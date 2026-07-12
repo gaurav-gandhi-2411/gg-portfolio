@@ -100,7 +100,7 @@ export function CommandPalette({
       onClick={(e) => {
         if (e.target === dialogRef.current) onOpenChange(false);
       }}
-      className="w-full max-w-lg rounded-lg border border-border bg-card p-0 text-card-foreground backdrop:bg-black/60"
+      className="fixed inset-auto top-24 left-1/2 w-full max-w-lg -translate-x-1/2 rounded-lg border border-border bg-card p-0 text-card-foreground backdrop:bg-black/60"
       aria-label="Command palette"
     >
       <div className="flex flex-col">

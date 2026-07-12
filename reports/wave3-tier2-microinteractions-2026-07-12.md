@@ -93,6 +93,32 @@ non-defect `/_vercel/insights/script.js` 404 in local dev — real production re
 axe-core (`npx @axe-core/cli http://localhost:3000 --exit`): **0 violations**, both before and
 after the fix (didn't regress, didn't improve — it was never able to see this class of issue).
 
+## Design-reviewer sign-off (post-code, pre-merge)
+
+Ran the `design-reviewer` subagent against this PR's diff, screenshots, and the wave-2 token
+file before requesting human merge (required per the wave brief: "T2-grade bar for this repo
+even if tiered T1"). It caught a real, blocking bug the manual browser pass above missed:
+the command palette's native `<dialog>` rendered pinned to the top-left corner of the
+viewport instead of centered. Root cause: Tailwind's Preflight resets `margin: 0` on `*`,
+which strips the UA stylesheet's `dialog:modal { margin: auto }` centering — a `<dialog>`
+shown via `.showModal()` depends on that default to center itself, and Preflight silently
+breaks it. Fixed in `components/command-palette.tsx` by making positioning fully explicit
+(`fixed inset-auto top-24 left-1/2 -translate-x-1/2`) rather than relying on inherited
+UA-default centering behavior — this also makes the fix immune to any future Preflight or
+browser default change. Re-verified: rebuilt, re-screenshotted (both palette screenshots
+below reflect the fixed, centered state), re-ran axe (0 violations, unchanged).
+
+Reviewer also approved-with-suggestions the two already-merged Tier 1/2.4 PRs (no blocking
+issues) and flagged 3 non-blocking suggestions for this tier: `animated-monogram.tsx`
+hardcodes hex colors instead of referencing the token file's CSS variables (values are
+correct today, but it's a token-bypass that would silently drift if the palette is ever
+retuned); the hover-glow box-shadow arbitrary value is duplicated verbatim across
+`products.tsx` and `research.tsx` rather than promoted to a named token; and no mobile-width
+screenshots exist for this tier's new components. None are blocking — logged here rather than
+fixed in this pass, since none affect current correctness and the token-hardcoding + shadow
+duplication are pre-existing patterns from earlier waves, not new debt introduced by this
+PR's own components in a way that regresses anything.
+
 ## What shipped
 
 - **Command palette** (⌘K, `/`, or click) — `components/command-palette-shell.tsx` (eager,
