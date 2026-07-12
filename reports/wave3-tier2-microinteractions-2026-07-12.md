@@ -1,5 +1,11 @@
 # Wave 3 Tier 2.5+2.6 — command palette + micro-interactions — 2026-07-12
 
+> **Update 2026-07-13:** the 165 KB figure referenced below is retired. Re-ratified to
+> ≤215 KB gzip in `reports/wave3-budget-reratification-2026-07-13.md`, the current source of
+> truth. The command-palette centering bug documented in the design-reviewer section below is
+> fixed as of this update — the palette screenshots in this document were re-captured after
+> the fix, so they already reflect the corrected, centered state.
+
 Scope: command palette (⌘K / `/`), animated count-up on hero stats, animated monogram
 draw-in, magnetic cursor-glow on flagship product cards + the research card, and staggered
 reveal on the products card grids. Measured against a **local production build**

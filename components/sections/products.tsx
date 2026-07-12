@@ -55,7 +55,7 @@ function ProductCard({
   const card = (
     <Card
       style={flagship ? undefined : { transitionDelay: `${delayMs}ms` }}
-      className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:ring-accent/40 hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--accent)_45%,transparent)] ${flagship ? "gap-4 p-8" : STAGGER_CLASSES}`}
+      className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:shadow-glow hover:ring-accent/40 ${flagship ? "gap-4 p-8" : STAGGER_CLASSES}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h3

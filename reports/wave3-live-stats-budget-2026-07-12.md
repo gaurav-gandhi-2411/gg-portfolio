@@ -1,5 +1,9 @@
 # Wave 3 Tier 1 budget report — 2026-07-12
 
+> **Update 2026-07-13:** the 165 KB target discussed below is retired. Re-ratified to
+> ≤215 KB gzip in `reports/wave3-budget-reratification-2026-07-13.md`, the current source of
+> truth. Left unmodified below as the historical record of how the mistake happened.
+
 ## Correcting the wave-2 record first
 
 Wave 2's reported JS total (161.3 KiB) was wrong — see the erratum at the top of

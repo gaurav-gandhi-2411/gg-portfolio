@@ -17,7 +17,7 @@ export function AnimatedMonogram({ className }: { className?: string }) {
       <path
         d="M 35.37 41.96 A 15.50 15.50 0 1 1 35.37 22.04"
         fill="none"
-        stroke="#EDEEF0"
+        stroke="var(--text-hi)"
         strokeWidth="4.6"
         strokeLinecap="round"
         pathLength={100}
@@ -26,7 +26,7 @@ export function AnimatedMonogram({ className }: { className?: string }) {
       <path
         d="M 39.00 32.00 L 30.48 32.00"
         fill="none"
-        stroke="#EDEEF0"
+        stroke="var(--text-hi)"
         strokeWidth="4.6"
         strokeLinecap="round"
         pathLength={100}
@@ -35,7 +35,7 @@ export function AnimatedMonogram({ className }: { className?: string }) {
       <path
         d="M 28.63 22.04 A 15.50 15.50 0 1 1 28.63 41.96"
         fill="none"
-        stroke="#818CF8"
+        stroke="var(--accent)"
         strokeWidth="4.6"
         strokeLinecap="round"
         pathLength={100}
@@ -44,7 +44,7 @@ export function AnimatedMonogram({ className }: { className?: string }) {
       <path
         d="M 25.00 32.00 L 33.52 32.00"
         fill="none"
-        stroke="#818CF8"
+        stroke="var(--accent)"
         strokeWidth="4.6"
         strokeLinecap="round"
         pathLength={100}

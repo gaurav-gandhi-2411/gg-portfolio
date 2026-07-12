@@ -154,7 +154,9 @@ dependency changes, tried both). This means GG's "re-baseline to 165KB" instruct
 on my wrong number — the real framework floor alone is already ~191-205 KB. Rather than
 re-litigate the absolute figure mid-wave, holding to the guardrail's actual intent: **every
 wave-3 feature must add zero bytes to the eager bundle**, via `next/dynamic` for anything
-interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`.
+interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`. **Update
+2026-07-13:** the 165 KB figure is now formally retired — re-ratified to ≤215 KB gzip in
+`reports/wave3-budget-reratification-2026-07-13.md`, which is the current source of truth.
 
 - [x] **Tier 1 — living data (zero JS cost, build-time/ISR only):** `lib/live-data.ts` — all
       4 fetches revalidate every 6h, fail soft (never throw, degrade to no-badge on error).
@@ -198,10 +200,44 @@ interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`.
 - [ ] **Tier 3.7 — dynamic per-section OG images: cut.** Brief's own condition ("if sections
       gain routes") doesn't apply — still a single-page site, no per-section routes exist.
       Single dark+indigo OG from wave 2 stands.
+- [x] **Design-reviewer sign-off (Tier 2.5+2.6):** caught one real blocking bug the manual
+      browser check missed — the command palette's native `<dialog>` rendered pinned to the
+      top-left corner instead of centered (Tailwind Preflight strips the UA stylesheet's
+      `dialog:modal { margin: auto }`). Fixed with explicit positioning
+      (`fixed inset-auto top-24 left-1/2 -translate-x-1/2`), re-screenshotted, re-verified
+      (axe still 0 violations). 3 non-blocking suggestions logged and since fixed in the
+      close-out below.
+- [x] **Post-PR#9 close-out (2026-07-13):** three items —
+      1. **Budget re-ratified to ≤215 KB gzip** on the corrected measurement (current: 207,862
+         bytes / 203.0 KiB). The 165 KB figure from this wave's kickoff is explicitly retired
+         — it was built on the wave-2 mismeasurement, never an achievable target for this
+         stack. `README.md` (new — none existed before) and `spec.md` both updated to cite
+         `reports/wave3-budget-reratification-2026-07-13.md` as the source of truth going
+         forward.
+      2. **Design-reviewer's 3 non-blocking items fixed:** `animated-monogram.tsx` now
+         references `var(--text-hi)`/`var(--accent)` instead of hardcoded hex (was a rule 15b
+         token-bypass); the duplicated hover-shadow arbitrary value in `products.tsx` +
+         `research.tsx` promoted to a named `--shadow-glow` token, consumed via the
+         `shadow-glow` utility; mobile (390px) screenshot set added at
+         `reports/screenshots/wave3-mobile/` — palette centers correctly at mobile width too
+         (the reviewer's speculative "flush to top edge" concern didn't materialize, since
+         the centering fix's `top-24` offset is a fixed value, not viewport-relative).
+      3. This close-out lands as additional commits on the still-open `feat/wave3-palette-
+         microinteractions` branch (PR #9) rather than a separate PR — items 2's fixes touch
+         files that only exist on that unmerged branch, so a fresh PR from `main` isn't
+         possible until #9 merges. **PR #9 is still open/draft, not yet merged** — gate 3
+         (515 reviewable lines vs. the ~400 cap) still fails, which is why this couldn't ship
+         as the small, independently-auto-mergeable PR originally framed. Needs GG's manual
+         merge.
 
-## Wave 3 (original) — post-arXiv (not started, separate from "Living portfolio" above)
+**Wave 3 ("Living portfolio") is otherwise complete.** Once PR #9 merges, the only remaining
+open item on this repo is the arXiv research-flip below — logging it as the sole outstanding
+wave and going idle until it's unblocked (paper 1's endorsement) or GG gives new direction.
 
-Flip research section live with arXiv ID; add Tier 2 paper when public.
+## Wave 3 (original) — post-arXiv (the sole remaining wave; blocked on paper 1's arXiv endorsement)
+
+Flip research section live with arXiv ID; add Tier 2 paper when public. No other work is
+queued on this repo until this unblocks or GG redirects.
 
 ## Gotchas / decisions log
 
