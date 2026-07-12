@@ -182,6 +182,22 @@ interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`.
       against the real generated vocab file; UI verified via accessibility-tree snapshot
       (labeled form, `aria-live` feedback). Full report:
       `reports/wave3-heat-toy-budget-2026-07-12.md`.
+- [x] **Tier 2.5+2.6 — command palette + micro-interactions:** ⌘K/`/` command palette
+      (native `<dialog>`, dynamic-imported UI behind a 1.5KB eager shell), count-up hero
+      stats, animated monogram draw-in, cursor-glow on flagship+research cards, staggered
+      card-grid reveal (≤280ms spread, under the 400ms ceiling). Eager JS +3,100 bytes
+      (207,862 bytes total). **LCP investigation:** initial measurement showed +21.7% vs.
+      wave 2's recorded 171ms — investigated rather than shipped blind. Re-measured the
+      pre-this-PR commit fresh in an isolated worktree under identical current system load:
+      211ms, statistically identical to this branch's 205.7ms 3-run average. The 171ms
+      figure was stale (measured under different background load earlier in the session);
+      this PR adds no measurable LCP cost. Fixed one real a11y finding pre-merge
+      (`label-content-name-mismatch` on the palette trigger — redundant `aria-label` didn't
+      include the button's own visible text, WCAG 2.5.3; axe-core didn't catch it, Lighthouse
+      did). Full report: `reports/wave3-tier2-microinteractions-2026-07-12.md`.
+- [ ] **Tier 3.7 — dynamic per-section OG images: cut.** Brief's own condition ("if sections
+      gain routes") doesn't apply — still a single-page site, no per-section routes exist.
+      Single dark+indigo OG from wave 2 stands.
 
 ## Wave 3 (original) — post-arXiv (not started, separate from "Living portfolio" above)
 

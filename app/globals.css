@@ -99,3 +99,10 @@
     @apply font-sans;
   }
 }
+
+/* Monogram draw-in (AnimatedMonogram) — pure CSS, no JS. */
+@keyframes draw-in {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
