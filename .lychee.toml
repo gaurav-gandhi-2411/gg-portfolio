@@ -15,4 +15,5 @@ exclude = [
   "^https://img\\.shields\\.io", # badge service, frequently rate-limits CI IPs
 ]
 
-exclude_mail = true
+# mailto: links are excluded by default (include_mail defaults to false) —
+# no explicit field needed.
