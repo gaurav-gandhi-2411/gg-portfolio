@@ -109,10 +109,35 @@ redundant once folded into `provenance.md`.
       now `nativeButton={false}` on all four). Exploration lives on local branch
       `explore/dark-theme-candidates`, **not pushed/merged** — held for GG's pick per the
       explicit gate instruction.
-- [ ] Blocked on the above pick: full dark remap merge, restrained motion (scroll-reveal + hover only),
-      full-page screenshots per section, responsive pass (390px–1440px matrix), a11y re-verify
-      (contrast changes with the dark remap), Lighthouse budgets (150KB/1.5s/0.05) measured
-      and committed to `reports/`.
+- [x] **Accent ratified 2026-07-12: indigo (`#818CF8`).** Warmer's card stays without a
+      GitHub link — repo stays private, GG's deliberate call, not a bug to fix.
+- [x] Full dark+indigo remap shipped: tokens finalized (renamed `--accent-cyan` →
+      `--indigo`, border bumped `#2C2F36`→`#62656E` after contrast-checking found it failed
+      the 3:1 non-text-contrast requirement — see globals.css header comment for the full
+      WCAG table), monogram + favicon + OG image all recolored to match.
+- [x] Restrained motion: `components/reveal.tsx` — IntersectionObserver fade+rise on
+      scroll, once, `motion-reduce:` CSS variant handles reduced-motion (not a JS branch, to
+      avoid a setState-in-effect lint violation). Applied to every section except Hero
+      (renders immediately, no reveal-on-load flash). Card hover: accent-tinted ring + soft
+      `color-mix()` glow shadow on Products/Research cards — subtle by design, not a heavy
+      glow.
+- [x] Responsive matrix 390/768/1024/1440px, screenshotted — clean at every breakpoint.
+      Gotcha: `resize_page` has a ~501px hard floor on this Windows Chrome install (can't
+      size below it); had to use `emulate` (CDP device-metrics override) to actually hit
+      390px. Found and fixed one polish issue along the way: product cards weren't stretching
+      to equal height in their grid row — added `h-full`.
+- [x] A11y re-verified post-remap: `npx @axe-core/cli` → 0 violations; contrast recomputed
+      for every token pair (see globals.css); keyboard-tab focus ring confirmed visible
+      (indigo outline, high contrast against the dark background).
+- [x] Lighthouse: Accessibility 100, Best Practices 96 (1 finding — `/_vercel/insights/script.js`
+      404s on local-only `next start`, confirmed 200 on the real deployment, not a real
+      defect), SEO 100. LCP 171ms / CLS 0.00 (localhost, unthrottled — real-world will be
+      higher, no CrUX field data yet for this new domain). **JS budget: 161.3 KiB gzip vs.
+      150 KB target — over by 11.3 KiB (7.5%).** Root cause: React 19 + Next 16 App Router
+      runtime alone is 69.3 KiB; chasing the remainder would mean swapping out
+      `@base-ui/react` or auditing per-component import weight — not attempted this wave,
+      flagged as an open follow-up rather than silently passing. Full report:
+      `reports/wave2-perf-budgets-2026-07-12.md` + `reports/lighthouse-2026-07-12.json`.
 
 ## Wave 3 — later, post-arXiv (not started)
 
