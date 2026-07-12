@@ -22,12 +22,13 @@ export function Hero() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Button render={<a href={site.resumeUrl} download />} size="lg">
+        <Button render={<a href={site.resumeUrl} download />} nativeButton={false} size="lg">
           <FileDown className="size-4" />
           Resume
         </Button>
         <Button
           render={<a href={site.githubUrl} target="_blank" rel="noopener noreferrer" />}
+          nativeButton={false}
           variant="outline"
           size="lg"
         >
@@ -36,13 +37,19 @@ export function Hero() {
         </Button>
         <Button
           render={<a href={site.linkedinUrl} target="_blank" rel="noopener noreferrer" />}
+          nativeButton={false}
           variant="outline"
           size="lg"
         >
           <LinkedinIcon className="size-4" />
           LinkedIn
         </Button>
-        <Button render={<a href={`mailto:${site.email}`} />} variant="outline" size="lg">
+        <Button
+          render={<a href={`mailto:${site.email}`} />}
+          nativeButton={false}
+          variant="outline"
+          size="lg"
+        >
           <Mail className="size-4" />
           Email
         </Button>
