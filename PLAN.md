@@ -31,8 +31,17 @@ Gate: GG reviews identity + copy before wave 2.
 - [x] Pushed to GitHub (`gaurav-gandhi-2411/gg-portfolio`, public), branch protection
       (required check `build`, no force-push/deletion, admins can bypass — solo-maintainer
       posture), auto-merge + delete-branch-on-merge enabled. Vercel git-linked deploy live at
-      `https://gg-portfolio-phi.vercel.app` (production domain; `gg-portfolio.vercel.app`
-      itself was taken). CI green on both pushes.
+      `https://gaurav-gandhi.vercel.app` (renamed from the auto-generated `gg-portfolio-phi`;
+      GitHub repo name intentionally kept as `gg-portfolio` — repo/project names don't need
+      to match). CI green on all pushes.
+- [x] Domain rename gotcha: renaming the Vercel *project* does not reassign or kill the old
+      auto-generated `.vercel.app` domain — that's a separate alias operation
+      (`vercel alias set`), and the old domain has to be explicitly removed
+      (`vercel alias rm`) or it keeps serving traffic indefinitely. Also: newly-created
+      aliases inherited team-level SSO deployment protection
+      (`all_except_custom_domains`) that the original auto-generated domain was
+      exempt from — had to explicitly `vercel project protection disable --sso` to make
+      the canonical URL publicly reachable without a Vercel login wall.
 
 ### Concurrency note (2026-07-12)
 
