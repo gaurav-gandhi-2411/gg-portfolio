@@ -34,17 +34,24 @@ export interface ProductMetric {
   sourceRef: string;
 }
 
+export interface ProductStoryLine {
+  text: string;
+  sourceRef: string;
+}
+
 export interface Product {
   slug: string;
   name: string;
   tagline: string;
   liveUrl?: string;
-  repoUrl: string;
+  repoUrl?: string;
   metric?: ProductMetric;
   secondaryMetric?: ProductMetric;
   tier: "flagship" | "secondary";
   techChips?: string[];
   pypi?: { packageName: string; installCommand: string; badgeUrl: string };
+  /** One-line "hard problem solved" — flagship cards only, sourced from provenance.md. */
+  storyLine?: ProductStoryLine;
 }
 
 export interface ResearchPaper {

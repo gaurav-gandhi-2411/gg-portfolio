@@ -1,0 +1,38 @@
+name: Link Check
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, Monday 06:00 UTC — surfaces link rot even with no PR open.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+concurrency:
+  group: link-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    # Non-blocking on PRs (rule: warn, don't gate on link rot outside our control —
+    # e.g. Cloud Run cold starts, third-party badge services). The weekly scheduled
+    # run has no PR to annotate, so it's allowed to fail loudly instead.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Link Checker
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config .lychee.toml
+            --no-progress
+            --format markdown
+            content/**/*.ts
+            app/**/*.tsx
+            components/**/*.tsx
+          fail: true
+          jobSummary: true

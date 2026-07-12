@@ -30,3 +30,8 @@ next-env.d.ts
 
 # raw resume drops (canonical copy lives at public/resume.pdf, tracked)
 .assets/
+
+# Claude Code session/scheduler state — not project content (but .claude/settings.json,
+# if added, is project config and should stay tracked)
+.claude/*.lock
+.claude/scheduled_tasks*
