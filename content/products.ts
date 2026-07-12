@@ -8,12 +8,16 @@ export const products: Product[] = [
     tagline:
       "Daily semantic word game — guess the secret word and an embedding model tells you how close you are.",
     liveUrl: "https://playwarmer.vercel.app/",
-    repoUrl: "https://github.com/gaurav-gandhi-2411/mindmeld",
+    // Repo (mindmeld) is private — no public repo link until that changes. See provenance.md.
     tier: "flagship",
     techChips: ["Flutter", "sentence-transformers", "Firebase"],
     metric: {
       label: "Hinglish embedding eval (Spearman correlation)",
       value: "-0.003 → 0.639",
+      sourceRef: "warmer:hinglish-fix",
+    },
+    storyLine: {
+      text: "Hinglish embeddings scored near-random until I traced it to a script-mismatch bug (the model was trained on Devanagari, not romanized text) and swapped in one trained on Hinglish directly.",
       sourceRef: "warmer:hinglish-fix",
     },
   },
@@ -36,6 +40,10 @@ export const products: Product[] = [
       value: "~52K items across 8 stores",
       sourceRef: "style-maitri:catalogue-size",
     },
+    storyLine: {
+      text: "Built a deterministic garment-type normalizer that resolves inconsistent product titles across 8 store catalogues into one canonical taxonomy — no LLM, rule-based, with a confidence score per item.",
+      sourceRef: "style-maitri:garment-normalizer",
+    },
   },
   {
     slug: "triageiq",
@@ -50,6 +58,10 @@ export const products: Product[] = [
       label: "Component classifier top-3 accuracy",
       value: "82.5% (k8s) / 90.4% (vscode)",
       sourceRef: "triageiq:classifier-top3",
+    },
+    storyLine: {
+      text: "Built a disjointness guard that caught 3 months of silent train/eval contamination in the gold judge set (54/60 cases affected), then ran a full audit that found the LLM synthesis stage fabricating claims 1.9–9.1% of the time — tracked, not yet hard-gated.",
+      sourceRef: "triageiq:contamination-adr0018",
     },
   },
 
@@ -86,7 +98,8 @@ export const products: Product[] = [
     name: "ReviewIQ",
     tagline:
       "Structured review intelligence across English, Hindi & Hinglish — tiered LLM routing plus authenticity scoring.",
-    liveUrl: "https://review-iq-ajjrytb3na-el.a.run.app",
+    // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
+    liveUrl: "https://review-iq-ajjrytb3na-el.a.run.app/docs",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",
     tier: "secondary",
     metric: {

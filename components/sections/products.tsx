@@ -33,21 +33,29 @@ function ProductCard({ product, flagship }: { product: Product; flagship: boolea
               <ExternalLink className="size-4" />
             </a>
           )}
-          <a
-            href={product.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${product.name} GitHub repo`}
-            className="text-muted-foreground transition-colors hover:text-accent"
-          >
-            <GithubIcon className="size-4" />
-          </a>
+          {product.repoUrl && (
+            <a
+              href={product.repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${product.name} GitHub repo`}
+              className="text-muted-foreground transition-colors hover:text-accent"
+            >
+              <GithubIcon className="size-4" />
+            </a>
+          )}
         </div>
       </div>
 
       <p className={`text-muted-foreground ${flagship ? "text-base" : "text-sm"}`}>
         {product.tagline}
       </p>
+
+      {product.storyLine && (
+        <p className="border-l-2 border-accent/40 pl-3 text-sm leading-relaxed text-foreground">
+          {product.storyLine.text}
+        </p>
+      )}
 
       {product.metric && (
         <div className="mt-auto flex flex-col gap-0.5 border-t border-border pt-3">

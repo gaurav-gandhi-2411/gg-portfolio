@@ -1,0 +1,19 @@
+# Config for the lychee link checker (.github/workflows/link-check.yml).
+# Scans content/*.ts (external product/social links) + rendered app output.
+
+timeout = 30
+retry_wait_time = 15
+max_retries = 3
+# Cloud Run demos (e.g. AetherArt) cold-start after idle (~5-7 min) — generous
+# timeout/retries above absorb that instead of flagging it as broken every run.
+
+# LinkedIn returns 999 to non-browser requests (its anti-scraping response, not
+# a real break) — accept it alongside normal success/redirect codes.
+accept = [200, 201, 202, 203, 204, 206, 301, 302, 303, 307, 308, 999]
+
+exclude = [
+  "^https://img\\.shields\\.io", # badge service, frequently rate-limits CI IPs
+]
+
+# mailto: links are excluded by default (include_mail defaults to false) —
+# no explicit field needed.

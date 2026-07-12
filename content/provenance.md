@@ -77,6 +77,17 @@ Live URL `https://playwarmer.vercel.app/` — `mindmeld/README.md:78-79`. Repo c
 "Warmer"; repo folder/Firebase project ID keep the legacy name deliberately
 (`mindmeld/README.md:1,7-8`).
 
+**Wave 2 link-check finding (2026-07-12):** the `mindmeld` GitHub repo is **private**
+(`gh repo view` succeeds authenticated; unauthenticated `curl` gets 404 — confirmed via
+`gh repo view gaurav-gandhi-2411/mindmeld --json visibility` → `PRIVATE`, the only private repo
+among all products referenced on this site). The repo link was removed from Warmer's card —
+shipping a link that 404s for every visitor is worse than no link. Flagged to GG as an open
+decision (make it public, or leave it link-less) rather than assumed.
+
+`warmer:hinglish-fix` also backs the flagship-card story line: the root cause was a
+script-mismatch (the swapped-out model was trained on Devanagari Hindi, not romanized/Latin-script
+Hinglish) — `mindmeld/spec-hinglish-fix.md:6-7`.
+
 ### Style Maitri
 
 | ID | Claim | Source |
@@ -97,6 +108,10 @@ pre-dates the 2026-07-12 sold-out-filter rebuild). Used the fresher, dated
 (93.8%) which the earlier pass didn't surface at all. Live URL `https://stylemaitri.vercel.app`
 confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 
+| ID | Claim | Source |
+|---|---|---|
+| `style-maitri:garment-normalizer` | Deterministic, rule-based garment-type normalizer resolving inconsistent product titles across store catalogues into one canonical taxonomy (garment type + category + confidence score), no LLM | `agentic-shopping-assistant/src/catalogue/normalizer.py` — module docstring lines 1–19 labels it "GarmentNormalizer"; actual callable is the function `normalize_garment_type()` at line 155 (there is no `class GarmentNormalizer` — verified via grep, zero hits — "GarmentNormalizer" is the module's informal/doc name, not a literal identifier, so the card copy describes what it does rather than naming a class that doesn't exist) |
+
 ### TriageIQ
 
 | ID | Claim | Source |
@@ -114,6 +129,17 @@ the previously-quoted retriever Recall@5 (36.7% vscode) was inflated by a proxy-
 bug; the honest product-task number is 22.4% (vscode) / 23.5% (k8s) — see
 `triage-iq/docs/architecture/adr/0030-phaseC-product-task-feasibility.md`. Used the classifier
 metric instead as a clean, current, positive, fully-corrected number.
+
+| ID | Claim | Source |
+|---|---|---|
+| `triageiq:contamination-adr0018` | Disjointness guard caught 3 months of silent train/eval contamination in the gold judge set (54/60 cases affected, two independent root causes), fixed the split-loading logic, declined to fabricate an inflation-magnitude estimate | `triage-iq/docs/architecture/adr/0018-gold-set-train-contamination.md` — root causes lines 22–55, blast radius lines 61–69, fix lines 98–108 |
+
+This is a genuine continuous "eval-integrity arc," not three unrelated fixes strung together:
+ADR-0028 (the fabrication-rate audit) opens by naming ADR-0018 as the pattern that motivated a
+systematic audit (`0028-per-model-eval-audit.md:9-23`) and says it found "2 new contamination
+leaks... that ADR-0018 doesn't cover" (line 19); ADR-0030 explicitly corrects/completes an
+ADR-0028 finding (retrieval-recall measurement). Full chain verified by an independent research
+pass before use in card copy.
 
 ### DealHunter (agentic-travel-booking-system)
 
@@ -159,6 +185,12 @@ live, dated eval artifact (`eval/report.md`, generated 2026-07-06) shows the cur
 every per-language gate still holds ≥80%"). Used the current, live-eval-sourced 83.8% figure,
 not the superseded table row.
 
+**Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
+(`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
+route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
+demonstrable, so the card now links there instead. Same service, better landing page — not a
+claims change.
+
 ### Multimodal Fashion Recommender
 
 | ID | Claim | Source |
@@ -203,6 +235,20 @@ the earlier concurrent-session pass's citation of only the 2.6GB single-componen
 Note: the PyPI package name (`tracegauge`) differs from the GitHub repo name
 (`token-efficiency-scorer`) — the card's repo link points to the actual repo; package
 name/install command reference the PyPI name.
+
+## Wave 2 link-check summary (2026-07-12)
+
+Every external link referenced in `content/*.ts` was curl-checked against the deployed site's
+link set. Two real breaks found and fixed (Warmer's repo link removed — private repo; ReviewIQ's
+live link repointed to `/docs`, see product sections above for both). Two apparent failures were
+false positives, left as-is:
+- **AetherArt** (`aetherart-demo-...run.app`) timed out at 15s but returned 200 on a 90s retry —
+  known Cloud Run cold-start behavior (~5–7 min after idle, documented in the project's own
+  README). The lychee CI job below is configured with a generous timeout/retry to avoid flagging
+  this as broken on every run.
+- **LinkedIn** (`linkedin.com/in/gauravgandhi03`) returns HTTP 999 to unauthenticated/non-browser
+  requests — LinkedIn's known anti-scraping response, not a real break (the profile loads fine in
+  a browser). Excluded from the strict-200 CI check via an accept-list.
 
 ## Known gaps / not shipped
 

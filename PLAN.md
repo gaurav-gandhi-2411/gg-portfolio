@@ -56,12 +56,38 @@ superseded with fresher/more precise sourcing (ReviewIQ accuracy, DealHunter met
 see `content/provenance.md` for the full reconciliation. `provenance-audit.md` was deleted as
 redundant once folded into `provenance.md`.
 
-## Wave 2 — polish + gates (not started)
+## Wave 2 — design elevation + content reorder + polish (in progress)
 
-Responsive pass, a11y (axe smoke), budgets measured (JS ≤150KB, LCP ≤1.5s, CLS ≤0.05 per rule
-15e — bundle chunk sizes look reasonable pre-Lighthouse but not yet formally measured), SEO/meta
-(JSON-LD Person schema, sitemap — basic OG/Twitter tags already in `app/layout.tsx`), real
-resume already wired (done early, `public/resume.pdf`), prod deploy.
+- [x] Content reorder: Hero → About → Products → Research → Experience → Contact (was
+      Hero → About → Experience → Products → Research → Contact). About paragraphs and hero
+      stats reordered to lead with independent-builder identity; employer/Uber-scale numbers
+      moved to supporting position, not headline.
+- [x] Engineering story lines added to the 3 flagship cards (Warmer, Style Maitri, TriageIQ),
+      each independently verified against the source repo before writing — see
+      `content/provenance.md` `warmer:hinglish-fix` (root cause detail added),
+      `style-maitri:garment-normalizer` (new), `triageiq:contamination-adr0018` (new, plus the
+      ADR-0018→0028→0030 continuity was verified as a real documented thread, not an invented
+      narrative).
+- [x] Live-link verification (every external URL in `content/*.ts` curl-checked against the
+      deployed site): found and fixed two real breaks — Warmer's GitHub repo link removed
+      (mindmeld is a **private** repo, confirmed via `gh repo view --json visibility`, only
+      private repo among all products referenced); ReviewIQ's live link repointed from the
+      bare API root (404, no handler) to `/docs` (200, browsable Swagger UI). Two false
+      positives investigated and left as-is: AetherArt Cloud Run cold-start timeout (200 on
+      retry), LinkedIn's 999 anti-scraping response (not a real break).
+- [x] `link-check.yml` CI job (lychee): non-blocking (`continue-on-error`) on PRs, weekly
+      scheduled run, `.lychee.toml` accepts LinkedIn's 999 and gives Cloud Run cold starts a
+      generous timeout/retry budget so link rot surfaces without false-alarming every PR.
+- [x] SEO: JSON-LD Person schema (`components/json-ld.tsx`), `app/sitemap.ts`, `app/robots.ts`.
+      Vercel Analytics wired (`@vercel/analytics`).
+- [ ] **Design elevation (gated on GG's review — not started building the full remap yet):**
+      dark tokens + 2-3 accent candidates, Hero-only render + screenshots for GG's pick before
+      rolling the remap across all sections. Reference: maninder.vercel.app's energy/polish
+      level (not its visual style).
+- [ ] Blocked on the above: full dark remap, restrained motion (scroll-reveal + hover only),
+      full-page screenshots per section, responsive pass (390px–1440px matrix), a11y re-verify
+      (contrast changes with the dark remap), Lighthouse budgets (150KB/1.5s/0.05) measured
+      and committed to `reports/`.
 
 ## Wave 3 — later, post-arXiv (not started)
 
