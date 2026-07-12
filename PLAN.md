@@ -42,6 +42,20 @@ Gate: GG reviews identity + copy before wave 2.
       (`all_except_custom_domains`) that the original auto-generated domain was
       exempt from — had to explicitly `vercel project protection disable --sso` to make
       the canonical URL publicly reachable without a Vercel login wall.
+- [x] **Critical follow-up gotcha, found during wave 2's post-merge live-verification
+      (2026-07-12):** `vercel alias set <deployment> gaurav-gandhi.vercel.app` (used to
+      create the canonical domain) is a **static, one-time pointer** — it does NOT track
+      future production deployments. Every wave-2 PR merge to `main` was deploying
+      correctly, but the canonical URL kept silently serving the wave-1 snapshot; only the
+      auto-generated per-deployment/branch URLs were updating. Root cause: `vercel alias`
+      is a raw imperative pointer, not the same mechanism as a real Vercel **project
+      domain** (the dashboard's Settings → Domains, which does auto-track production).
+      Fixed by registering the domain properly via the API:
+      `POST /v10/projects/{id}/domains {"name": "gaurav-gandhi.vercel.app"}` — the response's
+      `verified: true` and no `gitBranch` pin confirms it now tracks production like a
+      normal project domain. **Lesson: verify the live canonical URL after every deploy
+      claim, not just CI green — CI and the deployment both succeeding does not guarantee
+      the public-facing alias actually updated.**
 
 ### Concurrency note (2026-07-12)
 
