@@ -11,7 +11,10 @@ export function Research() {
       </h2>
       <div className="mt-6 flex flex-col gap-4">
         {researchPapers.map((paper) => (
-          <Card key={paper.title} className="flex flex-col gap-3 p-6">
+          <Card
+            key={paper.title}
+            className="flex flex-col gap-3 p-6 transition-shadow duration-300 hover:ring-accent/40 hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--accent)_45%,transparent)]"
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h3 className="font-heading text-lg font-semibold text-foreground">
                 {paper.title}

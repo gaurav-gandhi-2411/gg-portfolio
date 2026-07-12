@@ -9,7 +9,7 @@ import type { Product } from "@/content/types";
 function ProductCard({ product, flagship }: { product: Product; flagship: boolean }) {
   return (
     <Card
-      className={`flex flex-col gap-3 p-6 ${flagship ? "gap-4 p-8" : ""}`}
+      className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:ring-accent/40 hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--accent)_45%,transparent)] ${flagship ? "gap-4 p-8" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h3

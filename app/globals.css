@@ -5,7 +5,18 @@
 /*
  * GG Portfolio design tokens (rule 15b).
  * Single theme by design (spec non-goal: no dark-mode toggle ceremony).
- * Palette: warm paper + near-black ink + one terracotta accent. No gradients.
+ * Dark, high-contrast: deep graphite base + one vivid accent (indigo,
+ * ratified 2026-07-12). Depth via borders, no gradients.
+ *
+ * Contrast checked against WCAG 2.1 (rule: recheck contrast after any
+ * palette remap — dark themes are where failures hide):
+ *   text-hi on background   16.96:1  (AA normal text needs 4.5:1)
+ *   text-lo on background    6.57:1
+ *   accent on background     6.60:1
+ *   border on background     3.38:1  (AA non-text/UI-component needs 3:1 —
+ *                             the original #2C2F36 pick only hit 1.47:1 and
+ *                             was raised to #62656E specifically so chip/card
+ *                             outlines stay visible, not just decorative)
  */
 @theme inline {
   --color-background: var(--background);
@@ -42,35 +53,37 @@
 
 :root {
   /* Core palette */
-  --paper: #f7f5f0;
-  --ink: #14151a;
-  --ink-muted: #5b5d66;
-  --terracotta: #c2703a;
-  --line: #e4e0d7;
+  --graphite-950: #0a0b0d;
+  --graphite-900: #131417;
+  --graphite-800: #1b1d21;
+  --graphite-line: #62656e;
+  --text-hi: #edeef0;
+  --text-lo: #9195a0;
+  --indigo: #818cf8;
 
   /* Semantic tokens (consumed by shadcn components) */
-  --background: var(--paper);
-  --foreground: var(--ink);
-  --card: #fffefb;
-  --card-foreground: var(--ink);
-  --popover: #fffefb;
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-  --secondary: #ece8df;
-  --secondary-foreground: var(--ink);
-  --muted: #ece8df;
-  --muted-foreground: var(--ink-muted);
-  --accent: var(--terracotta);
-  --accent-foreground: #fff8f0;
-  --destructive: #b23b3b;
-  --border: var(--line);
-  --input: var(--line);
-  --ring: var(--terracotta);
+  --background: var(--graphite-950);
+  --foreground: var(--text-hi);
+  --card: var(--graphite-900);
+  --card-foreground: var(--text-hi);
+  --popover: var(--graphite-900);
+  --popover-foreground: var(--text-hi);
+  --primary: var(--text-hi);
+  --primary-foreground: var(--graphite-950);
+  --secondary: var(--graphite-800);
+  --secondary-foreground: var(--text-hi);
+  --muted: var(--graphite-800);
+  --muted-foreground: var(--text-lo);
+  --accent: var(--indigo);
+  --accent-foreground: #0e0b2e;
+  --destructive: #f87171;
+  --border: var(--graphite-line);
+  --input: var(--graphite-line);
+  --ring: var(--indigo);
 
   /* Status badge (Open to roles) */
-  --status-open: #3f5c46;
-  --status-open-bg: #e4ebe1;
+  --status-open: #34d399;
+  --status-open-bg: #0f2b22;
 
   --radius: 0.5rem;
 }
