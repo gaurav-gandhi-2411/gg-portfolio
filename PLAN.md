@@ -28,8 +28,11 @@ Gate: GG reviews identity + copy before wave 2.
       (flagship + secondary grid), Research, Contact.
 - [x] Repo rig: `ci.yml` (lint + typecheck + build, required check `build`), pre-commit
       (trailing-whitespace, gitleaks, local eslint/typecheck hooks), PR template.
-- [ ] Push to GitHub (`gaurav-gandhi-2411/gg-portfolio`, public), branch protection +
-      required check, Vercel git-linked deploy, preview URL. In progress.
+- [x] Pushed to GitHub (`gaurav-gandhi-2411/gg-portfolio`, public), branch protection
+      (required check `build`, no force-push/deletion, admins can bypass — solo-maintainer
+      posture), auto-merge + delete-branch-on-merge enabled. Vercel git-linked deploy live at
+      `https://gg-portfolio-phi.vercel.app` (production domain; `gg-portfolio.vercel.app`
+      itself was taken). CI green on both pushes.
 
 ### Concurrency note (2026-07-12)
 
