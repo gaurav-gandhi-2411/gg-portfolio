@@ -80,11 +80,22 @@ redundant once folded into `provenance.md`.
       generous timeout/retry budget so link rot surfaces without false-alarming every PR.
 - [x] SEO: JSON-LD Person schema (`components/json-ld.tsx`), `app/sitemap.ts`, `app/robots.ts`.
       Vercel Analytics wired (`@vercel/analytics`).
-- [ ] **Design elevation (gated on GG's review — not started building the full remap yet):**
-      dark tokens + 2-3 accent candidates, Hero-only render + screenshots for GG's pick before
-      rolling the remap across all sections. Reference: maninder.vercel.app's energy/polish
-      level (not its visual style).
-- [ ] Blocked on the above: full dark remap, restrained motion (scroll-reveal + hover only),
+- [x] **Design elevation — candidates rendered, awaiting GG's pick (gate held, nothing
+      rolled out further):** dark base tokens (deep graphite `#0A0B0D`/`#131417`, light text
+      `#EDEEF0`/`#9195A0`) built in `app/globals.css`; 3 accent candidates rendered and
+      screenshotted — cyan `#22D3EE`, electric blue `#3B82F6`, indigo `#818CF8`
+      (recommended — most distinctive without being loud, pairs well with the Fraunces
+      headline). One full-page render done with the recommended candidate to confirm the
+      token-driven architecture reskins every section automatically (About/Products/
+      Research/Experience/Contact all consume semantic tokens already, no bespoke
+      per-section work needed for the base remap). GG monogram recolored per candidate
+      (`public/logo-mark.svg`) since it's a static SVG, not itself token-driven.
+      Found-and-fixed in passing: a pre-existing a11y bug in Hero's 4 CTA buttons (Base UI's
+      `Button` defaulted to `nativeButton=true` while rendering `<a>` via the `render` prop —
+      now `nativeButton={false}` on all four). Exploration lives on local branch
+      `explore/dark-theme-candidates`, **not pushed/merged** — held for GG's pick per the
+      explicit gate instruction.
+- [ ] Blocked on the above pick: full dark remap merge, restrained motion (scroll-reveal + hover only),
       full-page screenshots per section, responsive pass (390px–1440px matrix), a11y re-verify
       (contrast changes with the dark remap), Lighthouse budgets (150KB/1.5s/0.05) measured
       and committed to `reports/`.
