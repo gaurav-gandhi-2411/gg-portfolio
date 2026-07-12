@@ -1,5 +1,21 @@
 # Wave 2 performance/quality budgets — 2026-07-12
 
+> **ERRATUM (added 2026-07-12, during wave 3 build-time testing):** the "Total: 161.3 KiB"
+> figure below is **wrong** — my chunk enumeration missed one script tag
+> (`0cz1d0mv5g_q7.js`, 39,627 bytes gzip). The **true wave-2 total was 204,762 bytes
+> (200.0 KiB)**, confirmed three independent ways: (1) re-measuring this exact commit
+> (`6fac780`) in an isolated git worktree, (2) re-measuring the current wave-3 branch before
+> any Tier-1 code ran (byte-identical), (3) a from-scratch bare `create-next-app` (Next.js
+> 16.2.10 + Turbopack, zero custom code) reproduces the *exact same chunk hash* — this is a
+> **Next.js/Turbopack framework-level default** (core-js polyfills: `Symbol`, generators,
+> `URLSearchParams`, `Set` operations), not something this app's code or dependencies
+> introduced. Tried removing it via a `browserslist` config and via removing
+> `@vercel/analytics` — neither changed the chunk (byte-identical hash both times) — not
+> fixable from application code in the time available. The bare-template baseline alone
+> measures 191,057 bytes; this app's own code adds only ~13.7 KiB on top of the framework
+> floor. Corrected budget math is in `reports/wave3-live-stats-budget-2026-07-12.md`.
+
+
 Measured against a **local production build** (`npm run build && npm run start`), not the
 dev server — dev-mode React/Next overhead would misrepresent real numbers (rule 65b: no
 invented or unrepresentative metrics). Raw Lighthouse JSON: `lighthouse-2026-07-12.json`

@@ -5,8 +5,36 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { products } from "@/content/products";
 import type { Product } from "@/content/types";
+import {
+  getRepoFreshness,
+  getTracegaugeDownloads,
+  getWarmerPuzzleNumber,
+} from "@/lib/live-data";
 
-function ProductCard({ product, flagship }: { product: Product; flagship: boolean }) {
+function repoSlug(repoUrl: string | undefined): string | null {
+  if (!repoUrl) return null;
+  const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+?)\/?$/);
+  return match ? match[1] : null;
+}
+
+function formatFreshness(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "shipped today";
+  if (days === 1) return "shipped yesterday";
+  if (days < 30) return `shipped ${days}d ago`;
+  if (days < 365) return `shipped ${Math.floor(days / 30)}mo ago`;
+  return `shipped ${Math.floor(days / 365)}y ago`;
+}
+
+function ProductCard({
+  product,
+  flagship,
+  liveNote,
+}: {
+  product: Product;
+  flagship: boolean;
+  liveNote?: string;
+}) {
   return (
     <Card
       className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:ring-accent/40 hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--accent)_45%,transparent)] ${flagship ? "gap-4 p-8" : ""}`}
@@ -99,11 +127,41 @@ function ProductCard({ product, flagship }: { product: Product; flagship: boolea
           ))}
         </div>
       )}
+
+      {liveNote && (
+        <div className="flex items-center gap-1.5 border-t border-border pt-2.5">
+          <span className="size-1.5 rounded-full bg-status-open" aria-hidden />
+          <span className="font-mono text-[11px] text-muted-foreground">{liveNote}</span>
+        </div>
+      )}
     </Card>
   );
 }
 
-export function Products() {
+export async function Products() {
+  const repoSlugs = products
+    .map((p) => repoSlug(p.repoUrl))
+    .filter((s): s is string => s !== null);
+
+  const [freshness, tracegaugeDownloads, warmerPuzzle] = await Promise.all([
+    getRepoFreshness(repoSlugs),
+    getTracegaugeDownloads(),
+    getWarmerPuzzleNumber(),
+  ]);
+
+  function liveNoteFor(product: Product): string | undefined {
+    if (product.slug === "warmer" && warmerPuzzle) {
+      return `Puzzle #${warmerPuzzle.number} live today`;
+    }
+    if (product.slug === "tracegauge" && tracegaugeDownloads) {
+      return `${tracegaugeDownloads.lastWeek.toLocaleString()} PyPI downloads this week`;
+    }
+    const slug = repoSlug(product.repoUrl);
+    const repoData = slug ? freshness[slug] : undefined;
+    if (repoData) return formatFreshness(repoData.lastCommitDate);
+    return undefined;
+  }
+
   const flagship = products.filter((p) => p.tier === "flagship");
   const secondary = products.filter((p) => p.tier === "secondary");
 
@@ -115,13 +173,23 @@ export function Products() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         {flagship.map((product) => (
-          <ProductCard key={product.slug} product={product} flagship />
+          <ProductCard
+            key={product.slug}
+            product={product}
+            flagship
+            liveNote={liveNoteFor(product)}
+          />
         ))}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {secondary.map((product) => (
-          <ProductCard key={product.slug} product={product} flagship={false} />
+          <ProductCard
+            key={product.slug}
+            product={product}
+            flagship={false}
+            liveNote={liveNoteFor(product)}
+          />
         ))}
       </div>
     </section>
