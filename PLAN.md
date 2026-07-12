@@ -139,7 +139,7 @@ redundant once folded into `provenance.md`.
       flagged as an open follow-up rather than silently passing. Full report:
       `reports/wave2-perf-budgets-2026-07-12.md` + `reports/lighthouse-2026-07-12.json`.
 
-## Wave 3 — "Living portfolio" (in progress, 2026-07-12)
+## Wave 3 — "Living portfolio" (code-complete 2026-07-13, pending PR #9 merge)
 
 Redefined scope per GG: liveliness = proof of connection to real running systems + premium
 micro-interaction craft. Priority-tiered. Supersedes/postpones the original "flip arXiv ID"
