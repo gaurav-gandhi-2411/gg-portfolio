@@ -250,10 +250,34 @@ false positives, left as-is:
   requests — LinkedIn's known anti-scraping response, not a real break (the profile loads fine in
   a browser). Excluded from the strict-200 CI check via an accept-list.
 
+## Wave 3 Tier 1: live-data provenance pattern
+
+Every number in this section is **fetched at build/ISR time from the real source, not
+claimed** — this is a structurally different provenance mechanism than the rest of this file
+(which cites a specific file+line snapshot). Live stats instead cite *the endpoint*, because
+the endpoint IS the source of truth and re-verifies itself every revalidation cycle. All
+fetches live in `lib/live-data.ts`, revalidate every 6h (`next.revalidate`), and fail soft
+(return `null`/`[]`, never throw) — a flaky third-party API degrades to "no live badge shown"
+for that one stat, never a broken build or a stale number presented as current.
+
+| Live stat | Source | Verified behavior |
+|---|---|---|
+| Warmer "Puzzle #N live today" | `raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json` — 1-indexed position of today's UTC date in the `en.days` array | Confirmed 2026-07-12: manifest shows 60 precomputed days from 2026-06-12; today's index computes to **Puzzle #31**, matching the launch-date math (30 days elapsed + 1) |
+| tracegauge "N PyPI downloads this week" | `pypistats.org/api/packages/tracegauge/recent` — `data.last_week` | Confirmed 2026-07-12: API returned `last_week: 32`, matches the number rendered in the build |
+| Per-product "shipped Nd/mo/y ago" freshness badge | `api.github.com/repos/{owner}/{repo}/commits?per_page=1` — latest commit's `commit.committer.date`, per public repo referenced in `content/products.ts` | Only computed for products with a public `repoUrl` (Warmer excluded — private repo, uses its puzzle number as the live signal instead) |
+| Shipping log (merged PRs across public repos) | `api.github.com/users/gaurav-gandhi-2411/events/public` — `PullRequestEvent` entries with `payload.action === "merged"` | **Correction during build-testing:** the events API's `PushEvent` payload has no commit-message array in this response shape (just refs/SHAs), and a merged PR's signal is `payload.action === "merged"`, not a `pull_request.merged` boolean as the docs might suggest — verified against the actual live payload, not assumed. Restricted to merged-PR entries only, matching "notable merges" rather than raw pushes |
+
+**Why unauthenticated GitHub API calls, not a token:** ISR revalidation means these fetches run
+in the background roughly every 6h, not per-visitor — call volume is a handful of requests per
+revalidation cycle, comfortably inside the unauthenticated 60/hr rate limit. Avoids provisioning
+and rotating a PAT/secret for a read-only public-data need (rule 96, least privilege).
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
 - **arXiv ID for the AgentGauge paper:** not yet assigned — Research section ships with
-  `status: "preprint-pending"`, no live arXiv/Scholar link. Flip in Wave 3 per spec.
+  `status: "preprint-pending"`, no live arXiv/Scholar link. Flip when assigned (separate from
+  Wave 3 "Living portfolio," which is the current wave — the original spec's post-arXiv wave 3
+  is still pending on GG getting a real ID).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
   what's already in the resume; nothing beyond the resume's own Indium/Uber bullets is used).

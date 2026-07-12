@@ -139,7 +139,39 @@ redundant once folded into `provenance.md`.
       flagged as an open follow-up rather than silently passing. Full report:
       `reports/wave2-perf-budgets-2026-07-12.md` + `reports/lighthouse-2026-07-12.json`.
 
-## Wave 3 — later, post-arXiv (not started)
+## Wave 3 — "Living portfolio" (in progress, 2026-07-12)
+
+Redefined scope per GG: liveliness = proof of connection to real running systems + premium
+micro-interaction craft. Priority-tiered. Supersedes/postpones the original "flip arXiv ID"
+wave 3 definition below, which still applies whenever GG has a real arXiv ID.
+
+**Budget correction (important, found during Tier 1 build-testing):** wave 2's reported
+161.3 KiB JS total was **wrong** — a chunk-enumeration miss, corrected to the true
+**204,762 bytes (200.0 KiB)**, verified 3 ways including a from-scratch bare `create-next-app`
+reproducing the identical missed chunk (39.6 KiB of core-js polyfills baked into Next.js
+16.2.10 + Turbopack's default output — not app code, not fixable via `browserslist` or
+dependency changes, tried both). This means GG's "re-baseline to 165KB" instruction was based
+on my wrong number — the real framework floor alone is already ~191-205 KB. Rather than
+re-litigate the absolute figure mid-wave, holding to the guardrail's actual intent: **every
+wave-3 feature must add zero bytes to the eager bundle**, via `next/dynamic` for anything
+interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`.
+
+- [x] **Tier 1 — living data (zero JS cost, build-time/ISR only):** `lib/live-data.ts` — all
+      4 fetches revalidate every 6h, fail soft (never throw, degrade to no-badge on error).
+      Warmer "Puzzle #N live today" (mindmeld-payloads manifest, confirmed Puzzle #31 on
+      2026-07-12), tracegauge weekly PyPI downloads (pypistats.org, confirmed 32/week),
+      per-product "shipped Nd/mo ago" freshness badges (GitHub commits API, per public repo),
+      shipping log of recent merged PRs across all public repos (GitHub public events API —
+      found and fixed a payload-shape assumption bug during build-testing, see
+      `content/provenance.md`'s Tier 1 section for the correction). `content/now.ts` +
+      `NowStrip` component — manually dated building-in-public line, date always renders so a
+      stale Now is visibly stale, never silently presented as current.
+      Deliberately unauthenticated GitHub API calls (60/hr limit) rather than provisioning a
+      token/secret — ISR's 6h revalidation means call volume is trivially within that limit,
+      and least-privilege (rule 96) favors not managing a new credential for read-only public
+      data.
+
+## Wave 3 (original) — post-arXiv (not started, separate from "Living portfolio" above)
 
 Flip research section live with arXiv ID; add Tier 2 paper when public.
 
