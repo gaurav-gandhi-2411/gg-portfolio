@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Mail, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GithubIcon, LinkedinIcon } from "@/components/icons/brand-icons";
+import { HeroHeatToyShell } from "@/components/hero-heat-toy-shell";
 import { site, heroStats } from "@/content/site";
 
 export function Hero() {
@@ -64,6 +65,10 @@ export function Hero() {
           </div>
         ))}
       </dl>
+
+      <div className="w-full max-w-md border-t border-border pt-6">
+        <HeroHeatToyShell />
+      </div>
     </section>
   );
 }

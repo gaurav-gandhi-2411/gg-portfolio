@@ -170,6 +170,18 @@ interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`.
       token/secret — ISR's 6h revalidation means call volume is trivially within that limit,
       and least-privilege (rule 96) favors not managing a new credential for read-only public
       data.
+- [x] **Tier 2.4 — hero semantic-heat toy:** reuses Warmer's actual mechanic (same base
+      model, `all-MiniLM-L6-v2`) — `scripts/generate-heat-toy-vocab.py` embeds 410 curated
+      words, PCA-reduces to 72 dims (72.3% variance retained, verified semantic neighbors
+      stay sensible post-reduction), quantizes to uint8 → `public/heat-toy-vocab.json`
+      (41.7 KiB gzip, well under the 80KB asset budget). `components/heat-toy.tsx` (cosine
+      sim + form) is `next/dynamic`-loaded only on interaction, behind a 1.5KB eager
+      `HeroHeatToyShell`. Verified isolated: eager bundle went 204,762 → 206,318 bytes
+      (+1,556, exactly the shell's size — the heavy component and vocab data cost zero
+      bytes for visitors who never click). Logic verified correct via a Node.js simulation
+      against the real generated vocab file; UI verified via accessibility-tree snapshot
+      (labeled form, `aria-live` feedback). Full report:
+      `reports/wave3-heat-toy-budget-2026-07-12.md`.
 
 ## Wave 3 (original) — post-arXiv (not started, separate from "Living portfolio" above)
 
