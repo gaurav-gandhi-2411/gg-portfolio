@@ -1,14 +1,15 @@
-import Image from "next/image";
 import { Mail, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GithubIcon, LinkedinIcon } from "@/components/icons/brand-icons";
 import { HeroHeatToyShell } from "@/components/hero-heat-toy-shell";
+import { CountUpStat } from "@/components/count-up-stat";
+import { AnimatedMonogram } from "@/components/animated-monogram";
 import { site, heroStats } from "@/content/site";
 
 export function Hero() {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col items-start gap-8 px-6 pt-24 pb-16 sm:pt-32">
-      <Image src="/logo-mark.svg" alt="" width={48} height={48} priority />
+      <AnimatedMonogram />
 
       <div className="flex flex-col gap-4">
         <div className="inline-flex w-fit items-center gap-2 rounded-full bg-status-open-bg px-3 py-1 text-sm font-medium text-status-open">
@@ -60,7 +61,9 @@ export function Hero() {
         {heroStats.map((stat) => (
           <div key={stat.label} className="flex flex-col gap-1">
             <dt className="sr-only">{stat.label}</dt>
-            <dd className="font-mono text-3xl font-semibold text-foreground">{stat.value}</dd>
+            <dd className="font-mono text-3xl font-semibold text-foreground">
+              <CountUpStat value={stat.value} />
+            </dd>
             <dd className="text-sm text-muted-foreground">{stat.label}</dd>
           </div>
         ))}

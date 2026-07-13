@@ -35,7 +35,11 @@ Next.js (App Router, static export where possible) + Tailwind + shadcn/ui on Ver
 
 ## Quality gates (same discipline as every other repo)
 - CI: lint + typecheck + build (required checks), branch protection, auto-merge per 70a. Pre-commit per rule 25.
-- Budgets (rule 15e): initial JS ≤ 150 KB, LCP ≤ 1.5 s, CLS ≤ 0.05 — measure with Lighthouse post-deploy, commit baseline to `reports/`.
+- Budgets (rule 15e): initial JS ≤ 215 KB gzip (re-ratified 2026-07-13 on a corrected
+  measurement — see `reports/wave3-budget-reratification-2026-07-13.md`; the original 150 KB
+  and the wave-3 165 KB figure were both built on a since-corrected wave-2 mismeasurement and
+  are retired), LCP ≤ 1.5 s, CLS ≤ 0.05 — measure with Lighthouse post-deploy, commit baseline
+  to `reports/`.
 - A11y: axe smoke on the single page; keyboard-navigable; semantic landmarks.
 - SEO/meta: full OG/Twitter cards, JSON-LD Person schema, sitemap. The og-image uses the new identity.
 - Screenshots in every UI PR (15c).

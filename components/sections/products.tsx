@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { GithubIcon } from "@/components/icons/brand-icons";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { CursorGlow } from "@/components/cursor-glow";
 import { products } from "@/content/products";
 import type { Product } from "@/content/types";
 import {
@@ -10,6 +11,18 @@ import {
   getTracegaugeDownloads,
   getWarmerPuzzleNumber,
 } from "@/lib/live-data";
+
+const STAGGER_STEP_MS = 70;
+const STAGGER_MAX_MS = 280;
+
+function staggerDelayMs(index: number): number {
+  return Math.min(index * STAGGER_STEP_MS, STAGGER_MAX_MS);
+}
+
+const STAGGER_CLASSES =
+  "opacity-0 translate-y-3 transition-[opacity,transform] duration-500 ease-out " +
+  "group-data-[visible=true]/reveal:opacity-100 group-data-[visible=true]/reveal:translate-y-0 " +
+  "motion-reduce:opacity-100 motion-reduce:translate-y-0 motion-reduce:transition-none";
 
 function repoSlug(repoUrl: string | undefined): string | null {
   if (!repoUrl) return null;
@@ -30,14 +43,19 @@ function ProductCard({
   product,
   flagship,
   liveNote,
+  index,
 }: {
   product: Product;
   flagship: boolean;
   liveNote?: string;
+  index: number;
 }) {
-  return (
+  const delayMs = staggerDelayMs(index);
+
+  const card = (
     <Card
-      className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:ring-accent/40 hover:shadow-[0_8px_28px_-16px_color-mix(in_oklab,var(--accent)_45%,transparent)] ${flagship ? "gap-4 p-8" : ""}`}
+      style={flagship ? undefined : { transitionDelay: `${delayMs}ms` }}
+      className={`flex h-full flex-col gap-3 p-6 transition-shadow duration-300 hover:shadow-glow hover:ring-accent/40 ${flagship ? "gap-4 p-8" : STAGGER_CLASSES}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h3
@@ -136,6 +154,18 @@ function ProductCard({
       )}
     </Card>
   );
+
+  // Cursor-glow micro-interaction: flagship cards only, per scope. Stagger
+  // lives on whichever element is outermost (CursorGlow's wrapper div for
+  // flagship, the Card itself otherwise) so it composes with h-full grid
+  // stretch either way.
+  return flagship ? (
+    <CursorGlow className={`h-full ${STAGGER_CLASSES}`} style={{ transitionDelay: `${delayMs}ms` }}>
+      {card}
+    </CursorGlow>
+  ) : (
+    card
+  );
 }
 
 export async function Products() {
@@ -172,23 +202,25 @@ export async function Products() {
       </h2>
 
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-        {flagship.map((product) => (
+        {flagship.map((product, index) => (
           <ProductCard
             key={product.slug}
             product={product}
             flagship
             liveNote={liveNoteFor(product)}
+            index={index}
           />
         ))}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {secondary.map((product) => (
+        {secondary.map((product, index) => (
           <ProductCard
             key={product.slug}
             product={product}
             flagship={false}
             liveNote={liveNoteFor(product)}
+            index={index}
           />
         ))}
       </div>
