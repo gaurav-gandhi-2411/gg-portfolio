@@ -32,7 +32,7 @@ file-dated 2026-06-12. Confirmed identical to the file GG most recently placed i
 | ID | Claim | Source |
 |---|---|---|
 | `resume:indium-ds-docunderstanding` | "50M+ documents", "144 A100 GPUs", "$10M+ in annual cost savings", "95%+ field accuracy" | Resume PDF p.1, Indium Software → Data Scientist (Jun 2024–May 2025), bullet "Document-Understanding Transformer at Production Scale" |
-| `derived:products-live-count` | "9 live AI products" | Derived, not external: count of entries in `content/products.ts` with a set `liveUrl` or `pypi` field as of this wave (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded from this count, though still shown as a card) |
+| `derived:products-live-count` | "N live AI products" (currently 9) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Now computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` OR `pypi` field (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded, though still shown as a card). One function is the single source of truth — the number can never drift from the array again. |
 
 ## About / skills
 

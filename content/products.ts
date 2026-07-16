@@ -1,5 +1,16 @@
 import type { Product } from "./types";
 
+/**
+ * "Live" = has a public liveUrl or a published PyPI package — matches
+ * content/provenance.md's `derived:products-live-count` definition exactly.
+ * Repo-only entries (e.g. ShelfSense) still get a card but don't count here.
+ * Single source of truth so the hero stat can never silently drift from the
+ * actual product list (see content/site.ts's heroStats).
+ */
+export function liveProductCount(list: Product[]): number {
+  return list.filter((p) => Boolean(p.liveUrl) || Boolean(p.pypi)).length;
+}
+
 export const products: Product[] = [
   // ── Flagship ────────────────────────────────────────────────────────────
   {
