@@ -1,6 +1,3 @@
-import { liveProductCount, products } from "./products";
-import type { Stat } from "./types";
-
 export const site = {
   name: "Gaurav Gandhi",
   role: "Senior Applied AI Scientist",
@@ -17,20 +14,8 @@ export const site = {
   scholarUrl: undefined as string | undefined,
 };
 
-export const heroStats: Stat[] = [
-  {
-    value: String(liveProductCount(products)),
-    label: "live AI products shipped under my own name",
-    sourceRef: "derived:products-live-count",
-  },
-  {
-    value: "50M+",
-    label: "documents processed by a system I built",
-    sourceRef: "resume:indium-ds-docunderstanding",
-  },
-  {
-    value: "$10M+",
-    label: "in measured annual cost savings",
-    sourceRef: "resume:indium-ds-docunderstanding",
-  },
-];
+// Hero stats moved to components/sections/hero.tsx (wave 5): one of the three
+// needs a live server fetch (Warmer's puzzle number via lib/live-data, which
+// imports "server-only"), and this file is imported by a client component
+// (command-palette.tsx, for site.email/githubUrl/etc.) — bundling a
+// server-only import into that client component would break the build.

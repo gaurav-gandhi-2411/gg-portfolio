@@ -3,7 +3,6 @@ import { Colophon } from "@/components/sections/colophon";
 import { Contact } from "@/components/sections/contact";
 import { Experience } from "@/components/sections/experience";
 import { Hero } from "@/components/sections/hero";
-import { LiveBand } from "@/components/sections/live-band";
 import { Products } from "@/components/sections/products";
 import { Research } from "@/components/sections/research";
 import { Reveal } from "@/components/reveal";
@@ -12,9 +11,6 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
       <Hero />
-      <Reveal>
-        <LiveBand />
-      </Reveal>
       <Reveal>
         <About />
       </Reveal>

@@ -11,27 +11,23 @@ import { researchPapers } from "@/content/research";
  */
 export function Research() {
   return (
-    <section id="research" className="mx-auto w-full max-w-4xl px-6 py-16">
+    <section id="research" className="mx-auto w-full max-w-4xl px-6 py-16 md:py-24">
       <SectionMark index="03" label="Research" />
 
       <div className="mt-10 flex flex-col gap-8">
         {researchPapers.map((paper) => (
           <article key={paper.title} className="grid grid-cols-12 gap-x-6 gap-y-6">
             <div className="col-span-12 lg:col-span-8">
-              <h3 className="font-heading text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] font-black">
-                {paper.title}
-              </h3>
+              <h3 className="font-heading text-title font-semibold">{paper.title}</h3>
 
               <blockquote className="border-accent relative mt-8 max-w-[52ch] border-l-2 pl-8">
                 <span
                   aria-hidden="true"
-                  className="font-heading text-accent absolute -top-7 -left-1 text-[5rem] leading-none select-none"
+                  className="font-heading text-accent absolute -top-4 -left-1 text-stat leading-none select-none"
                 >
                   &ldquo;
                 </span>
-                <p className="font-heading text-[clamp(1.125rem,1.8vw,1.375rem)] leading-relaxed italic">
-                  {paper.abstract}
-                </p>
+                <p className="font-heading text-lg leading-relaxed italic">{paper.abstract}</p>
               </blockquote>
 
               <div className="mt-6 flex gap-6">
@@ -54,7 +50,7 @@ export function Research() {
                 bolted onto the headline. */}
             <aside className="col-span-12 lg:col-span-4">
               <div className="border-border border-l pl-5">
-                <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">Status</p>
+                <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Status</p>
                 <p className="font-heading mt-2 text-lg font-semibold text-foreground">
                   {paper.status === "preprint-pending" ? "Preprint — pending arXiv" : "Live"}
                 </p>

@@ -1,5 +1,10 @@
 import type { ResearchPaper } from "./types";
 
+/** Mirrors products.ts's liveProductCount — one source of truth for the hero stat. */
+export function researchPaperCount(list: ResearchPaper[]): number {
+  return list.length;
+}
+
 export const researchPapers: ResearchPaper[] = [
   {
     title:

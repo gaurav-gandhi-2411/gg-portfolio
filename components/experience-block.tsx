@@ -5,14 +5,14 @@ export function ExperienceBlock({ entry }: { entry: ExperienceEntry }) {
   return (
     <article className="border-border grid grid-cols-12 gap-x-6 gap-y-6 border-t py-12 first:border-t-0 first:pt-0">
       <div className="col-span-12 lg:col-span-4">
-        <h3 className="font-heading text-3xl font-black md:text-4xl">{entry.company}</h3>
+        <h3 className="font-heading text-title font-semibold">{entry.company}</h3>
         {entry.companyDetail ? (
           <p className="text-muted-foreground mt-1 text-sm">{entry.companyDetail}</p>
         ) : null}
-        <p className="text-muted-foreground mt-3 text-xs tracking-[0.2em] uppercase">
+        <p className="text-muted-foreground mt-3 text-xs tracking-eyebrow uppercase">
           {entry.dateRange}
         </p>
-        <p className="text-muted-foreground text-xs tracking-[0.2em] uppercase">
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
           {entry.location}
         </p>
         <p className="text-muted-foreground mt-4 flex flex-wrap gap-x-3 gap-y-2 text-xs tracking-wider uppercase">
@@ -28,9 +28,9 @@ export function ExperienceBlock({ entry }: { entry: ExperienceEntry }) {
       <div className="col-span-12 lg:col-span-8">
         {entry.subRoles?.map((role) => (
           <div key={role.title} className="mb-8 last:mb-0">
-            <p className="font-heading text-xl font-semibold">
+            <p className="font-heading text-lead font-semibold">
               {role.title}
-              <span className="text-muted-foreground ml-3 text-xs tracking-[0.2em] uppercase">
+              <span className="text-muted-foreground ml-3 text-xs tracking-eyebrow uppercase">
                 {role.dateRange}
               </span>
             </p>
