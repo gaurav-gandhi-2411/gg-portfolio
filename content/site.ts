@@ -1,3 +1,4 @@
+import { liveProductCount, products } from "./products";
 import type { Stat } from "./types";
 
 export const site = {
@@ -18,7 +19,7 @@ export const site = {
 
 export const heroStats: Stat[] = [
   {
-    value: "9",
+    value: String(liveProductCount(products)),
     label: "live AI products shipped under my own name",
     sourceRef: "derived:products-live-count",
   },
