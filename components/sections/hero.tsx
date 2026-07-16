@@ -19,7 +19,7 @@ export function Hero() {
       <AnimatedMonogram />
 
       <div className="flex flex-col gap-5">
-        <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
           {site.role} — {site.location}
         </p>
 
@@ -67,7 +67,7 @@ export function Hero() {
       <dl className="mt-6 grid w-full grid-cols-1 gap-6 border-t border-border pt-8 sm:grid-cols-3">
         {heroStats.map((stat) => (
           <div key={stat.label} className="flex flex-col gap-1">
-            <dd className="font-mono text-2xl font-semibold text-foreground">
+            <dd className="font-mono text-lead font-semibold text-foreground">
               <CountUpStat value={stat.value} />
             </dd>
             <dt className="text-sm leading-relaxed text-muted-foreground">{stat.label}</dt>

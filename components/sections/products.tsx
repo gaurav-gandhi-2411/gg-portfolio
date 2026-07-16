@@ -64,7 +64,7 @@ export async function Products() {
       {/* Warmer's engine, playable — annexed to the Warmer entry, not the
           hero. Intro copy is GG's exact wording, verbatim. */}
       <div className="mt-16 max-w-xl border-t border-border pt-10">
-        <p className="text-muted-foreground text-xs tracking-[0.25em] uppercase">
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
           From Warmer&apos;s engine
           {puzzle ? (
             <span className="font-mono normal-case tracking-normal"> — puzzle #{puzzle.number} today</span>

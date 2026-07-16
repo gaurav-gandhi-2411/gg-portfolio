@@ -64,6 +64,10 @@
   --text-display: clamp(2.5rem, 5vw, 4rem);
   --text-display--line-height: 1.08;
 
+  /* One tracked-out caps eyebrow treatment sitewide — the wave-5 review
+   * found four different ad-hoc tracking values doing the same job. */
+  --tracking-eyebrow: 0.3em;
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

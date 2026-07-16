@@ -50,7 +50,7 @@ export function Research() {
                 bolted onto the headline. */}
             <aside className="col-span-12 lg:col-span-4">
               <div className="border-border border-l pl-5">
-                <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">Status</p>
+                <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Status</p>
                 <p className="font-heading mt-2 text-lg font-semibold text-foreground">
                   {paper.status === "preprint-pending" ? "Preprint — pending arXiv" : "Live"}
                 </p>

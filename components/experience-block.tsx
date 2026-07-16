@@ -9,10 +9,10 @@ export function ExperienceBlock({ entry }: { entry: ExperienceEntry }) {
         {entry.companyDetail ? (
           <p className="text-muted-foreground mt-1 text-sm">{entry.companyDetail}</p>
         ) : null}
-        <p className="text-muted-foreground mt-3 text-xs tracking-[0.2em] uppercase">
+        <p className="text-muted-foreground mt-3 text-xs tracking-eyebrow uppercase">
           {entry.dateRange}
         </p>
-        <p className="text-muted-foreground text-xs tracking-[0.2em] uppercase">
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
           {entry.location}
         </p>
         <p className="text-muted-foreground mt-4 flex flex-wrap gap-x-3 gap-y-2 text-xs tracking-wider uppercase">
@@ -30,7 +30,7 @@ export function ExperienceBlock({ entry }: { entry: ExperienceEntry }) {
           <div key={role.title} className="mb-8 last:mb-0">
             <p className="font-heading text-lead font-semibold">
               {role.title}
-              <span className="text-muted-foreground ml-3 text-xs tracking-[0.2em] uppercase">
+              <span className="text-muted-foreground ml-3 text-xs tracking-eyebrow uppercase">
                 {role.dateRange}
               </span>
             </p>

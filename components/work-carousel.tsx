@@ -169,7 +169,7 @@ export function WorkCarousel({ slides }: { slides: CarouselSlide[] }) {
             aria-label={`${i + 1} of ${slides.length}: ${product.name}`}
             className="flex w-[85vw] max-w-[24rem] shrink-0 snap-start flex-col rounded-lg border border-border bg-card p-6 md:w-[26rem] md:max-w-none"
           >
-            <p className="text-muted-foreground flex flex-wrap items-baseline justify-between gap-x-3 text-xs tracking-[0.25em] uppercase">
+            <p className="text-muted-foreground flex flex-wrap items-baseline justify-between gap-x-3 text-xs tracking-eyebrow uppercase">
               <span>
                 {String(i + 1).padStart(2, "0")}
                 {product.tier === "flagship" ? " · Flagship" : ""}
@@ -183,7 +183,7 @@ export function WorkCarousel({ slides }: { slides: CarouselSlide[] }) {
 
             {product.metric ? (
               <div className="mt-5">
-                <p className="text-muted-foreground text-xs tracking-[0.25em] uppercase">
+                <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
                   {product.metric.label}
                 </p>
                 <p className="font-mono mt-1.5 text-lg font-semibold text-foreground tabular-nums">

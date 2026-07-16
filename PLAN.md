@@ -322,11 +322,59 @@ on the same branch (same pattern as wave 3's PR #9 post-review close-out) rather
 separate PR, since the files being investigated only exist on this branch. Still needs GG's
 manual merge via the GitHub UI or `gh pr merge` run outside this session.
 
+## Wave 5 — restraint + restructure (2026-07-16, draft PR pending GG's merge)
+
+GG's brief: wave 4 was over-scaled and unbalanced; reposition around INDEPENDENT work.
+Reference for feel only (maninder.vercel.app) studied in-browser and measured — principles
+extracted (h1 only ~1.5× section headings, whitespace does the separation, employment named
+once outside Experience), not pixels. Full report:
+`reports/wave5-restraint-restructure-2026-07-16.md`.
+
+- [x] **Phase 0 gate honored:** two hero options at the restrained scale built as throwaway
+      routes (`explore/wave5-hero-options`, desktop+mobile screenshots) and posted for GG's
+      pick BEFORE any production rebuild — the last two waves over-committed before GG saw
+      proportions. **GG ratified Option A ("byline": left-aligned, name-led, 40-64px cap).**
+- [x] **Modular type scale** (ratio exactly 1.25 on the 18px body): five tokens in
+      `globals.css` (`--text-lead/title/heading/stat/display`) + `--tracking-eyebrow`. Full
+      typographic audit — hero 180px→64px max, section numerals 104px→35px, flagship titles
+      88px→28px, contact email 64px→35px, `font-black`→`font-semibold` sitewide; grep-verified
+      no component-level clamp()/oversize/arbitrary-tracking remains. Rhythm: `py-16 md:py-24`
+      sections, `mt-10` after every section mark.
+- [x] **Positioning shift:** Uber-derived stats out of the hero (stay in Experience);
+      `content/site.ts` scaffolds 3 independent stats — derived live-product count + two
+      em-dash placeholders **TODO(GG): supply the two numbers**. Now-strip and shipping log
+      deleted entirely (`content/now.ts`, `live-band.tsx`, `getShippingLog`, orphaned
+      `flagship-feature.tsx`/`secondary-index.tsx` all removed). Surviving live data
+      relocated with context: Warmer puzzle # → heat-toy annex, tracegauge downloads →
+      colophon footnote.
+- [x] **Products → APG-pattern carousel** (`work-carousel.tsx`): 9 slides, scroll-snap
+      touch, arrows + ArrowLeft/Right/Home/End, position counter, reduced-motion instant
+      path. Three real bugs found and fixed by driving it in-browser (offsetLeft
+      double-counting, ambiguous IntersectionObserver current-slide tracking → replaced with
+      nearest-snap-offset, role=group-on-li axe violation → APG div structure).
+- [x] **Heat toy relocated** hero → Warmer annex under the carousel, GG's exact intro copy
+      verbatim, live puzzle number in the eyebrow, still 0 eager bytes until interaction.
+- [x] **Design-reviewer sign-off** (explicit lens: "balanced and restrained, or does it
+      shout?"): approved-with-suggestions; 2 blocking findings BOTH fixed + re-verified
+      same-session (mobile hierarchy inversion — 44px decorative numeral vs 40px h1 floor on
+      ≤800px viewports, caught by the reviewer's math; Experience `mt-4` rhythm break). Two
+      non-blocking suggestions also taken (hero stats onto the token scale; eyebrow tracking
+      consolidated). One logged for later (heat-toy-annex return-to-Warmer affordance).
+- [x] **Verification:** axe 0 violations · eager JS 204,618 bytes gzip vs 220,160 ceiling
+      (+2,723 = the carousel shell) · Lighthouse a11y 100 / SEO 100 / BP 96 (known
+      localhost-only non-defect) / LCP 3.33s = wave-4's accepted framework floor, no
+      regression (`reports/lighthouse-wave5-2026-07-16.json`) · desktop+mobile full-page
+      screenshots post-fixes (`reports/screenshots/wave5-restraint/`).
+- [ ] **TODO(GG):** the two independent-work hero stats (renders as em-dashes until then).
+
+Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
+as waves 3/4.
+
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 
-Flip research section live with arXiv ID; add Tier 2 paper when public. Once wave 4's draft PR
-merges and the recommended follow-up Lighthouse pass is run, this is the only remaining open
-item on the repo — no other work is queued until this unblocks or GG redirects.
+Flip research section live with arXiv ID; add Tier 2 paper when public. After wave 5's draft
+PR merges, the open items are: GG's two hero stats, and this arXiv flip — no other work is
+queued until one unblocks or GG redirects.
 
 ## Gotchas / decisions log
 

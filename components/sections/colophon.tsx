@@ -20,7 +20,7 @@ export async function Colophon() {
       <div className="border-border flex flex-col gap-6 border-t pt-10">
         {tracegauge?.pypi ? (
           <div className="flex flex-col gap-2">
-            <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">
+            <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
               Also shipped
             </p>
             <p className="text-foreground text-sm">
