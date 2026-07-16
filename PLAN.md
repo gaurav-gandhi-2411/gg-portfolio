@@ -416,7 +416,24 @@ not *composition* (one narrow column floating down a 6,090px dark void) or *conv
       `reports/wave6-composition-rebuild-2026-07-17.md`.
 - [x] Design-reviewer sign-off: see report/PR.
 
-Large diff (full-page rebuild) → draft PR for GG's manual review, same posture as waves 3-5.
+Large diff (full-page rebuild) → draft PR #15 for GG's manual review, same posture as waves 3-5.
+
+### Queued follow-ups (GG, 2026-07-17, low priority)
+
+1. **Field p75 LCP check — blocked on PR #15 merge + a few days of real traffic.** Method:
+   Vercel dashboard → gaurav-gandhi project → Speed Insights → LCP p75 (mobile + desktop,
+   7-day window). Compare against the wave-6 lab baselines (localhost, unthrottled):
+   LCP 0.6s desktop / Lighthouse perf 100 (`reports/lighthouse-wave6-2026-07-17.json`
+   @ `4b68cd8`), and against the pre-rebuild field data accumulated since wave 4's
+   instrumentation (whatever the dashboard shows for the pre-merge window — the wave-5
+   page's reveal layer held sections at opacity:0, which is what the rebuild removed).
+   Record in this file whether the lab/field gap holds or the reveal-layer fix
+   under-delivered in the field. Note: Speed Insights has no public API — this is a
+   dashboard read, GG or a browser-tool session.
+2. **Right-rail data-as-visual — proposal only, held for GG's pick.** Options + recommendation:
+   `reports/wave7-right-rail-proposal-2026-07-17.md`; mockup screenshots of the top option:
+   `reports/screenshots/wave7-proposals/` (mock code on `explore/wave7-right-rail`, never
+   for direct merge). Do not build into production until GG picks.
 
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 

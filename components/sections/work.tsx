@@ -1,6 +1,7 @@
 import { InlineLink } from "@/components/inline-link";
 import { Section } from "@/components/section";
 import { HeatToyShell } from "@/components/heat-toy-shell";
+import { BarFigure, DumbbellFigure, PairedBarFigure } from "@/components/eval-figure";
 import { liveProductCount, products } from "@/content/products";
 import {
   getRepoFreshness,
@@ -82,37 +83,53 @@ export async function Work() {
                 ? `puzzle #${puzzle.number} live today`
                 : undefined
               : datelineFor(product.repoUrl);
+          {/* MOCKUP: right-rail eval figure per flagship (Option A). The
+              figure replaces the inline metric line — same value, same
+              sourceRef, drawn instead of typed. */}
+          const figure =
+            product.slug === "warmer" ? (
+              <DumbbellFigure from={-0.003} to={0.639} label={product.metric?.label ?? ""} />
+            ) : product.slug === "style-maitri" ? (
+              <BarFigure pct={93.8} valueText="93.8% (n=211)" label={product.metric?.label ?? ""} />
+            ) : product.slug === "triageiq" ? (
+              <PairedBarFigure
+                rows={[
+                  { name: "k8s", pct: 82.5 },
+                  { name: "vscode", pct: 90.4 },
+                ]}
+                label={product.metric?.label ?? ""}
+              />
+            ) : null;
+
           return (
-            <article key={product.slug} className="flex flex-col gap-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                <h3 className="font-heading text-title font-semibold text-foreground">
-                  {product.name}
-                </h3>
-                {dateline && (
-                  <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
+            <article
+              key={product.slug}
+              className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-x-10"
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                  <h3 className="font-heading text-title font-semibold text-foreground">
+                    {product.name}
+                  </h3>
+                  {dateline && (
+                    <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
+                  )}
+                </div>
+
+                <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
+                  {product.tagline}
+                </p>
+
+                {product.storyLine && (
+                  <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
+                    {product.storyLine.text}
+                  </p>
                 )}
+
+                <ProductLinks product={product} />
               </div>
 
-              <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
-                {product.tagline}
-              </p>
-
-              {product.metric && (
-                <p className="text-sm">
-                  <span className="font-mono font-medium text-foreground">
-                    {product.metric.value}
-                  </span>{" "}
-                  <span className="text-muted-foreground">— {product.metric.label}</span>
-                </p>
-              )}
-
-              {product.storyLine && (
-                <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
-                  {product.storyLine.text}
-                </p>
-              )}
-
-              <ProductLinks product={product} />
+              <div className="hidden lg:flex lg:items-start lg:pt-2">{figure}</div>
             </article>
           );
         })}
