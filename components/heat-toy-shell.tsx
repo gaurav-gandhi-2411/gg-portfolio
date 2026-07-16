@@ -22,10 +22,14 @@ export function HeatToyShell() {
   }
 
   return (
+    // Text-styled trigger, not a boxed widget: after nine unboxed work rows a
+    // bordered card read louder than anything around it (review fix). The
+    // intro copy directly above sets up the affordance; the underline says
+    // clickable in the same voice as every other link on the page.
     <button
       type="button"
       onClick={() => setActivated(true)}
-      className="font-heading flex w-full items-center gap-2 rounded-md border border-border bg-card px-4 py-3 text-left text-lg text-foreground italic transition-colors hover:border-accent/40 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="font-heading flex w-fit items-center gap-2 text-left text-lg text-foreground italic underline decoration-border decoration-1 underline-offset-4 transition-colors hover:decoration-accent focus-visible:decoration-accent motion-reduce:transition-none"
     >
       <span aria-hidden className="not-italic">
         🔥

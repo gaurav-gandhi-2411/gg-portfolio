@@ -386,6 +386,59 @@ once outside Experience), not pixels. Full report:
 Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
 as waves 3/4. No more open items on this wave — PR #14 is ready for GG's review as-is.
 
+## Wave 6 — composition rebuild (2026-07-17, autonomous wave)
+
+GG's standing brief: five waves in, still unsatisfying — audit independently against
+external references, rebuild with full design authority, self-verify. Diagnosis
+(`reports/wave6-audit-2026-07-17.md`, written before any code, benchmarked against
+emilkowal.ski / paco.me / leerob.com / rauno.me / karpathy.ai): wave 5 fixed *scale* but
+not *composition* (one narrow column floating down a 6,090px dark void) or *conviction*
+(7 typographic voices, boxed-UI everywhere, a carousel hiding 7 of 9 products).
+
+- [x] One `max-w-5xl` grid, shared left edge (fixed hero's 64px misalignment bug), sticky
+      label-column composition on desktop.
+- [x] Two type voices; killed long italics, section numerals, chip wall, green pill,
+      near-all tracked caps. No boxes anywhere; links are underlined text (`InlineLink`).
+- [x] Carousel deleted → flat Work: 3 flagship entries + 6-row index (tracegauge promoted
+      from footer, live downloads intact). About dissolved into hero + Experience.
+      Experience: 7/10 bullets via `featured` flag (verbatim selection), ~40%→~20% of page.
+- [x] Deleted: command palette (+⌘K chip that rendered on touch), count-up, monogram
+      draw-in, reveal-on-scroll. Deps dropped: @base-ui/react, lucide-react, cva.
+- [x] Bugs fixed from audit: heat-toy intro copy duplication, carousel native scrollbar
+      (moot — deleted), no-JS/print blank page (reveal layer), contact email mid-word wrap
+      at 768/390.
+- [x] Verification: axe 0 · eager JS **189,608 B gzip** (−15,010 vs wave 5, ceiling
+      220,160) · Lighthouse a11y 100 / SEO 100 / BP 96 (known non-defect) /
+      **Performance 100, LCP 0.6s** (was 79 / 3.32s — the wave-4 "framework floor" was
+      actually the reveal layer holding sections at opacity:0; deleting it un-stuck LCP)
+      · before/after/reference screenshots at 1440/768/390
+      (`reports/screenshots/wave6/`). Full report:
+      `reports/wave6-composition-rebuild-2026-07-17.md`.
+- [x] Design-reviewer sign-off: see report/PR.
+
+Large diff (full-page rebuild) → draft PR #15 for GG's manual review, same posture as waves 3-5.
+
+### Queued follow-ups (GG, 2026-07-17, low priority)
+
+1. **Field p75 LCP check — blocked on PR #15 merge + a few days of real traffic.** Method:
+   Vercel dashboard → gaurav-gandhi project → Speed Insights → LCP p75 (mobile + desktop,
+   7-day window). Compare against the wave-6 lab baselines (localhost, unthrottled):
+   LCP 0.6s desktop / Lighthouse perf 100 (`reports/lighthouse-wave6-2026-07-17.json`
+   @ `4b68cd8`), and against the pre-rebuild field data accumulated since wave 4's
+   instrumentation (whatever the dashboard shows for the pre-merge window — the wave-5
+   page's reveal layer held sections at opacity:0, which is what the rebuild removed).
+   Record in this file whether the lab/field gap holds or the reveal-layer fix
+   under-delivered in the field. Note: Speed Insights has no public API — this is a
+   dashboard read, GG or a browser-tool session.
+2. **Right-rail data-as-visual — GG picked Option A (2026-07-17), built production-grade
+   same day** on the PR #15 branch: typed `ProductFigure` content fields mirroring each
+   flagship metric + sourceRef, static server-rendered SVG (0 eager bytes), responsive
+   below-lg placement, worded `role="img"` aria-labels (a11y-tree verified; live-SR pass
+   still unexecuted — noted honestly), design-reviewer approved with suggestions (all 5
+   taken). Build record appended to `reports/wave7-right-rail-proposal-2026-07-17.md`;
+   final screenshots at 390/768/1024/1440 in `reports/screenshots/wave7-proposals/`.
+   `explore/wave7-right-rail` (the throwaway mock) can be deleted once PR #15 merges.
+
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 
 Flip research section live with arXiv ID; add Tier 2 paper when public. After wave 5's draft

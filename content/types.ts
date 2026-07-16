@@ -10,6 +10,8 @@ export interface Stat {
 export interface ExperienceBullet {
   text: string;
   sourceRef: string;
+  /** Shown on the page (wave 6 shows a tightened selection; the resume carries the rest). */
+  featured?: boolean;
 }
 
 export interface ExperienceSubRole {
@@ -39,6 +41,16 @@ export interface ProductStoryLine {
   sourceRef: string;
 }
 
+/**
+ * Structured data behind a flagship row's eval figure (wave 7). Every value
+ * must mirror the row's `metric` — same numbers, same claim, same sourceRef
+ * (rule 65b): the figure is the metric drawn, never a second source of truth.
+ */
+export type ProductFigure =
+  | { kind: "dumbbell"; from: number; to: number; scaleNote: string }
+  | { kind: "bar"; pct: number; valueText: string }
+  | { kind: "bars"; rows: { name: string; pct: number }[] };
+
 export interface Product {
   slug: string;
   name: string;
@@ -52,11 +64,15 @@ export interface Product {
   pypi?: { packageName: string; installCommand: string; badgeUrl: string };
   /** One-line "hard problem solved" — flagship cards only, sourced from provenance.md. */
   storyLine?: ProductStoryLine;
+  /** The metric, drawn (flagship only) — values must match `metric`, see ProductFigure. */
+  figure?: ProductFigure;
 }
 
 export interface ResearchPaper {
   title: string;
   abstract: string;
+  /** Verbatim opening sentence of `abstract` — the thesis, for quiet display. */
+  abstractExcerpt?: string;
   arxivUrl?: string;
   repoUrl: string;
   pdfUrl?: string;

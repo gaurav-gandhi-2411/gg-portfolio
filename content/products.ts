@@ -27,6 +27,9 @@ export const products: Product[] = [
       value: "-0.003 → 0.639",
       sourceRef: "warmer:hinglish-fix",
     },
+    // Figure = the metric above, drawn. Same numbers, same claim,
+    // sourceRef warmer:hinglish-fix (rule 65b).
+    figure: { kind: "dumbbell", from: -0.003, to: 0.639, scaleNote: "0–1 scale" },
     storyLine: {
       text: "Hinglish embeddings scored near-random until I traced it to a script-mismatch bug (the model was trained on Devanagari, not romanized text) and swapped in one trained on Hinglish directly.",
       sourceRef: "warmer:hinglish-fix",
@@ -46,6 +49,9 @@ export const products: Product[] = [
       value: "93.8% (n=211)",
       sourceRef: "style-maitri:intent-accuracy",
     },
+    // Figure = the metric above, drawn. Same numbers, same claim,
+    // sourceRef style-maitri:intent-accuracy (rule 65b).
+    figure: { kind: "bar", pct: 93.8, valueText: "93.8% (n=211)" },
     secondaryMetric: {
       label: "Cross-store catalogue",
       value: "~52K items across 8 stores",
@@ -69,6 +75,15 @@ export const products: Product[] = [
       label: "Component classifier top-3 accuracy",
       value: "82.5% (k8s) / 90.4% (vscode)",
       sourceRef: "triageiq:classifier-top3",
+    },
+    // Figure = the metric above, drawn. Same numbers, same claim,
+    // sourceRef triageiq:classifier-top3 (rule 65b).
+    figure: {
+      kind: "bars",
+      rows: [
+        { name: "k8s", pct: 82.5 },
+        { name: "vscode", pct: 90.4 },
+      ],
     },
     storyLine: {
       text: "Built a disjointness guard that caught 3 months of silent train/eval contamination in the gold judge set (54/60 cases affected), then ran a full audit that found the LLM synthesis stage fabricating claims 1.9–9.1% of the time — tracked, not yet hard-gated.",
