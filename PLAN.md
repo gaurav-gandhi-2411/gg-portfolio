@@ -416,7 +416,14 @@ not *composition* (one narrow column floating down a 6,090px dark void) or *conv
       `reports/wave6-composition-rebuild-2026-07-17.md`.
 - [x] Design-reviewer sign-off: see report/PR.
 
-Large diff (full-page rebuild) → draft PR #15 for GG's manual review, same posture as waves 3-5.
+**Waves 6+7 merged 2026-07-17** (PR #15, squash `9e10805`, GG's manual merge per gate 3).
+Post-merge gotcha: the merge push landed during a GitHub API incident (503s on
+Actions/check-runs) and the push event never reached Vercel — no production deployment
+existed for `9e10805` and the canonical URL kept serving wave 5. Retriggered via a fresh
+docs-only push to main (this commit). Lesson reconfirmed from wave 1: **verify the live
+canonical URL serves the new build after every merge — CI green and even "merged" are not
+proof the deploy pipeline fired.** The Speed Insights field-p75 clock (queued follow-up 1)
+starts from the actual deploy, not the merge.
 
 ### Queued follow-ups (GG, 2026-07-17, low priority)
 
