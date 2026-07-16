@@ -16,9 +16,9 @@ export function SectionMark({ index, label }: { index: string; label: string }) 
       >
         {index}
       </span>
-      <span className="text-muted-foreground pb-2 text-xs tracking-[0.35em] uppercase md:pb-4 md:text-sm">
+      <h2 className="text-muted-foreground pb-2 text-xs font-normal tracking-[0.35em] uppercase md:pb-4 md:text-sm">
         {label}
-      </span>
+      </h2>
     </div>
   );
 }

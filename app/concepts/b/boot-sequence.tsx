@@ -11,14 +11,18 @@ interface BootSequenceProps {
 
 /**
  * Boot-sequence load: reveals `lines` one at a time, then swaps to the real
- * content. `prefers-reduced-motion` users land on the final state instantly,
- * enforced two independent ways so there's never a flash either way:
+ * content. The real content is NEVER removed from the DOM/accessibility
+ * tree — the overlay is a `fixed`, full-viewport layer painted ON TOP of it
+ * while booting, not a `display:none` toggle on the content itself. Screen
+ * readers and axe-style scans see the real heading/content immediately;
+ * only the visual presentation is deferred. `prefers-reduced-motion` users
+ * never see the overlay at all, enforced two independent ways:
  *
- *   1. Pure CSS (`motion-reduce:` variants) hides the overlay and shows the
- *      content at first paint, before any JS has run.
+ *   1. Pure CSS (`motion-reduce:` variants) hides the overlay at first
+ *      paint, before any JS has run.
  *   2. The mount effect also checks `window.matchMedia` and resolves
  *      straight to `done` if motion is reduced, so the reveal timers never
- *      start.
+ *      start (the overlay is already hidden by (1) regardless).
  *   3. A `<noscript>` override covers the no-JS case the same way.
  *
  * Follows the components/count-up-stat.tsx pattern: the initial `useState`
@@ -66,17 +70,17 @@ export function BootSequence({ lines, children }: BootSequenceProps) {
     <>
       <noscript>
         {/* No-JS fallback: the reveal timers above never run, so force the
-            final state via plain CSS rather than leaving visitors stuck on
-            the boot screen forever. */}
-        <style>{`.b-boot-overlay{display:none!important}.b-boot-content{display:block!important}`}</style>
+            overlay hidden via plain CSS rather than leaving visitors stuck
+            looking at it forever. The content underneath was always visible. */}
+        <style>{`.b-boot-overlay{display:none!important}`}</style>
       </noscript>
 
       <div
         aria-hidden="true"
         className={
           done
-            ? "b-boot-overlay hidden"
-            : "b-boot-overlay flex min-h-screen flex-col justify-center bg-background px-6 py-10 motion-reduce:hidden"
+            ? "hidden"
+            : "b-boot-overlay fixed inset-0 z-50 flex flex-col justify-center bg-background px-6 py-10 motion-reduce:hidden"
         }
       >
         <div className="mx-auto flex w-full max-w-lg flex-col font-mono text-sm">
@@ -98,9 +102,7 @@ export function BootSequence({ lines, children }: BootSequenceProps) {
         {done ? "" : "Loading console…"}
       </p>
 
-      <div className={done ? "b-boot-content block" : "b-boot-content hidden motion-reduce:block"}>
-        {children}
-      </div>
+      {children}
     </>
   );
 }

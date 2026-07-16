@@ -60,7 +60,10 @@
   left: 50%;
   width: 3.5rem;
   height: 3.5rem;
-  z-index: 40;
+  /* Behind all normal-flow content (never above/competing with text) —
+     the "threading through" presence should read as a background element,
+     not an overlay that collides with the hero headline. */
+  z-index: -1;
   pointer-events: none;
   transform: translate(-50%, -50%) scale(2.4);
   transition:
