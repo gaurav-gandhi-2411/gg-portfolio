@@ -1,6 +1,9 @@
 export const aboutParagraphs: string[] = [
   "I build and ship AI products end-to-end under my own name — a semantic word game, a multi-brand fashion styling agent, an ML issue-triage service, and more — and write research on agent tool-use quality, from experiment design through evaluation to a pre-submission paper.",
-  "That same rigor is what I bring to my day job: for the past year I've led and mentored a 5-person data-science team inside Uber's AI org (via Indium Software), shipping GenAI document-intelligence, multi-agent RAG copilots, and LLM fine-tuning pipelines into production — including an encoder-decoder transformer pretrained on 50M+ documents across 144 A100 GPUs that now accounts for $10M+ in annual cost savings.",
+  // Wave 6: trailing "— including an encoder-decoder transformer…$10M+" clause
+  // removed from display — the same claim renders verbatim (with sourceRef) as
+  // the Data Scientist bullet directly below this paragraph in Experience.
+  "That same rigor is what I bring to my day job: for the past year I've led and mentored a 5-person data-science team inside Uber's AI org (via Indium Software), shipping GenAI document-intelligence, multi-agent RAG copilots, and LLM fine-tuning pipelines into production.",
 ];
 
 // Curated ~10, not a tag cloud. Sourced from resume "Key Technical Skills" (see provenance.md#resume).

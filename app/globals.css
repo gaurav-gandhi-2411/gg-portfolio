@@ -37,8 +37,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-status-open: var(--status-open);
-  --color-status-open-bg: var(--status-open-bg);
 
   --font-sans: var(--font-space-grotesk);
   --font-heading: var(--font-fraunces);
@@ -59,8 +57,6 @@
   --text-title--line-height: 1.25;
   --text-heading: 2.197rem;
   --text-heading--line-height: 1.15;
-  --text-stat: 2.747rem;
-  --text-stat--line-height: 1.1;
   --text-display: clamp(2.5rem, 5vw, 4rem);
   --text-display--line-height: 1.08;
 
@@ -105,10 +101,6 @@
   --input: var(--graphite-line);
   --ring: var(--indigo);
 
-  /* Status badge (Open to roles) */
-  --status-open: #34d399;
-  --status-open-bg: #0f2b22;
-
   --radius: 0.5rem;
 }
 
@@ -121,12 +113,5 @@
   }
   html {
     @apply font-sans;
-  }
-}
-
-/* Monogram draw-in (AnimatedMonogram) — pure CSS, no JS. */
-@keyframes draw-in {
-  to {
-    stroke-dashoffset: 0;
   }
 }

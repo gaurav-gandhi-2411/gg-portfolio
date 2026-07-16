@@ -10,6 +10,8 @@ export interface Stat {
 export interface ExperienceBullet {
   text: string;
   sourceRef: string;
+  /** Shown on the page (wave 6 shows a tightened selection; the resume carries the rest). */
+  featured?: boolean;
 }
 
 export interface ExperienceSubRole {
@@ -57,6 +59,8 @@ export interface Product {
 export interface ResearchPaper {
   title: string;
   abstract: string;
+  /** Verbatim opening sentence of `abstract` — the thesis, for quiet display. */
+  abstractExcerpt?: string;
   arxivUrl?: string;
   repoUrl: string;
   pdfUrl?: string;

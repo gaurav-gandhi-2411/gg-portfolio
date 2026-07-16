@@ -131,22 +131,10 @@ export function HeatToy() {
     return <p className="text-sm text-muted-foreground">Loading today&apos;s word…</p>;
   }
 
+  // Intro copy lives once, in the Work section's annex — rendering it here
+  // too duplicated the paragraph the moment the toy loaded (wave-6 audit bug).
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are — this
-        is the exact matching engine behind{" "}
-        <a
-          href="https://playwarmer.vercel.app/"
-          target="_blank"
-          rel="noreferrer"
-          className="text-accent hover:underline"
-        >
-          Warmer
-        </a>
-        , my daily word game.
-      </p>
-
       <form onSubmit={handleSubmit} className="flex gap-2">
         <label htmlFor="heat-toy-input" className="sr-only">
           Guess today&apos;s word
@@ -180,9 +168,18 @@ export function HeatToy() {
         {history.map((h, i) => {
           const feedback = guessFeedback(h);
           return (
-            <div key={`${h.word}-${i}`} className="flex items-center justify-between text-xs">
-              <span className="font-mono text-foreground">{h.word}</span>
-              <span className={`font-mono ${feedback.className}`}>
+            <div key={`${h.word}-${i}`} className="flex items-center gap-3 text-xs">
+              <span className="w-24 shrink-0 truncate font-mono text-foreground">{h.word}</span>
+              {/* The similarity, made visible — this row IS the demo. */}
+              <span aria-hidden className="h-px flex-1 bg-border/40">
+                {h.sim >= 0 && (
+                  <span
+                    className="block h-px bg-accent"
+                    style={{ width: `${Math.max(2, Math.round(h.sim * 100))}%` }}
+                  />
+                )}
+              </span>
+              <span className={`shrink-0 font-mono ${feedback.className}`}>
                 {h.sim >= 0 ? `${feedback.label} (${h.sim.toFixed(2)})` : feedback.label}
               </span>
             </div>

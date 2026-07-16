@@ -1,57 +1,55 @@
-import { MapPin } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/icons/brand-icons";
-import { SectionMark } from "@/components/section-mark";
+import { InlineLink } from "@/components/inline-link";
+import { Section } from "@/components/section";
 import { site } from "@/content/site";
 
+/**
+ * Wave 6: Contact absorbs the colophon (tracegauge moved up into the Work
+ * index where products belong). The big serif email link stays — it earned
+ * its place as the page's one unmissable action.
+ */
 export function Contact() {
   return (
-    <section id="contact" className="mx-auto w-full max-w-4xl px-6 py-16 md:py-24">
-      <SectionMark index="05" label="Contact" />
-
-      <div className="mt-10 flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <p className="text-lg text-foreground">
+    <Section id="contact" label="Contact">
+      <div className="flex flex-col gap-6">
+        <div className="flex max-w-[62ch] flex-col gap-2">
+          <p className="text-base leading-relaxed text-foreground">
             Open to Senior/Principal Applied AI roles — full-time, hiring-manager or recruiter,
             let&apos;s talk.
           </p>
-          <p className="text-muted-foreground text-lg">
-            Also open to short-term AI/ML build or advisory projects, if the scope is a good fit.
+          <p className="text-muted-foreground text-base leading-relaxed">
+            Also open to short-term AI/ML build or advisory projects, if the scope is a good
+            fit.
           </p>
         </div>
 
-        {/* The one unmissable action on the page. */}
         <a
           href={`mailto:${site.email}`}
-          className="font-heading w-fit break-all text-heading font-semibold text-foreground transition-colors hover:text-accent"
+          className="font-heading w-fit text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"
         >
           {site.email}
         </a>
 
-        <div className="border-border flex flex-wrap items-center gap-6 border-t pt-6 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-4" />
-            {site.location}
-          </span>
-          <a
-            href={site.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-accent inline-flex items-center gap-1.5"
-          >
-            <GithubIcon className="size-4" />
+        <p className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <span>{site.location}</span>
+          <InlineLink href={site.githubUrl} className="text-muted-foreground">
             GitHub
-          </a>
-          <a
-            href={site.linkedinUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-accent inline-flex items-center gap-1.5"
-          >
-            <LinkedinIcon className="size-4" />
+          </InlineLink>
+          <InlineLink href={site.linkedinUrl} className="text-muted-foreground">
             LinkedIn
-          </a>
-        </div>
+          </InlineLink>
+        </p>
       </div>
-    </section>
+    </Section>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="mx-auto w-full max-w-5xl px-6 pt-4 pb-10">
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        © {new Date().getFullYear()} {site.name}. Set in Fraunces, Space Grotesk, and JetBrains
+        Mono. Every number on this page is derived from live data or a sourced record.
+      </p>
+    </footer>
   );
 }
