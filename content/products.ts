@@ -95,7 +95,7 @@ export const products: Product[] = [
     slug: "shelfsense",
     name: "ShelfSense",
     tagline:
-      "Dagster-orchestrated LightGBM demand forecasting on the M5 Walmart dataset — 30,490 series, 7 model variants.",
+      "Demand forecasting for retail inventory — Dagster-orchestrated LightGBM models on the M5 Walmart dataset, 30,490 series, 7 model variants.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/shelfsense-m5",
     tier: "secondary",
     metric: {
@@ -108,7 +108,7 @@ export const products: Product[] = [
     slug: "reviewiq",
     name: "ReviewIQ",
     tagline:
-      "Structured review intelligence across English, Hindi & Hinglish — tiered LLM routing plus authenticity scoring.",
+      "Turns customer reviews into structured insight across English, Hindi & Hinglish — tiered LLM routing plus authenticity scoring.",
     // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
     liveUrl: "https://review-iq-ajjrytb3na-el.a.run.app/docs",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",
@@ -123,7 +123,7 @@ export const products: Product[] = [
     slug: "multimodal-fashion-recommender",
     name: "Multimodal Fashion Recommender",
     tagline:
-      "Two-tower recommender fusing CLIP image embeddings with SBERT text embeddings via in-batch InfoNCE contrastive loss.",
+      "Fashion recommendations from a photo or a description — a two-tower model fusing CLIP image embeddings with SBERT text embeddings via in-batch InfoNCE contrastive loss.",
     liveUrl: "https://huggingface.co/spaces/gauravgandhi2411/multimodal-fashion-recommender",
     repoUrl: "https://github.com/gaurav-gandhi-2411/multimodal-fashion-recommender",
     tier: "secondary",
@@ -151,7 +151,7 @@ export const products: Product[] = [
     slug: "aetherart",
     name: "AetherArt",
     tagline:
-      "Diffusion image generation — custom rank-8 Ukiyo-e SDXL LoRA composed with Hyper-SD and ControlNet, served on Cloud Run.",
+      "AI-generated Ukiyo-e-style art — a custom rank-8 SDXL LoRA composed with Hyper-SD and ControlNet, served on Cloud Run.",
     liveUrl: "https://aetherart-demo-473907703523.us-central1.run.app/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/AetherArt",
     tier: "secondary",

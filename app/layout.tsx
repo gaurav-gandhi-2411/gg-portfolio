@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { CommandPaletteShell } from "@/components/command-palette-shell";
 import { PersonJsonLd } from "@/components/json-ld";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Wave 4: editorial system. Space Grotesk replaces Inter as the body/UI
+// voice — pairs with Fraunces' warmth without competing with its display
+// role. Fraunces stays for display type (font-heading); JetBrains Mono
+// stays for tabular data figures (font-mono) — the "by the numbers" band
+// and per-spread metrics.
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
   display: "swap",
 });
@@ -55,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <head>
         <PersonJsonLd />

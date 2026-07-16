@@ -230,14 +230,70 @@ interactive. Full writeup: `reports/wave3-live-stats-budget-2026-07-12.md`. **Up
          as the small, independently-auto-mergeable PR originally framed. Needs GG's manual
          merge.
 
-**Wave 3 ("Living portfolio") is otherwise complete.** Once PR #9 merges, the only remaining
-open item on this repo is the arXiv research-flip below — logging it as the sole outstanding
-wave and going idle until it's unblocked (paper 1's endorsement) or GG gives new direction.
+**Wave 3 ("Living portfolio") is complete** — PR #9 merged 2026-07-13.
 
-## Wave 3 (original) — post-arXiv (the sole remaining wave; blocked on paper 1's arXiv endorsement)
+## Wave 4 — design concept divergence + editorial production rebuild (2026-07-16)
 
-Flip research section live with arXiv ID; add Tier 2 paper when public. No other work is
-queued on this repo until this unblocks or GG redirects.
+**Phase 1 (concept exploration, no production code):** three genuinely divergent design
+concepts built as throwaway static routes (`explore/wave4-concepts` branch, never merged) —
+A: editorial/magazine (giant Fraunces display, asymmetric grid, products as feature spreads
+with a pull-quote signature element), B: terminal/systems (monospace console, live-telemetry
+dashboard as the star, heat toy as a REPL widget), C: spatial/narrative (five-act scroll story,
+an evolving monogram as the signature element, CSS-only scroll mechanics). All three real
+content, real live data, axe-clean (2 real bugs found and fixed during review: a command-
+palette-style z-index collision behind Concept C's hero text, and a heading-order/missing-h1
+pair caught across A and B's boot-sequence). GG picked **Concept A**, with B's telemetry band
+and heat toy to transplant.
+
+**Phase 2 (production rebuild, `feat/wave4-editorial-redesign` branch, draft PR pending GG's
+merge):**
+- [x] **9-vs-10 provenance fix, shipped first as its own small PR (#10, merged 2026-07-16,
+      auto-merge eligible):** the hero's "9 live products" stat was a hand-typed string that
+      happened to match `provenance.md`'s manual count at write-time — nothing kept it in sync
+      with `content/products.ts` going forward. Now derived via `liveProductCount()`.
+- [x] **Concept A rebuilt as the production homepage**: Fraunces + Space Grotesk (replaces
+      Inter sitewide) + JetBrains Mono for data figures. Flagship products as pull-quoted
+      feature spreads; secondary products as a linked editorial index (GitHub/live links on
+      every product, not just flagship — conversion-pass requirement).
+- [x] **B's telemetry transplanted as "00 — Live"** (`components/sections/live-band.tsx`) —
+      real Warmer puzzle #, real tracegauge downloads, a curated "recently shipped" feed
+      (bot/CI-noise filtered out, humanized branch names, 2-per-repo cap for diversity).
+      Replaces the separate wave-3 NowStrip + ShippingLog sections.
+- [x] **B's heat toy transplanted into the hero**, reframed with a one-line plain-language
+      instruction instead of REPL chrome — same underlying cosine-similarity engine.
+- [x] **Weak spots designed, not defaulted**: Research abstract as a true pull-quote with an
+      intentional "preprint, pending arXiv" margin note; tracegauge moved out of the secondary
+      index (its `pip install` didn't fit a metric-shaped row) into its own colophon footnote.
+- [x] **Conversion pass**: resume CTA in hero + again at end of Experience; a consulting line
+      in Contact ("open to short-term AI/ML build or advisory projects" — wording confirmed
+      with GG); large unmissable email CTA closing Contact.
+- [x] **Design-reviewer sign-off**: first pass blocked on 3 issues (unhumanized/bot-noisy
+      shipping-log transplant, jargon-first secondary taglines, missing phase-1 screenshots in
+      this branch) — all 3 fixed and confirmed resolved in a second pass. Full detail:
+      `reports/wave4-editorial-redesign-2026-07-16.md`.
+- [x] **Budget**: 201,895 bytes (197.2 KiB) eager JS, comfortably under the 220,160-byte
+      (215 KB) ceiling — no new client interaction surface added; also removed genuinely dead
+      code surfaced by the layout change (`components/cursor-glow.tsx` + the `--shadow-glow`
+      token had zero consumers once the card grid was replaced by spreads; `reveal.tsx`'s
+      unused wave-3 stagger hook removed too).
+- [x] **Accessibility**: axe 0 violations (checked repeatedly through the build), correct
+      heading hierarchy end-to-end, one real duplicate screen-reader announcement bug found
+      and fixed on the hero stats.
+- [ ] **Lighthouse: not captured this pass** — the chrome-devtools MCP browser tool's server
+      disconnected mid-session (confirmed not a real lingering-process issue: zero `chrome.exe`
+      processes were running at the OS level while the tool still errored). Flagged honestly
+      rather than fabricated; recommend running Lighthouse against this branch/preview before
+      merge to confirm the prior 100/96/100 (Accessibility/Best Practices/SEO) baseline holds.
+- [x] **`/concepts/*` deleted** from the production branch once the rebuild was verified.
+
+Opened as a **draft PR** (large diff, full homepage rebuild) for GG's manual review and merge —
+never intended to be gate-3-eligible at this size, not forced through.
+
+## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
+
+Flip research section live with arXiv ID; add Tier 2 paper when public. Once wave 4's draft PR
+merges and the recommended follow-up Lighthouse pass is run, this is the only remaining open
+item on the repo — no other work is queued until this unblocks or GG redirects.
 
 ## Gotchas / decisions log
 

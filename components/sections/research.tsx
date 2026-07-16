@@ -1,60 +1,71 @@
 import { GithubIcon } from "@/components/icons/brand-icons";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { CursorGlow } from "@/components/cursor-glow";
+import { InlineLink } from "@/components/inline-link";
+import { SectionMark } from "@/components/section-mark";
 import { researchPapers } from "@/content/research";
 
+/**
+ * Deliberate quiet treatment, not a plain paragraph: the abstract reads as a
+ * set pull-quote (the same voice as a flagship product's storyLine), and the
+ * preprint status is a marginal note beside it rather than a small badge —
+ * intentional typography, not "we didn't have time for this one."
+ */
 export function Research() {
   return (
     <section id="research" className="mx-auto w-full max-w-4xl px-6 py-16">
-      <h2 className="font-heading text-sm font-semibold tracking-widest text-accent uppercase">
-        Research
-      </h2>
-      <div className="mt-6 flex flex-col gap-4">
+      <SectionMark index="03" label="Research" />
+
+      <div className="mt-10 flex flex-col gap-8">
         {researchPapers.map((paper) => (
-          <CursorGlow key={paper.title}>
-            <Card className="flex flex-col gap-3 p-6 transition-shadow duration-300 hover:shadow-glow hover:ring-accent/40">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h3 className="font-heading text-lg font-semibold text-foreground">
-                  {paper.title}
-                </h3>
-                {paper.status === "preprint-pending" ? (
-                  <Badge variant="secondary" className="shrink-0">
-                    Preprint — pending arXiv
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 bg-status-open-bg text-status-open"
-                  >
-                    Live
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{paper.abstract}</p>
-              <div className="flex gap-3 pt-1">
-                {paper.arxivUrl && (
-                  <a
-                    href={paper.arxivUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-accent hover:underline"
-                  >
-                    arXiv
-                  </a>
-                )}
-                <a
-                  href={paper.repoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
+          <article key={paper.title} className="grid grid-cols-12 gap-x-6 gap-y-6">
+            <div className="col-span-12 lg:col-span-8">
+              <h3 className="font-heading text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.05] font-black">
+                {paper.title}
+              </h3>
+
+              <blockquote className="border-accent relative mt-8 max-w-[52ch] border-l-2 pl-8">
+                <span
+                  aria-hidden="true"
+                  className="font-heading text-accent absolute -top-7 -left-1 text-[5rem] leading-none select-none"
                 >
-                  <GithubIcon className="size-3.5" />
+                  &ldquo;
+                </span>
+                <p className="font-heading text-[clamp(1.125rem,1.8vw,1.375rem)] leading-relaxed italic">
+                  {paper.abstract}
+                </p>
+              </blockquote>
+
+              <div className="mt-6 flex gap-6">
+                {paper.arxivUrl && (
+                  <InlineLink href={paper.arxivUrl} className="text-sm font-medium">
+                    arXiv
+                  </InlineLink>
+                )}
+                <InlineLink
+                  href={paper.repoUrl}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium"
+                >
+                  <GithubIcon className="size-3.5" aria-hidden />
                   Repo
-                </a>
+                </InlineLink>
               </div>
-            </Card>
-          </CursorGlow>
+            </div>
+
+            {/* Margin note: a deliberate editorial annotation, not a badge
+                bolted onto the headline. */}
+            <aside className="col-span-12 lg:col-span-4">
+              <div className="border-border border-l pl-5">
+                <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase">Status</p>
+                <p className="font-heading mt-2 text-lg font-semibold text-foreground">
+                  {paper.status === "preprint-pending" ? "Preprint — pending arXiv" : "Live"}
+                </p>
+                <p className="text-muted-foreground mt-2 max-w-[28ch] text-sm leading-relaxed">
+                  {paper.status === "preprint-pending"
+                    ? "Submission in progress. This link updates the moment an arXiv ID is assigned — no placeholder, no guessed date."
+                    : "Published and citable."}
+                </p>
+              </div>
+            </aside>
+          </article>
         ))}
       </div>
     </section>

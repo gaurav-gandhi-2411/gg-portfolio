@@ -40,7 +40,7 @@
   --color-status-open: var(--status-open);
   --color-status-open-bg: var(--status-open-bg);
 
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-space-grotesk);
   --font-heading: var(--font-fraunces);
   --font-mono: var(--font-jetbrains-mono);
 
@@ -49,9 +49,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
-
-  /* Card hover elevation — one named step, not a per-component arbitrary value. */
-  --shadow-glow: 0 8px 28px -16px color-mix(in oklab, var(--accent) 45%, transparent);
 }
 
 :root {
