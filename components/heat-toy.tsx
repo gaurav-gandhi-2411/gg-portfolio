@@ -49,6 +49,11 @@ function heatLabel(sim: number): { label: string; className: string } {
   return { label: "Cold", className: "text-muted-foreground" };
 }
 
+function guessFeedback(entry: { word: string; sim: number }): { label: string; className: string } {
+  if (entry.sim < 0) return { label: "Not in the word list — try another", className: "text-muted-foreground" };
+  return heatLabel(entry.sim);
+}
+
 export function HeatToy() {
   const [vocab, setVocab] = useState<VocabPayload | null>(null);
   const [error, setError] = useState(false);
@@ -98,7 +103,7 @@ export function HeatToy() {
 
     const idx = vocab.words.indexOf(word);
     if (idx === -1) {
-      setHistory((h) => [{ word: `${word} (not in vocab, try another)`, sim: -1 }, ...h].slice(0, 6));
+      setHistory((h) => [{ word, sim: -1 }, ...h].slice(0, 6));
       setGuess("");
       return;
     }
@@ -127,7 +132,21 @@ export function HeatToy() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are — this
+        is the exact matching engine behind{" "}
+        <a
+          href="https://playwarmer.vercel.app/"
+          target="_blank"
+          rel="noreferrer"
+          className="text-accent hover:underline"
+        >
+          Warmer
+        </a>
+        , my daily word game.
+      </p>
+
       <form onSubmit={handleSubmit} className="flex gap-2">
         <label htmlFor="heat-toy-input" className="sr-only">
           Guess today&apos;s word
@@ -139,14 +158,14 @@ export function HeatToy() {
           value={guess}
           onChange={(e) => setGuess(e.target.value)}
           disabled={won}
-          placeholder="Type a word…"
+          placeholder="Your guess…"
           autoComplete="off"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
         <button
           type="submit"
           disabled={won}
-          className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           Guess
         </button>
@@ -155,21 +174,16 @@ export function HeatToy() {
       <div aria-live="polite" className="flex flex-col gap-1.5">
         {won && (
           <p className="text-sm font-medium text-accent">
-            🎉 Found it — that&apos;s today&apos;s word. This is the same warmth mechanic
-            behind{" "}
-            <a href="https://playwarmer.vercel.app/" className="underline hover:no-underline">
-              Warmer
-            </a>
-            .
+            🎉 That&apos;s it — you found today&apos;s word.
           </p>
         )}
         {history.map((h, i) => {
-          const heat = h.sim >= 0 ? heatLabel(h.sim) : { label: "Not found", className: "text-muted-foreground" };
+          const feedback = guessFeedback(h);
           return (
             <div key={`${h.word}-${i}`} className="flex items-center justify-between text-xs">
               <span className="font-mono text-foreground">{h.word}</span>
-              <span className={`font-mono ${heat.className}`}>
-                {h.sim >= 0 ? `${heat.label} (${h.sim.toFixed(2)})` : heat.label}
+              <span className={`font-mono ${feedback.className}`}>
+                {h.sim >= 0 ? `${feedback.label} (${h.sim.toFixed(2)})` : feedback.label}
               </span>
             </div>
           );

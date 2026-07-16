@@ -24,10 +24,12 @@ export function HeroHeatToyShell() {
     <button
       type="button"
       onClick={() => setActivated(true)}
-      className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="font-heading flex w-full items-center gap-2 rounded-md border border-border bg-card px-4 py-3 text-left text-lg text-foreground italic transition-colors hover:border-accent/40 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     >
-      <span aria-hidden>🔥</span>
-      Play Warmer&apos;s mechanic — guess today&apos;s hidden word
+      <span aria-hidden className="not-italic">
+        🔥
+      </span>
+      Guess today&apos;s secret word
     </button>
   );
 }
