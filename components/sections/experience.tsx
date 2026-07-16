@@ -7,7 +7,7 @@ import { site } from "@/content/site";
 
 export function Experience() {
   return (
-    <section id="experience" className="mx-auto w-full max-w-4xl px-6 py-16">
+    <section id="experience" className="mx-auto w-full max-w-4xl px-6 py-16 md:py-24">
       <SectionMark index="04" label="Experience" />
 
       <div className="mt-4">

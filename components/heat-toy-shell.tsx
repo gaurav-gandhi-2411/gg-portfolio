@@ -8,12 +8,13 @@ const HeatToy = dynamic(() => import("./heat-toy").then((m) => m.HeatToy), {
 });
 
 /**
- * Deliberately tiny — this is the only part of the hero interaction that
+ * Deliberately tiny — this is the only part of the heat-toy interaction that
  * ships in the eager bundle. The real component (cosine-sim logic + the
  * ~41KB vocab fetch) only loads once the visitor actually engages, so the
  * "most memorable element" costs nothing for visitors who never touch it.
+ * Wave 5: relocated from the hero to the Work section's Warmer annex.
  */
-export function HeroHeatToyShell() {
+export function HeatToyShell() {
   const [activated, setActivated] = useState(false);
 
   if (activated) {

@@ -83,55 +83,6 @@ export async function getRepoFreshness(
   );
 }
 
-export interface ShippingLogEntry {
-  repo: string;
-  date: string;
-  detail: string;
-}
-
-interface GithubEvent {
-  type: string;
-  repo: { name: string };
-  created_at: string;
-  payload: {
-    action?: string;
-    number?: number;
-    pull_request?: { head: { ref: string }; base: { ref: string } };
-  };
-}
-
-/**
- * Compact recent-activity feed across all public repos, one GitHub API call.
- * Note: the public events API's PushEvent payload doesn't include commit
- * messages (just refs/SHAs) and PullRequestEvent's merge signal is
- * `action === "merged"`, not a `pull_request.merged` boolean — verified
- * against the live payload shape, not assumed from the docs. Restricted to
- * merged PRs only, matching "notable merges" rather than raw pushes.
- */
-export async function getShippingLog(limit: number): Promise<ShippingLogEntry[]> {
-  const events = await safeFetchJson<GithubEvent[]>(
-    "https://api.github.com/users/gaurav-gandhi-2411/events/public?per_page=50"
-  );
-  if (!events) return [];
-
-  const entries: ShippingLogEntry[] = [];
-  const seen = new Set<string>();
-
-  for (const e of events) {
-    if (e.type !== "PullRequestEvent" || e.payload.action !== "merged") continue;
-    const dedupeKey = `${e.repo.name}:${e.payload.number}`;
-    if (seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
-
-    const branch = e.payload.pull_request?.head.ref ?? `PR #${e.payload.number}`;
-    entries.push({
-      repo: e.repo.name,
-      date: e.created_at,
-      detail: `merged ${branch}`,
-    });
-
-    if (entries.length >= limit) break;
-  }
-
-  return entries;
-}
+// getShippingLog was removed in wave 5 along with the "Recently shipped"
+// band — GG's call, the building-in-public feed is out of the positioning.
+// Version control is the archive if it's ever wanted back.

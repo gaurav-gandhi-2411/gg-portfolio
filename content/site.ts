@@ -17,6 +17,12 @@ export const site = {
   scholarUrl: undefined as string | undefined,
 };
 
+// Wave 5 positioning: hero stats are independent-work numbers only —
+// employer-derived figures (50M docs, $10M savings) moved out of the hero
+// entirely; they remain in the Experience section where they have context.
+// TODO(GG): supply the two remaining independent-work stats. Until then the
+// placeholders render as an em-dash + label so the scaffold is visibly
+// incomplete rather than silently faked (rule 65b).
 export const heroStats: Stat[] = [
   {
     value: String(liveProductCount(products)),
@@ -24,13 +30,13 @@ export const heroStats: Stat[] = [
     sourceRef: "derived:products-live-count",
   },
   {
-    value: "50M+",
-    label: "documents processed by a system I built",
-    sourceRef: "resume:indium-ds-docunderstanding",
+    value: "—",
+    label: "TODO: independent-work stat (GG to supply)",
+    sourceRef: "todo:awaiting-gg",
   },
   {
-    value: "$10M+",
-    label: "in measured annual cost savings",
-    sourceRef: "resume:indium-ds-docunderstanding",
+    value: "—",
+    label: "TODO: independent-work stat (GG to supply)",
+    sourceRef: "todo:awaiting-gg",
   },
 ];

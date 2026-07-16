@@ -5,7 +5,7 @@ import { site } from "@/content/site";
 
 export function Contact() {
   return (
-    <section id="contact" className="mx-auto w-full max-w-4xl px-6 py-16">
+    <section id="contact" className="mx-auto w-full max-w-4xl px-6 py-16 md:py-24">
       <SectionMark index="05" label="Contact" />
 
       <div className="mt-10 flex flex-col gap-8">
@@ -22,7 +22,7 @@ export function Contact() {
         {/* The one unmissable action on the page. */}
         <a
           href={`mailto:${site.email}`}
-          className="font-heading w-fit text-[clamp(2rem,6vw,4rem)] leading-none font-black text-foreground transition-colors hover:text-accent"
+          className="font-heading w-fit break-all text-heading font-semibold text-foreground transition-colors hover:text-accent"
         >
           {site.email}
         </a>
