@@ -279,15 +279,48 @@ merge):**
 - [x] **Accessibility**: axe 0 violations (checked repeatedly through the build), correct
       heading hierarchy end-to-end, one real duplicate screen-reader announcement bug found
       and fixed on the hero stats.
-- [ ] **Lighthouse: not captured this pass** — the chrome-devtools MCP browser tool's server
-      disconnected mid-session (confirmed not a real lingering-process issue: zero `chrome.exe`
-      processes were running at the OS level while the tool still errored). Flagged honestly
-      rather than fabricated; recommend running Lighthouse against this branch/preview before
-      merge to confirm the prior 100/96/100 (Accessibility/Best Practices/SEO) baseline holds.
+- [x] **Lighthouse captured (2026-07-16, follow-up pass):** ran `npx lighthouse` CLI against
+      PR #11's Vercel preview (the chrome-devtools MCP tool used for the wave-3 baseline
+      wasn't used this time — went straight to the CLI). Accessibility held at 100, Best
+      Practices improved 96→100 (wave-3's 96 was a localhost-only `/_vercel/insights` 404
+      that doesn't fire against a real deployment). SEO reads 63 on the preview but this is a
+      Vercel preview-URL artifact (`X-Robots-Tag: noindex`, auto-injected on every
+      `*.vercel.app` preview, confirmed absent on production and absent from this PR's diff)
+      — production SEO stays 100. Full detail: `reports/lighthouse-wave4-2026-07-16.md` +
+      `reports/lighthouse-wave4-2026-07-16.json`.
+- [x] **LCP deep-dive (2026-07-16):** the preview's simulated LCP came in at 4.03s vs. wave
+      3's 205.7ms (different measurement method — DevTools trace vs. Lighthouse — not a
+      true apples-to-apples baseline). Investigated whether the hero heat toy or ⌘K palette
+      hydrate eagerly and are fixable: **they don't** — both already defer their heavy logic
+      to interaction via `next/dynamic`, confirmed by reading `hero-heat-toy-shell.tsx` and
+      `command-palette-shell.tsx`, unchanged from wave 3's design. Isolated preview-only
+      overhead (~550ms, mostly the `vercel.live` preview-toolbar script) via a local
+      production-build comparison; re-tested wave 3's already-documented `core-js`/
+      browserslist finding under the current Turbopack toolchain (still a no-op — 0 byte
+      change after adding an explicit modern browserslist target, reverted). Real (non-simulated)
+      devtools-throttled measurement: 3.12s, matching the trace breakdown exactly (unlike the
+      Lantern-simulated run, which under-reports the render-delay subpart). **Conclusion:
+      framework floor, accepted.** The remaining ~3.1-3.5s under a 4×-CPU-throttle profile is
+      React/Next hydration + style/layout cost inherent to a client-hydrated homepage of this
+      shape, not attributable to any single wave-4 feature, and not moved by the app-level
+      levers available without a materially larger rendering-architecture change than this
+      pass's scope. Full trace evidence and methodology: `reports/wave4-lcp-investigation-2026-07-16.md`.
+- [x] **Real field LCP: instrumentation added, data not available yet.** `@vercel/analytics`
+      (already installed) only reports pageviews, not Core Web Vitals — there was no way to
+      get a real p75 LCP regardless of traffic. Added `@vercel/speed-insights`
+      (`<SpeedInsights />` in `app/layout.tsx`), verified zero measurable eager-path cost.
+      **Open follow-up: check the Speed Insights p75 LCP once this deploys and gets real
+      traffic — that field number, not the lab figure above, is the actual bar.**
 - [x] **`/concepts/*` deleted** from the production branch once the rebuild was verified.
 
 Opened as a **draft PR** (large diff, full homepage rebuild) for GG's manual review and merge —
-never intended to be gate-3-eligible at this size, not forced through.
+never intended to be gate-3-eligible at this size, not forced through. **2026-07-16 update:
+PR #11 marked ready for review (no longer draft) at GG's request, but is still unmerged** —
+`gh pr merge` is mechanically blocked by this repo's rule-70a hook (gate 3: diff size), which
+is working as designed; the Lighthouse + LCP follow-up work above landed as additional commits
+on the same branch (same pattern as wave 3's PR #9 post-review close-out) rather than a
+separate PR, since the files being investigated only exist on this branch. Still needs GG's
+manual merge via the GitHub UI or `gh pr merge` run outside this session.
 
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CommandPaletteShell } from "@/components/command-palette-shell";
 import { PersonJsonLd } from "@/components/json-ld";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default function RootLayout({
         {children}
         <CommandPaletteShell />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
