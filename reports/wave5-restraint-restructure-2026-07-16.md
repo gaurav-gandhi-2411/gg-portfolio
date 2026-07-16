@@ -50,9 +50,16 @@ section mark.
 ## Positioning shift
 
 - **Hero stats**: employer-derived figures (50M+ docs, $10M+ savings) removed from the hero
-  — they remain, with context, in the Experience section. `content/site.ts` scaffolds three
-  independent-work stats: the derived live-product count (real) plus two visible em-dash
-  placeholders marked `TODO(GG)` — **open item: GG supplies the two remaining numbers.**
+  — they remain, with context, in the Experience section. Three independent-work stats now
+  render, all derived, none hand-typed (rule 65b): live product count (breadth), **live
+  Warmer puzzle count** (operational cadence — GG's call was "we already have verified
+  numbers, use that; decision on you to pick the best metrics," so this and the paper count
+  were picked as the two axes distinct from breadth), and **research paper count** (depth).
+  Assembly moved from `content/site.ts` into `hero.tsx` (now async) since the puzzle fetch
+  needs `lib/live-data.ts`'s `server-only` import and `site.ts` is also imported by the
+  client-side command palette. Verified live: puzzle #35 cross-checked directly against the
+  public manifest (index 34 for 2026-07-16). Provenance: `derived:warmer-puzzle-count`,
+  `derived:research-paper-count`.
 - **"Now / Right now" strip: removed entirely** (`content/now.ts` deleted).
 - **"Recently shipped" / shipping log: removed entirely** (`getShippingLog` deleted from
   `lib/live-data.ts`; the whole `live-band.tsx` section deleted — the two surviving live
@@ -125,17 +132,17 @@ feedback suggests confusion).
   full chunk enumeration via curl gzip against every chunk in the initial HTML, same
   methodology as prior waves. +2,723 bytes vs. wave 4 (the carousel shell); the heat-toy
   engine and palette UI remain dynamic-import-only.
-- **Lighthouse** (CLI, desktop, local prod build — `reports/lighthouse-wave5-2026-07-16.json`):
-  Accessibility **100**, SEO **100**, Best Practices 96 (the documented localhost-only
-  `/_vercel/*` 404 non-defect), performance 66 / LCP 3.33s — statistically identical to the
-  wave-4 accepted framework floor (3.35–3.48s, same methodology,
-  `reports/wave4-lcp-investigation-2026-07-16.md`); the redesign adds no LCP regression.
+- **Lighthouse** (CLI, desktop, local prod build — `reports/lighthouse-wave5-2026-07-16.json`,
+  re-run with the final hero-stats code): Accessibility **100**, SEO **100**, Best Practices
+  96 (the documented localhost-only `/_vercel/*` 404 non-defect), performance 79 / LCP
+  3.32s — statistically identical to the wave-4 accepted framework floor (3.35–3.48s, same
+  methodology, `reports/wave4-lcp-investigation-2026-07-16.md`); the redesign and the live
+  hero-stats fetch add no LCP regression.
 - **Screenshots** (`reports/screenshots/wave5-restraint/`): 01 desktop full page (1440),
-  02 mobile full page (390), 03 hero desktop, 04 carousel mid-track. All captured post-fixes.
+  02 mobile full page (390), 03 hero desktop, 04 carousel mid-track. All re-captured with
+  the final, live hero-stats numbers.
 
 ## Open items
 
-1. **TODO(GG): the two remaining independent-work hero stats** — placeholders render as
-   em-dashes until supplied (`content/site.ts`).
-2. arXiv flip for the research section (pre-existing, unchanged).
-3. Design-reviewer's non-blocking heat-toy-annex affordance suggestion (logged above).
+1. arXiv flip for the research section (pre-existing, unchanged).
+2. Design-reviewer's non-blocking heat-toy-annex affordance suggestion (logged above).

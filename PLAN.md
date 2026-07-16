@@ -365,10 +365,26 @@ once outside Experience), not pixels. Full report:
       localhost-only non-defect) / LCP 3.33s = wave-4's accepted framework floor, no
       regression (`reports/lighthouse-wave5-2026-07-16.json`) · desktop+mobile full-page
       screenshots post-fixes (`reports/screenshots/wave5-restraint/`).
-- [ ] **TODO(GG):** the two independent-work hero stats (renders as em-dashes until then).
+- [x] **Hero stats resolved (2026-07-16):** GG's call — "we already have verified numbers,
+      use that; decision on you to pick the best metrics." Picked, from existing
+      provenance-backed data, the two that read as distinct axes from the product-count
+      stat (breadth): **live Warmer puzzle count** (operational cadence/real daily users —
+      derived via `getWarmerPuzzleNumber()`, same live-data function verified in wave 3, fails
+      soft to "—" not a stale/fabricated number) and **research paper count** (technical
+      depth — `researchPaperCount(researchPapers)`, mirrors `liveProductCount`'s pattern).
+      Passed over as weaker/redundant-with-the-carousel: Style Maitri catalogue size and
+      tracegauge weekly downloads (small, volatile number; already visible on its own card).
+      `heroStats` moved out of `content/site.ts` into `hero.tsx` (now async) — that file is
+      also imported by the client-side command palette, and the puzzle fetch needs
+      `lib/live-data.ts`'s `server-only` import, which can't reach a client bundle. Verified
+      live in-browser: puzzle #35 resolved and cross-checked directly against the public
+      manifest (index 34 for 2026-07-16 → puzzle #35). Provenance entries added
+      (`derived:warmer-puzzle-count`, `derived:research-paper-count`). Re-verified post-change:
+      typecheck/lint/build clean, axe 0 violations, Lighthouse unchanged (a11y 100/SEO 100/
+      LCP 3.32s), screenshots re-captured with live numbers.
 
 Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
-as waves 3/4.
+as waves 3/4. No more open items on this wave — PR #14 is ready for GG's review as-is.
 
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 

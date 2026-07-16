@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { GithubIcon, LinkedinIcon } from "@/components/icons/brand-icons";
 import { CountUpStat } from "@/components/count-up-stat";
 import { AnimatedMonogram } from "@/components/animated-monogram";
-import { site, heroStats } from "@/content/site";
+import { site } from "@/content/site";
+import { liveProductCount, products } from "@/content/products";
+import { researchPaperCount, researchPapers } from "@/content/research";
+import { getWarmerPuzzleNumber } from "@/lib/live-data";
+import type { Stat } from "@/content/types";
 
 /**
  * Wave 5 "byline" hero (option A, ratified by GG from the explore-branch
@@ -12,8 +16,38 @@ import { site, heroStats } from "@/content/site";
  * italic; the heat toy moved down to the Work section where Warmer gives
  * it context; stats are independent-work numbers only (employer figures
  * live in Experience).
+ *
+ * All three stats are derived, never hand-typed (rule 65b) — the same
+ * discipline as the wave-4 provenance fix that caught a hand-typed hero
+ * number silently drifting from the real product list. Puzzle count is the
+ * one live server fetch (fail-soft: renders "—" rather than a stale or
+ * fabricated number if the manifest is unreachable), which is why Hero is
+ * async and why this data isn't assembled in content/site.ts (that file is
+ * also imported by the client-side command palette).
  */
-export function Hero() {
+export async function Hero() {
+  const puzzle = await getWarmerPuzzleNumber();
+
+  const heroStats: Stat[] = [
+    {
+      value: String(liveProductCount(products)),
+      label: "live AI products shipped under my own name",
+      sourceRef: "derived:products-live-count",
+    },
+    {
+      value: puzzle ? `${puzzle.number}+` : "—",
+      label: puzzle
+        ? "daily Warmer puzzles shipped, and counting"
+        : "Warmer puzzle count temporarily unavailable",
+      sourceRef: "derived:warmer-puzzle-count",
+    },
+    {
+      value: String(researchPaperCount(researchPapers)),
+      label: "research paper in progress (preprint, pending arXiv)",
+      sourceRef: "derived:research-paper-count",
+    },
+  ];
+
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col items-start gap-8 px-6 pt-28 pb-16 sm:pt-36 md:pb-24">
       <AnimatedMonogram />

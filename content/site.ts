@@ -1,6 +1,3 @@
-import { liveProductCount, products } from "./products";
-import type { Stat } from "./types";
-
 export const site = {
   name: "Gaurav Gandhi",
   role: "Senior Applied AI Scientist",
@@ -17,26 +14,8 @@ export const site = {
   scholarUrl: undefined as string | undefined,
 };
 
-// Wave 5 positioning: hero stats are independent-work numbers only —
-// employer-derived figures (50M docs, $10M savings) moved out of the hero
-// entirely; they remain in the Experience section where they have context.
-// TODO(GG): supply the two remaining independent-work stats. Until then the
-// placeholders render as an em-dash + label so the scaffold is visibly
-// incomplete rather than silently faked (rule 65b).
-export const heroStats: Stat[] = [
-  {
-    value: String(liveProductCount(products)),
-    label: "live AI products shipped under my own name",
-    sourceRef: "derived:products-live-count",
-  },
-  {
-    value: "—",
-    label: "TODO: independent-work stat (GG to supply)",
-    sourceRef: "todo:awaiting-gg",
-  },
-  {
-    value: "—",
-    label: "TODO: independent-work stat (GG to supply)",
-    sourceRef: "todo:awaiting-gg",
-  },
-];
+// Hero stats moved to components/sections/hero.tsx (wave 5): one of the three
+// needs a live server fetch (Warmer's puzzle number via lib/live-data, which
+// imports "server-only"), and this file is imported by a client component
+// (command-palette.tsx, for site.email/githubUrl/etc.) — bundling a
+// server-only import into that client component would break the build.
