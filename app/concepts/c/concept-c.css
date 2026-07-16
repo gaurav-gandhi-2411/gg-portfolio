@@ -1,0 +1,150 @@
+/*
+ * Concept C — Spatial/Narrative. Local, route-scoped stylesheet.
+ *
+ * Everything that Tailwind utilities/variants can express (layout, sticky
+ * columns, motion-reduce fallbacks) lives inline in JSX per rule 15b/58b —
+ * this file only holds the three things Tailwind can't reach:
+ *   1. @property registrations for the two scroll-driven custom properties
+ *      that make the monogram evolve continuously with page scroll.
+ *   2. The scroll-linked keyframe + animation-timeline: scroll() wiring.
+ *   3. Discrete per-act placement of the persistent monogram, keyed off the
+ *      data-current-act attribute the client-side ActScrollTracker sets.
+ *
+ * Colors reuse existing design tokens (--text-hi / --accent from
+ * app/globals.css, already loaded globally) — never new hex values (rule 15b).
+ */
+
+/* Type pairing utilities. Fall back to the real site's already-loaded font
+   vars (never a bare generic keyword) so a font-load hiccup still lands on a
+   deliberate typeface rather than the browser default. */
+.cc-shell {
+  font-family: var(--cc-font-body), var(--font-sans);
+}
+
+.cc-display {
+  font-family: var(--cc-font-display), var(--font-heading);
+}
+
+.cc-mono {
+  font-family: var(--cc-font-mono), var(--font-mono);
+}
+
+/* Registered as animatable numbers so animation-timeline: scroll() can drive
+   them continuously across the whole page scroll (0 -> 100 == top -> bottom). */
+@property --cc-mono-rot {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --cc-mono-mix {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes cc-mono-evolve {
+  from {
+    --cc-mono-rot: 0;
+    --cc-mono-mix: 0;
+  }
+  to {
+    --cc-mono-rot: 320;
+    --cc-mono-mix: 100;
+  }
+}
+
+.cc-monogram-fixed {
+  position: fixed;
+  top: 46%;
+  left: 50%;
+  width: 3.5rem;
+  height: 3.5rem;
+  z-index: 40;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(2.4);
+  transition:
+    top 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    left 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Continuous scroll-driven rotation + graphite<->indigo cross-fade. Only
+   registered when the visitor allows motion — under reduced motion the
+   custom properties simply stay at their @property initial-value (0),
+   which resolves to "no rotation, no mix", a fully static resting frame. */
+@media (prefers-reduced-motion: no-preference) {
+  .cc-monogram-fixed {
+    animation: cc-mono-evolve linear;
+    animation-timeline: scroll(root);
+    animation-range: 0% 100%;
+  }
+}
+
+.cc-monogram-fixed svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(calc(var(--cc-mono-rot) * 1deg));
+  transform-origin: center;
+}
+
+.cc-mono-stroke-a {
+  stroke: color-mix(
+    in oklab,
+    var(--text-hi) calc(100% - var(--cc-mono-mix) * 1%),
+    var(--accent) calc(var(--cc-mono-mix) * 1%)
+  );
+}
+
+.cc-mono-stroke-b {
+  stroke: color-mix(
+    in oklab,
+    var(--accent) calc(100% - var(--cc-mono-mix) * 1%),
+    var(--text-hi) calc(var(--cc-mono-mix) * 1%)
+  );
+}
+
+/* Discrete, deliberate per-act placement — the monogram opens centered and
+   large (Act I), shrinks into a corner marker that alternates sides through
+   the middle acts (II top-left, III top-right, IV top-left again — a visible
+   through-line stitching the acts together), then returns to center, large,
+   for the close (Act V), bookending the journey. */
+.cc-shell[data-current-act="hero"] .cc-monogram-fixed {
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(2.4);
+}
+
+.cc-shell[data-current-act="products"] .cc-monogram-fixed,
+.cc-shell[data-current-act="track"] .cc-monogram-fixed {
+  top: 6.5vh;
+  left: 6vw;
+  transform: translate(-50%, -50%) scale(0.85);
+}
+
+.cc-shell[data-current-act="think"] .cc-monogram-fixed {
+  top: 6.5vh;
+  left: 94vw;
+  transform: translate(-50%, -50%) scale(0.85);
+}
+
+.cc-shell[data-current-act="close"] .cc-monogram-fixed {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(2.1);
+}
+
+/* Reduced motion: collapse every scroll-linked/transition-driven effect on
+   the monogram to a single static resting frame. It is decorative
+   (aria-hidden) and never gates access to real content — only its animated
+   presentation is removed, per the accessibility floor. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-monogram-fixed {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cc-monogram-fixed svg {
+    transform: none !important;
+  }
+}
