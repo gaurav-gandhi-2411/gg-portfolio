@@ -73,7 +73,15 @@ export async function Work() {
       {/* Flagship — generous editorial entries */}
       <div className="flex flex-col gap-10">
         {flagship.map((product) => {
-          const dateline = datelineFor(product.repoUrl);
+          // Warmer's repo is private, so it has no freshness dateline — its
+          // right-edge anchor is the stronger live signal it does have: the
+          // daily puzzle number (fail-soft like every live figure).
+          const dateline =
+            product.slug === "warmer"
+              ? puzzle
+                ? `puzzle #${puzzle.number} live today`
+                : undefined
+              : datelineFor(product.repoUrl);
           return (
             <article key={product.slug} className="flex flex-col gap-3">
               <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
@@ -85,7 +93,7 @@ export async function Work() {
                 )}
               </div>
 
-              <p className="text-muted-foreground max-w-[62ch] text-base leading-relaxed">
+              <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
                 {product.tagline}
               </p>
 
@@ -99,7 +107,7 @@ export async function Work() {
               )}
 
               {product.storyLine && (
-                <p className="text-muted-foreground max-w-[62ch] text-sm leading-relaxed">
+                <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
                   {product.storyLine.text}
                 </p>
               )}
@@ -129,7 +137,7 @@ export async function Work() {
                 <ProductLinks product={product} />
               </span>
             </div>
-            <p className="text-muted-foreground max-w-[62ch] text-sm leading-relaxed">
+            <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               {product.tagline}
             </p>
             {product.metric && (
@@ -152,7 +160,7 @@ export async function Work() {
             </span>
           ) : null}
         </p>
-        <p className="mt-4 max-w-[62ch] text-base leading-relaxed text-foreground">
+        <p className="mt-4 max-w-measure text-base leading-relaxed text-foreground">
           I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are — this
           is the exact matching engine behind Warmer, my daily word game.
         </p>

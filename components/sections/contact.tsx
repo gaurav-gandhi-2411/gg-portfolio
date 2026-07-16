@@ -11,7 +11,7 @@ export function Contact() {
   return (
     <Section id="contact" label="Contact">
       <div className="flex flex-col gap-6">
-        <div className="flex max-w-[62ch] flex-col gap-2">
+        <div className="flex max-w-measure flex-col gap-2">
           <p className="text-base leading-relaxed text-foreground">
             Open to Senior/Principal Applied AI roles — full-time, hiring-manager or recruiter,
             let&apos;s talk.
@@ -22,6 +22,10 @@ export function Contact() {
           </p>
         </div>
 
+        {/* Deliberate exception to the InlineLink underline convention: at
+            display size an underline reads as clutter, and this is the one
+            link whose size/placement already announces it as the page's
+            primary action. */}
         <a
           href={`mailto:${site.email}`}
           className="font-heading w-fit text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"

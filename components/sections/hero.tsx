@@ -55,10 +55,17 @@ export async function Hero() {
 
         <p className="text-muted-foreground text-lg">
           {site.role} · {site.location} ·{" "}
-          <span className="text-accent">{site.status}</span>
+          {/* Accent implies interactivity — so make it real: the status is a
+              link to the section where acting on it happens (review fix). */}
+          <a
+            href="#contact"
+            className="text-accent decoration-accent/40 underline decoration-1 underline-offset-4 transition-colors hover:decoration-accent focus-visible:decoration-accent motion-reduce:transition-none"
+          >
+            {site.status}
+          </a>
         </p>
 
-        <p className="mt-2 max-w-[62ch] text-lg leading-relaxed text-foreground">
+        <p className="mt-2 max-w-measure text-lg leading-relaxed text-foreground">
           {aboutParagraphs[0]}
         </p>
 

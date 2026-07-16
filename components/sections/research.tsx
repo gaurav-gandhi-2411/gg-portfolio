@@ -25,7 +25,7 @@ export function Research() {
                 : "Published and citable."}
             </p>
 
-            <p className="text-muted-foreground max-w-[62ch] text-base leading-relaxed">
+            <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
               {paper.abstractExcerpt ?? paper.abstract}
             </p>
 

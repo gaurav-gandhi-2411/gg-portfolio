@@ -89,6 +89,28 @@ hero); GG's ratified byline hero structure and 40–64px display cap unchanged.
 | Robustness (no-JS, print, capture) | 2/10 — blank below hero without JS | 9/10 — fully static render | 9/10 |
 | Copy voice (plain, confident) | 5/10 — jargon caps, provenance-speak | 8/10 | 9/10 |
 
+## Design-reviewer sign-off
+
+Verdict: **approved with suggestions — zero blocking findings.** The reviewer independently
+confirmed the composition fix ("genuinely occupies the 1440 canvas at the section level"),
+tier legibility without card chrome, the two-voice discipline (grep-verified), and that the
+LCP/no-JS fixes are real. All six suggestions were taken same-session and re-verified:
+
+1. Hero status accent was a false affordance (accent-colored non-link) → now a real link
+   to `#contact`, underlined like every other link.
+2. The Warmer flagship row was the page's worst surviving "void" case (no dateline — private
+   repo) → now anchored right with its live puzzle number ("puzzle #N live today",
+   fail-soft), a stronger real signal than a commit date.
+3. Heat-toy trigger was the page's one boxed element → converted to a text-styled
+   underlined trigger; the intro copy above carries the affordance.
+4. Contact email's no-underline exception → documented in-component as deliberate.
+5. `max-w-[62ch]` ×9 → promoted to a `--container-measure` token (`max-w-measure`).
+6. Focus-visible ring claim was self-reported → keyboard focus state captured
+   (`after-06-focus-state-1440.png`, indigo ring on the Resume link).
+
+Re-verified after fixes: typecheck/lint/build clean, axe 0 violations, eager JS
+189,593 bytes gzip, contact email single-line at 390/768/1440.
+
 ## Honest shortfalls
 
 The page is 5,144px at 1440 — denser and composed, but still ~2× the reference sites'

@@ -16,7 +16,7 @@ import { site } from "@/content/site";
 export function Experience() {
   return (
     <Section id="experience" label="Experience">
-      <p className="text-muted-foreground max-w-[62ch] text-base leading-relaxed">
+      <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
         {aboutParagraphs[1]}
       </p>
 
@@ -55,7 +55,7 @@ export function Experience() {
                       </span>
                     )}
                   </p>
-                  <ul className="flex max-w-[62ch] flex-col gap-2">
+                  <ul className="flex max-w-measure flex-col gap-2">
                     {bullets.map((bullet) => (
                       <li
                         key={bullet.sourceRef}
@@ -72,7 +72,7 @@ export function Experience() {
         ))}
       </div>
 
-      <p className="text-muted-foreground mt-10 max-w-[62ch] text-sm leading-relaxed">
+      <p className="text-muted-foreground mt-10 max-w-measure text-sm leading-relaxed">
         Working across {skillChips.join(" · ")}.
       </p>
 
