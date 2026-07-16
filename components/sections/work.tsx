@@ -1,3 +1,4 @@
+import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
 import { Section } from "@/components/section";
 import { HeatToyShell } from "@/components/heat-toy-shell";
@@ -82,9 +83,23 @@ export async function Work() {
                 ? `puzzle #${puzzle.number} live today`
                 : undefined
               : datelineFor(product.repoUrl);
+          // The figure IS the metric, drawn (typed values mirror metric +
+          // sourceRef in content/products.ts, rule 65b) — so a row with a
+          // figure drops the text metric line instead of saying it twice.
+          // Placement: in DOM order the figure sits between tagline and
+          // story (its slot below lg); at lg+ explicit grid placement moves
+          // it to the right rail spanning the entry's rows.
+          const figure =
+            product.figure && product.metric ? (
+              <EvalFigure figure={product.figure} label={product.metric.label} />
+            ) : null;
+
           return (
-            <article key={product.slug} className="flex flex-col gap-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+            <article
+              key={product.slug}
+              className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-x-10"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 lg:col-start-1">
                 <h3 className="font-heading text-title font-semibold text-foreground">
                   {product.name}
                 </h3>
@@ -93,12 +108,22 @@ export async function Work() {
                 )}
               </div>
 
-              <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
+              <p className="text-muted-foreground max-w-measure text-base leading-relaxed lg:col-start-1">
                 {product.tagline}
               </p>
 
-              {product.metric && (
-                <p className="text-sm">
+              {/* self-center: optically centers the figure in the rail's full
+                  height instead of hanging it off the h3's cap-height, and
+                  distributes the rail's remaining whitespace evenly
+                  (design-review finding, wave 7). */}
+              {figure && (
+                <div className="lg:col-start-2 lg:row-start-1 lg:row-span-4 lg:self-center">
+                  {figure}
+                </div>
+              )}
+
+              {!figure && product.metric && (
+                <p className="text-sm lg:col-start-1">
                   <span className="font-mono font-medium text-foreground">
                     {product.metric.value}
                   </span>{" "}
@@ -107,12 +132,14 @@ export async function Work() {
               )}
 
               {product.storyLine && (
-                <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
+                <p className="text-muted-foreground max-w-measure text-sm leading-relaxed lg:col-start-1">
                   {product.storyLine.text}
                 </p>
               )}
 
-              <ProductLinks product={product} />
+              <div className="lg:col-start-1">
+                <ProductLinks product={product} />
+              </div>
             </article>
           );
         })}

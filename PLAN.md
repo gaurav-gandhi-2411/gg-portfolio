@@ -430,10 +430,14 @@ Large diff (full-page rebuild) → draft PR #15 for GG's manual review, same pos
    Record in this file whether the lab/field gap holds or the reveal-layer fix
    under-delivered in the field. Note: Speed Insights has no public API — this is a
    dashboard read, GG or a browser-tool session.
-2. **Right-rail data-as-visual — proposal only, held for GG's pick.** Options + recommendation:
-   `reports/wave7-right-rail-proposal-2026-07-17.md`; mockup screenshots of the top option:
-   `reports/screenshots/wave7-proposals/` (mock code on `explore/wave7-right-rail`, never
-   for direct merge). Do not build into production until GG picks.
+2. **Right-rail data-as-visual — GG picked Option A (2026-07-17), built production-grade
+   same day** on the PR #15 branch: typed `ProductFigure` content fields mirroring each
+   flagship metric + sourceRef, static server-rendered SVG (0 eager bytes), responsive
+   below-lg placement, worded `role="img"` aria-labels (a11y-tree verified; live-SR pass
+   still unexecuted — noted honestly), design-reviewer approved with suggestions (all 5
+   taken). Build record appended to `reports/wave7-right-rail-proposal-2026-07-17.md`;
+   final screenshots at 390/768/1024/1440 in `reports/screenshots/wave7-proposals/`.
+   `explore/wave7-right-rail` (the throwaway mock) can be deleted once PR #15 merges.
 
 ## Wave 3 (original) — post-arXiv (blocked on paper 1's arXiv endorsement)
 
