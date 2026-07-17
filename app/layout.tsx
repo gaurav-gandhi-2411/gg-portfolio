@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { BootLoader } from "@/components/boot-loader";
 import { PersonJsonLd } from "@/components/json-ld";
 import "./globals.css";
 
@@ -64,8 +65,20 @@ export default function RootLayout({
     >
       <head>
         <PersonJsonLd />
+        {/* Boot-loader gate — must run before first paint, hence a raw
+            inline script rather than next/script. Opts INTO the entrance
+            overlay (see components/boot-loader.tsx) only when JS is live
+            and the visitor doesn't prefer reduced motion; no-JS and
+            reduced-motion visitors never see it at all. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.boot='1'}catch(e){}",
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col">
+        <BootLoader />
         {children}
         <Analytics />
         <SpeedInsights />
