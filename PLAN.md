@@ -386,6 +386,37 @@ once outside Experience), not pixels. Full report:
 Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
 as waves 3/4. No more open items on this wave — PR #14 is ready for GG's review as-is.
 
+## Wave 10 — content, voice, and two real bugs (2026-07-17)
+
+GG deployed wave 9 and gave direct feedback: the slider doesn't slide, the heat toy errored in
+production and gives no hint how to engage, the hero/contact voice reads boastful/vague, and
+more completed projects exist than the site shows. Not a redesign — fixes inside the wave-9
+structure. Branch `feat/wave10-fixes-content`; full report
+`reports/wave10-fixes-content-2026-07-17.md`.
+
+- [x] **Slider bug** — reproduced on production (120px mouse drag = 0px movement): mandatory
+      scroll-snap re-snaps every programmatic scrollLeft assignment, so sub-half-card drags did
+      nothing; no wheel path, no visible controls. Fixed: snap off during drag + restore/snap on
+      release, 4px click-safe threshold, visible ←/→ arrow buttons with end-disabled states.
+- [x] **Heat toy prod error** — root cause is failure *handling*, not the fetch path (vocab
+      200s in prod): single-attempt fetch parked a permanent error on any transient blip. Now
+      3 attempts with backoff + a Try-again button; verified via stubbed-fetch end-to-end test.
+- [x] **Heat toy hint** — "one of 410 everyday English words" + two clickable daily starter
+      chips (deterministic offsets, never the secret).
+- [x] **Voice pass** — hero intro rewritten warm/humble (3 options drafted, A built), stats
+      rebalanced to 5 yrs / 9 live / 5-person team (all provenance-backed, alternates in
+      report), contact rewritten direct-professional.
+- [x] **Inventory** — full ml-projects sweep: AgentGauge added as 11th card (descriptive
+      metric honoring its own "pilot-scale research artifact" scope note);
+      expense-tracker/reclaim/support-repos skipped with reasons in the report.
+- [x] **Verification** — axe 0, Lighthouse a11y 100/SEO 100, budget 201,535B ≤ 220,160B,
+      responsive matrix, design-reviewer sign-off, slider+toy re-verified on the deployed
+      Vercel preview (GG's explicit standard this wave).
+- [ ] **Item 6 (resume rewrite)** — HELD until GG supplies the resume file; do not derive from
+      repo contents.
+
+Draft PR for GG's merge (diff exceeds the 400-line auto-merge gate).
+
 ## Wave 9 — production integration of all 5 wave-8 prototypes (2026-07-17)
 
 GG clicked through `/lab` live and approved all five wave-8 prototypes; this wave builds

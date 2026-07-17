@@ -46,7 +46,9 @@ export function WorkSlider({ slides }: { slides: WorkSlideData[] }) {
   const [index, setIndex] = useState(0);
   const [showClassifier, setShowClassifier] = useState(false);
   const classifierPanelRef = useRef<HTMLDivElement | null>(null);
-  const dragState = useRef<{ startX: number; startScroll: number } | null>(null);
+  const dragState = useRef<{ startX: number; startScroll: number; dragging: boolean } | null>(
+    null
+  );
 
   // The panel renders outside the card that triggers it (see
   // triageiq-classify-disclosure.tsx) — scroll it into view on open so
@@ -104,16 +106,41 @@ export function WorkSlider({ slides }: { slides: WorkSlideData[] }) {
     if (e.pointerType !== "mouse") return; // touch/trackpad already scroll natively
     const el = scrollerRef.current;
     if (!el) return;
-    dragState.current = { startX: e.clientX, startScroll: el.scrollLeft };
+    dragState.current = { startX: e.clientX, startScroll: el.scrollLeft, dragging: false };
     el.setPointerCapture(e.pointerId);
   }
   function onPointerMove(e: React.PointerEvent) {
-    if (!dragState.current || !scrollerRef.current) return;
-    const dx = e.clientX - dragState.current.startX;
-    scrollerRef.current.scrollLeft = dragState.current.startScroll - dx;
+    const el = scrollerRef.current;
+    const state = dragState.current;
+    if (!state || !el) return;
+    const dx = e.clientX - state.startX;
+    // GG's wave-10 bug report ("can't slide it"), reproduced on production:
+    // with `scroll-snap-type: x mandatory` active, Chrome re-snaps every
+    // programmatic scrollLeft assignment to the nearest snap point
+    // immediately, so any mouse drag shorter than half a card (~158px)
+    // moved the slider exactly 0px. Snap must be off for the duration of
+    // the drag; it's restored (and the nearest card snapped to) on release.
+    if (!state.dragging) {
+      if (Math.abs(dx) < 4) return; // don't hijack plain clicks on card links
+      state.dragging = true;
+      el.style.scrollSnapType = "none";
+    }
+    el.scrollLeft = state.startScroll - dx;
   }
   function onPointerUp() {
+    const el = scrollerRef.current;
+    const state = dragState.current;
     dragState.current = null;
+    if (!el || !state?.dragging) return;
+    const cardStep = el.scrollWidth / slides.length;
+    const nearest = Math.max(0, Math.min(slides.length - 1, Math.round(el.scrollLeft / cardStep)));
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ left: cardStep * nearest, behavior: reduceMotion ? "auto" : "smooth" });
+    // Re-enable snap only after the smooth scroll settles — restoring it
+    // mid-animation makes the browser re-snap instantly (a visible jump).
+    window.setTimeout(() => {
+      el.style.scrollSnapType = "";
+    }, reduceMotion ? 0 : 450);
   }
 
   return (
@@ -208,7 +235,28 @@ export function WorkSlider({ slides }: { slides: WorkSlideData[] }) {
         })}
       </div>
 
+      {/* Visible prev/next arrows — GG's wave-10 feedback: the slider needs
+          an unmistakable affordance, not just a grab cursor and card peek.
+          Text arrows match the site's existing "Live ↗" idiom (no icon dep). */}
       <div className="flex items-center gap-3 px-[8%]">
+        <button
+          type="button"
+          onClick={() => stepTo(Math.max(0, index - 1))}
+          disabled={index === 0}
+          aria-label="Previous project"
+          className="border-border text-foreground hover:border-ring rounded-md border px-3 py-1.5 text-sm transition-colors disabled:opacity-40 disabled:hover:border-border"
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          onClick={() => stepTo(Math.min(slides.length - 1, index + 1))}
+          disabled={index === slides.length - 1}
+          aria-label="Next project"
+          className="border-border text-foreground hover:border-ring rounded-md border px-3 py-1.5 text-sm transition-colors disabled:opacity-40 disabled:hover:border-border"
+        >
+          →
+        </button>
         <div className="bg-border/40 h-[2px] flex-1 overflow-hidden rounded-full">
           <div
             className="bg-accent h-full rounded-full transition-[width] duration-150"

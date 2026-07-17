@@ -93,23 +93,37 @@ export function HeatToy() {
   );
   const [stage, setStage] = useState<"idle" | "embedding" | "revealed">("idle");
 
+  // retryNonce re-runs the effect when the visitor clicks "Try again" —
+  // the wave-9 version fetched exactly once and parked on a permanent
+  // error for any transient failure (mid-deploy blip, flaky mobile
+  // connection), which is what GG hit on the live site. Rule 108: an
+  // outbound call gets retries and a defined failure behavior, and the
+  // failure behavior here is recoverable, not a dead end.
+  const [retryNonce, setRetryNonce] = useState(0);
   useEffect(() => {
     let cancelled = false;
-    fetch("/heat-toy-vocab.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("fetch failed");
-        return res.json();
-      })
-      .then((data: VocabPayload) => {
-        if (!cancelled) setVocab(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      });
+    async function load() {
+      const delays = [0, 500, 1500];
+      for (const delay of delays) {
+        if (delay) await new Promise((r) => setTimeout(r, delay));
+        if (cancelled) return;
+        try {
+          const res = await fetch("/heat-toy-vocab.json");
+          if (!res.ok) throw new Error("fetch failed");
+          const data: VocabPayload = await res.json();
+          if (!cancelled) setVocab(data);
+          return;
+        } catch {
+          // fall through to the next backoff step
+        }
+      }
+      if (!cancelled) setError(true);
+    }
+    load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryNonce]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -161,10 +175,9 @@ export function HeatToy() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocab, secretIndex, bounds]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function submitWord(raw: string) {
     if (!vocab || !secretVector) return;
-    const word = guess.trim().toLowerCase();
+    const word = raw.trim().toLowerCase();
     if (!word) return;
 
     const idx = vocab.words.indexOf(word);
@@ -209,15 +222,43 @@ export function HeatToy() {
     }, 180);
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submitWord(guess);
+  }
+
+  // Two clickable starter guesses for first-time visitors (GG's wave-10
+  // feedback: with a hidden word and no hint, a visitor has no idea how to
+  // engage). Fixed offsets from the daily index keep the picks deterministic
+  // per day and never equal to the secret (137 and 271 are not multiples of
+  // the 410-word vocab size, so index + offset ≡ index is impossible).
+  const starterWords = useMemo(() => {
+    if (!vocab || secretIndex < 0) return [];
+    const n = vocab.words.length;
+    return [vocab.words[(secretIndex + 137) % n], vocab.words[(secretIndex + 271) % n]];
+  }, [vocab, secretIndex]);
+
   if (error) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Couldn&apos;t load the word list right now — try{" "}
-        <a href="https://playwarmer.vercel.app/" className="text-accent hover:underline">
-          the real Warmer
-        </a>{" "}
-        instead.
-      </p>
+      <div className="flex flex-col items-start gap-2">
+        <p className="text-sm text-muted-foreground">
+          Couldn&apos;t load the word list right now — or try{" "}
+          <a href="https://playwarmer.vercel.app/" className="text-accent hover:underline">
+            the real Warmer
+          </a>{" "}
+          instead.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setError(false);
+            setRetryNonce((n) => n + 1);
+          }}
+          className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-card"
+        >
+          Try again
+        </button>
+      </div>
     );
   }
 
@@ -252,6 +293,25 @@ export function HeatToy() {
           Guess
         </button>
       </form>
+
+      {history.length === 0 && starterWords.length > 0 && (
+        <p className="text-sm text-muted-foreground">
+          It&apos;s one of 410 everyday English words. Not sure where to start? Try{" "}
+          {starterWords.map((w, i) => (
+            <span key={w}>
+              <button
+                type="button"
+                onClick={() => submitWord(w)}
+                className="rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-ring"
+              >
+                {w}
+              </button>
+              {i < starterWords.length - 1 ? " or " : ""}
+            </span>
+          ))}
+          {" — the plot shows how close you land."}
+        </p>
+      )}
 
       <svg
         viewBox={`0 0 ${PW} ${PH}`}

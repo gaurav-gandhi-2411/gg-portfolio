@@ -73,7 +73,11 @@ export async function Work() {
     <Section
       id="work"
       label="Work"
-      labelNote={`${liveProductCount(products)} products live`}
+      // Both counts derived, never hand-typed — design review (wave 10)
+      // flagged "9 products live" sitting over an 11-slide counter as a
+      // subtraction the visitor shouldn't have to do (ShelfSense and
+      // AgentGauge are repo-only).
+      labelNote={`${products.length} projects · ${liveProductCount(products)} live`}
     >
       <WorkSlider slides={slides} />
 

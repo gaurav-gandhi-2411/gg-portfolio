@@ -3,9 +3,18 @@ import { Monogram } from "@/components/monogram";
 import { site } from "@/content/site";
 import { aboutParagraphs } from "@/content/about";
 import { liveProductCount, products } from "@/content/products";
-import { researchPaperCount, researchPapers } from "@/content/research";
-import { getWarmerPuzzleNumber } from "@/lib/live-data";
 import type { Stat } from "@/content/types";
+
+/**
+ * Whole years since the first data-science role on the resume (TCS, Jul 2021
+ * — content/experience.ts dateRange, resume p.1). Computed, not hand-typed,
+ * so it can never silently go stale (same drift-proofing rationale as
+ * liveProductCount — see provenance.md#derived:career-years).
+ */
+function careerYears(): number {
+  const start = Date.UTC(2021, 6, 1); // Jul 2021
+  return Math.floor((Date.now() - start) / (365.25 * 24 * 3600 * 1000));
+}
 
 /**
  * Wave 6 hero: the wave-5 "byline" structure (GG-ratified: left-aligned,
@@ -40,24 +49,27 @@ import type { Stat } from "@/content/types";
  * explicit per-child margin (unchanged from the RevealGroup attempt) so
  * the rhythm matches every other wave-9 section.
  */
-export async function Hero() {
-  const puzzle = await getWarmerPuzzleNumber();
-
+export function Hero() {
+  // Wave 10 stats (GG's feedback: the previous three — product count,
+  // Warmer puzzle count, preprint count — read wrong to him). Rebalanced to
+  // career + independent work with plain labels; alternates in
+  // reports/wave10. All three stay verifiable: two derived, one verbatim
+  // from the resume (resume:indium-senior-lead).
   const heroStats: Stat[] = [
     {
+      value: String(careerYears()),
+      label: "years in data science & ML",
+      sourceRef: "derived:career-years",
+    },
+    {
       value: String(liveProductCount(products)),
-      label: "live AI products under my own name",
+      label: "AI products live today",
       sourceRef: "derived:products-live-count",
     },
     {
-      value: puzzle ? `${puzzle.number}+` : "—",
-      label: puzzle ? "daily Warmer puzzles since launch" : "Warmer puzzle count unavailable",
-      sourceRef: "derived:warmer-puzzle-count",
-    },
-    {
-      value: String(researchPaperCount(researchPapers)),
-      label: "research preprint, pending arXiv",
-      sourceRef: "derived:research-paper-count",
+      value: "5",
+      label: "people on the data-science team I lead",
+      sourceRef: "resume:indium-senior-lead",
     },
   ];
 
