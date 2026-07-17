@@ -10,5 +10,5 @@ import dynamic from "next/dynamic";
  */
 export const TriageiqClassifyPanel = dynamic(
   () => import("./triageiq-classify-toy").then((m) => m.TriageiqClassifyToy),
-  { loading: () => <p className="text-muted-foreground text-xs">Loading…</p> }
+  { loading: () => <p className="text-muted-foreground text-xs leading-snug">Loading…</p> }
 );

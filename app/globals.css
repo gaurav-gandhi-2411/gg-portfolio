@@ -151,17 +151,21 @@
   height: 42rem;
   max-width: 100vw;
   border-radius: 50%;
+  /* Design-review (wave 11): at 0.17 the drift read as inert on a normal
+   * 3-5s hero dwell — raised to 0.26 with stronger alpha stops so the
+   * moment is actually felt. Contrast re-verified post-bump (axe clean;
+   * worst-case tint behind the muted role line stays far above 4.5:1). */
   background: conic-gradient(
     from 40deg,
     transparent 0%,
-    color-mix(in oklab, var(--indigo) 42%, transparent) 22%,
-    color-mix(in oklab, var(--indigo) 12%, transparent) 46%,
+    color-mix(in oklab, var(--indigo) 52%, transparent) 22%,
+    color-mix(in oklab, var(--indigo) 16%, transparent) 46%,
     transparent 62%,
-    color-mix(in oklab, var(--indigo) 26%, transparent) 82%,
+    color-mix(in oklab, var(--indigo) 34%, transparent) 82%,
     transparent 100%
   );
   filter: blur(80px);
-  opacity: 0.17;
+  opacity: 0.26;
   pointer-events: none;
   animation: halo-spin 28s linear infinite;
 }
