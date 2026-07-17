@@ -273,6 +273,29 @@ html[data-boot="1"] #boot-loader {
   overflow: hidden;
   background: color-mix(in oklab, var(--graphite-line) 40%, transparent);
 }
+/* Wave 12 route transition (app/template.tsx) — applied only on
+ * client-side navigations, never the initial load. Content starts the
+ * animation at full-layout position with a small rise; 240ms keeps it
+ * felt-but-not-waited-for. */
+.page-enter {
+  animation: page-enter 0.24s cubic-bezier(0.33, 1, 0.68, 1);
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
 .boot-bar-fill {
   height: 100%;
   width: 100%;

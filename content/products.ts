@@ -11,6 +11,21 @@ export function liveProductCount(list: Product[]): number {
   return list.filter((p) => Boolean(p.liveUrl) || Boolean(p.pypi)).length;
 }
 
+/**
+ * The home page's showcase five (wave 12): the three flagships plus the
+ * two that widen the technical range the most — DealHunter (multi-agent
+ * search with the deepest test rig) and ShelfSense (classical-ML
+ * forecasting at 30K-series scale). Everything else lives one click away
+ * on /projects.
+ */
+export const showcaseSlugs = [
+  "warmer",
+  "style-maitri",
+  "triageiq",
+  "dealhunter",
+  "shelfsense",
+] as const;
+
 export const products: Product[] = [
   // ── Flagship ────────────────────────────────────────────────────────────
   {
@@ -190,6 +205,23 @@ export const products: Product[] = [
       label: "pilot-scale research artifact, honestly scoped",
       value: "8 scoring dimensions, all implemented",
       sourceRef: "agentgauge:scoring-dimensions",
+    },
+  },
+  {
+    slug: "expense-tracker",
+    name: "Expense Tracker",
+    tagline:
+      "Multi-user expense tracker with NL entry parsing, embedding-based auto-categorization, anomaly detection, and Prophet forecasting — live on Cloud Run + Vercel.",
+    // Added wave 12: the wave-10 sweep skipped this repo on its stale
+    // top-level README; CURRENT_STATE.md shows a deployed, tested,
+    // multi-user product (see provenance.md#expense-tracker:state).
+    liveUrl: "https://expense-tracker-tawny-eight-98.vercel.app",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
+    tier: "secondary",
+    metric: {
+      label: "Test suite",
+      value: "143/143 passing",
+      sourceRef: "expense-tracker:tests",
     },
   },
   {

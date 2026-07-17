@@ -1,17 +1,12 @@
+import Link from "next/link";
 import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
-import { HeatToyShell } from "@/components/heat-toy-shell";
-import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
 import { workLede } from "@/content/about";
-import { liveProductCount, products } from "@/content/products";
+import { liveProductCount, products, showcaseSlugs } from "@/content/products";
 import type { Product } from "@/content/types";
-import {
-  getRepoFreshness,
-  getTracegaugeDownloads,
-  getWarmerPuzzleNumber,
-} from "@/lib/live-data";
+import { getRepoFreshness, getWarmerPuzzleNumber } from "@/lib/live-data";
 
 function repoSlug(repoUrl: string | undefined): string | null {
   if (!repoUrl) return null;
@@ -29,32 +24,30 @@ function formatFreshness(iso: string): string {
 }
 
 /**
- * Wave 11 — wow moment #3. The slider is retired after two passes of GG
- * feedback ("can't slide it", then "classy modern is not there"): eleven
- * heterogeneous cards fought the pattern both times, and the brief's own
- * bar — usability + beauty over the slider concept — points at a crafted
- * static presentation instead. Three flagship showcase cards carry the
- * concentrated craft (eval-figure rail, hover lift with the tokenized
- * indigo shadow, storyline); the remaining projects sit in a quiet
- * two-column index grid. Everything is server-rendered except the
- * existing EvalFigure draw-in and the TriageIQ disclosure — deleting the
- * slider removes its whole client bundle.
+ * Wave 12 — the home page now TEASES (maninder's structural pattern): the
+ * five showcase projects, each linking to its /work/[slug] case study,
+ * with the full set one click away on /projects. The wave-11 card craft
+ * (eval-figure rail, tokenized hover lift) carries over unchanged; the
+ * heat toy and TriageIQ classifier moved to their products' case-study
+ * pages, where the teaching happens.
  */
 export async function Work() {
-  const repoSlugs = products
+  const showcase = showcaseSlugs
+    .map((slug) => products.find((p) => p.slug === slug))
+    .filter((p): p is Product => p !== undefined);
+
+  const repoSlugs = showcase
     .map((p) => repoSlug(p.repoUrl))
     .filter((s): s is string => s !== null);
 
-  const [freshness, puzzle, downloads] = await Promise.all([
+  const [freshness, puzzle] = await Promise.all([
     getRepoFreshness(repoSlugs),
     getWarmerPuzzleNumber(),
-    getTracegaugeDownloads(),
   ]);
 
   function datelineFor(product: Product): string | undefined {
-    // Warmer's repo is private, so it has no freshness dateline — its
-    // right-edge anchor is the stronger live signal it does have: the
-    // daily puzzle number (fail-soft like every live figure).
+    // Warmer's repo is private — its right-edge anchor is the stronger
+    // live signal it does have: the daily puzzle number (fail-soft).
     if (product.slug === "warmer") {
       return puzzle ? `puzzle #${puzzle.number} live today` : undefined;
     }
@@ -63,23 +56,17 @@ export async function Work() {
     return repoData ? formatFreshness(repoData.lastCommitDate) : undefined;
   }
 
-  const flagship = products.filter((p) => p.tier === "flagship");
-  const secondary = products.filter((p) => p.tier === "secondary");
-
   return (
     <Section
       id="work"
-      label="Work"
+      label="Selected work"
       wide
       // Both counts derived, never hand-typed (rule 65b).
-      labelNote={`${products.length} projects · ${liveProductCount(products)} live`}
-      // Sentences 2–3 of the wave-10-approved intro paragraph — they
-      // describe exactly what follows, so they open the section.
+      labelNote={`${showcase.length} of ${products.length} projects · ${liveProductCount(products)} live`}
       lede={workLede}
     >
-      {/* Flagship showcase — the craft concentrates here. */}
       <RevealGroup mode="onview" className="flex flex-col gap-6">
-        {flagship.map((product) => {
+        {showcase.map((product) => {
           const dateline = datelineFor(product);
           return (
             <article
@@ -90,7 +77,12 @@ export async function Work() {
                 <div>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
                     <h3 className="font-heading text-title font-semibold text-foreground">
-                      {product.name}
+                      <Link
+                        href={`/work/${product.slug}`}
+                        className="focus-visible:outline-ring transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                      >
+                        {product.name}
+                      </Link>
                     </h3>
                     {dateline && (
                       <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
@@ -107,7 +99,13 @@ export async function Work() {
                     </p>
                   )}
 
-                  <div className="mt-5 flex gap-5 text-sm">
+                  <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                    <Link
+                      href={`/work/${product.slug}`}
+                      className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                    >
+                      Read the case study →
+                    </Link>
                     {product.liveUrl && <InlineLink href={product.liveUrl}>Live ↗</InlineLink>}
                     {product.repoUrl && <InlineLink href={product.repoUrl}>Source ↗</InlineLink>}
                   </div>
@@ -118,95 +116,29 @@ export async function Work() {
                     <EvalFigure figure={product.figure} label={product.metric.label} />
                   </div>
                 )}
-              </div>
 
-              {product.slug === "triageiq" && <TriageiqClassifyDisclosure />}
-            </article>
-          );
-        })}
-      </RevealGroup>
-
-      <p className="text-muted-foreground mt-14 text-center font-mono text-xs tracking-eyebrow uppercase">
-        More projects
-      </p>
-
-      {/* Secondary index — same card language, quieter. */}
-      <RevealGroup mode="onview" className="mt-6 grid gap-4 sm:grid-cols-2">
-        {secondary.map((product) => {
-          const dateline = datelineFor(product);
-          return (
-            <article
-              key={product.slug}
-              className="border-border/40 bg-card/40 hover:border-accent/40 hover:shadow-card-hover flex h-full flex-col rounded-lg border p-5 transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h3 className="font-medium text-foreground">{product.name}</h3>
-                {dateline && (
-                  <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
+                {!product.figure && product.metric && (
+                  <p className="mt-6 text-sm md:mt-0 md:max-w-[13rem] md:self-center md:justify-self-end md:text-right">
+                    <span className="font-mono font-medium text-foreground">
+                      {product.metric.value}
+                    </span>{" "}
+                    <span className="text-muted-foreground">— {product.metric.label}</span>
+                  </p>
                 )}
               </div>
-
-              <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                {product.tagline}
-              </p>
-
-              {product.metric && (
-                <p className="mt-3 text-sm">
-                  <span className="font-mono font-medium text-foreground">
-                    {product.metric.value}
-                  </span>{" "}
-                  <span className="text-muted-foreground">— {product.metric.label}</span>
-                </p>
-              )}
-
-              {product.slug === "tracegauge" && (
-                <div className="mt-3 flex flex-col gap-2">
-                  <code className="border-border/60 bg-background text-foreground w-fit rounded-md border px-3 py-1.5 font-mono text-xs">
-                    pip install tracegauge
-                  </code>
-                  {downloads?.lastWeek !== undefined && (
-                    <p className="text-muted-foreground font-mono text-xs">
-                      {downloads.lastWeek.toLocaleString()} downloads last week
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-auto flex gap-5 pt-4 text-sm">
-                {product.liveUrl && <InlineLink href={product.liveUrl}>Live ↗</InlineLink>}
-                {product.repoUrl && <InlineLink href={product.repoUrl}>Source ↗</InlineLink>}
-              </div>
             </article>
           );
         })}
       </RevealGroup>
 
-      {/* Warmer's engine, playable — the page's one interactive signature. */}
-      <RevealGroup
-        as="div"
-        mode="onview"
-        className="border-border/40 mx-auto mt-16 flex max-w-xl flex-col gap-4 border-t pt-10"
-      >
-        <div>
-          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
-            From Warmer&apos;s engine
-            {puzzle ? (
-              <span className="font-mono normal-case tracking-normal">
-                {" "}
-                — puzzle #{puzzle.number} today
-              </span>
-            ) : null}
-          </p>
-          <p className="mt-4 max-w-measure text-base leading-relaxed text-foreground">
-            I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are —
-            this is the exact matching engine behind Warmer, my daily word game, now shown
-            as an actual embedding-space plot.
-          </p>
-        </div>
-        <div>
-          <HeatToyShell />
-        </div>
-      </RevealGroup>
+      <p className="mt-10 text-center">
+        <Link
+          href="/projects"
+          className="border-border/60 bg-card/60 hover:border-accent/60 hover:bg-card focus-visible:outline-ring inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium text-foreground transition-[transform,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+        >
+          View all {products.length} projects →
+        </Link>
+      </p>
     </Section>
   );
 }

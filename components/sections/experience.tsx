@@ -1,97 +1,87 @@
-import { InlineLink } from "@/components/inline-link";
+import { FileTextIcon } from "@/components/icons";
+import { LinkButton } from "@/components/link-button";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
-import { dayJobParagraph, skillChips } from "@/content/about";
 import { experience } from "@/content/experience";
 import { site } from "@/content/site";
 
 /**
- * Wave 6: Experience tightened from a four-paragraph-per-role résumé wall
- * (~40% of the mobile page) to supporting evidence — the day-job context
- * paragraph from the dissolved About section leads, each role shows its
- * `featured` bullets (selection, not rewriting: every shown bullet is
- * verbatim from content/experience.ts with its sourceRef), and the skill
- * chips became one plain-prose line. The full detail is the resume's job —
- * linked right here.
- *
- * Wave 9: the section body is now one RevealGroup (mode="onview") — the
- * site's new default reveal pattern (GG's integration map, item 2). Each
- * child keeps its original margin classes, unaffected by the wrapper swap.
- * The three-company block gets its OWN nested RevealGroup (design-review
- * finding, wave 9): RevealGroup only staggers its *direct* children, so
- * without this the whole résumé block was one reveal unit — visually
- * indistinguishable from wave 6's instant-render at a glance. Nesting
- * gives each company its own cascade step, inside the outer section's step.
+ * Wave 12 — Experience moves up to first-after-About (GG's explicit
+ * order) and gets the fuller professional treatment: company cards with
+ * role, dates, location, every impact bullet (the wave-6 `featured`
+ * trimming is retired — the professional record is now a headline
+ * section, not supporting evidence), and a tech-chip row per company.
+ * The day-job context paragraph moved into About; the skills line moved
+ * there too.
  */
 export function Experience() {
   return (
-    <Section id="experience" label="Experience">
-      <RevealGroup mode="onview">
-      <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
-        {dayJobParagraph}
-      </p>
-
-      <RevealGroup as="div" mode="onview" className="mt-10 flex flex-col gap-10">
+    <Section id="experience" label="Experience" wide>
+      <RevealGroup mode="onview" className="flex flex-col gap-6">
         {experience.map((entry) => (
-          <article key={entry.company} className="flex flex-col gap-4">
-            <div>
-              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                <h3 className="font-heading text-lead font-semibold text-foreground">
-                  {entry.company}
-                </h3>
-                <span className="text-muted-foreground font-mono text-xs">
-                  {entry.dateRange}
-                </span>
-              </div>
-              {entry.companyDetail && (
-                <p className="text-muted-foreground mt-1 text-sm">{entry.companyDetail}</p>
-              )}
+          <article
+            key={entry.company}
+            className="border-border/40 bg-card/40 rounded-xl border p-6 md:p-8"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+              <h3 className="font-heading text-lead font-semibold text-foreground">
+                {entry.company}
+              </h3>
+              <span className="text-muted-foreground font-mono text-xs">{entry.dateRange}</span>
+            </div>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {entry.companyDetail ? `${entry.companyDetail} · ` : ""}
+              {entry.location}
+            </p>
+
+            <div className="mt-5 flex flex-col gap-5">
+              {entry.subRoles?.map((role) => {
+                const showDates =
+                  (entry.subRoles?.length ?? 0) > 1 || role.dateRange !== entry.dateRange;
+                return (
+                  <div key={role.title} className="flex flex-col gap-2.5">
+                    <p className="text-sm">
+                      <span className="font-medium text-foreground">{role.title}</span>
+                      {showDates && (
+                        <span className="text-muted-foreground font-mono text-xs">
+                          {" "}
+                          · {role.dateRange}
+                        </span>
+                      )}
+                    </p>
+                    <ul className="flex flex-col gap-2">
+                      {role.bullets.map((bullet) => (
+                        <li
+                          key={bullet.sourceRef}
+                          className="text-muted-foreground border-border/40 border-l-2 pl-4 text-sm leading-relaxed"
+                        >
+                          {bullet.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
 
-            {entry.subRoles?.map((role) => {
-              const bullets = role.bullets.filter((b) => b.featured);
-              if (bullets.length === 0) return null;
-              // Single-role companies already show these dates on the company
-              // line — repeating them reads as a résumé tic.
-              const showDates =
-                (entry.subRoles?.length ?? 0) > 1 || role.dateRange !== entry.dateRange;
-              return (
-                <div key={role.title} className="flex flex-col gap-2">
-                  <p className="text-sm">
-                    <span className="font-medium text-foreground">{role.title}</span>
-                    {showDates && (
-                      <span className="text-muted-foreground font-mono text-xs">
-                        {" "}
-                        · {role.dateRange}
-                      </span>
-                    )}
-                  </p>
-                  <ul className="flex max-w-measure flex-col gap-2">
-                    {bullets.map((bullet) => (
-                      <li
-                        key={bullet.sourceRef}
-                        className="text-muted-foreground text-sm leading-relaxed"
-                      >
-                        {bullet.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+            <p className="mt-6 flex flex-wrap gap-2">
+              {entry.techChips.map((chip) => (
+                <span
+                  key={chip}
+                  className="border-border/40 text-muted-foreground rounded-full border px-3 py-1 font-mono text-xs"
+                >
+                  {chip}
+                </span>
+              ))}
+            </p>
           </article>
         ))}
-      </RevealGroup>
 
-      <p className="text-muted-foreground mt-10 max-w-measure text-sm leading-relaxed">
-        Working across {skillChips.join(" · ")}.
-      </p>
-
-      <p className="mt-6 text-sm">
-        <InlineLink href={site.resumeUrl} download>
-          Download the full resume (PDF)
-        </InlineLink>
-      </p>
+        <p className="mt-2 text-center">
+          <LinkButton href={site.resumeUrl} icon={<FileTextIcon />}>
+            View the full resume
+          </LinkButton>
+        </p>
       </RevealGroup>
     </Section>
   );

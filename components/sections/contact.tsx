@@ -51,6 +51,9 @@ export function Contact() {
           <InlineLink href={site.linkedinUrl} className="text-muted-foreground">
             LinkedIn
           </InlineLink>
+          <InlineLink href={site.huggingfaceUrl} className="text-muted-foreground">
+            Hugging Face
+          </InlineLink>
         </p>
       </RevealGroup>
     </Section>

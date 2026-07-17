@@ -289,6 +289,165 @@ in the background roughly every 6h, not per-visitor — call volume is a handful
 revalidation cycle, comfortably inside the unauthenticated 60/hr rate limit. Avoids provisioning
 and rotating a PAT/secret for a read-only public-data need (rule 96, least privilege).
 
+## Wave 12 — case-study provenance (2026-07-18)
+
+The multi-page rebuild adds a `/work/[slug]` case study per project
+(`content/case-studies/*.ts`). Every new claim below was sourced by reading the actual repos
+on 2026-07-18 (4 parallel research passes, file+line cites). Existing IDs above are reused
+unchanged where they already covered a claim. Paths are relative to
+`C:\Users\gaura\ml-projects\<repo>`.
+
+### Warmer (mindmeld)
+
+| ID | Claim | Source |
+|---|---|---|
+| `warmer:precompute-design` | Puzzles fully precomputed offline; runtime is a rank-table lookup, ~$0 marginal serving cost | `mindmeld/README.md:31-37`, `mindmeld/spec-hinglish-fix.md:10` |
+| `warmer:wasm-decision` | `--wasm` adopted on measurement: TBT 221ms→13.5ms, −417KB page weight | `mindmeld/reports/renderer-decision-2026-07-12.md:43-53` |
+| `warmer:finetune-failures` | Two Hinglish fine-tune attempts both regressed held-out Spearman (0.435 → 0.376 → 0.324); shipped the off-the-shelf model | `mindmeld/docs/known-limitations.md:38-81` |
+| `warmer:tests` | 160/160 generator + 94/94 app + 2/2 emulator integration tests | `mindmeld/README.md:175-176` |
+| `warmer:perf-budget` | TBT 26ms (≤200ms budget, pass); LCP 3,082ms vs 3,000ms ceiling — failing by 82ms, tracked openly | `mindmeld/docs/known-limitations.md:369-375` |
+
+### Style Maitri (agentic-shopping-assistant)
+
+| ID | Claim | Source |
+|---|---|---|
+| `style-maitri:hybrid-retrieval` | Hybrid FAISS+BM25 via RRF handles both vibe and exact-keyword queries | `README.md:15,167-172` |
+| `style-maitri:router-decision` | Router experiment: LLM 100% pass/~2100ms/~$0.10 per 1k vs DistilBERT 75%/31ms/$0 vs cascade 94%; kept LLM router + deterministic code guard | `reports/router_comparison.md:6-20`, `src/agents/graph.py:3345` |
+| `style-maitri:flywheel-ranking` | Transparent outfit-ranking boost: final_score = coherence × (1 + 0.25 × positive_rate), ≥10-signal cold-start gate | `docs/architecture/adr/0005-flywheel-ranking-blend.md:6-14,32-34` |
+| `style-maitri:retrieval-eval` | Retrieval P@5 96–99% occasion/search, 67% adversarial (n=92) | `reports/model_eval_20260712T091248Z.md:19-24` |
+| `style-maitri:live-audit` | Adversarial live audit: 15/32 skeptical-shopper queries disappointing; 2 trust-destroying bugs; outfit-board honest vs plain-search confabulating on identical missing inventory | `reports/deep_diagnosis_2026-07-12.md:3-9,125-138` |
+
+### TriageIQ (triage-iq)
+
+| ID | Claim | Source |
+|---|---|---|
+| `triageiq:classifier-bakeoff` | DistilBERT +1.2pp on vscode (needed +11pp for 20x latency), −5.1pp on kubernetes; TF-IDF wins at this data scale | `reports/03_classifier_comparison.md:257-260,395-412` |
+| `triageiq:cqr` | Raw quantile coverage unreliable (74.4%/38.2%); CQR gives distribution-free guaranteed coverage | `docs/architecture/adr/0010-conformal-quantile-regression.md:14-38` |
+| `triageiq:split-fix` | closed_at split leaked (train median 1.0d vs test 677d); created_at re-split dropped MAE 693→87 days; has_priority feature leak (corr 0.595, applied during triage) | `docs/architecture/adr/0009-resolution-predictor-diagnosis.md:60-93,184` |
+| `triageiq:retrieval` | k8s Recall@5 23.5% "genuinely weak"; vscode retired (gold pairs ~80% noise); 3 zero-training fixes all failed, reranking regressed at 190-330x latency | `README.md:86-90,117-120,193-207` |
+| `triageiq:resolution` | Resolution MAE: k8s 104.05d vs 106.29d naive (+2.1%); vscode 6.02d vs 3.53d naive (70.5% worse, served with transparency badge) | `README.md:91-98` |
+
+### DealHunter (agentic-travel-booking-system)
+
+| ID | Claim | Source |
+|---|---|---|
+| `dealhunter:window-searcher` | Deterministic WindowSearcher coordinator (not an LLM agent) for testability + hard call budget | `docs/architecture/adr/0005-hierarchical-window-search.md:52-71,211-231` |
+| `dealhunter:pareto-archetypes` | Exactly 2 Pareto archetypes with guaranteed-distinct trade-offs, not a ranked list | `docs/architecture/adr/0006-pareto-frontier-archetypes.md:39-77,175-190` |
+| `dealhunter:llm-judge` | LLM-judge eval: single judge, cross-family, median-of-3 | `docs/architecture/adr/0016-llm-judge-design.md:29-66` |
+| `dealhunter:multi-provider` | Multi-provider fallback chain built after repeated free-tier Groq daily-quota outages | `spec.md:1-9,30-36` |
+| `dealhunter:planner-baseline` | Planner baseline 31/31 archetype selection | `CURRENT_STATE.md:377-385` |
+| `dealhunter:optimizer-baseline` | Optimizer baseline: demo-haiku 24/24, coherence 5.0/5; demo-llama 21/24 (quota-constrained), 4.881 | `apps/api/docs/evals/baselines/README.md:19-27` |
+| `dealhunter:audit` | Early self-audit: 6/10 prototype-to-production score | `AUDIT_REPORT.md:9-15` |
+| `dealhunter:silent-outage` | Two-week silent outage: stale Cloud Run tag + empty-string env vars bypassing `??`; fixed with canary/soak gates + staleness cron | `docs/architecture/adr/0023`, `0024-production-frontend-alignment.md:1-153` |
+
+### ShelfSense (shelfsense-m5)
+
+| ID | Claim | Source |
+|---|---|---|
+| `shelfsense:tweedie` | Tweedie loss over RMSE for 68% zero-inflated demand; +0.02 WRMSSE | `README.md:266,31-43` |
+| `shelfsense:direct-horizon` | 28 direct per-horizon models; recursion measured at 11% WRMSSE cost | `README.md:186-203,271` |
+| `shelfsense:global-model` | Global cross-series LightGBM; per-series ETS collapsed on HOBBIES (3.27 WRMSSE) | `README.md:148,166-172` |
+| `shelfsense:pandera` | Pandera schema enforcement at persistence boundaries caught a real NaN bug | `README.md:276` |
+| `shelfsense:hobbies` | HOBBIES 3.2663 (ETS) → 0.6112 (LightGBM), 5x | `README.md:158-164` |
+| `shelfsense:val-divergence` | 4 variants improved on validation but lost on private LB (harness failure, documented); winner 0.520 vs realistic ceiling 0.53–0.55; SARIMA OOM at 442/1000; 111 tests | `README.md:234-256,389-393,15,405,111,375` |
+
+### ReviewIQ (review-iq)
+
+| ID | Claim | Source |
+|---|---|---|
+| `reviewiq:privacy-routing` | Groq-only client-data path; Gemini dev-only, enforced via `assert_privacy_safe()` | `review-iq-closeout-roadmap.md:27`, `README.md:304-305` |
+| `reviewiq:tiered-routing` | Tiered routing cut token cost 27.9% at a published 1.4pp accuracy cost | `README.md:139-147` |
+| `reviewiq:cassette-ci` | Cassette-replay CI keyed on sha256(model+prompts); zero live LLM calls | `eval/README.md:5-16,52-57` |
+| `reviewiq:urgency-rubric` | Urgency rewritten tone→signal-based; "poor fit" pattern-match bug diagnosed via cassette replay | `PROMPTS.md:162-192,79-128,7-56,248-251` |
+| `reviewiq:authenticity` | Authenticity on 40 fixtures: P/R/F1 = 1.000, labeled "a starting calibration" | `README.md:151-157`, `docs/compliance.md:74-87` |
+| `reviewiq:gold-label-caveat` | hi/hi-en gold labels LLM-generated, "not published-credible"; gap mostly benchmark-label noise | `spec.md:11-13`, `PROMPTS.md:38-43` |
+
+### Multimodal Fashion Recommender
+
+| ID | Claim | Source |
+|---|---|---|
+| `mmfr:frozen-fusion` | Frozen CLIP+SBERT fusion transfers to new catalogues without retraining encoders | `README.md:82,178-180` |
+| `mmfr:collapse-fix` | Original config caused total representation collapse; τ=0.1 + LR 3e-4 + 500-step warmup fixed it (warmup most critical) | `README.md:103,207-208` |
+| `mmfr:faiss-adr` | FAISS IndexFlatIP over managed vector DB for ≤4 brands; scaling math + 4-phase migration path documented | `docs/architecture/adr/0001-multi-brand-scaling.md:30-36,96-156` |
+| `mmfr:ndcg` | NDCG@10 0.0208, MRR 0.0172 (active pool) | `README.md:113-124` |
+| `mmfr:cost` | ≈$0.001–$0.004 per 1,000 recommendations with warm cache | `COST.md:26-27,64` |
+| `mmfr:brand-caveat` | New-brand /recommend is illustrative-only (synthetic users); /similar is the validated day-one capability | `README.md:178-190` |
+
+### Gold Rate Tracker
+
+| ID | Claim | Source |
+|---|---|---|
+| `gold:direction-baseline` | Direction baseline corrected 50% → true base rate 69.7–75.5% ("always predict up" in a bull regime); model loses on every window; signal kept DARK | `docs/adr/019-direction-signal-below-base-rate.md:16-35,62-72`, `docs/DIRECTION_SIGNAL_STATUS.md:15-20` |
+| `gold:promotion-gate` | Pre-registered promotion gate: ≥250-fold backtest, MAE beat, Wilcoxon p<0.05 | `docs/adr/012-naive-headline-chronos-companion.md:50-58` |
+| `gold:power-analysis` | Monte Carlo power analysis: at n=93 only ~21pp edge detectable at 80% power; revisit dates computed | `docs/DIRECTION_SIGNAL_STATUS.md:52-63,82-96` |
+| `gold:zero-cost` | ₹0/month infra (GitHub Actions + Pages + ntfy.sh free tiers) | `README.md:11` |
+
+### AetherArt
+
+| ID | Claim | Source |
+|---|---|---|
+| `aetherart:clip-blindness` | CLIP structurally blind to rendering-level changes across 9 experiments (SD 2.1 + SDXL); own claim revised 9/9 → 4/9 under a stricter 1-SE threshold | `README.md:71,91-105,111-123,199-211` |
+| `aetherart:checkpoint` | Checkpoint 1000 over 500/1500 via multi-scorer + human review, not lowest loss | `README.md:236-242` |
+| `aetherart:lora-quality` | Ukiyo-e LoRA: HPS 0.239, ImageReward 1.479, CLIP 0.359 comparison-only (GCP L4, seed 42) | `docs/lab_notebook.md:258-266` |
+| `aetherart:360-sweep` | 360-run benchmark: prompt moves CLIP 18× more than scheduler (range 0.130 vs 0.007) | `README.md:248-252` |
+| `aetherart:tests` | 229 tests, ~60s, no GPU required | `README.md:283` |
+| `aetherart:caveats` | Underfitting paradox (CLIP rewards keyword matching); unresolved calligraphy-cartouche artifact | `README.md:256-260`, `reports/what_didnt_work.md:93-95` |
+| `aetherart:int8-surprise` | INT8 increased peak VRAM vs FP16 under CPU offload (2210 vs 1803MB); pipeline-cache eviction bug fixed with single-slot cache | `README.md:305-313`, `reports/what_didnt_work.md:9-19` |
+
+### AgentGauge
+
+| ID | Claim | Source |
+|---|---|---|
+| `agentgauge:frozen-protocol` | Frozen pre-registered protocol: one judge (llama3.1:8b, seed 42), generator always a different family, nulls first-class | `docs/research/frozen_protocol.md:1-27` |
+| `agentgauge:mock-provider` | Provider protocol + deterministic MockProvider CI default — no network/cost/credentials | `README.md:162-172` |
+| `agentgauge:regime-framing` | Regime-bounded framing; two-condition practitioner test instead of a blanket claim | `README.md:25-37`, `docs/paper/paper.md:591-627` |
+| `agentgauge:governance` | Judge/scorer/rubric changes require human-reviewed draft PRs; nothing auto-merges | `docs/paper/paper.md:725-729` |
+| `agentgauge:t18` | Synthetic 60-tool catalog: oracle descriptions +34.5pp (62.9→97.4%, p<0.0001); +40.8pp on Llama-3.3-70B (different harness, not apples-to-apples) | `docs/paper/paper.md:251-256,300-310` |
+| `agentgauge:prevalence-null` | Pre-registered N=10 pilot: 0/9 real servers showed the in-regime effect | `docs/paper/paper.md:471` |
+| `agentgauge:localizer` | Localizer recall 1.00 but precision 0.167 under two framings | `docs/paper/paper.md:527-547` |
+| `agentgauge:seed-bug` | Seed bug reversed two findings; false-positive/false-negative asymmetry stated as an epistemic bound | `docs/paper/paper.md:478-492,645-662` |
+
+### tracegauge (token-efficiency-scorer)
+
+| ID | Claim | Source |
+|---|---|---|
+| `tracegauge:pointwise-judge` | Reference-based pointwise judge over pairwise (35% vs 9% flip rate under perturbation) | `research/05-architecture-pivot.md:19-21,253-258` |
+| `tracegauge:heuristic-pivot` | 3 of 4 heuristics failed inter-annotator κ (0.15/0.43/0.19 vs 0.60 bar; winner 0.825) → full pivot to 3-layer hybrid | `research/05-architecture-pivot.md:33-38,56-102` |
+| `tracegauge:judge-independence` | Judge deliberately non-Anthropic (Qwen) — structural self-enhancement-bias prevention | `research/05-architecture-pivot.md:383-388` |
+| `tracegauge:no-composite` | No composite score by design; three labeled signals with per-axis caveats | `README.md:19,81,167-168` |
+| `tracegauge:local-first` | Localhost-only bind by construction; redaction at ingestion; opt-in-only egress | `README.md:73-76,143-155` |
+| `tracegauge:tests` | 601/601 tests; baselines from 75 quality-gated sessions, 5 task types | `README.md:20,207` |
+| `tracegauge:judge-validation` | Judge corroboration 84% strict / 96% top-2, ρ≈0.79 — no human gold labels (stated) | `README.md:67,208` |
+| `tracegauge:generalization` | 172 devs / 1,053 sessions: repeated-failed-retry generalizes at ~1.4% vs 6.6% calibration pool (pool labeled a high-waste outlier) | `README.md:65,126,210` |
+| `tracegauge:pypi` | Live on PyPI v0.10.0 | `pyproject.toml`; `pip index versions tracegauge` (2026-07-12, above) |
+| `tracegauge:held-features` | Community corpus built but dormant; habit coach built then deliberately unshipped | `CURRENT_STATE.md` 0.9.0/0.10.0 sections |
+
+### Expense Tracker (added wave 12)
+
+Overturns the wave-10 skip, which was made against the repo's stale top-level README;
+`CURRENT_STATE.md` (post-Phase-3b.1) shows the actual state. Repo confirmed **public** via
+`gh repo view` 2026-07-18.
+
+| ID | Claim | Source |
+|---|---|---|
+| `expense-tracker:state` | Live: FastAPI on Cloud Run + Next.js 16 on Vercel; Supabase Auth (ES256/HS256 dual JWT), per-user isolation (cross-user → 404), Alembic migrations; 9/9 Playwright auth E2E | `expense-tracker/CURRENT_STATE.md:6-26,233-236` |
+| `expense-tracker:tests` | 143/143 backend tests, ruff clean, mypy clean | `expense-tracker/CURRENT_STATE.md:228-231` |
+| `expense-tracker:ml-features` | Groq NL parsing + 3 local ML features (embedding categorizer, IsolationForest anomaly, Prophet forecast), documented fallbacks, manual non-CI evals | `expense-tracker/CURRENT_STATE.md:69-71,76-77` |
+
+**Not added — reclaim:** the wave-12 inventory re-check found `reclaim` substantially more
+complete than its README suggests (all 7 build stages done, real sign-off-gated runs), but the
+repo has **no git remote** (local-only, verified `git remote -v` 2026-07-18) — nothing public a
+visitor could open or verify, so it stays off the site until GG publishes it.
+
+### HuggingFace account (wave 12 verification)
+
+Fetched https://huggingface.co/gauravgandhi2411 on 2026-07-18: profile exists ("Gaurav
+Gandhi"), 2 public models (`aetherart-ukiyo-sd21`: 6 downloads; `aetherart-ukiyo-sdxl`: 106
+downloads), 4 public Spaces (ReviewIQ, AetherArt, Agentic Shopping Assistant, Multimodal
+Fashion Recommender), 0 followers. **Decision per the wave-12 brief:** profile linked in the
+hero button row and Contact; NO download stat shown anywhere — 112 cumulative downloads is
+real but too small to present as a headline number.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).

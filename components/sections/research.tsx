@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { InlineLink } from "@/components/inline-link";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
@@ -33,9 +34,16 @@ export function Research() {
               {paper.abstractExcerpt ?? paper.abstract}
             </p>
 
-            <p className="flex gap-5 text-sm">
+            <p className="flex flex-wrap gap-5 text-sm">
               {paper.arxivUrl && <InlineLink href={paper.arxivUrl}>arXiv ↗</InlineLink>}
               <InlineLink href={paper.repoUrl}>Repo ↗</InlineLink>
+              {/* Wave 12: the benchmark behind the paper has its own case study. */}
+              <Link
+                href="/work/agentgauge"
+                className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              >
+                Read the benchmark&apos;s case study →
+              </Link>
             </p>
           </article>
         ))}
