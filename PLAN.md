@@ -472,6 +472,47 @@ them production-grade per GG's explicit integration map and deletes `/lab/*`.
 
 Large diff → draft PR for GG's manual review, same posture as prior waves.
 
+## Wave 11 — calm base, concentrated wow (2026-07-17, draft PR #19 pending GG's merge)
+
+GG's direction, reconciling the "calm/centered like maninder.vercel.app" and
+"modern/impressive" feedback that pulled waves 6–10 in opposite directions: restrained
+centered foundation, craft concentrated in exactly 3 moments. Full design authority, no
+mid-build option gates. Full report: `reports/wave11-calm-base-wow-2026-07-17.md`.
+
+- [x] **Foundation:** one centered column (max-w-2xl prose / max-w-3xl work), centered
+      section headers, wave-6 sticky label rail deleted, whitespace-only separation,
+      Contact + footer centered. Wave-10-approved copy carried verbatim; the intro
+      paragraph split at its natural seam (sentence 1 → hero one-liner, sentences 2–3 →
+      Work lede) — documented in content/about.ts.
+- [x] **Wow 1 — boot loader:** monogram stroke-draw + hairline + top-down curtain
+      reveal, pure CSS, visually done ~1.0s. Structurally cannot appear for no-JS or
+      reduced-motion visitors (pre-paint head-script opt-IN gate); content never dips
+      below full opacity (wave-9 axe-race lesson); overlay bg = page bg token. axe 5/5
+      local + preview clean; LCP unmoved (0.6s preview, perf 100).
+- [x] **Wow 2 — hero:** centered stack, conic indigo halo (28s transform-only drift,
+      static under reduced motion), gradient stat numerals (both endpoints AA-checked).
+      Design review scored the halo weakest (0.17 opacity read inert) → raised to 0.26,
+      axe re-verified 3/3.
+- [x] **Wow 3 — Work:** slider retired after two failed passes (GG: "can't slide it",
+      then "classy modern is not there") — the brief's own bar (usability + beauty over
+      the slider concept) points static: 3 flagship showcase cards (eval-figure rail,
+      tokenized hover lift) + 2-col index grid. TriageIQ disclosure finally inline
+      (the overflow-x scroller that forced the remote-panel workaround is gone);
+      EvalFigure rootEl plumbing deleted.
+- [x] **Budget:** eager JS **191,179 B gzip vs 220,160 ceiling** (−10,356 vs wave 10 —
+      the slider's client bundle deleted outright).
+- [x] **Verification (deployed preview, PR #19):** axe 0 · Lighthouse perf 100 /
+      a11y 100 / BP 100 / LCP 0.6s / CLS 0 (SEO 63 = known preview noindex artifact) ·
+      no-JS SSR proof · reduced-motion differential · fail-soft 0px-shift capture ·
+      screenshots 1440/768/390 + 3 recordings, all preview-captured
+      (`reports/screenshots/wave11/`).
+- [x] **Design-reviewer sign-off:** approved with suggestions, zero blocking (base 8.5,
+      loader 9, work 8.5, halo 6.5 → fixed). All actionable suggestions taken same-day
+      (`cbf3a6b`); eval-figure width-constant consolidation logged for a cleanup pass.
+- [ ] Large diff → **draft PR #19 for GG's manual review/merge**, same posture as prior
+      waves. `explore/wave8-lab` deletion still deferred until its content is an
+      ancestor of main (unchanged standing note).
+
 ## Wave 8 — creative delight pass, prototype-first (2026-07-17, holding for GG's pick)
 
 GG's read on waves 6/7: too restrained, feels dull — wants lively/modern (sliders,
