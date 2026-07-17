@@ -114,7 +114,7 @@ export async function Work() {
                 </div>
 
                 {product.figure && product.metric && (
-                  <div className="mt-6 md:mt-1 md:justify-self-end">
+                  <div className="mt-6 md:mt-0 md:self-center md:justify-self-end">
                     <EvalFigure figure={product.figure} label={product.metric.label} />
                   </div>
                 )}
