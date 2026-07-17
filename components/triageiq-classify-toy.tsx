@@ -1,18 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { sampleIssues } from "@/content/lab-tfidf-samples";
+import { sampleIssues } from "@/content/tfidf-samples";
 
 /**
- * Lab 4 — a live-compute micro-moment: a real TF-IDF classifier, computed
- * in the browser over the real sample corpus (content/lab-tfidf-samples.ts,
- * 12 real currently-public GitHub issues, sourced per-item). This mirrors
- * TriageIQ's real first-stage technique (TF-IDF) on the same two repos its
- * published metric covers — it is explicitly labeled below as an
- * illustrative reproduction, NOT the production model (no BGE+FAISS
- * retrieval stage, no LightGBM resolution estimate, no Groq synthesis, and
- * only 12 sample docs vs. the real gold-labeled eval set). Nothing here
- * calls TriageIQ's live service or fabricates a score.
+ * A live-compute micro-moment on the TriageIQ work entry: a real TF-IDF
+ * classifier, computed in the browser over the real sample corpus
+ * (content/tfidf-samples.ts, 12 real currently-public GitHub issues,
+ * sourced per-item). This mirrors TriageIQ's real first-stage technique
+ * (TF-IDF) on the same two repos its published metric covers — it is
+ * explicitly labeled below as an illustrative reproduction, NOT the
+ * production model (no BGE+FAISS retrieval stage, no LightGBM resolution
+ * estimate, no Groq synthesis, and only 12 sample docs vs. the real
+ * gold-labeled eval set). Nothing here calls TriageIQ's live service or
+ * fabricates a score. Promoted from wave 8's Lab 4 prototype
+ * (reports/wave8-lab-2026-07-17.md); ships collapsed by default via
+ * triageiq-classify-disclosure.tsx, GG's call to keep it clearly secondary
+ * to the embedding-space visualization.
  */
 
 const STOPWORDS = new Set([
@@ -74,8 +78,6 @@ function buildSpace() {
   }
 
   return {
-    k8sCentroid: centroid("k8s"),
-    vscodeCentroid: centroid("vscode"),
     classify(text: string) {
       const v = vectorize(tokenize(text));
       return {
@@ -86,7 +88,7 @@ function buildSpace() {
   };
 }
 
-export function TfidfClassifyToy() {
+export function TriageiqClassifyToy() {
   const space = useMemo(() => buildSpace(), []);
   const [text, setText] = useState(sampleIssues[3].title);
   const [result, setResult] = useState<{ k8s: number; vscode: number } | null>(null);
@@ -121,11 +123,11 @@ export function TfidfClassifyToy() {
         }}
         className="flex gap-2"
       >
-        <label htmlFor="lab4-text" className="sr-only">
+        <label htmlFor="triageiq-classify-text" className="sr-only">
           Bug title to classify
         </label>
         <input
-          id="lab4-text"
+          id="triageiq-classify-text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="border-border bg-card text-foreground w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:border-ring"

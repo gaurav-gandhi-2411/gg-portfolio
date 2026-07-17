@@ -1,12 +1,15 @@
 /**
- * Lab 4 sample corpus — real, currently-public issue titles from the same
- * two repos TriageIQ's published metric cites (content/products.ts:
- * "Component classifier top-3 accuracy: 82.5% (k8s) / 90.4% (vscode)").
- * Fetched 2026-07-17 via GitHub's public search API (unauthenticated,
- * same fail-soft-friendly pattern as lib/live-data.ts), sorted by comment
- * count so titles are real, substantive bug reports, not placeholders.
- * Sourced per-item (repo + issue number + URL) so every classification
- * this lab produces traces to a real, checkable GitHub issue.
+ * Sample corpus for the TriageIQ illustrative TF-IDF classifier
+ * (components/triageiq-classify-toy.tsx) — real, currently-public issue
+ * titles from the same two repos TriageIQ's published metric cites
+ * (content/products.ts: "Component classifier top-3 accuracy: 82.5% (k8s)
+ * / 90.4% (vscode)"). Fetched 2026-07-17 via GitHub's public search API
+ * (unauthenticated, same fail-soft-friendly pattern as lib/live-data.ts),
+ * sorted by comment count so titles are real, substantive bug reports, not
+ * placeholders. Sourced per-item (repo + issue number + URL) so every
+ * classification this demo produces traces to a real, checkable GitHub
+ * issue. Originated as wave 8's Lab 4 prototype
+ * (reports/wave8-lab-2026-07-17.md); promoted to production in wave 9.
  */
 export interface SampleIssue {
   repo: "k8s" | "vscode";

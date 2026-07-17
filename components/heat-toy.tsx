@@ -49,18 +49,49 @@ function heatLabel(sim: number): { label: string; className: string } {
   return { label: "Cold", className: "text-muted-foreground" };
 }
 
-function guessFeedback(entry: { word: string; sim: number }): { label: string; className: string } {
-  if (entry.sim < 0) return { label: "Not in the word list — try another", className: "text-muted-foreground" };
+// `found` is an explicit flag, not inferred from `sim`'s sign — cosine
+// similarity is legitimately negative for two real, valid, dissimilar
+// embeddings (verified live: "fire" scored -0.083 against one real secret
+// word), so a bare `sim < 0` sentinel misreports a real match as "not in
+// the word list" whenever the true similarity happens to be negative. Bug
+// found during this wave's own QA of the headline feature, not introduced
+// by it — pre-existing since the sentinel pattern shipped in wave 3.
+function guessFeedback(entry: { word: string; sim: number; found: boolean }): {
+  label: string;
+  className: string;
+} {
+  if (!entry.found) return { label: "Not in the word list — try another", className: "text-muted-foreground" };
   return heatLabel(entry.sim);
 }
+
+// Plot geometry — internal SVG coordinate system, rendered responsively
+// (viewBox + w-full) so it scales cleanly from 390px mobile up, unlike the
+// wave-8 Lab 1 prototype's fixed-pixel width (that lab was desktop-only —
+// production fixes this).
+const PW = 320;
+const PH = 190;
+const PAD = 24;
 
 export function HeatToy() {
   const [vocab, setVocab] = useState<VocabPayload | null>(null);
   const [error, setError] = useState(false);
   const [guess, setGuess] = useState("");
-  const [history, setHistory] = useState<{ word: string; sim: number }[]>([]);
+  const [history, setHistory] = useState<{ word: string; sim: number; found: boolean }[]>([]);
   const [won, setWon] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Wave 9 (GG-approved production integration of the wave-8 Lab 1
+  // prototype — reports/wave8-lab-2026-07-17.md, the "highest-leverage"
+  // pick): the guess is plotted in the real embedding space next to
+  // today's secret word, not just labeled Cold/Warm/Hot. Both the plot
+  // *and* the original text feedback below render from the same real
+  // numbers — the visualization adds a channel, it doesn't replace the
+  // accessible one.
+  const [plotPos, setPlotPos] = useState<{ x: number; y: number } | null>(null);
+  const [plotLabel, setPlotLabel] = useState<{ word: string; pc1: number; pc2: number; sim: number } | null>(
+    null
+  );
+  const [stage, setStage] = useState<"idle" | "embedding" | "revealed">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +126,41 @@ export function HeatToy() {
     return dequantize(vocab.vectors[secretIndex], vocab.mins, vocab.scale);
   }, [vocab, secretIndex]);
 
+  // Real bounds of the real embedding space's first two components,
+  // computed once from the full 410-word vocab — not arbitrary axis limits.
+  const bounds = useMemo(() => {
+    if (!vocab) return null;
+    let min0 = Infinity,
+      max0 = -Infinity,
+      min1 = Infinity,
+      max1 = -Infinity;
+    for (const v of vocab.vectors) {
+      const d0 = (v[0] / 255) * vocab.scale[0] + vocab.mins[0];
+      const d1 = (v[1] / 255) * vocab.scale[1] + vocab.mins[1];
+      if (d0 < min0) min0 = d0;
+      if (d0 > max0) max0 = d0;
+      if (d1 < min1) min1 = d1;
+      if (d1 > max1) max1 = d1;
+    }
+    return { min0, max0, min1, max1 };
+  }, [vocab]);
+
+  function project(d0: number, d1: number) {
+    if (!bounds) return { x: PW / 2, y: PH / 2 };
+    const nx = (d0 - bounds.min0) / (bounds.max0 - bounds.min0 || 1);
+    const ny = (d1 - bounds.min1) / (bounds.max1 - bounds.min1 || 1);
+    return { x: PAD + nx * (PW - 2 * PAD), y: PH - PAD - ny * (PH - 2 * PAD) };
+  }
+
+  const secretPos = useMemo(() => {
+    if (!vocab || secretIndex < 0) return null;
+    const v = vocab.vectors[secretIndex];
+    const d0 = (v[0] / 255) * vocab.scale[0] + vocab.mins[0];
+    const d1 = (v[1] / 255) * vocab.scale[1] + vocab.mins[1];
+    return project(d0, d1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vocab, secretIndex, bounds]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!vocab || !secretVector) return;
@@ -103,16 +169,44 @@ export function HeatToy() {
 
     const idx = vocab.words.indexOf(word);
     if (idx === -1) {
-      setHistory((h) => [{ word, sim: -1 }, ...h].slice(0, 6));
+      setHistory((h) => [{ word, sim: 0, found: false }, ...h].slice(0, 6));
       setGuess("");
       return;
     }
 
     const guessVector = dequantize(vocab.vectors[idx], vocab.mins, vocab.scale);
     const sim = cosineSim(guessVector, secretVector);
-    setHistory((h) => [{ word, sim }, ...h].slice(0, 6));
+    setHistory((h) => [{ word, sim, found: true }, ...h].slice(0, 6));
     setGuess("");
     if (idx === secretIndex) setWon(true);
+
+    const v = vocab.vectors[idx];
+    const d0 = (v[0] / 255) * vocab.scale[0] + vocab.mins[0];
+    const d1 = (v[1] / 255) * vocab.scale[1] + vocab.mins[1];
+    const target = project(d0, d1);
+
+    // Staged reveal, disclosed as pacing, not a disguised wait — the cosine
+    // sim above and this projection are both already computed (<5ms for
+    // 410 words); the ~180ms hold + ~450ms transform transition is a
+    // deliberate sequence so the guess visibly *arrives* at its real
+    // position rather than popping there (reports/wave8-lab, Lab 1).
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setPlotPos(target);
+      setPlotLabel({ word, pc1: d0, pc2: d1, sim });
+      setStage("revealed");
+      return;
+    }
+
+    setStage("embedding");
+    // First guess starts from the plot's neutral center; later guesses
+    // carry over their previous position, so the point visibly moves
+    // closer to or farther from the secret word guess-to-guess.
+    setPlotPos((prev) => prev ?? { x: PW / 2, y: PH / 2 });
+    window.setTimeout(() => {
+      setPlotPos(target);
+      setPlotLabel({ word, pc1: d0, pc2: d1, sim });
+      setStage("revealed");
+    }, 180);
   }
 
   if (error) {
@@ -127,7 +221,7 @@ export function HeatToy() {
     );
   }
 
-  if (!vocab) {
+  if (!vocab || !secretPos) {
     return <p className="text-sm text-muted-foreground">Loading today&apos;s word…</p>;
   }
 
@@ -159,7 +253,65 @@ export function HeatToy() {
         </button>
       </form>
 
+      <svg
+        viewBox={`0 0 ${PW} ${PH}`}
+        role="img"
+        aria-label={
+          plotLabel
+            ? `${plotLabel.word} plotted at (${plotLabel.pc1.toFixed(2)}, ${plotLabel.pc2.toFixed(2)}), cosine similarity ${plotLabel.sim.toFixed(3)} against today's secret word`
+            : "Embedding-space plot, no guess yet"
+        }
+        className="border-border/60 bg-background/40 h-auto w-full max-w-md rounded-md border"
+      >
+        <line x1={PAD} y1={PH - PAD} x2={PW - PAD} y2={PH - PAD} stroke="var(--border)" strokeWidth={1} />
+        <line x1={PAD} y1={PAD} x2={PAD} y2={PH - PAD} stroke="var(--border)" strokeWidth={1} />
+        <text x={PW - PAD} y={PH - PAD + 14} textAnchor="end" fill="var(--text-lo)" fontSize={9} fontFamily="var(--font-jetbrains-mono)">
+          PC1 →
+        </text>
+        <text x={PAD - 4} y={PAD - 8} textAnchor="start" fill="var(--text-lo)" fontSize={9} fontFamily="var(--font-jetbrains-mono)">
+          ↑ PC2
+        </text>
+
+        {/* opacity 0.8, not eyeballed: --text-lo composited at 0.8 over
+            --background computes to 4.55:1 (AA text floor is 4.5:1) —
+            0.6 (the original value) only reached 3.03:1, caught by
+            design review since it's a new derived color not in
+            globals.css's own contrast table. */}
+        <circle cx={secretPos.x} cy={secretPos.y} r={5} fill="var(--text-lo)" opacity={0.8} />
+        <text x={secretPos.x + 9} y={secretPos.y + 3} fill="var(--text-lo)" fontSize={10} fontFamily="var(--font-jetbrains-mono)">
+          today&apos;s word
+        </text>
+
+        {plotPos && (
+          <line
+            x1={secretPos.x}
+            y1={secretPos.y}
+            x2={plotPos.x}
+            y2={plotPos.y}
+            stroke="var(--indigo)"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            opacity={0.5}
+          />
+        )}
+
+        {plotPos && (
+          <g
+            className="transition-transform duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+            style={{ transform: `translate(${plotPos.x}px, ${plotPos.y}px)` }}
+          >
+            <circle r={6} fill="var(--indigo)" />
+            {plotLabel && (
+              <text x={10} y={4} fill="var(--text-hi)" fontSize={11} fontFamily="var(--font-jetbrains-mono)">
+                {plotLabel.word}
+              </text>
+            )}
+          </g>
+        )}
+      </svg>
+
       <div aria-live="polite" className="flex flex-col gap-1.5">
+        {stage === "embedding" && <p className="text-muted-foreground text-xs animate-pulse">embedding…</p>}
         {won && (
           <p className="text-sm font-medium text-accent">
             🎉 That&apos;s it — you found today&apos;s word.
@@ -172,20 +324,26 @@ export function HeatToy() {
               <span className="w-24 shrink-0 truncate font-mono text-foreground">{h.word}</span>
               {/* The similarity, made visible — this row IS the demo. */}
               <span aria-hidden className="h-px flex-1 bg-border/40">
-                {h.sim >= 0 && (
+                {h.found && (
                   <span
                     className="block h-px bg-accent"
-                    style={{ width: `${Math.max(2, Math.round(h.sim * 100))}%` }}
+                    style={{ width: `${Math.max(2, Math.round(Math.max(0, h.sim) * 100))}%` }}
                   />
                 )}
               </span>
               <span className={`shrink-0 font-mono ${feedback.className}`}>
-                {h.sim >= 0 ? `${feedback.label} (${h.sim.toFixed(2)})` : feedback.label}
+                {h.found ? `${feedback.label} (${h.sim.toFixed(2)})` : feedback.label}
               </span>
             </div>
           );
         })}
       </div>
+
+      <p className="text-muted-foreground max-w-[52ch] text-xs leading-relaxed">
+        The plot uses only the real embedding space&apos;s 1st and 2nd principal components
+        (of 72 total, 72.3% variance retained) — a genuine but simplified 2D view. The
+        Cold/Warm/Hot feedback above uses all 72 dimensions, same as always.
+      </p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { InlineLink } from "@/components/inline-link";
+import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { site } from "@/content/site";
 
@@ -6,11 +7,14 @@ import { site } from "@/content/site";
  * Wave 6: Contact absorbs the colophon (tracegauge moved up into the Work
  * index where products belong). The big serif email link stays — it earned
  * its place as the page's one unmissable action.
+ *
+ * Wave 9: RevealGroup (mode="onview") replaces the plain wrapper — the
+ * site's new default reveal pattern (GG's integration map, item 2).
  */
 export function Contact() {
   return (
     <Section id="contact" label="Contact">
-      <div className="flex flex-col gap-6">
+      <RevealGroup mode="onview" className="flex flex-col gap-6">
         <div className="flex max-w-measure flex-col gap-2">
           <p className="text-base leading-relaxed text-foreground">
             Open to Senior/Principal Applied AI roles — full-time, hiring-manager or recruiter,
@@ -42,7 +46,7 @@ export function Contact() {
             LinkedIn
           </InlineLink>
         </p>
-      </div>
+      </RevealGroup>
     </Section>
   );
 }

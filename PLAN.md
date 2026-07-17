@@ -386,6 +386,61 @@ once outside Experience), not pixels. Full report:
 Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
 as waves 3/4. No more open items on this wave — PR #14 is ready for GG's review as-is.
 
+## Wave 9 — production integration of all 5 wave-8 prototypes (2026-07-17)
+
+GG clicked through `/lab` live and approved all five wave-8 prototypes; this wave builds
+them production-grade per GG's explicit integration map and deletes `/lab/*`.
+
+- [x] **Embedding-space visualization → merged into the existing heat toy** (Warmer
+      annex under Work) — headline feature, most QA attention. Found and fixed a real
+      pre-existing bug (shipped since wave 3, surfaced by this wave's own thorough guess-
+      flow testing): `guessFeedback()` used `sim < 0` as a "not found" sentinel, but
+      cosine similarity is legitimately negative for real dissimilar embeddings (verified:
+      "fire" scored -0.083 against a real secret word and was misreported as "not in the
+      word list"). Fixed with an explicit `found: boolean` field, no longer inferred from
+      sign.
+- [x] **Staggered reveal (`components/reveal-group.tsx`) → the site's new default
+      entrance pattern**, applied to Work's Warmer annex, Research, Experience (nested
+      per-company), Contact. **Hero deliberately excluded** — this wave's own testing
+      found the onload version raced axe-core's color-contrast check (flaky 2/3 failures
+      on identical code, settled-state contrast confirmed compliant — a transient
+      first-paint opacity artifact, not a real defect). Reverted to instant render,
+      re-affirming wave 2/3's original "no reveal-on-load flash for Hero" principle for a
+      second, concrete reason. 5/5 clean axe runs after the revert.
+- [x] **Momentum slider (`components/work-slider.tsx`) replaces the flat Work list** —
+      all 10 products, native scroll-snap, peek-of-next, mouse-drag, progress bar +
+      counter. Flagship cards carry their eval figure with scroll-linked draw-in
+      (`components/eval-figure.tsx`, now client, rooted to the slider's own scroll
+      container, not the viewport).
+- [x] **TF-IDF classifier → collapsed disclosure on TriageIQ's card**, click-to-expand,
+      illustrative label unchanged from the lab. A floating-popover version hit a real
+      CSS bug (`overflow-x:auto` forces `overflow-y:auto` per spec, silently clipping the
+      popover — traced via a genuine document-level horizontal-overflow defect, the same
+      class wave 6 fixed the old carousel for) — fixed structurally by rendering the
+      panel in normal block flow below the whole slider instead, connected via
+      `aria-controls` + scroll-into-view.
+- [x] **Design-reviewer sign-off**, reversed lens ("modern and alive, or still dull?"):
+      approved with suggestions, zero blocking. Quote: "this is the first wave where
+      'real-time compute moment' is an accurate description of what ships." Two
+      suggestions fixed pre-merge (Experience's cascade granularity was one reveal unit,
+      not per-company; TriageIQ panel needed `aria-controls` + scroll feedback); one
+      contrast finding also fixed (heat-toy reference dot opacity 0.6→0.8, 3.03:1→4.55:1,
+      computed not eyeballed).
+- [x] **Verification**: axe 0/5 runs, no-JS literal test via CDP
+      `Emulation.setScriptExecutionDisabled` (real engine-level JS disable, not curl-only —
+      full page renders correctly, screenshot on file), reduced-motion via a genuine
+      `--force-prefers-reduced-motion` browser flag with a differential + negative-control
+      proof (normal motion: guess-point position changes 30ms→1030ms; reduced motion:
+      identical — confirmed on the headline feature specifically), Lighthouse a11y 100/
+      SEO 100/perf 100/LCP 0.7s, budget 201,324 B gzip (+11.7KB vs wave 7, ceiling
+      unchanged at 220,160B). Full report: `reports/wave9-lab-integration-2026-07-17.md`;
+      screenshots: `reports/screenshots/wave9/`.
+- [ ] **`explore/wave8-lab` deletion deferred** (not an ancestor of `main` yet — deleting
+      now would violate the standing never-delete-without-ancestor-check rule). Delete
+      once this wave's PR merges to main.
+
+Large diff → draft PR for GG's manual review, same posture as prior waves.
+
 ## Wave 8 — creative delight pass, prototype-first (2026-07-17, holding for GG's pick)
 
 GG's read on waves 6/7: too restrained, feels dull — wants lively/modern (sliders,
