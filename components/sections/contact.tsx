@@ -15,14 +15,17 @@ export function Contact() {
   return (
     <Section id="contact" label="Contact">
       <RevealGroup mode="onview" className="flex flex-col gap-6">
+        {/* Wave 10 (GG: previous copy read vague/casual — "let's talk",
+            "if the scope is a good fit"). Direct and professional: what I'm
+            looking for, how to reach me, where I am. */}
         <div className="flex max-w-measure flex-col gap-2">
           <p className="text-base leading-relaxed text-foreground">
-            Open to Senior/Principal Applied AI roles — full-time, hiring-manager or recruiter,
-            let&apos;s talk.
+            I&apos;m looking for Senior or Principal Applied AI roles, and I take on select
+            AI/ML consulting engagements.
           </p>
           <p className="text-muted-foreground text-base leading-relaxed">
-            Also open to short-term AI/ML build or advisory projects, if the scope is a good
-            fit.
+            If my work fits what you&apos;re building, email is the fastest way to reach me — I
+            read everything and reply promptly.
           </p>
         </div>
 

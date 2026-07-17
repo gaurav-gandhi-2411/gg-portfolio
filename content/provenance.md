@@ -34,7 +34,8 @@ file-dated 2026-06-12. Confirmed identical to the file GG most recently placed i
 | `resume:indium-ds-docunderstanding` | "50M+ documents", "144 A100 GPUs", "$10M+ in annual cost savings", "95%+ field accuracy" | Resume PDF p.1, Indium Software → Data Scientist (Jun 2024–May 2025), bullet "Document-Understanding Transformer at Production Scale" |
 | `derived:products-live-count` | "N live AI products" (currently 9) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Now computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` OR `pypi` field (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded, though still shown as a card). One function is the single source of truth — the number can never drift from the array again. |
 | `derived:warmer-puzzle-count` | "N+ daily Warmer puzzles shipped" (wave 5, replaces the retired 50M+/$10M+ employer-derived hero stats) | Live server fetch, not a hand-typed number: `getWarmerPuzzleNumber()` (`lib/live-data.ts`) reads the public `mindmeld-payloads` manifest (`raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json`), same source and function already used and verified in wave 3 (`reports/wave3-live-stats-budget-2026-07-12.md` — confirmed Puzzle #31 on 2026-07-12). ISR-revalidated every 6h, fails soft to `"—"` in `components/sections/hero.tsx` if the manifest is unreachable — never a stale or fabricated number. |
-| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `preprint-pending`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. |
+| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `preprint-pending`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
+| `derived:career-years` | "N years in data science & ML" (currently 5) | Computed at build/ISR time in `components/sections/hero.tsx` `careerYears()`: whole years elapsed since Jul 2021, the start of the first data-science role on the resume (TCS Data Engineer, "Jul 2021 – Jul 2022" — `content/experience.ts` dateRange, itself resume-sourced via `resume:tcs-pipelines`). Same drift-proofing rationale as `derived:products-live-count`: a computed floor, never a hand-typed number that ages. |
 
 ## About / skills
 
@@ -227,6 +228,12 @@ de-emphasizes it as "comparison-only" (`README.md:71`) since a 2026-06-07 rewrit
 CLIP-led hero with a VRAM/CLIP-blindness framing. Used the VRAM framing — specifically the
 full-pipeline 6.2GB figure (what's actually served in production), which is more complete than
 the earlier concurrent-session pass's citation of only the 2.6GB single-component number.
+
+### AgentGauge (added wave 10)
+
+| ID | Claim | Source |
+|---|---|---|
+| `agentgauge:scoring-dimensions` | 8 scoring dimensions (all marked **Implemented**), 10-server pilot sample | `agentgauge/README.md` "Scoring dimensions" table (8 rows, weights sum to 100%); "10-server pilot sample" in the scope note near line 62, which also says "pilot-scale research artifact… not a validated product claim" — the card's metric is therefore descriptive (dimension count + pilot size), not a performance number. Verified directly against the README 2026-07-17, not from the inventory-agent relay. Repo public via `git remote -v` → `github.com/gaurav-gandhi-2411/agentgauge`. No liveUrl and no PyPI package → correctly excluded from `liveProductCount`. |
 
 ### tracegauge
 

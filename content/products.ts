@@ -177,6 +177,22 @@ export const products: Product[] = [
     },
   },
   {
+    slug: "agentgauge",
+    name: "AgentGauge",
+    tagline:
+      "Scores how well an AI agent can actually use an MCP server — runs a real LLM agent against it across 8 dimensions. The benchmark behind the tool-description paper in Research below.",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
+    tier: "secondary",
+    // Deliberately descriptive, not a performance claim — the repo's own
+    // scope note calls it "a pilot-scale research artifact… not a validated
+    // product claim", and the card honors that framing (provenance.md).
+    metric: {
+      label: "Pilot-scale research artifact",
+      value: "8 scoring dimensions · 10-server pilot",
+      sourceRef: "agentgauge:scoring-dimensions",
+    },
+  },
+  {
     slug: "tracegauge",
     name: "tracegauge",
     tagline:
