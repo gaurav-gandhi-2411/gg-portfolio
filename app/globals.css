@@ -74,6 +74,12 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
+
+  /* Wave 11 — the one hover-elevation shadow for Work cards (rule 15b:
+   * a named token, not a per-component arbitrary value). Soft indigo
+   * lift, deliberately below "glow" intensity. */
+  --shadow-card-hover: 0 16px 40px -18px
+    color-mix(in oklab, var(--indigo) 30%, transparent);
 }
 
 :root {
@@ -118,5 +124,165 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/*
+ * ── Wave 11: calm base, concentrated wow ───────────────────────────────
+ * Three deliberate high-craft moments (boot loader, hero halo + gradient
+ * stat numerals, Work card hover) on an otherwise centered, quiet page.
+ * Everything below is decorative-only CSS: no text is ever held below
+ * full opacity (the wave-9 axe-race lesson), and every animation has a
+ * reduced-motion path.
+ */
+
+/* Hero halo — a single blurred indigo disc drifting behind the centered
+ * hero. One hue (the ratified accent), conic alpha variation only, so the
+ * one-accent discipline holds. transform-only animation (GPU-composited);
+ * z-index -1 tucks it behind the header's content but above the page
+ * background (the header is position:relative). */
+.hero-halo {
+  position: absolute;
+  top: -7rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: -1;
+  width: 42rem;
+  height: 42rem;
+  max-width: 100vw;
+  border-radius: 50%;
+  /* Design-review (wave 11): at 0.17 the drift read as inert on a normal
+   * 3-5s hero dwell — raised to 0.26 with stronger alpha stops so the
+   * moment is actually felt. Contrast re-verified post-bump (axe clean;
+   * worst-case tint behind the muted role line stays far above 4.5:1). */
+  background: conic-gradient(
+    from 40deg,
+    transparent 0%,
+    color-mix(in oklab, var(--indigo) 52%, transparent) 22%,
+    color-mix(in oklab, var(--indigo) 16%, transparent) 46%,
+    transparent 62%,
+    color-mix(in oklab, var(--indigo) 34%, transparent) 82%,
+    transparent 100%
+  );
+  filter: blur(80px);
+  opacity: 0.26;
+  pointer-events: none;
+  animation: halo-spin 28s linear infinite;
+}
+@keyframes halo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-halo {
+    animation: none;
+  }
+}
+
+/* Gradient stat numerals (hero). Both gradient endpoints independently
+ * pass WCAG AA on the page background (text-hi 16.96:1, indigo 6.60:1 —
+ * see the token header table), so no point of the gradient can dip below
+ * the normal-text 4.5:1 bar. */
+.stat-figure {
+  background: linear-gradient(135deg, var(--text-hi) 15%, var(--indigo) 95%);
+  background-clip: text;
+  color: transparent;
+}
+
+/*
+ * Boot loader. The overlay is server-rendered but display:none by
+ * default — a pre-paint inline <head> script opts INTO it (sets
+ * html[data-boot="1"]) only when JS is running and the visitor does not
+ * prefer reduced motion. Consequences, all deliberate:
+ *   - no-JS visitors never see it (the wave-6 "blank without JS" class
+ *     is structurally unreachable);
+ *   - reduced-motion visitors never see it;
+ *   - the exit is pure CSS with fixed delays, so even if hydration lags,
+ *     the overlay is visually gone at ~1s (React removes the node later
+ *     as cleanup, it does not gate the reveal).
+ * The overlay is aria-hidden, pointer-events:none, and painted in the
+ * exact page background color — an axe pass that lands mid-animation
+ * computes text contrast against the identical color it would find
+ * after the overlay is gone.
+ */
+#boot-loader {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  pointer-events: none;
+  clip-path: inset(0 0 0 0);
+}
+html[data-boot="1"] #boot-loader {
+  display: flex;
+  /* Top inset grows → the page is revealed top-down, hero name first. */
+  animation: boot-exit 0.38s cubic-bezier(0.83, 0, 0.17, 1) 0.62s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-boot="1"] #boot-loader {
+    display: none;
+  }
+}
+@keyframes boot-exit {
+  to {
+    clip-path: inset(100% 0 0 0);
+    visibility: hidden;
+  }
+}
+.boot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: boot-inner-exit 0.3s cubic-bezier(0.83, 0, 0.17, 1) 0.62s forwards;
+}
+@keyframes boot-inner-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+/* Monogram strokes draw in (pathLength=1 normalizes every path). */
+.boot-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: boot-draw 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.boot-path-delay-1 {
+  animation-delay: 0.08s;
+}
+.boot-path-delay-2 {
+  animation-delay: 0.22s;
+}
+.boot-path-delay-3 {
+  animation-delay: 0.3s;
+}
+@keyframes boot-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.boot-bar {
+  margin-top: 1.75rem;
+  width: 8.75rem;
+  height: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--graphite-line) 40%, transparent);
+}
+.boot-bar-fill {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: var(--indigo);
+  animation: boot-fill 0.55s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+}
+@keyframes boot-fill {
+  to {
+    transform: scaleX(1);
   }
 }

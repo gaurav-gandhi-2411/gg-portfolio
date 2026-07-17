@@ -130,7 +130,10 @@ export function TriageiqClassifyToy() {
           id="triageiq-classify-text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="border-border bg-card text-foreground w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:border-ring"
+          // Focus ring matches heat-toy.tsx's input — the stronger of the two
+          // treatments (design-review, wave 11: this input is newly prominent
+          // now that the disclosure renders inline in the Work section).
+          className="border-border bg-card text-foreground w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring"
         />
         <button
           type="submit"

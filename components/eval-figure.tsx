@@ -20,12 +20,10 @@ import type { ProductFigure } from "@/content/types";
  * an IntersectionObserver confirms the figure is actually visible; nothing
  * is hidden by default (same safety pattern as reveal-group.tsx).
  *
- * `rootEl`: when a figure lives inside a horizontally-scrolling container
- * (the work slider), the default viewport-rooted IntersectionObserver
- * would fire for every slide the moment the *section* scrolls into view,
- * regardless of which slide is actually scrolled to — defeating the
- * point. Pass the slider's own scroll container so "visible" means
- * "the slide holding this figure is actually scrolled into view."
+ * Wave 11: the `rootEl` prop (a custom IntersectionObserver root for
+ * figures inside the retired work slider's scroll container) is gone —
+ * every figure now lives in normal page flow, so the viewport root is
+ * always correct.
  *
  * Accessibility: each <svg> is role="img" with an aria-label that states
  * the metric in words (values included). The visible <figcaption> is
@@ -40,9 +38,9 @@ const MONO = "var(--font-jetbrains-mono)";
 // caption sit on one size (design-review finding: 11px was a tokenless 1px
 // mismatch with the figcaption directly below).
 const FIG_TEXT_PX = 12;
-// Keep in sync with the rail column: work-slider's card width assumptions
-// and this figure's own w-[13rem] wrapper — 208 = 13rem at the 16px root.
-// A root-size change must update all three together.
+// Keep in sync with the flagship card's figure rail (md:grid-cols-[1fr_13rem]
+// in components/sections/work.tsx) and this figure's own w-[13rem] wrapper —
+// 208 = 13rem at the 16px root. A root-size change must update all three.
 const W = 208;
 const EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
 
@@ -59,7 +57,7 @@ function Caption({ children }: { children: React.ReactNode }) {
 
 type Mark = SVGRectElement | SVGLineElement | SVGCircleElement;
 
-function useDrawIn(rootEl?: Element | null) {
+function useDrawIn() {
   const svgRef = useRef<SVGSVGElement>(null);
   const markRefs = useRef<(Mark | null)[]>([]);
 
@@ -103,25 +101,17 @@ function useDrawIn(rootEl?: Element | null) {
         });
         observer.disconnect();
       },
-      { threshold: 0.5, root: rootEl ?? null }
+      { threshold: 0.5 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [rootEl]);
+  }, []);
 
   return { svgRef, setMarkRef };
 }
 
-export function EvalFigure({
-  figure,
-  label,
-  rootEl,
-}: {
-  figure: ProductFigure;
-  label: string;
-  rootEl?: Element | null;
-}) {
-  const { svgRef, setMarkRef } = useDrawIn(rootEl);
+export function EvalFigure({ figure, label }: { figure: ProductFigure; label: string }) {
+  const { svgRef, setMarkRef } = useDrawIn();
 
   if (figure.kind === "dumbbell") {
     const x = (v: number) => 8 + Math.max(0, Math.min(1, v)) * (W - 16);
