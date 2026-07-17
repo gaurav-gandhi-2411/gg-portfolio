@@ -37,7 +37,7 @@ export function CaseStudyPage({
   const next = () => ++sectionIndex;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-12 pb-20 md:pt-16">
+    <main id="main" className="mx-auto w-full max-w-2xl flex-1 px-6 pt-12 pb-20 md:pt-16">
       <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
         <Link
           href="/projects"
@@ -65,9 +65,12 @@ export function CaseStudyPage({
         </p>
       )}
 
+      {/* Design-review (wave 12): one primary action per surface — the
+          first link (the live/try destination, or the repo when that's
+          all there is) carries the filled variant. */}
       <p className="mt-6 flex flex-wrap gap-3">
-        {study.links.map((link) => (
-          <LinkButton key={link.href} href={link.href}>
+        {study.links.map((link, i) => (
+          <LinkButton key={link.href} href={link.href} variant={i === 0 ? "primary" : "secondary"}>
             {link.label} ↗
           </LinkButton>
         ))}
@@ -174,8 +177,12 @@ export function CaseStudyPage({
       <div className="border-border/40 mt-16 flex flex-col items-center gap-5 border-t pt-10 text-center">
         <p className="text-muted-foreground text-sm">Want to see it for yourself?</p>
         <p className="flex flex-wrap justify-center gap-3">
-          {study.links.map((link) => (
-            <LinkButton key={link.href} href={link.href}>
+          {study.links.map((link, i) => (
+            <LinkButton
+              key={link.href}
+              href={link.href}
+              variant={i === 0 ? "primary" : "secondary"}
+            >
               {link.label} ↗
             </LinkButton>
           ))}

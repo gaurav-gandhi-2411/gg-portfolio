@@ -148,7 +148,7 @@ export function TriageiqClassifyToy() {
           {(["k8s", "vscode"] as const).map((repo) => (
             <div key={repo} className="flex items-center gap-3">
               <span className="w-16 font-mono text-xs text-muted-foreground">{repo}</span>
-              <div className="bg-border/40 h-[6px] flex-1 overflow-hidden rounded-full">
+              <div className="bg-border/40 h-1.5 flex-1 overflow-hidden rounded-full">
                 <div
                   className={`h-full rounded-full ${repo === winner ? "bg-accent" : "bg-border"}`}
                   style={{ width: `${Math.max(2, result[repo] * 100)}%` }}

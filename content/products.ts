@@ -211,11 +211,12 @@ export const products: Product[] = [
     slug: "expense-tracker",
     name: "Expense Tracker",
     tagline:
-      "Multi-user expense tracker with NL entry parsing, embedding-based auto-categorization, anomaly detection, and Prophet forecasting — live on Cloud Run + Vercel.",
+      "Multi-user expense tracker with NL entry parsing, embedding-based auto-categorization, anomaly detection, and Prophet forecasting — built production-shaped (real auth, isolation, migrations).",
     // Added wave 12: the wave-10 sweep skipped this repo on its stale
-    // top-level README; CURRENT_STATE.md shows a deployed, tested,
-    // multi-user product (see provenance.md#expense-tracker:state).
-    liveUrl: "https://expense-tracker-tawny-eight-98.vercel.app",
+    // top-level README; CURRENT_STATE.md shows a built, tested, multi-user
+    // product. Deliberately NO liveUrl: the documented demo deployment was
+    // found down on 2026-07-18 (frontend 404, backend 500 — caught by this
+    // repo's own lychee CI) — see provenance.md#expense-tracker:state.
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
     tier: "secondary",
     metric: {

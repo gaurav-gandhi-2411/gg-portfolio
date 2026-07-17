@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
   const downloads = await getTracegaugeDownloads();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-6 pt-12 pb-20 md:pt-16">
+    <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-6 pt-12 pb-20 md:pt-16">
       <div className="flex flex-col items-center text-center">
         <h1 className="font-heading text-heading font-semibold tracking-tight text-foreground">
           All projects

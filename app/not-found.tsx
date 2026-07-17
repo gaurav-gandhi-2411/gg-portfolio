@@ -4,7 +4,7 @@ import Link from "next/link";
 // styled dead-end instead of the framework default.
 export default function NotFound() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-32 text-center">
+    <main id="main" className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-32 text-center">
       <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">404</p>
       <h1 className="font-heading text-heading mt-4 font-semibold text-foreground">
         Nothing lives here

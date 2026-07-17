@@ -34,6 +34,14 @@ export function SiteNav() {
       aria-label="Site"
       className="border-border/30 bg-background/80 sticky top-0 z-50 border-b backdrop-blur-md"
     >
+      {/* WCAG 2.4.1 (design-review): a keyboard user shouldn't tab the
+          whole nav on all 14 routes to reach content. */}
+      <a
+        href="#main"
+        className="bg-accent text-accent-foreground sr-only rounded-md px-4 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
+      >
+        Skip to content
+      </a>
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-3">
         <Link
           href="/"

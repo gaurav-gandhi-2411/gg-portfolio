@@ -430,7 +430,7 @@ Overturns the wave-10 skip, which was made against the repo's stale top-level RE
 
 | ID | Claim | Source |
 |---|---|---|
-| `expense-tracker:state` | Live: FastAPI on Cloud Run + Next.js 16 on Vercel; Supabase Auth (ES256/HS256 dual JWT), per-user isolation (cross-user → 404), Alembic migrations; 9/9 Playwright auth E2E | `expense-tracker/CURRENT_STATE.md:6-26,233-236` |
+| `expense-tracker:state` | Built + deployed: FastAPI on Cloud Run + Next.js 16 on Vercel; Supabase Auth (ES256/HS256 dual JWT), per-user isolation (cross-user → 404), Alembic migrations; 9/9 Playwright auth E2E. **Correction 2026-07-18 (caught by this repo's lychee CI on PR #20):** the documented demo deployment is currently DOWN — frontend `expense-tracker-tawny-eight-98.vercel.app` returns 404, backend `expense-tracker-242393598566.us-central1.run.app` returns 500 (curl-verified). Site treats the project as repo-only (no liveUrl, excluded from `liveProductCount`); the case-study page states the outage explicitly. | `expense-tracker/CURRENT_STATE.md:6-26,233-236`; outage: curl checks 2026-07-18 |
 | `expense-tracker:tests` | 143/143 backend tests, ruff clean, mypy clean | `expense-tracker/CURRENT_STATE.md:228-231` |
 | `expense-tracker:ml-features` | Groq NL parsing + 3 local ML features (embedding categorizer, IsolationForest anomaly, Prophet forecast), documented fallbacks, manual non-CI evals | `expense-tracker/CURRENT_STATE.md:69-71,76-77` |
 

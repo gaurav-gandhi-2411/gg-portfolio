@@ -46,7 +46,7 @@ export function FlowDiagram({ stages, label }: { stages: FlowStage[]; label: str
                     >
                       <p className="text-xs font-medium text-foreground">{branch.label}</p>
                       {branch.detail && (
-                        <p className="text-muted-foreground mt-0.5 font-mono text-[11px] leading-relaxed">
+                        <p className="text-muted-foreground mt-0.5 font-mono text-xs leading-relaxed">
                           {branch.detail}
                         </p>
                       )}
