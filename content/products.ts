@@ -11,6 +11,21 @@ export function liveProductCount(list: Product[]): number {
   return list.filter((p) => Boolean(p.liveUrl) || Boolean(p.pypi)).length;
 }
 
+/**
+ * The home page's showcase five (wave 12): the three flagships plus the
+ * two that widen the technical range the most — DealHunter (multi-agent
+ * search with the deepest test rig) and ShelfSense (classical-ML
+ * forecasting at 30K-series scale). Everything else lives one click away
+ * on /projects.
+ */
+export const showcaseSlugs = [
+  "warmer",
+  "style-maitri",
+  "triageiq",
+  "dealhunter",
+  "shelfsense",
+] as const;
+
 export const products: Product[] = [
   // ── Flagship ────────────────────────────────────────────────────────────
   {
@@ -190,6 +205,24 @@ export const products: Product[] = [
       label: "pilot-scale research artifact, honestly scoped",
       value: "8 scoring dimensions, all implemented",
       sourceRef: "agentgauge:scoring-dimensions",
+    },
+  },
+  {
+    slug: "expense-tracker",
+    name: "Expense Tracker",
+    tagline:
+      "Multi-user expense tracker with NL entry parsing, embedding-based auto-categorization, anomaly detection, and Prophet forecasting — built production-shaped (real auth, isolation, migrations).",
+    // Added wave 12: the wave-10 sweep skipped this repo on its stale
+    // top-level README; CURRENT_STATE.md shows a built, tested, multi-user
+    // product. Deliberately NO liveUrl: the documented demo deployment was
+    // found down on 2026-07-18 (frontend 404, backend 500 — caught by this
+    // repo's own lychee CI) — see provenance.md#expense-tracker:state.
+    repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
+    tier: "secondary",
+    metric: {
+      label: "Test suite",
+      value: "143/143 passing",
+      sourceRef: "expense-tracker:tests",
     },
   },
   {

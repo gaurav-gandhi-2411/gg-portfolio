@@ -1,14 +1,22 @@
-// Wave 10: GG read the previous version ("I build and ship AI products
-// end-to-end under my own name… through evaluation to a pre-submission
-// paper") as boastful/overwrought, and it was rewritten warm, first-person,
-// humble. Wave 11 splits that same approved paragraph across the new
-// centered composition — sentence 1 is the hero's one-line intro;
-// sentences 2–3 open the Work section they were describing (no re-wording
-// beyond dropping "Below is", which the new placement makes literal).
+// Wave 10 rewrote this file's voice warm/first-person/humble after GG read
+// the previous version as boastful. Wave 12 (multi-page): the approved
+// paragraph's first sentence became the hero h1's headline; the About Me
+// section GG asked for lives here as aboutParagraphs; sentences 2–3 still
+// open the Work section as workLede.
 
-/** Hero intro — sentence 1 of the wave-10-approved paragraph, verbatim. */
-export const heroIntro =
-  "I like building AI products and seeing them all the way through — from the first experiment to something real people can use.";
+/**
+ * Wave 12 — About Me (GG's ask: short, first-person, human, professional).
+ * Facts: career timeline and team-lead scope from the canonical resume
+ * (resume:indium-senior-lead, resume:fedex-anomaly, resume:tcs-pipelines);
+ * live-product count is derived on the page next to this copy; the two
+ * honest-numbers examples are real published results
+ * (gold-rate-tracker:headline, triageiq:retrieval — see provenance.md).
+ */
+export const aboutParagraphs: string[] = [
+  "I'm Gaurav — a data scientist in Bengaluru. Over the past five years I've gone from building ETL pipelines at TCS, to forecasting and anomaly detection at FedEx, to my current role inside Uber's AI org (via Indium Software), where I lead a five-person data-science team shipping GenAI document intelligence into production.",
+  "Outside work, I build my own AI products — a daily word game, a fashion stylist, an issue-triage service, and more. Each one exists because I wanted to see an idea all the way through: not a model in a notebook, but something deployed, evaluated, and used by real people.",
+  "The through-line is honest measurement. Every project ships with an evaluation harness, and the numbers I publish include the unflattering ones — the naive baseline that beat my forecasting model, the retrieval score that stayed weak after three attempted fixes. I'd rather show a real 83% than claim a vague \"high accuracy.\"",
+];
 
 /** Work lede — sentences 2–3 of the same approved paragraph. The closing
  * clause is real (gold-rate-tracker:headline: the naive baseline genuinely
@@ -16,10 +24,9 @@ export const heroIntro =
 export const workLede =
   "What I've made so far: a daily word game, a fashion styling assistant, an issue-triage service, and the research they led me to. The numbers are honest, including the one where a simple baseline beat my model.";
 
-/** Experience lead-in (wave 6: the dissolved About section's day-job
- * paragraph; wave 10 voice pass left it unchanged). */
-export const dayJobParagraph =
-  "That same rigor is what I bring to my day job: for the past year I've led and mentored a 5-person data-science team inside Uber's AI org (via Indium Software), shipping GenAI document-intelligence, multi-agent RAG copilots, and LLM fine-tuning pipelines into production.";
+// Wave 12: the wave-6 dayJobParagraph is retired — its facts (5-person
+// team, Uber's AI org via Indium, GenAI doc-intelligence) now live in
+// aboutParagraphs[0]; Experience opens straight into the company cards.
 
 // Curated ~10, not a tag cloud. Sourced from resume "Key Technical Skills" (see provenance.md#resume).
 export const skillChips: string[] = [

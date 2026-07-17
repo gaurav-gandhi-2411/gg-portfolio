@@ -68,6 +68,46 @@ export interface Product {
   figure?: ProductFigure;
 }
 
+/**
+ * One stage of an architecture flow diagram (wave 12). Rendered by
+ * components/flow-diagram.tsx as a vertical flow of boxes — `parallel`
+ * renders side-by-side sub-boxes inside the stage (e.g. FAISS + BM25).
+ * Only components that actually exist in the repo may appear here.
+ */
+export interface FlowStage {
+  label: string;
+  detail?: string;
+  parallel?: { label: string; detail?: string }[];
+  kind?: "input" | "stage" | "output";
+}
+
+/**
+ * A /work/[slug] case-study page (wave 12). Written for a novice reader:
+ * plain language, jargon explained in place. Every metric row carries a
+ * sourceRef into content/provenance.md (rule 65b) — no sourceRef, no ship.
+ */
+export interface CaseStudy {
+  slug: string;
+  /** Page h1 — the product name. */
+  title: string;
+  /** One-line dek under the title. */
+  dek: string;
+  /** Full pages get every section; short pages may omit architecture/decisions. */
+  depth: "full" | "short";
+  /** What real problem this solves and who it helps. Paragraphs. */
+  problem: string[];
+  /** How it works end-to-end, novice-readable. Paragraphs. */
+  approach: string[];
+  architecture?: { intro?: string; stages: FlowStage[]; note?: string };
+  /** Model/method choices and why — the teaching core. */
+  decisions?: { title: string; body: string; sourceRef: string }[];
+  /** Sourced metrics, including the honest/unflattering ones. */
+  results?: { label: string; value: string; detail?: string; sourceRef: string }[];
+  /** The hardest documented engineering/debugging story. */
+  story?: { title: string; body: string[]; sourceRef: string };
+  links: { label: string; href: string }[];
+}
+
 export interface ResearchPaper {
   title: string;
   abstract: string;

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
 import { PersonJsonLd } from "@/components/json-ld";
+import { SiteNav } from "@/components/site-nav";
 import "./globals.css";
 
 // Wave 4: editorial system. Space Grotesk replaces Inter as the body/UI
@@ -70,15 +71,19 @@ export default function RootLayout({
             overlay (see components/boot-loader.tsx) only when JS is live
             and the visitor doesn't prefer reduced motion; no-JS and
             reduced-motion visitors never see it at all. */}
+        {/* Wave 12: the entrance is scoped to the homepage — a visitor
+            opening a shared /work/... link shouldn't wait through a brand
+            moment before the content they were sent. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.boot='1'}catch(e){}",
+              "try{if(location.pathname==='/'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.boot='1'}catch(e){}",
           }}
         />
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
+        <SiteNav />
         {children}
         <Analytics />
         <SpeedInsights />

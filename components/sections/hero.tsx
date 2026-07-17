@@ -1,7 +1,12 @@
-import { InlineLink } from "@/components/inline-link";
-import { Monogram } from "@/components/monogram";
+import {
+  FileTextIcon,
+  GitHubIcon,
+  HuggingFaceIcon,
+  LinkedInIcon,
+  MailIcon,
+} from "@/components/icons";
+import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
-import { heroIntro } from "@/content/about";
 import { liveProductCount, products } from "@/content/products";
 import type { Stat } from "@/content/types";
 
@@ -17,23 +22,20 @@ function careerYears(): number {
 }
 
 /**
- * Wave 11 hero — wow moment #2. Fully centered on the page's single axis
- * (GG's direction; the wave-6 left-aligned byline left the right half of
- * the viewport empty). The intro is now ONE line — sentence 1 of the
- * wave-10-approved paragraph, verbatim (the rest opens Work, where it
- * points). Two concentrated touches, calm everywhere else:
- *   - .hero-halo: a slow-drifting blurred indigo disc behind the stack
- *     (decorative, aria-hidden, transform-only, static under
- *     prefers-reduced-motion);
- *   - .stat-figure: gradient numerals on the stats row (both gradient
- *     endpoints independently pass AA on this background — globals.css).
+ * Wave 12 hero. The h1 is now the tagline (maninder's structural pattern:
+ * the statement leads, the name sits in the byline and the nav); the
+ * wave-10-approved warm voice carries over — this is that paragraph's
+ * first sentence, tightened into a headline.
  *
- * Deliberately NOT animated: every text node renders at full opacity from
- * first paint. Wave 9 proved an onload hero cascade races axe-core's
- * contrast check; the entrance feeling comes from the boot loader's
- * curtain reveal (components/boot-loader.tsx), which never dips content
- * opacity. Stats stay the wave-10 set (GG-ratified): two derived, one
- * verbatim from the resume (resume:indium-senior-lead).
+ * Stats (wave-12 brief): "5 people I lead" is retired from the hero — it
+ * contradicts the independent-builder positioning as a headline (it stays
+ * in About/Experience where it's employment context). The third axis is
+ * the resume-sourced Uber corpus scale, the one number of GG's that
+ * honestly supports scale language (resume:indium-ds-docunderstanding).
+ *
+ * Still deliberately NOT animated: every text node renders at full
+ * opacity from first paint (wave-9 axe-race lesson); the entrance feeling
+ * is the boot loader's curtain reveal.
  */
 export function Hero() {
   const heroStats: Stat[] = [
@@ -48,52 +50,60 @@ export function Hero() {
       sourceRef: "derived:products-live-count",
     },
     {
-      value: "5",
-      label: "people on the data-science team I lead",
-      sourceRef: "resume:indium-senior-lead",
+      value: "50M+",
+      label: "documents behind the Uber doc-AI I helped build",
+      sourceRef: "resume:indium-ds-docunderstanding",
     },
   ];
 
   return (
-    <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-24 pb-16 text-center sm:pt-32 md:pb-20">
+    <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28 md:pb-20">
       <div aria-hidden="true" className="hero-halo" />
 
-      <Monogram className="size-11" />
-
-      <h1 className="font-heading text-display mt-8 font-semibold tracking-tight text-foreground">
-        {site.name}
-      </h1>
-
-      <p className="text-muted-foreground mt-4 text-lg">
-        {site.role} · {site.location} ·{" "}
-        {/* Accent implies interactivity — so make it real: the status is a
-            link to the section where acting on it happens (review fix). */}
+      <p className="text-sm">
         <a
           href="#contact"
-          className="text-accent decoration-accent/40 underline decoration-1 underline-offset-4 transition-colors hover:decoration-accent focus-visible:decoration-accent motion-reduce:transition-none"
+          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex items-center gap-2 rounded-full border px-4 py-1.5 transition-colors motion-reduce:transition-none"
         >
+          <span aria-hidden="true" className="bg-accent size-1.5 rounded-full" />
           {site.status}
         </a>
       </p>
 
-      <p className="mt-6 max-w-[44ch] text-lg leading-relaxed text-foreground">{heroIntro}</p>
+      <h1 className="font-heading text-display mt-8 max-w-[24ch] font-semibold tracking-tight text-foreground">
+        I build <span className="stat-figure">AI products</span> and see them through — from
+        first experiment to real users.
+      </h1>
 
-      <p className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-base">
-        <InlineLink href={site.resumeUrl} download>
-          Resume
-        </InlineLink>
-        <InlineLink href={site.githubUrl}>GitHub</InlineLink>
-        <InlineLink href={site.linkedinUrl}>LinkedIn</InlineLink>
-        <InlineLink href={`mailto:${site.email}`} sameTab>
+      <p className="text-muted-foreground mt-6 text-lg">
+        <span className="font-medium text-foreground">{site.name}</span> · Senior Data
+        Scientist — Applied AI · {site.location}
+      </p>
+
+      <p className="mt-8 flex flex-wrap justify-center gap-3">
+        {/* Views the PDF in a new tab — never a forced download (wave 12). */}
+        <LinkButton href={site.resumeUrl} variant="primary" icon={<FileTextIcon />}>
+          View Resume
+        </LinkButton>
+        <LinkButton href={site.githubUrl} icon={<GitHubIcon />}>
+          GitHub
+        </LinkButton>
+        <LinkButton href={site.linkedinUrl} icon={<LinkedInIcon />}>
+          LinkedIn
+        </LinkButton>
+        <LinkButton href={site.huggingfaceUrl} icon={<HuggingFaceIcon />}>
+          Hugging Face
+        </LinkButton>
+        <LinkButton href={`mailto:${site.email}`} sameTab icon={<MailIcon />}>
           Email
-        </InlineLink>
+        </LinkButton>
       </p>
 
       <dl className="border-border/40 mt-14 grid w-full max-w-2xl grid-cols-1 gap-x-8 gap-y-6 border-t pt-8 sm:grid-cols-3">
         {heroStats.map((stat) => (
           <div key={stat.sourceRef} className="flex flex-col items-center gap-1.5">
             <dd className="stat-figure font-mono text-heading font-medium">{stat.value}</dd>
-            <dt className="text-muted-foreground max-w-[18ch] text-sm leading-snug">
+            <dt className="text-muted-foreground max-w-[22ch] text-sm leading-snug">
               {stat.label}
             </dt>
           </div>

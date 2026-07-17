@@ -513,6 +513,50 @@ mid-build option gates. Full report: `reports/wave11-calm-base-wow-2026-07-17.md
       waves. `explore/wave8-lab` deletion still deferred until its content is an
       ancestor of main (unchanged standing note).
 
+## Wave 12 — multi-page architecture (2026-07-18, draft PR #20 pending GG's merge)
+
+GG's brief: the real gap vs maninder.vercel.app was STRUCTURE, not feel — build the
+multi-page portfolio (home teases → /projects indexes → /work/[slug] teaches). Full report:
+`reports/wave12-multipage-2026-07-18.md`.
+
+- [x] **Reference studied in-browser** (maninder home, /projects, a /work case study) —
+      structure extracted, no content copied.
+- [x] **12 case-study pages** (`content/case-studies/*.ts` + `/work/[slug]` route): problem →
+      approach → architecture (server-rendered FlowDiagram, zero JS) → decisions-with-why →
+      honest results → hard-problem story. 11 full + 1 short (expense-tracker). Content
+      researched from the actual repos by 4 parallel read-only passes; ~70 new file:line
+      provenance rows in provenance.md's wave-12 section. Heat toy → /work/warmer, TriageIQ
+      classifier → /work/triageiq (demos live where the teaching happens).
+- [x] **Inventory correction:** expense-tracker added (wave-10 skip rested on a stale
+      README; CURRENT_STATE.md shows a built, tested, multi-user product). **Mid-wave
+      catch by this repo's own lychee CI:** its documented demo deployment is DOWN
+      (frontend 404 / backend 500, curl-verified) — shipped repo-only, outage stated on the
+      page, derived live count self-corrected 10 → 9. reclaim NOT added (no git remote —
+      local-only, nothing public to verify).
+- [x] **Home restructured per GG's order:** hero → About Me (new) → Experience first (full
+      card treatment, all bullets, tech chips) → top-5 showcase (3 flagships + DealHunter +
+      ShelfSense) + "View all 12 →" → Research → Contact.
+- [x] **Hero:** tagline is the h1 (wave-10 voice tightened), name in byline; "5 people I
+      lead" retired from stats → resume-sourced "50M+ documents" scale axis; LinkButton row
+      (primary View Resume + GitHub/LinkedIn/HuggingFace/Email).
+- [x] **HF verified 2026-07-18:** real account, 2 public models, 112 cumulative downloads,
+      4 Spaces → link added (hero + contact), NO download stat (too small, per brief).
+- [x] **Resume opens in a new tab for VIEWING** — target=_blank, no download attr,
+      `Content-Disposition: inline` verified live on the preview.
+- [x] **Nav + transitions:** first persistent top nav (client, active states, skip link);
+      240ms route transition on client navigations only (initial load never animates —
+      wave-9 axe-race lesson); boot loader scoped to home (deep links skip it).
+- [x] **Verification:** build 20 static pages · axe 0 on ALL 14 routes · eager JS 202,787 B
+      gzip vs 220,160 ceiling (+11.6KB vs wave 11 for nav+transitions) · Lighthouse preview
+      desktop: home 99/100/100 LCP 0.6s CLS 0, /work/triageiq 100/100/100 LCP 0.6s (SEO 63
+      = preview noindex artifact) · full nav click-through on deployed preview · screenshots
+      1440/768/390 + nav-transition/loader GIFs (`reports/screenshots/wave12/`).
+- [x] **Design-reviewer sign-off:** approved with suggestions, zero blocking (structure 9,
+      hero 9, craft 9, rhythm 7, consistency 8). All 4 actionable suggestions taken
+      same-session (`761eea4`); shared contrast token + OG green dot logged for cleanup.
+- [ ] Large diff → **draft PR #20 for GG's manual review/merge**, same posture as prior
+      waves. `explore/wave8-lab` deletion still deferred (unchanged standing note).
+
 ## Wave 8 — creative delight pass, prototype-first (2026-07-17, holding for GG's pick)
 
 GG's read on waves 6/7: too restrained, feels dull — wants lively/modern (sliders,
