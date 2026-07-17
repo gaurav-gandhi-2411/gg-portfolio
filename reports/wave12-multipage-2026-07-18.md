@@ -115,13 +115,46 @@ failed fine-tunes and its own failing LCP budget).
 - **Recordings:** `nav-transition.gif`, `loader-home-scoped.gif` (frames captured under a
   disclosed slow-motion CSS override — this harness has no native screen recorder —
   assembled at ~2.5fps).
-- **Lighthouse (preview):** PENDING — filled in below after the Vercel preview deploy.
-- **Design review:** PENDING — running.
+- **Lighthouse (preview, desktop preset — the waves-6-through-11 baseline method):** see below.
 
-## Preview verification (Vercel, PR #20)
+## Preview verification (Vercel, PR #20, deployment `761eea4`)
 
-_(to be filled)_
+Preview: `gaurav-gandhi-git-feat-wave-865d31-gaurav-gandhi-2411s-projects.vercel.app`
+
+- **Routing:** /, /projects, /work/warmer, /work/triageiq, /work/expense-tracker all 200;
+  /work/nonexistent 404 (styled page). Full click-through driven live via CDP:
+  home → nav → /projects → card → /work/shelfsense → back → /projects → monogram → home,
+  every step landing with the right h1.
+- **Resume opens for viewing, verified live:** `target="_blank"`, no `download` attribute
+  (DOM check on the preview), and the server responds
+  `Content-Disposition: inline; filename="resume.pdf"` + `Content-Type: application/pdf` —
+  the browser renders the PDF in the new tab, exactly maninder's behavior.
+- **Lighthouse (desktop preset), artifacts
+  `reports/lighthouse-wave12-home-2026-07-18.json` +
+  `reports/lighthouse-wave12-triageiq-2026-07-18.json` @ `761eea4`:**
+  - `/` — perf **99** · a11y **100** · best-practices **100** · SEO 63 (known preview
+    `X-Robots-Tag: noindex` artifact, prod stays 100) · LCP **0.6s** · CLS **0**
+  - `/work/triageiq` — perf **100** · a11y **100** · BP **100** · SEO 63 (same artifact) ·
+    LCP **0.6s** · CLS **0**
+  - Matches the wave-11 baseline (perf 100 / LCP 0.6s) — the multi-page rebuild adds no
+    measurable perf cost. (The mobile-simulated CLI default reads 79/3.8s on the preview —
+    same Lantern-simulation gap wave 4 documented; the desktop preset is the
+    like-for-like comparison to every prior wave's number.)
+- **lychee:** failed on the first push — and the failure was REAL: expense-tracker's
+  documented live URL 404s (and its backend 500s). Fixed by de-listing the liveUrl and
+  stating the outage on the page (see above); lychee green on `761eea4`.
 
 ## Design-reviewer sign-off
 
-_(to be filled)_
+**Approved with suggestions, zero blocking.** Scores: structure 9/10 ("materially better
+than wave 11's single 6,392px page"), hero 9/10, craft concentration 9/10, type/space
+rhythm 7/10, consistency 8/10.
+
+Suggestions taken same-session (`761eea4`): flow-diagram `text-[11px]` → `text-xs`;
+classifier bar `h-[6px]` → `h-1.5`; case-study CTA rows now carry exactly one primary
+button (the live/try link); skip-to-content link added to the persistent nav (WCAG 2.4.1)
+with `id="main"` on every route. Logged for a later cleanup pass, not taken now: a shared
+token for the ~4.5:1 muted-at-80%-opacity contrast math (currently re-derived at each use
+site); the OG image's green status dot (predates wave 12, meta-image only). Reviewer
+explicitly declined to flag Research/Contact remaining on the home page ("a legitimate
+closing section, not 'everything'").
