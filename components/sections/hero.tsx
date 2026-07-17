@@ -22,6 +22,23 @@ import type { Stat } from "@/content/types";
  * - Count-up animation removed; stats render as a quiet mono row. All three
  *   values stay derived, never hand-typed (rule 65b), and the puzzle fetch
  *   stays fail-soft ("—", never a stale number).
+ *
+ * Wave 9: tried RevealGroup (mode="onload") here first, cascading each
+ * line in on first paint as the site's new default reveal pattern (GG's
+ * integration map, item 2) — reverted after this wave's own verification
+ * found it flaky: axe-core CLI's color-contrast check raced the ~800ms
+ * hero cascade and intermittently caught text mid-fade (2 of 3 runs
+ * failed, 1 passed, on IDENTICAL code — a transient opacity dip, not a
+ * real token/contrast defect, confirmed by reading the same elements'
+ * settled computed styles). Above-the-fold, first-paint content animating
+ * in from invisible is exactly the "reveal-on-load flash" wave 2/3
+ * deliberately avoided for Hero, now with a second, concrete reason not
+ * to reintroduce it: it races real accessibility tooling, not just
+ * cosmetics. RevealGroup's "onview" mode (used everywhere below the fold)
+ * doesn't have this race — it only fires once a section is already
+ * scrolled into view, well after any first-paint snapshot. Spacing is
+ * explicit per-child margin (unchanged from the RevealGroup attempt) so
+ * the rhythm matches every other wave-9 section.
  */
 export async function Hero() {
   const puzzle = await getWarmerPuzzleNumber();
@@ -46,14 +63,14 @@ export async function Hero() {
 
   return (
     <header className="mx-auto w-full max-w-5xl px-6 pt-20 pb-12 sm:pt-24 md:pb-16">
-      <Monogram />
+      <div>
+        <Monogram />
 
-      <div className="mt-10 flex flex-col gap-4">
-        <h1 className="font-heading text-display font-semibold tracking-tight text-foreground">
+        <h1 className="font-heading text-display mt-10 font-semibold tracking-tight text-foreground">
           {site.name}
         </h1>
 
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground mt-4 text-lg">
           {site.role} · {site.location} ·{" "}
           {/* Accent implies interactivity — so make it real: the status is a
               link to the section where acting on it happens (review fix). */}
@@ -65,11 +82,11 @@ export async function Hero() {
           </a>
         </p>
 
-        <p className="mt-2 max-w-measure text-lg leading-relaxed text-foreground">
+        <p className="mt-6 max-w-measure text-lg leading-relaxed text-foreground">
           {aboutParagraphs[0]}
         </p>
 
-        <p className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-base">
+        <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-base">
           <InlineLink href={site.resumeUrl} download>
             Resume
           </InlineLink>
@@ -79,16 +96,16 @@ export async function Hero() {
             Email
           </InlineLink>
         </p>
-      </div>
 
-      <dl className="border-border/40 mt-12 grid w-full grid-cols-1 gap-x-8 gap-y-4 border-t pt-6 sm:grid-cols-3">
-        {heroStats.map((stat) => (
-          <div key={stat.sourceRef} className="flex flex-col gap-1">
-            <dd className="font-mono text-lead font-medium text-foreground">{stat.value}</dd>
-            <dt className="text-muted-foreground text-sm leading-snug">{stat.label}</dt>
-          </div>
-        ))}
-      </dl>
+        <dl className="border-border/40 mt-12 grid w-full grid-cols-1 gap-x-8 gap-y-4 border-t pt-6 sm:grid-cols-3">
+          {heroStats.map((stat) => (
+            <div key={stat.sourceRef} className="flex flex-col gap-1">
+              <dd className="font-mono text-lead font-medium text-foreground">{stat.value}</dd>
+              <dt className="text-muted-foreground text-sm leading-snug">{stat.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </div>
     </header>
   );
 }

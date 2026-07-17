@@ -1,4 +1,5 @@
 import { InlineLink } from "@/components/inline-link";
+import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { researchPapers } from "@/content/research";
 
@@ -8,11 +9,14 @@ import { researchPapers } from "@/content/research";
  * spoke provenance-internals to visitors. Now: title, the abstract's thesis
  * sentence in the body voice (verbatim excerpt from the abstract), and a
  * one-line status in plain language.
+ *
+ * Wave 9: RevealGroup (mode="onview") replaces the plain wrapper — the
+ * site's new default reveal pattern (GG's integration map, item 2).
  */
 export function Research() {
   return (
     <Section id="research" label="Research">
-      <div className="flex flex-col gap-10">
+      <RevealGroup mode="onview" className="flex flex-col gap-10">
         {researchPapers.map((paper) => (
           <article key={paper.title} className="flex flex-col gap-3">
             <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
@@ -35,7 +39,7 @@ export function Research() {
             </p>
           </article>
         ))}
-      </div>
+      </RevealGroup>
     </Section>
   );
 }

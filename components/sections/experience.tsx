@@ -1,4 +1,5 @@
 import { InlineLink } from "@/components/inline-link";
+import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { aboutParagraphs, skillChips } from "@/content/about";
 import { experience } from "@/content/experience";
@@ -12,15 +13,25 @@ import { site } from "@/content/site";
  * verbatim from content/experience.ts with its sourceRef), and the skill
  * chips became one plain-prose line. The full detail is the resume's job —
  * linked right here.
+ *
+ * Wave 9: the section body is now one RevealGroup (mode="onview") — the
+ * site's new default reveal pattern (GG's integration map, item 2). Each
+ * child keeps its original margin classes, unaffected by the wrapper swap.
+ * The three-company block gets its OWN nested RevealGroup (design-review
+ * finding, wave 9): RevealGroup only staggers its *direct* children, so
+ * without this the whole résumé block was one reveal unit — visually
+ * indistinguishable from wave 6's instant-render at a glance. Nesting
+ * gives each company its own cascade step, inside the outer section's step.
  */
 export function Experience() {
   return (
     <Section id="experience" label="Experience">
+      <RevealGroup mode="onview">
       <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
         {aboutParagraphs[1]}
       </p>
 
-      <div className="mt-10 flex flex-col gap-10">
+      <RevealGroup as="div" mode="onview" className="mt-10 flex flex-col gap-10">
         {experience.map((entry) => (
           <article key={entry.company} className="flex flex-col gap-4">
             <div>
@@ -70,7 +81,7 @@ export function Experience() {
             })}
           </article>
         ))}
-      </div>
+      </RevealGroup>
 
       <p className="text-muted-foreground mt-10 max-w-measure text-sm leading-relaxed">
         Working across {skillChips.join(" · ")}.
@@ -81,6 +92,7 @@ export function Experience() {
           Download the full resume (PDF)
         </InlineLink>
       </p>
+      </RevealGroup>
     </Section>
   );
 }
