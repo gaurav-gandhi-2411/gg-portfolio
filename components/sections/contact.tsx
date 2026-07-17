@@ -14,7 +14,10 @@ import { site } from "@/content/site";
 export function Contact() {
   return (
     <Section id="contact" label="Contact">
-      <RevealGroup mode="onview" className="flex flex-col gap-6">
+      {/* Wave 11: fully centered — Contact is the page's closing note and
+          the one section short enough to read comfortably center-aligned;
+          the display-size email anchors the axis. */}
+      <RevealGroup mode="onview" className="flex flex-col items-center gap-6 text-center">
         {/* Wave 10 (GG: previous copy read vague/casual — "let's talk",
             "if the scope is a good fit"). Direct and professional: what I'm
             looking for, how to reach me, where I am. */}
@@ -40,7 +43,7 @@ export function Contact() {
           {site.email}
         </a>
 
-        <p className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
           <span>{site.location}</span>
           <InlineLink href={site.githubUrl} className="text-muted-foreground">
             GitHub
@@ -56,8 +59,8 @@ export function Contact() {
 
 export function Footer() {
   return (
-    <footer className="mx-auto w-full max-w-5xl px-6 pt-4 pb-10">
-      <p className="text-muted-foreground text-xs leading-relaxed">
+    <footer className="mx-auto w-full max-w-2xl px-6 pt-4 pb-10">
+      <p className="text-muted-foreground text-center text-xs leading-relaxed">
         © {new Date().getFullYear()} {site.name}. Set in Fraunces, Space Grotesk, and JetBrains
         Mono. Every number on this page is derived from live data or a sourced record.
       </p>

@@ -1,7 +1,7 @@
 import { InlineLink } from "@/components/inline-link";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
-import { aboutParagraphs, skillChips } from "@/content/about";
+import { dayJobParagraph, skillChips } from "@/content/about";
 import { experience } from "@/content/experience";
 import { site } from "@/content/site";
 
@@ -28,7 +28,7 @@ export function Experience() {
     <Section id="experience" label="Experience">
       <RevealGroup mode="onview">
       <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
-        {aboutParagraphs[1]}
+        {dayJobParagraph}
       </p>
 
       <RevealGroup as="div" mode="onview" className="mt-10 flex flex-col gap-10">
