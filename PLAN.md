@@ -386,6 +386,46 @@ once outside Experience), not pixels. Full report:
 Large diff (full-page redesign) → **draft PR for GG's manual review and merge**, same posture
 as waves 3/4. No more open items on this wave — PR #14 is ready for GG's review as-is.
 
+## Wave 8 — creative delight pass, prototype-first (2026-07-17, holding for GG's pick)
+
+GG's read on waves 6/7: too restrained, feels dull — wants lively/modern (sliders,
+loading patterns), while acknowledging the tension with wave 6/7's calm-minimal
+benchmark (emilkowal.ski/paco.me/rauno.me). Resolved by prototyping, not reskinning:
+5 isolated demos at `/lab/1`–`/lab/5` on throwaway branch `explore/wave8-lab`, every
+demo built on real data/computation from GG's actual work, nothing merged.
+
+- [x] **Lab 1 (GG's highest-leverage pick): embedding-space visualization as a loading
+      state.** Reuses the real production heat-toy vocab + cosine-sim engine; guess and
+      secret plotted at the real 1st/2nd PCA components, animating between real
+      coordinates on a deliberate ~450ms reveal (computation already <5ms — reveal is
+      disclosed staged pacing, not a disguised wait).
+- [x] **Lab 2: staggered stream-in** (real skill-chip/Experience content, 50-60ms
+      cascade via `Element.animate()` + IntersectionObserver, `fill:"backwards"`) —
+      directly answers the wave-6 tension: DOM default state is always fully visible,
+      so the wave-6 "blank without JS" bug class is structurally unreachable here.
+- [x] **Lab 3: modern momentum slider** — native scroll-snap (real trackpad/touch
+      momentum, zero JS cost) + pointer-drag for mouse + peek-of-next + thin
+      progress-bar/fraction-counter. Found and fixed the *same* `role="group"`-on-`<li>`
+      axe violation wave 5's carousel hit — caught by this wave's own axe pass.
+- [x] **Lab 4: live TF-IDF classify** — real TF-IDF + cosine similarity computed
+      client-side over 12 real, sourced GitHub issue titles (6 k8s / 6 vscode, fetched
+      2026-07-17, cited per-item), mirroring TriageIQ's real technique + published
+      accuracy figure, explicitly labeled illustrative (not the production model).
+- [x] **Lab 5: scroll-linked reveal** of the real wave-7 eval figures (same sourced
+      values), drawing in from 0 as they enter view.
+- [x] Verification: axe 0/5 routes (1 bug found+fixed, see Lab 3), reduced-motion via
+      code-pattern review, marginal per-route bytes measured against the shared
+      framework baseline (0.8–4.1 KiB each — nowhere near budget-relevant, and `/lab/*`
+      is never linked from production). Recordings: GIFs assembled from real captured
+      frames (slow-motion override + WAAPI pause/scrub techniques, both disclosed) since
+      this harness has no native screen-recording tool. Full report:
+      `reports/wave8-lab-2026-07-17.md`; recordings + screenshots:
+      `reports/screenshots/wave8-lab/`.
+
+**Nothing merges without GG's pick.** Awaiting which lab(s), in what combination,
+advance to a production-grade build (same process as wave 7: harden, design-review,
+PR through the 70a gates). `explore/wave8-lab` can be deleted once superseded.
+
 ## Wave 6 — composition rebuild (2026-07-17, autonomous wave)
 
 GG's standing brief: five waves in, still unsatisfying — audit independently against
