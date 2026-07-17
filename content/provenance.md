@@ -19,6 +19,14 @@ git-tracked public copy is `public/resume.pdf`), MD5 `6aec7861c1e5cf8c1ba4bece5e
 file-dated 2026-06-12. Confirmed identical to the file GG most recently placed in
 `C:\Users\gaura\Downloads\Gaurav_Gandhi_Resume.pdf` by MD5 hash.
 
+**Wave 10 resume rework (2026-07-17):** `public/resume.pdf` now serves the reworked two-page
+resume (MD5 `f37fc9454ac3360dddfb34036221bd6b`, built from
+`.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx`, gitignored master). The canonical
+2026-06-12 PDF above is **unchanged** and remains the sole source of career facts (roles,
+dates, titles, education, contact) — the rework changed presentation and project content
+only; project metrics come from this file's own sourced entries. Full change log + metric
+sources: `reports/resume-rework-2026-07-17.md`.
+
 ## Contact / identity
 
 | ID | Claim | Source |
