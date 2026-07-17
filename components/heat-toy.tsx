@@ -302,7 +302,7 @@ export function HeatToy() {
               <button
                 type="button"
                 onClick={() => submitWord(w)}
-                className="rounded-md border border-border bg-card px-2 py-0.5 font-mono text-xs text-foreground transition-colors hover:border-ring"
+                className="rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-ring"
               >
                 {w}
               </button>

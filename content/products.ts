@@ -187,8 +187,8 @@ export const products: Product[] = [
     // scope note calls it "a pilot-scale research artifact… not a validated
     // product claim", and the card honors that framing (provenance.md).
     metric: {
-      label: "Pilot-scale research artifact",
-      value: "8 scoring dimensions · 10-server pilot",
+      label: "pilot-scale research artifact, honestly scoped",
+      value: "8 scoring dimensions, all implemented",
       sourceRef: "agentgauge:scoring-dimensions",
     },
   },

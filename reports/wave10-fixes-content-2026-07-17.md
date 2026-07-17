@@ -170,13 +170,43 @@ Everything else AI on the page is the products themselves, linked out to their o
 | Slider fix | verified local prod build (synthetic pointer-event drag, arrow clicks, end states) + deployed preview (below) |
 | Heat-toy retry | verified end-to-end via stubbed fetch (see Bug 2a) |
 | Responsive matrix | `reports/screenshots/wave10/full-{1440,768,390}.jpeg` |
-| Design review | see PR / addendum below |
+| Design review | **approved with suggestions** (lens: "warm, simple, professional — and does everything actually WORK?"). Voice, slider affordance, token discipline, responsive all passed. One blocking item + 3 actionable suggestions, all resolved below; 2 nits deferred to GG. |
 
-## Preview verification
+## Preview verification (deployed, not localhost)
 
-GG's standard for this wave: slider + heat-toy verified on the DEPLOYED preview, not localhost.
-Performed against the PR's Vercel preview deployment after push — results recorded in the PR
-body and the addendum below.
+Run against PR #17's Vercel preview
+(`gaurav-gandhi-git-feat-wave-88d59f-…vercel.app`, deployment green at 2026-07-17):
+
+| Check | Result |
+|---|---|
+| 120px synthetic mouse drag | moves 120px mid-drag (production before the fix: 0px) |
+| Arrow next → | advances to card 2; prev enables |
+| Slide count | 11 (AgentGauge present) |
+| Heat-toy vocab | loads on deployed URL |
+| Starter chips | `jungle` / `soldier` render; clicking `jungle` submits and plots (4 SVG circles) |
+
+Screenshot: `reports/screenshots/wave10/slider-deployed-preview.png`.
+
+## Design-review outcome
+
+Sign-off: **approved with suggestions**, contingent on one blocking item — all addressed:
+
+- **[blocking] No screenshot of the heat-toy error/retry state** (one of the wave's two headline
+  fixes; rule 15a/15c requires each interaction state visible). Captured via the same stubbed-
+  fetch method as the functional test: `reports/screenshots/wave10/heattoy-error-retry-1440.png`.
+- **[fixed] Starter-chip tap target** ~17px tall vs. the visually-identical chip pattern in
+  `triageiq-classify-toy.tsx` (~24px). Brought to `px-2.5 py-1` to match.
+- **[fixed] "9 products live" over an "01 / 11" counter** made visitors do the subtraction
+  (ShelfSense + AgentGauge are repo-only). Work label now "11 projects · 9 live", both derived.
+- **[fixed] AgentGauge metric redundancy** — "pilot" appeared in both value and label as
+  concatenated. Value now "8 scoring dimensions, all implemented".
+- **[deferred to GG] "5 / 9 / 5" stats row** — repeated digit can read as a glitch on a fast
+  skim (reviewer's soft nit; numbers are real and derived). Alternate stat sets are above.
+- **[deferred to GG] Arrow buttons' tab position** — they sit after all 11 slides' links in tab
+  order. Arrow keys already work on the focused carousel itself; noted, not changed, to avoid
+  DOM reshuffling inside a just-fixed component.
+- **[noted] Hero/contact rewrites carry no before-shots** — copy-only, zero layout change; the
+  before is fully visible in wave 9's committed screenshots (`reports/screenshots/wave9/`).
 
 ## Held
 
