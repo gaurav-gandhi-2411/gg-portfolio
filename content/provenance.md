@@ -430,14 +430,15 @@ Overturns the wave-10 skip, which was made against the repo's stale top-level RE
 
 | ID | Claim | Source |
 |---|---|---|
-| `expense-tracker:state` | Built + deployed: FastAPI on Cloud Run + Next.js 16 on Vercel; Supabase Auth (ES256/HS256 dual JWT), per-user isolation (cross-user → 404), Alembic migrations; 9/9 Playwright auth E2E. **Correction 2026-07-18 (caught by this repo's lychee CI on PR #20):** the documented demo deployment is currently DOWN — frontend `expense-tracker-tawny-eight-98.vercel.app` returns 404, backend `expense-tracker-242393598566.us-central1.run.app` returns 500 (curl-verified). Site treats the project as repo-only (no liveUrl, excluded from `liveProductCount`); the case-study page states the outage explicitly. | `expense-tracker/CURRENT_STATE.md:6-26,233-236`; outage: curl checks 2026-07-18 |
+| `expense-tracker:state` | Built + deployed: FastAPI on Cloud Run + Next.js 16 on Vercel; Supabase Auth (ES256/HS256 dual JWT), per-user isolation (cross-user → 404), Alembic migrations; 9/9 Playwright auth E2E. **Correction 2026-07-18 (caught by this repo's lychee CI on PR #20):** the documented demo deployment is currently DOWN — frontend `expense-tracker-tawny-eight-98.vercel.app` returns 404, backend `expense-tracker-242393598566.us-central1.run.app` returns 500 (curl-verified). Site treats the project as repo-only (no liveUrl, excluded from `liveProductCount`); the case-study page states the outage explicitly. **Root-caused 2026-07-26 (wave 14, read-only diagnosis — no GCP config/billing touched):** `gcloud run services describe`/`revisions describe` show the latest revision (`expense-tracker-00006-d4c`) reporting Ready, but `gcloud logging read` shows every cold start's Alembic-migration startup step crashing with `sqlalchemy.exc.OperationalError: could not translate host name "db.ckedawgfjwzefayhcybe.supabase.co" to address: Name or service not known` — DNS NXDOMAIN for the Supabase Postgres host, consistent with a paused (free-tier inactivity) or deleted Supabase project, not an application defect; the crashed startup fails Cloud Run's TCP probe, which is what serves the 500/503 to any request. Separately, `curl -I` on the frontend now returns `X-Vercel-Error: DEPLOYMENT_NOT_FOUND` — the Vercel project/deployment backing that domain no longer exists. Neither half is fixable from this session: no Vercel project access to `expense-tracker` (confirmed via `list_projects` against the accessible team — not present), and GCP deploy/billing actions on a separate project are outside this repo's standing exclusion. Numbered recovery steps for GG in `reports/wave14-verification-audit-2026-07-26.md`. | `expense-tracker/CURRENT_STATE.md:6-26,233-236`; outage: curl checks 2026-07-18; root cause: `gcloud logging read` + `gcloud run services/revisions describe`, `curl -I`, 2026-07-26 |
 | `expense-tracker:tests` | 143/143 backend tests, ruff clean, mypy clean | `expense-tracker/CURRENT_STATE.md:228-231` |
 | `expense-tracker:ml-features` | Groq NL parsing + 3 local ML features (embedding categorizer, IsolationForest anomaly, Prophet forecast), documented fallbacks, manual non-CI evals | `expense-tracker/CURRENT_STATE.md:69-71,76-77` |
 
 **Not added — reclaim:** the wave-12 inventory re-check found `reclaim` substantially more
 complete than its README suggests (all 7 build stages done, real sign-off-gated runs), but the
 repo has **no git remote** (local-only, verified `git remote -v` 2026-07-18) — nothing public a
-visitor could open or verify, so it stays off the site until GG publishes it.
+visitor could open or verify, so it stays off the site until GG publishes it. **Update, Wave 14:**
+GG made the repo public; see the Wave 14 section below for the full case study now shipped.
 
 ### HuggingFace account (wave 12 verification)
 
@@ -512,6 +513,83 @@ Fetched via API 2026-07-25: **3** public models now — `hinglish-relatedness-sb
 **Decision:** still below the low-thousands bar → still no download stat on the site. The
 count is tracked in `metrics.json`'s informational block; the weekly PR flags it if it
 crosses 1,000.
+
+## Wave 14 (2026-07-26) — reclaim added
+
+GG made the `reclaim` repo public (confirmed via `git remote -v` and `git tag -l` this session:
+`origin` is `https://github.com/gaurav-gandhi-2411/reclaim.git`, real tags `v1.0.0`–`v1.3.0`,
+`pyproject.toml` at `version = "1.3.0"`). Reads in full this session:
+`reclaim/README.md`, `reclaim/docs/CASE_STUDY.md` (776 lines, read start to end), `reclaim/PLAN.md`,
+`reclaim/reclaim-spec.md`, `reclaim/reclaim-ai-features-spec.md`,
+`reclaim/docs/architecture/adr/0001-category-tiered-retention.md`,
+`0002-sql-pushdown-candidate-generation.md`,
+`0006-hardlink-aware-reclaimable-size-estimate.md`,
+`0008-model-cache-and-environment-exclusion-from-exact-duplicate.md`,
+`0009-standalone-python-installation-exclusion.md`,
+`0010-structural-python-environment-detection.md`,
+`0023-stage2-safe-mode-safety-boundary.md`, `0024-stage2-installer-and-ai-bundle-size.md`,
+`reclaim/evals/test_safe_mode_gate.py`, `reclaim/tests/frontend/xss.test.mjs`. All paths below
+are relative to `C:\Users\gaura\ml-projects\reclaim`.
+
+### reclaim
+
+| ID | Claim | Source |
+|---|---|---|
+| `reclaim:architecture` | Rules-first, no ML in the deletion path; SafetyValidator deny-first gate (protected roots, git repos, protected extensions, DB/VM files, Docker/WSL roots, cloud-sync placeholders — BLOCKED excludes, never downgrades); dry-run by default; retention is a per-category property (rebuild-recoverable caches delete permanently, everything else vault-/Recycle-Bin-recoverable) | `docs/CASE_STUDY.md:31-58`; `docs/architecture/adr/0001-category-tiered-retention.md:28-51` |
+| `reclaim:honesty-arc` | exact_duplicate reclaimable estimate corrected downward 3 times, never up: ~48GB (unexamined logical size) → 23.09GB (hardlink-aware accounting) → 4.26GB (model-cache/environment exclusion) → 3.92GB (net of 186 restored files, post-incident) | `docs/CASE_STUDY.md:60-76` (honesty-arc table); `docs/architecture/adr/0006-hardlink-aware-reclaimable-size-estimate.md`, `0008-model-cache-and-environment-exclusion-from-exact-duplicate.md`, `0009-standalone-python-installation-exclusion.md` |
+| `reclaim:bug-trail` | 11-bug trail across observability/scalability/selectivity/honesty themes; capstone incident 11 — exact_duplicate apply recycle-binned 186 files across 3 shared Python installs (none recognized as an "environment" — no `conda-meta/`, no `pyvenv.cfg`), breaking the project's own `.venv` (`import socket` failed); first keyword-driven recovery pass found 71/186; systematic re-audit against all 10,134 applied files found the true 186; all recovered by parsing the Windows Recycle Bin's own `$I`/`$R` index format directly; fixed twice — marker-based check (ADR-0009), then structural detection by default (ADR-0010) after finding Windows venvs put `python.exe` in `Scripts/`, not the venv root | `docs/CASE_STUDY.md:78-171` |
+| `reclaim:xss-finding` | Filename-driven XSS in `renderClusterTable` (`src/reclaim/api/static/app.js`) — a file/directory literally named `<img src=x onerror=...>` was interpolated into `.innerHTML`, reachable because the dashboard's CSRF token sits in the same page's DOM; fixed by rewriting to `textContent` (0 `innerHTML` assignments carry a path field anywhere in the codebase today); regression test feeds the exact function an `<img onerror>` and `<script>` payload and asserts the DOM contains zero parsed `<img>`/`<script>` elements | `docs/CASE_STUDY.md:173-205`; `tests/frontend/xss.test.mjs:1-60`; `README.md:268-271` |
+| `reclaim:security-audit` | Same audit pass: `--host` hard-gated to `127.0.0.1`/`::1` at argparse parse time; per-process CSRF token + Host/Origin check against the exact loopback authority (DNS-rebinding defense); `restore_batch` refuses any manifest entry whose vault path doesn't resolve inside the configured vault dir or whose original path is a protected root; every mutating command refuses to run under an elevated token; `pip-audit` added to CI | `docs/CASE_STUDY.md:207-215`; `README.md:252-272` |
+| `reclaim:ai-layer-boundary` | AI layer's `AICluster`/`AIClusterMember` share zero field names with the deterministic engine's `Candidate` — `apply_batch` accesses `candidate.safety_verdict` unconditionally, so an AI object raises `AttributeError` before any filesystem call; a static AST scan re-checks every `src/reclaim/ai/` file on every CI run for an import of the executor/delete library; `pydantic` `extra="forbid"` rejects any config-injected AI-named category | `docs/CASE_STUDY.md:217-240` |
+| `reclaim:phash-measurement` | Feature 1a (pHash near-dup images) measured on INRIA Copydays' `strong` (adversarial) split: precision 0.9600, recall 0.0764 at Hamming distance 14 — real but answering the wrong question. Remeasured on a realistic distribution (5 deterministic transforms — light resave, moderate resize+recompress, PNG round-trip, WhatsApp/Instagram-style resave — applied to Copydays' own 157 real photos): recall 1.0000, precision 0.9987 across 785 pairs, at the identical threshold | `docs/CASE_STUDY.md:309-321,345-384` |
+| `reclaim:track-b-clip` | Track B (semantic image grouping): OpenCLIP ViT-B/32 (`"ViT-B-32-quickgelu"` checkpoint variant), MIT end-to-end, chosen over Apple MobileCLIP (non-commercial ToS on pretrained weights); measured BCubed precision 0.7897, recall 0.7143 at similarity threshold 0.82, across 98 real images; gated on precision ≥0.70 AND recall ≥0.20, both cleared | `docs/CASE_STUDY.md:628-658`; `reclaim-ai-features-spec.md:55,72` |
+| `reclaim:ranker-consensus` | Generic clutter-likelihood ranker: labels from 3 independent local LLMs via Ollama (`qwen3:8b`, `llama3.1:8b`, `gemma2:9b`), zero paid API calls; Fleiss' κ=0.6768 (N=120, "substantial agreement"); trained on the 79/120 (65.8%) unanimous-only subset (41 non-unanimous records excluded from training, not majority-voted); LightGBM LambdaMART on a grouped (no-leakage) split scored NDCG@5=0.9763 (floor 0.70) / precision@3=1.0000 (floor 0.50) on held-out batches; `_DISTRIBUTION.is_synthetic_only=True` — `assert_safe_to_promote_to_measured` raises by construction, permanently PROVISIONAL | `docs/CASE_STUDY.md:582-626` |
+| `reclaim:pooling-bug` | Templated-document remeasurement: pooling a large prose tier (7,140 negatives) with a small templated tier (459 negatives) reported 0.9524 precision; the templated tier alone at the same threshold was actually 0.8634 precision — a real 71% false-positive rate the pooled number hid. Fixed with `select_operating_point_per_tier`/`select_joint_operating_point_per_tier`, which have no code path capable of concatenating counts across tiers before computing a ratio; the incident became a permanent regression test | `docs/CASE_STUDY.md:421-459` |
+| `reclaim:safe-mode-installer` | Public installer safe mode: 3 independent structural guarantees — (1) permanent-delete unreachable when `mode=SAFE` (proven by monkeypatching `os.unlink`/`shutil.rmtree` to raise if called, then running a real `apply=True` batch); (2) `duplicates`/`model_caches`/`dev_artifacts` force-disabled regardless of `config.toml`; (3) every apply requires explicit human-picked paths, no blanket tier/category apply. Proven twice against the compiled `reclaim.exe` (raw Nuitka `--standalone` build + real silent install→run→uninstall cycle), not just the source tree. Core-only installer: 13.6MB installed / 18.2MB installer vs. the `[ai]` extra's 1,041.8MB (`torch` alone 464.3MB, shared by document-dedup and CLIP features) | `docs/CASE_STUDY.md:660-719`; `docs/architecture/adr/0023-stage2-safe-mode-safety-boundary.md`; `docs/architecture/adr/0024-stage2-installer-and-ai-bundle-size.md`; `evals/test_safe_mode_gate.py:1-44`; `README.md:278-306` |
+| `reclaim:honest-metrics` | Real disk-free reclaimed (measured `shutil.disk_usage` before/after, 3 real applies, independently cross-checked byte-for-byte against the filesystem): 36,216,430,592 bytes = 33.73GB. exact_duplicate candidates applied: 10,134 succeeded / 10,247 selected / 113 failed (all explained: access-denied, file-in-use, long-path, vanished-in-race) | `docs/CASE_STUDY.md:753-767` (honest-metrics table) |
+| `reclaim:releases` | Public repo confirmed (`git remote -v`); real GitHub Releases `v1.0.0`–`v1.3.0` (`reclaim-setup.exe`), matching `pyproject.toml`'s `version = "1.3.0"` | `git tag -l`, `git remote -v` (this session); `README.md`'s Download section |
+
+**Metric-store deviation, resolved same-wave:** the executor agent that wrote this section
+correctly flagged that `reclaim`'s product-card metric was hand-typed rather than routed through
+`refreshableMetric()`, since adding `.portfolio/metrics.json` sat outside its assigned file
+scope. Closed before this wave shipped: `reclaim:honesty-arc` now has a `content/metrics.json`
+entry (source `docs/CASE_STUDY.md:761`, commit `b7d1aa4`) and the product card reads it via
+`refreshableMetric("reclaim:honesty-arc")`, same as every other product; a `.portfolio/
+metrics.json` manifest PR is open on the reclaim repo (gaurav-gandhi-2411/reclaim#29, GG
+merges) so the weekly refresh picks it up from here on — no exception remains. The honesty-arc
+value itself was also corrected to include the missing intermediate step (23.09GB, ADR-0006)
+that the case study's first draft had compressed out — the source table has four values across
+three corrections, not three.
+
+**Categories:** tagged `tooling` (primary — an end-user Windows desktop tool, the same precedent
+as tracegauge), `vision` (Track B's OpenCLIP semantic grouping), `retrieval` (MinHash + sentence-
+embedding document near-dup, the closest fit to "Retrieval & Embeddings" among the fixed six).
+`evals-research` was considered — the safety-testing rigor is the strongest in the whole
+portfolio — but left off to keep the tag count at 3 and because rigorous testing is present
+across every project on this site rather than being reclaim's distinguishing *category* signal;
+GG can add it back if the judgment call should go the other way.
+
+**Depth-ordering placement:** scored against the wave-13 four-axis rubric (A model/representation,
+B eval rigor, C applied-AI system depth, D novel technique) from `reports/wave13-autonomy-density-2026-07-25.md`
+— not re-scoring the other 12 products, just placing reclaim among them: A=1 (a real trained
+LightGBM LambdaMART ranker, but on 79 labeled records, and every image/doc-similarity model used
+is off-the-shelf, not trained from scratch), B=3 (the strongest eval-rigor story on the site:
+distribution-trust gating, per-tier pooling prevention, real dataset sourcing across 3 license
+audits, a 3.1M-file real-disk validation), C=2 (a genuine multi-stage applied-AI system — 4
+features plus a ranker — but deliberately decoupled from the core product as recommend-only,
+never in the public installer, weighed honestly per the wave-14 brief rather than scored as if it
+were load-bearing), D=1 (no published research, but the self-invented distribution-trust/
+per-tier-gating infrastructure has real methodological originality). Σ=7, tying ShelfSense/
+AetherArt/AgentGauge — placed last in that tied group (after AgentGauge, before ReviewIQ) because
+its A axis is the weakest of the four ties and its C axis is capped by the AI layer's own
+recommend-only, not-in-the-installer framing.
+
+**Not verified, left out:** the case study's `.portfolio/`-style dataset-hunt narrative (Copydays
+mirror history, AVA rejection) is real but not load-bearing enough to cite as a numbered claim on
+the portfolio site — mentioned only in passing in the case-study prose, not as a sourced result
+row. No number from `docs/CASE_STUDY.md` was used without a direct line-range read; nothing was
+rounded beyond what the source document itself already rounds to (e.g. "~48GB" is the source's own
+approximation, not this pass's).
 
 ## Known gaps / not shipped
 

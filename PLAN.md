@@ -557,6 +557,62 @@ multi-page portfolio (home teases → /projects indexes → /work/[slug] teaches
 - [ ] Large diff → **draft PR #20 for GG's manual review/merge**, same posture as prior
       waves. `explore/wave8-lab` deletion still deferred (unchanged standing note).
 
+## Wave 14 — bug fix, verification discipline, inventory refresh (2026-07-26, draft PR pending GG's merge)
+
+GG's brief: the category filters he clicked on production did nothing — reproduce and fix;
+fix the verification gap that let it ship, not the bug alone; enumerate GitHub fresh and
+reconcile; redeploy expense-tracker; audit every interactive element end to end. Full report:
+`reports/wave14-verification-audit-2026-07-26.md`.
+
+- [x] **Filter bug reproduced on production first**, root-caused: the click mechanism itself
+      worked (proven via CDP clicks, raw DOM pointer/mouse dispatch, keyboard, throttled,
+      desktop+mobile, fresh-load+client-nav — all correct). The real defect: the only
+      confirmation text was `sr-only` (invisible to sighted users) and the active-pill state
+      was a barely-perceptible 15%-opacity tint — for any category keeping the top card
+      visible, a working click and a dead one looked identical. Fixed: counter now visible,
+      active pill is a solid accent fill.
+- [x] **Found + fixed a real regression from the fix itself**: the solid pill's count badge
+      kept wave-13's `opacity-70` dim, composing to 3.74:1 — under the 4.5:1 text floor in
+      either pill state (axe filed single-digit instances as "incomplete," a confidence
+      heuristic, not a pass; two-digit "All 12" fails outright the moment any filter is
+      applied — the normal path). Dim removed entirely.
+- [x] **New Playwright E2E suite** (`e2e/`): filters, nav, route transitions, resume
+      (inline-not-download), Warmer's heat-toy, TriageIQ's classifier, external-link
+      structure, axe on every route (auto-discovered from the real case-study registry).
+      Wired into CI as a **required** `e2e` job (branch protection updated via `gh api`).
+      The suite's own rigor was tested: an early counter assertion used `toBeVisible()`,
+      which does NOT catch Tailwind's `sr-only` clip-rect trick — strengthened to check real
+      pixel dimensions, verified it now correctly fails against the old code and passes
+      against the fix. Also fixed one test-timing flake matching this repo's own documented
+      wave-9 "axe race" pattern (RevealGroup's entrance fade, now also racing on /projects'
+      in-viewport grid).
+- [x] **Standing rule adopted:** no interactive feature is reported as working unless a test
+      in `e2e/` actually drove it in a browser — code-review-only claims are no longer
+      sufficient evidence for this repo.
+- [x] **GitHub inventory reconciled fresh** (17 repos via `gh repo list`, not memory):
+      16/17 already matched; **reclaim** added (GG published it 2026-07-23, real GitHub
+      Releases v1.0.0–v1.3.0) with a full case study at the same depth as the other 12,
+      wired into `content/metrics.json` + a `.portfolio/metrics.json` manifest PR opened on
+      the reclaim repo itself; mindmeld-payloads/triage-iq-ui confirmed as correctly-excluded
+      supporting repos; claude-config confirmed as personal tooling, not a product.
+- [x] **Weekly Action extended**: `scripts/refresh-metrics.mjs` now enumerates public repos
+      via the GitHub API and opens/updates a tracking GitHub issue (not a PR — no file diff)
+      when a new un-added repo appears, so this reconciliation doesn't need GG to remember to
+      ask again.
+- [x] **expense-tracker root-caused, not fixed** (read-only diagnosis, no GCP config/billing
+      touched — this repo's standing exclusion; no Vercel project access for the frontend
+      either): backend crashes every cold start because its Supabase Postgres hostname no
+      longer resolves (DNS NXDOMAIN — a paused/deleted free-tier project, not a code defect);
+      frontend's Vercel deployment returns `DEPLOYMENT_NOT_FOUND` (project/deployment no
+      longer exists). Numbered recovery steps for GG in the wave report; case study and
+      provenance updated with the precise diagnosis.
+- [x] **Full production audit**: pass/fail table in the wave report — everything traces to
+      the one filter bug; no other broken interactive element found. axe 0 on all routes
+      (including the new /work/reclaim), Lighthouse preview home 100/100/100 LCP 0.6s,
+      /work/reclaim 100/100/100 LCP 0.6s (SEO 63 = known preview noindex artifact), budget
+      204,782 B vs 220,160 ceiling (+12 B vs wave 13).
+- [ ] Large diff → **draft PR for GG's manual review/merge**, same posture as prior waves.
+
 ## Wave 13 — autonomy, ordering, polish (2026-07-25, draft PR pending GG's merge)
 
 GG's brief: autonomous metric refresh (his #1), desktop density at 1280–1600px, tiering

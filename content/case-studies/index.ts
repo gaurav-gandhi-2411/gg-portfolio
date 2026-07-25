@@ -5,6 +5,7 @@ import { dealhunter } from "./dealhunter";
 import { expenseTracker } from "./expense-tracker";
 import { goldRateTracker } from "./gold-rate-tracker";
 import { mmfr } from "./multimodal-fashion-recommender";
+import { reclaim } from "./reclaim";
 import { reviewiq } from "./reviewiq";
 import { shelfsense } from "./shelfsense";
 import { styleMaitri } from "./style-maitri";
@@ -28,6 +29,7 @@ export const caseStudies: Record<string, CaseStudy> = {
   [goldRateTracker.slug]: goldRateTracker,
   [aetherart.slug]: aetherart,
   [agentgauge.slug]: agentgauge,
+  [reclaim.slug]: reclaim,
   [tracegauge.slug]: tracegauge,
   [expenseTracker.slug]: expenseTracker,
 };

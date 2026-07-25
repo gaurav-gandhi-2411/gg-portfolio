@@ -31,6 +31,12 @@ next-env.d.ts
 # raw resume drops (canonical copy lives at public/resume.pdf, tracked)
 .assets/
 
+# Playwright (wave 14) — generated per-run, never source
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Claude Code session/scheduler state — not project content (but .claude/settings.json,
 # if added, is project config and should stay tracked)
 .claude/*.lock

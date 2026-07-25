@@ -1,0 +1,40 @@
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * Wave 14 — the verification-gap fix. Wave 13's report claimed the category
+ * filters were "instant, keyboard-accessible" and they were never actually
+ * clicked by a human or a browser: they shipped functionally broken-feeling
+ * (see reports/wave14-verification-audit-2026-07-26.md). Going forward, no
+ * interactive feature is reported as working unless a test in e2e/ drove it
+ * — this config is what CI's required `e2e` job runs against a real
+ * production build (`next start`), never `next dev`, so timing/hydration
+ * behavior matches what a visitor actually gets.
+ *
+ * PLAYWRIGHT_BASE_URL overrides the target (e.g. a deployed preview URL) —
+ * used manually this wave to drive the actual production site; CI always
+ * uses the local webServer below.
+ */
+export default defineConfig({
+  testDir: "./e2e",
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
+  projects: [
+    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    { name: "mobile", use: { ...devices["Pixel 7"] } },
+  ],
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "npm run start",
+        url: "http://localhost:3000",
+        reuseExistingServer: !process.env.CI,
+        timeout: 60_000,
+      },
+});

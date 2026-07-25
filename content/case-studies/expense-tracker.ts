@@ -2,9 +2,17 @@ import type { CaseStudy } from "../types";
 
 // Sources: expense-tracker repo (CURRENT_STATE.md) — see provenance.md's
 // Expense Tracker section. NOTE (2026-07-18, caught by the lychee CI job on
-// this very PR): the demo deployment documented in CURRENT_STATE.md is
-// currently DOWN (frontend 404, backend 500) — the page says so honestly
-// and links only the repo; no liveUrl on the product card either.
+// PR #20; root-caused 2026-07-26): the demo deployment documented in
+// CURRENT_STATE.md is currently DOWN — the page says so honestly and links
+// only the repo; no liveUrl on the product card either. Root cause (read-
+// only gcloud diagnosis, wave 14): the backend's every cold start crashes
+// during its Alembic-migration startup step because its Supabase Postgres
+// hostname no longer resolves (DNS NXDOMAIN) — consistent with a paused/
+// deleted free-tier Supabase project, not a code defect. The frontend
+// separately 404s with Vercel's DEPLOYMENT_NOT_FOUND — that Vercel
+// project/deployment no longer exists. Both need GG's account-level action
+// (Supabase + Vercel dashboards); see reports/wave14-verification-audit-
+// 2026-07-26.md for the exact steps.
 export const expenseTracker: CaseStudy = {
   slug: "expense-tracker",
   title: "Expense Tracker",
@@ -47,7 +55,7 @@ export const expenseTracker: CaseStudy = {
       label: "Deployment",
       value: "Cloud Run (backend) + Vercel (frontend) — demo currently offline",
       detail:
-        "the deployment documented in the repo was found down (frontend 404, backend 500) when this page was written, 2026-07-18 — said here rather than hidden; 9/9 Playwright auth E2E scenarios pass locally",
+        "found down 2026-07-18, root-caused 2026-07-26: the backend's Supabase Postgres hostname no longer resolves (a paused/deleted free-tier project, not a code defect) and the frontend's Vercel deployment no longer exists — said here rather than hidden; 9/9 Playwright auth E2E scenarios pass locally",
       sourceRef: "expense-tracker:state",
     },
     {

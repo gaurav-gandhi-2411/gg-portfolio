@@ -33,6 +33,7 @@ jobs:
       - name: Refresh metrics from source repos
         env:
           SUMMARY_PATH: /tmp/metrics-summary.md
+          NEW_REPOS_PATH: /tmp/new-repos.json
         run: node scripts/refresh-metrics.mjs
 
       - name: Open PR if anything changed
@@ -70,3 +71,38 @@ jobs:
           # explicitly — the check run lands on the same SHA the PR points
           # at, which satisfies branch protection.
           gh workflow run ci.yml --ref "$BRANCH"
+
+      # Wave 14: new-repo discovery doesn't change any tracked file (it's
+      # "GG published something and didn't tell us," not a value drift), so
+      # it can't ride the git-diff-gated PR above — a PR with zero file
+      # changes isn't meaningful. An issue is the right vehicle for a pure
+      # notification: update-in-place via a stable title so this doesn't
+      # spam a new issue every week the same repo goes unaddressed.
+      - name: Open/update an issue for newly discovered repos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s /tmp/new-repos.json ] || [ "$(cat /tmp/new-repos.json)" = "[]" ]; then
+            echo "No new repos found this week."
+            exit 0
+          fi
+
+          TITLE="New public repos not yet on the portfolio site"
+          BODY=$(node -e '
+            const repos = require("/tmp/new-repos.json");
+            const lines = repos.map(r => `- [\`${r.name}\`](${r.url})${r.description ? ` — ${r.description}` : ""}`);
+            console.log([
+              "Found by the weekly metrics-refresh run — these are public, non-fork, non-archived repos under gaurav-gandhi-2411 that aren'\''t linked from any product on the site and aren'\''t in `KNOWN_NON_PRODUCT_REPOS` (scripts/refresh-metrics.mjs).",
+              "",
+              ...lines,
+              "",
+              "If a repo here is a real project, it needs a case study (content/case-studies/) at the same depth as the other 12 — see reclaim'\''s wave-14 addition for the process. If it'\''s a support repo, add its name to `KNOWN_NON_PRODUCT_REPOS`. Closing this issue is fine once addressed; it reopens/recreates next time something new shows up unaddressed."
+            ].join("\n"));
+          ')
+
+          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi

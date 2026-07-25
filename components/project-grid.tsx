@@ -63,7 +63,9 @@ export async function ProjectGrid({
         // Columns engage at xl, exactly where Section's width step does —
         // at lg the container is still 3xl and two columns would squeeze
         // the cards (design-review finding 6).
-        className="project-grid mt-8 grid gap-4 xl:grid-cols-2 xl:gap-5"
+        // mt-6, not mt-8: the filter's now-visible result counter (wave 14)
+        // already carries mt-4 of its own above this grid.
+        className="project-grid mt-6 grid gap-4 xl:grid-cols-2 xl:gap-5"
       >
         {products.map((product) => (
           <ProjectCard

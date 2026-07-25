@@ -83,8 +83,15 @@ export function ProjectFilter({
     active === "all" ? cats.length : cats.filter((p) => p.categories.includes(active)).length;
 
   const pillBase =
-    "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none";
-  const pillOn = "border-accent/70 bg-accent/15 text-foreground";
+    "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
+  // Wave 14 fix: a solid fill, not a 15%-tint border — GG reported clicking
+  // a pill and "nothing happens." The mechanism was firing correctly (the
+  // bug hunt is in reports/wave14-…); the actual defect was that success
+  // and failure looked identical: the only confirmation text was sr-only
+  // (see the visible counter below) and the selected state was a nearly
+  // imperceptible tint. Solid accent fill + accent-foreground text is the
+  // same "you are here" contrast the nav's active-page state already uses.
+  const pillOn = "border-accent bg-accent text-accent-foreground";
   // Full-opacity border: on an unselected pill the border is the ONLY
   // boundary affordance, so WCAG 1.4.11's 3:1 applies — --border at 100%
   // is 3.38:1; at the /40 first cut it computed ~1.47:1, the exact value
@@ -107,7 +114,17 @@ export function ProjectFilter({
           onClick={() => select("all")}
           className={`${pillBase} ${active === "all" ? pillOn : pillOff}`}
         >
-          All <span className="font-mono text-xs opacity-70">{cats.length}</span>
+          {/* No opacity dim on the count: text-muted-foreground alone is
+              6.57:1 (safe), but at opacity-70 (the original wave-13 value)
+              it composites to 3.74:1 — under the 4.5:1 text floor. Axe
+              only auto-fails this as a definite violation once the badge
+              text is 2+ digits ("12"); single-digit counts get filed as
+              "incomplete" (a genuine axe confidence heuristic for very
+              short text, not a pass) — real math fails either width, so
+              the dim comes off entirely rather than being patched around
+              per-badge (wave 14, caught once this suite actually clicked
+              a filter into the state where "All 12" goes inactive). */}
+          All <span className="font-mono text-xs">{cats.length}</span>
         </button>
         {CATEGORIES.map((c) => (
           <button
@@ -117,12 +134,17 @@ export function ProjectFilter({
             onClick={() => select(c.id)}
             className={`${pillBase} ${active === c.id ? pillOn : pillOff}`}
           >
-            {c.label} <span className="font-mono text-xs opacity-70">{counts.get(c.id)}</span>
+            {c.label} <span className="font-mono text-xs">{counts.get(c.id)}</span>
           </button>
         ))}
       </div>
 
-      <p aria-live="polite" className="sr-only">
+      {/* Wave 14 fix: was sr-only — the ONE piece of text confirming a
+          filter applied was invisible to sighted users. For any category
+          that still includes the top-of-viewport card, that left zero
+          perceivable feedback: a working filter and a dead click looked
+          identical. Now visible, still aria-live for screen readers. */}
+      <p aria-live="polite" className="text-muted-foreground mt-4 text-center font-mono text-xs">
         Showing {visible} of {cats.length} projects
       </p>
 
