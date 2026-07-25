@@ -78,4 +78,73 @@ end of the wave alongside item 2 (same routes touched).
 
 ---
 
-*(Sections for items 2–6 appended below as they land.)*
+## Item 2 — Progressive disclosure
+
+Home and `/projects` both now cap every active filter view (including "All") to the first 4
+matching cards (in `content/products.ts`'s existing AI/ML-depth order) with a "See all N →" /
+"See all N in [Label] →" link — except `/projects`'s own "All" view, which stays uncapped since
+it IS the see-all destination for home's "All" tease. Every category filter (on both pages) caps
+regardless, since its own destination is the new `/projects/[category]` page.
+
+- **New route `/projects/[category]`** (`app/projects/[category]/page.tsx`), one static page per
+  category via `generateStaticParams`, mirroring `/work/[slug]`'s SSG pattern: server-rendered,
+  uncapped, lists every project in that category, `notFound()` on an unknown id. Added to
+  `app/sitemap.ts` (6 new entries); `app/robots.ts` already allows `/` blanket, no change needed.
+- **Capping mechanism** (`components/project-filter.tsx`): pure CSS, zero extra client JS cost for
+  the hiding itself — an inline `<style>` tag hides the specific overflow slugs
+  (`[data-active-category="X"] [data-slug="Y"]{display:none}`), computed from the same `cats` prop
+  the filter already receives. `ProjectCard` gained a `data-slug` attribute to make this possible.
+- **No-JS safety, the one real design problem this feature raised:** the existing category filter
+  is naturally no-JS-safe because a no-JS visitor's `data-active-category` can never be anything
+  but `"all"`. Capping "All" itself breaks that assumption — without a fix, a no-JS visitor on
+  home would see a permanent 4-card gate with no way to reach the rest (there's no JS to run the
+  "See all" click... except "See all" is a plain link, so that part's fine — the actual risk was
+  the CSS hide-rule itself becoming a permanent gate). Fixed with a `<noscript><style>` override
+  that restores `display:flex` on every capped card whenever scripting is off — verified by a
+  dedicated e2e assertion (`no-JS: every card renders, pills are inert, and no capping applies`)
+  that fails if the override regresses.
+- **Extracted `lib/project-display.ts`** from `project-grid.tsx` (the repo-freshness/PyPI-download
+  ISR fetch + dateline formatting) so `/projects/[category]` doesn't duplicate it.
+- **Counter semantics changed deliberately:** "Showing X of Y projects" now uses the *active
+  view's own total* as Y (e.g. "Showing 4 of 6 projects" for a capped category), not the site-wide
+  total — more informative once a view can be capped. Existing `e2e/filters.spec.ts` assertions
+  updated to match; a `Math.min(categoryTotal, 4)` replaces the old exact-match expectation.
+
+### Verification
+
+- `npm run typecheck` / `lint` / `build`: clean. Build now emits 27 static pages (21 → 27, the 6
+  new category routes).
+- **Budget, measured before/after with an identical method** (curl `Accept-Encoding: gzip` against
+  every eager JS chunk on `/`, isolated browser context to avoid stale-cache artifacts): baseline
+  (post-item-1, pre-item-2) **167,725 B** → post-item-2 **168,283 B** — **+558 B**, comfortably
+  under the 220,160 B ceiling. **Open methodology flag:** this curl-based figure doesn't reconcile
+  with the previously-recorded wave-14 figure (204,782 B) — likely a compression-negotiation or
+  measurement-tool difference (this session used manual `curl`, not the chrome-devtools network
+  panel prior waves may have used), not a real ~37KB improvement. Flagging honestly rather than
+  presenting the lower absolute number as a win; the delta (+558 B) is the reliable number here
+  since both sides of it were measured the same way in the same session.
+- **E2E:** full suite (59 tests) + new `e2e/category-pages.spec.ts` (10 tests) green on desktop and
+  mobile projects, including the no-JS/no-cap regression guard. Rewrote `e2e/filters.spec.ts` to
+  assert the new capped-count and "See all" link behavior per path (home caps "All", `/projects`
+  doesn't) instead of the old shared-behavior-on-both-paths assumption.
+- **Axe:** 0 violations on all 27 routes (6 new category pages added to `e2e/a11y.spec.ts`'s
+  auto-discovered `ROUTES`, via a new `e2e/fixtures/category-ids.ts` mirroring the existing
+  `case-study-slugs.ts` pattern).
+- **Lighthouse:** home 100 a11y / 96 BP (known localhost-only `/_vercel/insights` 404, not a real
+  defect) / 100 SEO. `/projects/retrieval`: 95 a11y / 96 BP / 100 SEO — investigated the a11y drop
+  rather than accepted it: Lighthouse flagged `color-contrast` on the dateline span at a computed
+  foreground of `#54575e`, but the actual token (`--text-lo: #9195a0`, documented 6.57:1) composited
+  at ~55% opacity over the background computes to almost exactly that flagged color — reproduced
+  twice, consistent both times, and matches this repo's own already-documented "axe race" pattern
+  (`e2e/a11y.spec.ts`'s comment: RevealGroup's onview fade can be sampled by an automated scanner
+  before it settles, worse on any route whose grid sits inside the initial viewport — true here,
+  as it was for `/projects` in wave 9). Playwright's axe-core pass (with the repo's existing
+  1300ms settle wait) reports 0 violations on this exact route, which is this repo's actual
+  required CI gate — the Lighthouse snapshot is a supplementary manual artifact, not the gate.
+  Reports: `reports/lighthouse-wave15-home-2026-07-25.json` / `-category-retrieval-2026-07-25.json`.
+- **Screenshots:** `reports/screenshots/wave15/` — home teaser (desktop + 390px mobile), a capped
+  category filter on `/projects`, and the `/projects/retrieval` destination page.
+
+---
+
+*(Sections for items 3–6 appended below as they land.)*

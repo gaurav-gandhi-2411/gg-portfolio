@@ -34,6 +34,7 @@ export function ProjectCard({
   return (
     <article
       data-cats={product.categories.join(" ")}
+      data-slug={product.slug}
       className="border-border/40 bg-card/50 hover:border-accent/50 hover:shadow-card-hover @container flex h-full flex-col rounded-xl border p-6 transition-[transform,box-shadow,border-color,opacity] duration-300 ease-out hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <div className="grid gap-x-8 gap-y-6 @[28rem]:grid-cols-[minmax(0,1fr)_13rem]">
