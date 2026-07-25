@@ -4,7 +4,7 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
-## Wave 15 — content framing, progressive disclosure, agentic pipeline (in progress, 2026-07-25/26)
+## Wave 15 — content framing, progressive disclosure, agentic pipeline (code-complete 2026-07-26, pending GG's merge)
 
 GG's brief: rewrite case-study framing to lead with capability not failure; progressive
 disclosure (4-card tease + category pages); replace the metric-refresh pipeline with a
@@ -34,10 +34,19 @@ Branch `feat/wave15-content-framing-pipeline`. Full report:
       every case study. Vercel Web Analytics data blocked on GG enabling the dashboard feature
       itself (client lib already wired since wave 2) — numbered steps in the wave report, no
       fabricated numbers.
-- [ ] **Item 3 — agentic content pipeline** (extractor/curator/framer/verifier, replaces
-      `scripts/refresh-metrics.mjs`'s fetch-and-diff refresh): not started. First LLM-API
-      integration this repo's automation has ever had — no existing secret-wiring/rate-limit
-      pattern to extend. Queued next.
+- [x] **Item 3 — agentic content pipeline**: done. `scripts/content-pipeline/`
+      (extractor→curator→framer→verifier), rubric documented at
+      `docs/content-pipeline-rubric.md`. Curator/framer on Groq/Llama-3.3-70B, verifier on
+      Groq/Qwen3.6-27B (genuinely different family — the OpenRouter path tried first for a
+      different *provider* used a dead reused key, found Qwen on Groq's own catalog instead, zero
+      new credentials). Output lands in `content/provenance.md` as a dated "LLM-consensus,
+      pending human review" section — never a direct edit to the case-study files. Validated
+      against real repos before wiring in: 3 proposals, and the verifier caught a real framer
+      hallucination (a flipped win/loss comparison) in the same test run. Wired into
+      `.github/workflows/metrics-refresh.yml` (renamed "Content + metrics refresh") as its own
+      job/PR, separate from the metric-value refresh. Shared-Groq-quota consideration (this key
+      also serves live traffic on other GG projects) surfaced in the wave report, not hidden —
+      bounded to ~20 candidates/run to keep the marginal impact small.
 - [x] **Item 5 — expense-tracker on review-iq's Supabase**: done. STRIDE pass written; dedicated
       `expense` schema + non-superuser `expense_app` role (zero grants on `public`, verified by
       direct denial test, not just convention); migrations 001-003 land in `expense` unchanged
@@ -52,8 +61,9 @@ Branch `feat/wave15-content-framing-pipeline`. Full report:
       introduced here), so full bidirectional isolation needs a follow-up on review-iq's side.
       Numbered steps for GG in the wave report (PR review, password custody, custom domain,
       when to flip the case-study's "offline" claim to live).
-- [ ] Large diff (multiple substantial items) → will open as a **draft PR for GG's manual
-      review/merge**, same posture as prior waves, once items 3 and 5 land.
+- [ ] Large diff (6 substantial items) → **draft PR for GG's manual review/merge**, same posture
+      as prior waves. Also needs GG's merge on the two manifest/CI PRs (item 4) and the
+      expense-tracker Supabase-migration PR (item 5) opened on their own repos this wave.
 
 ## Wave 1 — identity + skeleton (done, pending GG review)
 

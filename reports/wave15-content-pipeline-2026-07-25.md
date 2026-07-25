@@ -398,4 +398,90 @@ with the last-updated/reading-time line, the Work-with-me CTA, the new OG image)
 
 ---
 
-*(Item 3 — the agentic content pipeline — is the remaining item, queued next alongside item 5.)*
+## Item 3 — Agentic content pipeline
+
+The first LLM-API integration this repo's automation has ever had. Replaces the mechanical
+"copy whatever the manifest says" behavior for **newly discovered** facts with a 4-stage
+pipeline (`scripts/content-pipeline/`); `scripts/refresh-metrics.mjs` is unchanged and keeps
+refreshing already-known metric IDs — that's not the "dumb copy-paste" problem this item
+addresses.
+
+### Pipeline
+
+1. **Extractor** (no LLM, `extractor.mjs`) — pulls candidates from each wired repo's
+   `.portfolio/metrics.json` (pass-through, already sourced) and a bounded regex sweep of
+   `README.md` for numeric claims not already tracked (≤5 per repo), each with `file:line@SHA`.
+2. **Curator** (Groq/Llama-3.3-70B, `curator.mjs`) — scores every README-discovered candidate
+   against `docs/content-pipeline-rubric.md` (documented in-repo, per the brief): proves a
+   skill, is verifiable in the fetched source text, is current, isn't already reflected in the
+   project's case-study copy. Conservative by design — most README lines are noise.
+3. **Framer** (Groq/Llama-3.3-70B, `framer.mjs`) — drafts capability-first copy for
+   curator-approved candidates (wave 15's framing rule). Proposes only — never writes into the
+   hand-crafted `content/case-studies/*.ts` files directly; that risk (fragile string-splicing
+   into prose a human wrote carefully) was rejected in favor of a safer output surface, below.
+4. **Verifier** (Groq/**Qwen3.6-27B** — a genuinely different model family than curator/framer,
+   `verifier.mjs`) — independently re-checks the draft against the same source text: any number
+   not literally present, any tone drift, any claim not actually supported. Defaults to rejecting
+   when uncertain. Only drafts it approves reach the PR.
+
+**Output surface, deliberately scoped down from "edit the case study directly":** the pipeline's
+only file write is a new dated section in `content/provenance.md` — "Wave N pipeline proposals —
+LLM-consensus, pending human review" — listing each approved proposal with its curator score +
+reasoning, source citation, drafted text, and suggested provenance ID. GG folds an approved
+proposal into the actual case study by hand. This is a deliberately conservative v1 scope:
+programmatically splicing generated prose into hand-crafted TypeScript case-study files risked
+corrupting them for marginal convenience; a real, reviewable git diff to a markdown provenance
+record is the safer place for an experimental agentic system's first output to land. Every output
+is machine-labeled "LLM-consensus" — this is model judgment, never presented as a human-verified
+claim, per the task's explicit ask.
+
+### Provider/model decision (documented, not hidden)
+
+Went in planning to use two providers (Groq for curator/framer, OpenRouter for the verifier) for
+genuine cross-provider independence, not just cross-family. The reused OpenRouter key (from
+another GG project's `.env`) turned out to be dead (`"User not found"`, confirmed via a direct
+curl). Rather than provision a new account for this, checked Groq's own model catalog
+(`GET /openai/v1/models`) and found `qwen/qwen3.6-27b` — Alibaba's Qwen, a genuinely different
+model family from Meta's Llama (which curator/framer use), hosted on the same already-working
+Groq key. This gives the cross-family independence the design actually needs (a judge that isn't
+the same model marking its own homework) with zero new credentials — a real fallback found and
+verified, not a shortcut. `GROQ_API_KEY` set as a `gg-portfolio` repo secret via `gh secret set`
+(reused key, no new spend).
+
+### Shared-quota consideration (rule 54a's explicit trigger, surfaced not hidden)
+
+`GROQ_API_KEY` is the same free-tier key several of GG's *live* products already depend on for
+real user traffic (DealHunter's own case study documents Groq's free-tier daily quota being
+exhausted in production before). This pipeline runs weekly, not per-request, and
+`PIPELINE_MAX_CANDIDATES` (default 20) bounds each run to a small, predictable number of calls —
+in the validation run below, 13 repos scanned cost roughly a dozen LLM calls total. The marginal
+quota impact should be small, but it's a real, non-zero shared-resource consideration, not a
+theoretical one — flagged here rather than silently reused. If GG wants this pipeline on a fully
+separate key/account, that's a one-line secret swap, no code change.
+
+### Validation (real repos, real API calls, before wiring into CI)
+
+Ran locally against real repos with a small candidate budget before touching the workflow:
+**3 proposals produced** (all from `triage-iq`'s README), **2 rejected/skipped**. The verifier
+caught a real framer error in this same test run — a draft that flipped a win/loss comparison
+("the classifier lost to the naive prior by 22.08 percentage points" reported in the source, the
+framer's draft claimed outperformance) — exactly the failure mode the cross-family verifier
+exists to catch, demonstrated working, not just designed. That test run's file output
+(`content/provenance.md`) was reverted before committing — the real first run is the actual
+scheduled/dispatched workflow, not this local validation pass.
+
+### CI wiring
+
+Added as a `content-pipeline` job in `.github/workflows/metrics-refresh.yml` (renamed "Content +
+metrics refresh"), its own PR (`chore/content-pipeline`) separate from the existing metric-value
+refresh PR — a reviewer shouldn't be asked to judge a mechanical value bump and an LLM-consensus
+content proposal in the same review. Same `GITHUB_TOKEN` anti-recursion workaround (explicit
+`gh workflow run ci.yml --ref`) as the existing job.
+
+### Verification
+
+`npm run typecheck` / `lint` / `build` clean (scripts are plain Node ESM, outside the Next.js
+app). Workflow YAML validated. Full e2e suite (59 tests) re-run clean after this item — it
+touches no site-rendering code, only new backend automation scripts.
+
+---
