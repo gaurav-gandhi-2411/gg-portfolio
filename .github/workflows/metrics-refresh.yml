@@ -2,7 +2,12 @@
 # commit): the PR is the human gate that keeps rule 65b intact. Fail-soft
 # end to end — an unreachable source repo skips that project with a note
 # in the PR body; the site is never blanked by automation.
-name: Metrics refresh
+#
+# Wave 15 — added the content-pipeline job below: extractor/curator/framer/
+# verifier curation of newly-discovered facts (docs/content-pipeline-rubric.md),
+# as its own separate PR from the metric-value refresh (see that job's header
+# comment for why they're kept apart).
+name: Content + metrics refresh
 
 on:
   schedule:
@@ -106,3 +111,57 @@ jobs:
           else
             gh issue create --title "$TITLE" --body "$BODY"
           fi
+
+  content-pipeline:
+    # Wave 15 — separate job/PR from the metric-value refresh above: that job
+    # mechanically refreshes already-known metric IDs (low-risk, deterministic
+    # diff); this one curates NEWLY discovered facts from source-repo READMEs
+    # through an extractor → curator → framer → verifier pipeline (LLM
+    # judgment, not a deterministic diff) — see docs/content-pipeline-rubric.md.
+    # Kept as its own PR so a reviewer isn't asked to judge a mechanical value
+    # bump and an LLM-consensus content proposal in the same review.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run the content curation pipeline
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
+        run: node scripts/content-pipeline/run.mjs
+
+      - name: Open PR if any proposal passed all three stages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet content/provenance.md; then
+            echo "No proposals reached the PR bar this week."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/content-pipeline"
+          git checkout -B "$BRANCH"
+          git add content/provenance.md
+          git commit -m "chore(content): weekly curated content proposals (LLM-consensus)"
+          git push --force origin "$BRANCH:refs/heads/$BRANCH"
+
+          if ! gh pr create \
+            --title "chore(content): weekly curated content proposals" \
+            --body-file /tmp/content-pipeline-summary.md \
+            --base main --head "$BRANCH"; then
+            gh pr edit "$BRANCH" --body-file /tmp/content-pipeline-summary.md
+          fi
+
+          # Same GITHUB_TOKEN anti-recursion workaround as the metrics-refresh
+          # job above — PRs opened with GITHUB_TOKEN don't trigger
+          # pull_request-triggered workflows, so dispatch ci.yml explicitly.
+          gh workflow run ci.yml --ref "$BRANCH"
