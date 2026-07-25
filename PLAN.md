@@ -4,6 +4,49 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Wave 15 — content framing, progressive disclosure, agentic pipeline (in progress, 2026-07-25/26)
+
+GG's brief: rewrite case-study framing to lead with capability not failure; progressive
+disclosure (4-card tease + category pages); replace the metric-refresh pipeline with a
+multi-agent extractor/curator/framer/verifier pipeline; audit manifest/CI coverage across all
+17 repos; migrate expense-tracker onto review-iq's Supabase; five forward-looking enhancements.
+Branch `feat/wave15-content-framing-pipeline`. Full report:
+`reports/wave15-content-pipeline-2026-07-25.md`.
+
+- [x] **Item 1 — framing rewrite**: all 13 case-study deks + story titles rewritten to lead
+      with the capability/action demonstrated; body/results/numbers unchanged. New `closing`
+      field ("What this means if you need something similar") added to all 13. Before/after
+      headline table in the wave report.
+- [x] **Item 2 — progressive disclosure**: home + `/projects` cap every filter view to 4 cards
+      + "See all N" (home's "All" caps too; `/projects`'s own "All" stays uncapped — it's the
+      destination). New `/projects/[category]` SSG route, one per category. `<noscript>`
+      override keeps the cap from becoming a permanent no-JS content gate (dedicated e2e
+      assertion). Budget +558B gzip.
+- [x] **Item 4 — manifest/CI audit, all 17 repos**: re-verified fresh against `origin/main`
+      (a research agent's snapshot was stale on 2 of 4 flagged repos — nothing done there).
+      Real gaps: `token-efficiency-scorer` (missing both — PR #1, green after 3 fix-rounds:
+      stale/gitignored `uv.lock`, a numpy-stub/mypy `python_version` mismatch, 2 real-corpus
+      test dependencies, 1 Linux-only flake, all investigated not blind-excluded) and
+      `mindmeld-payloads` (missing CI — PR #2, minimal JSON-validation check, green). Full
+      repo-by-repo table in the wave report.
+- [x] **Item 6 — enhancements**: per-project OG images, per-case-study JSON-LD
+      (SoftwareApplication), git-derived last-updated + reading time, a "Work with me" CTA on
+      every case study. Vercel Web Analytics data blocked on GG enabling the dashboard feature
+      itself (client lib already wired since wave 2) — numbered steps in the wave report, no
+      fabricated numbers.
+- [ ] **Item 3 — agentic content pipeline** (extractor/curator/framer/verifier, replaces
+      `scripts/refresh-metrics.mjs`'s fetch-and-diff refresh): not started. First LLM-API
+      integration this repo's automation has ever had — no existing secret-wiring/rate-limit
+      pattern to extend. Queued next.
+- [ ] **Item 5 — expense-tracker on review-iq's Supabase**: not started, deliberately — highest
+      blast-radius item in the wave (live production DB shared with a real product). Groundwork
+      done: review-iq's `.env`/schema/RLS conventions read, expense-tracker's own `.env` confirmed
+      pointing at a different dead Supabase project (matches wave 14's diagnosis), Cloud Run
+      deploy script read, gcloud confirmed authenticated (previously assumed blocked). STRIDE
+      pass + `expense` schema migration + RLS scoping + redeploy queued next, alongside item 3.
+- [ ] Large diff (multiple substantial items) → will open as a **draft PR for GG's manual
+      review/merge**, same posture as prior waves, once items 3 and 5 land.
+
 ## Wave 1 — identity + skeleton (done, pending GG review)
 
 Gate: GG reviews identity + copy before wave 2.
