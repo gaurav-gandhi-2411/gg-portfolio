@@ -38,12 +38,20 @@ Branch `feat/wave15-content-framing-pipeline`. Full report:
       `scripts/refresh-metrics.mjs`'s fetch-and-diff refresh): not started. First LLM-API
       integration this repo's automation has ever had — no existing secret-wiring/rate-limit
       pattern to extend. Queued next.
-- [ ] **Item 5 — expense-tracker on review-iq's Supabase**: not started, deliberately — highest
-      blast-radius item in the wave (live production DB shared with a real product). Groundwork
-      done: review-iq's `.env`/schema/RLS conventions read, expense-tracker's own `.env` confirmed
-      pointing at a different dead Supabase project (matches wave 14's diagnosis), Cloud Run
-      deploy script read, gcloud confirmed authenticated (previously assumed blocked). STRIDE
-      pass + `expense` schema migration + RLS scoping + redeploy queued next, alongside item 3.
+- [x] **Item 5 — expense-tracker on review-iq's Supabase**: done. STRIDE pass written; dedicated
+      `expense` schema + non-superuser `expense_app` role (zero grants on `public`, verified by
+      direct denial test, not just convention); migrations 001-003 land in `expense` unchanged
+      (role's own `search_path`); new `app_profiles` table + auth hook documents the shared-
+      `auth.users` handling. review-iq regression-tested with its own live-Supabase integration
+      suite: **71 passed, 0 failed** — one transient failure investigated and traced to my own
+      interrupted prior test run, not this change. Backend redeployed to Cloud Run (was 500 on
+      every route, now 200/401 correctly); frontend redeployed fresh on Vercel (previous project
+      gone) at https://expense-tracker-eight-xi-93.vercel.app; CORS verified end-to-end. PR:
+      `gaurav-gandhi-2411/expense-tracker#3`. One residual, documented risk not closed this pass:
+      review-iq's own connection still uses the Postgres superuser role (pre-existing, not
+      introduced here), so full bidirectional isolation needs a follow-up on review-iq's side.
+      Numbered steps for GG in the wave report (PR review, password custody, custom domain,
+      when to flip the case-study's "offline" claim to live).
 - [ ] Large diff (multiple substantial items) → will open as a **draft PR for GG's manual
       review/merge**, same posture as prior waves, once items 3 and 5 land.
 
