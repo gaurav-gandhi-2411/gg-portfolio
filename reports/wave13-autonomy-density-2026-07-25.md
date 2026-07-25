@@ -282,6 +282,14 @@ Post-fix numbers: axe 0 (home + /projects re-run; other routes untouched by the 
 budget 204,770 B gzip (+5 B from class strings), all "after" screenshots re-captured at
 the unified width (the report's screenshot references are the final versions).
 
+Sign-off closure, stated precisely: the reviewer's verdict was conditional approval
+("once finding 1 lands, this is approved"); the reviewer's session could not be resumed
+for a re-confirmation, so the condition was closed two independent ways instead —
+in-browser pixel measurement (nav/About/Experience/Work all at x=304 @1600px) and a
+separate verifier agent's 7/7-pass source audit of the width unification (no 6xl remains
+in app/ or components/; thresholds retuned). Recorded here rather than claimed as a
+fresh reviewer pass.
+
 ## Process notes
 
 - 4 executor subagents (source-repo manifests ×3 batches + agentgauge follow-up), 1
