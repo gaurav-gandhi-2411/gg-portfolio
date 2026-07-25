@@ -114,6 +114,17 @@ export const products: Product[] = [
     metric: refreshableMetric("agentgauge:blocking-causal"),
   },
   {
+    slug: "reclaim",
+    name: "Reclaim",
+    tagline:
+      "Rules-first Windows disk-cleanup tool — a deterministic safety gate decides what's safe to remove, and the reclaimable-space estimate got corrected downward four times as real bugs were found, never once upward.",
+    liveUrl: "https://github.com/gaurav-gandhi-2411/reclaim/releases/latest",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/reclaim",
+    categories: ["tooling", "vision", "retrieval"],
+    techChips: ["SafetyValidator", "OpenCLIP", "pHash + MinHash", "LightGBM"],
+    metric: refreshableMetric("reclaim:honesty-arc"),
+  },
+  {
     slug: "reviewiq",
     name: "ReviewIQ",
     tagline:

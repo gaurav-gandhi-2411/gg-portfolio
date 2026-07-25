@@ -102,6 +102,15 @@
       "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
       "measured_at": "2026-07-25"
     },
+    "reclaim:honesty-arc": {
+      "label": "Exact-duplicate reclaimable estimate, corrected as real safety bugs were found",
+      "value": "~48GB → 23.09GB → 4.26GB → 3.92GB — never corrected upward",
+      "repo": "gaurav-gandhi-2411/reclaim",
+      "source_file": "docs/CASE_STUDY.md",
+      "source_line": 761,
+      "commit_sha": "b7d1aa4aa93725e1d7584d4381470e7932fdb8fe",
+      "measured_at": "2026-07-23"
+    },
     "expense-tracker:tests": {
       "label": "Test suite",
       "value": "143/143 passing",

@@ -24,6 +24,7 @@ const PRODUCTS_PATH = join(ROOT, "content", "products.ts");
 const RESUME_MANIFEST_PATH = join(ROOT, "content", "resume-metrics.json");
 const RESUME_PDF_PATH = join(ROOT, "public", "resume.pdf");
 const SUMMARY_PATH = process.env.SUMMARY_PATH ?? join(ROOT, "metrics-refresh-summary.md");
+const NEW_REPOS_PATH = process.env.NEW_REPOS_PATH ?? join(ROOT, "new-repos.json");
 
 const STALE_DAYS = 90;
 const FETCH_TIMEOUT_MS = 20_000;
@@ -35,6 +36,18 @@ const HF_AUTHOR = "gauravgandhi2411";
 // The agreed bar (wave 13) below which the HF download count is tracked
 // but not shown on the site; crossing it is worth a PR on its own.
 const HF_DISPLAY_BAR = 1000;
+const GITHUB_AUTHOR = "gaurav-gandhi-2411";
+// Wave 14: repos that are real, public, and deliberately NOT their own
+// product card — supporting/companion repos for a project already listed,
+// or this site's own repo. New public repos not in this list and not
+// already linked from a product get flagged, not silently skipped — this
+// is what makes GG's "reclaim" wave-14 catch (published, un-told) a one-
+// time fix instead of a recurring one.
+const KNOWN_NON_PRODUCT_REPOS = new Set([
+  "gg-portfolio", // this site
+  "mindmeld-payloads", // Warmer's public data mirror; mindmeld itself is private
+  "triage-iq-ui", // triage-iq's frontend companion, same product/live URL
+]);
 
 const changes = []; // { id, field, old, new, source }
 const notes = []; // free-form markdown bullets
@@ -173,7 +186,33 @@ for (const url of liveUrls) {
 }
 const brokenLinks = linkResults.filter((r) => !r.ok);
 
-// ── 4. Resume drift (wave-13 follow-up: the resume shouldn't silently rot
+// ── 4. Repo inventory (wave 14: GG published "reclaim" and the site found
+//       out from him, not from us — the exact gap this closes). Enumerates
+//       every public repo under the author, diffs against repoUrl/liveUrl
+//       hosts already referenced in products.ts plus the known-supporting
+//       list above, and flags anything new. Report-only: adding a project
+//       to the site is a content/case-study decision, not something this
+//       script should attempt on its own. ─────────────────────────────────
+
+const referencedRepoSlugs = new Set(
+  [...productsSrc.matchAll(/github\.com\/[^/"]+\/([^/"]+)/g)].map((m) => m[1])
+);
+const newRepos = [];
+try {
+  const repos = await fetchJson(
+    `https://api.github.com/users/${GITHUB_AUTHOR}/repos?per_page=100&type=public`
+  );
+  for (const repo of repos) {
+    if (repo.fork || repo.archived) continue;
+    if (KNOWN_NON_PRODUCT_REPOS.has(repo.name)) continue;
+    if (referencedRepoSlugs.has(repo.name)) continue;
+    newRepos.push({ name: repo.name, url: repo.html_url, description: repo.description ?? "" });
+  }
+} catch (err) {
+  notes.push(`Repo inventory check unavailable this run (${err.message}).`);
+}
+
+// ── 5. Resume drift (wave-13 follow-up: the resume shouldn't silently rot
 //       while the site self-heals). content/resume-metrics.json records,
 //       per resume claim, the STORE value at the last resume sync — so
 //       drift detection is an exact string compare against site truth, no
@@ -201,7 +240,7 @@ try {
   notes.push(`Resume drift check unavailable this run (${err.message}).`);
 }
 
-// ── 5. Write store + summary ─────────────────────────────────────────────
+// ── 6. Write store + summary ─────────────────────────────────────────────
 
 const metricChanges = changes.filter((c) => c.id !== "hf:downloads-alltime");
 const hfOnlyChange = changes.length > 0 && metricChanges.length === 0;
@@ -267,6 +306,18 @@ if (resumeDrift.length > 0 || resumeHashNote) {
     "> Report-only: the resume is a designed 2-page document — a human regenerates it (see .assets/resume-sources/ + content/resume-metrics.json's _readme)."
   );
 }
+if (newRepos.length > 0) {
+  lines.push("");
+  lines.push("### New public repos not yet on the site");
+  lines.push("");
+  for (const r of newRepos) {
+    lines.push(`- [\`${r.name}\`](${r.url})${r.description ? ` — ${r.description}` : ""}`);
+  }
+  lines.push("");
+  lines.push(
+    "> Report-only: adding a project is a content/case-study decision (depth, categories, honest metrics), not something this script does automatically. If this is a real product, it needs a case study at the same depth as the other 12 (see reports/wave14-verification-audit-2026-07-26.md's reclaim addition for the process). If it's a support repo or not ready to show, add its name to KNOWN_NON_PRODUCT_REPOS in scripts/refresh-metrics.mjs so it stops appearing here."
+  );
+}
 if (notes.length > 0) {
   lines.push("");
   lines.push("### Notes");
@@ -279,6 +330,7 @@ lines.push(
 );
 
 writeFileSync(SUMMARY_PATH, lines.join("\n") + "\n");
+writeFileSync(NEW_REPOS_PATH, JSON.stringify(newRepos, null, 2) + "\n");
 console.log(lines.join("\n"));
 console.log(
   `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
