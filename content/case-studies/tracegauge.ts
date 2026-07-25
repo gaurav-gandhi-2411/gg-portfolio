@@ -6,7 +6,7 @@ import type { CaseStudy } from "../types";
 export const tracegauge: CaseStudy = {
   slug: "tracegauge",
   title: "tracegauge",
-  dek: "A local, three-axis scorer for whether a Claude Code session was token-efficient or wasteful — because \"this agent is efficient\" is usually a vibe, not a measurement.",
+  dek: "A local, three-axis scorer that replaces \"this agent felt efficient\" with a measurement — built by testing four candidate waste heuristics against real annotator agreement, and rebuilding the architecture around the one that survived.",
   depth: "full",
   problem: [
     "Developers using Claude Code (or similar coding agents) have no real visibility into whether a given session used tokens well or burned through them on repeated failed attempts, redundant reads, or a wandering plan. Efficiency claims about coding agents are almost always anecdotal — \"it felt fast\" or \"it felt wasteful\" — rather than measured against anything.",
@@ -112,7 +112,7 @@ export const tracegauge: CaseStudy = {
     },
   ],
   story: {
-    title: "The heuristic pivot: when three of four rules fail the same test",
+    title: "Tested four waste-detection heuristics against real annotator agreement — kept the one that survived, rebuilt the architecture around why the other three couldn't",
     body: [
       "Four waste-detection heuristics were built, each with a written rubric, and tested the honest way: independent human annotators applied each rule and their agreement was measured with Cohen's kappa (a statistic for inter-rater agreement that corrects for chance). The bar was 0.60. Three of the four heuristics scored 0.15, 0.43, and 0.19 — well below it. One case was especially telling: a capable model applying one of the failing heuristics systematically over-fired it on 23% of turns, which ruled out \"the annotators are just being noisy\" as the explanation. The disagreement was conceptual, not statistical noise.",
       "The postmortem's conclusion was structural rather than incremental: these three concepts need cross-turn intent inference — understanding what a sequence of steps was trying to accomplish — that no phrase-matching rule can capture, no matter how the rubric is worded. As the postmortem put it, any further rubric patch \"reduces to 'the annotator decides per instance' — which is what κ=0.15 already measures.\" Patching the rubric a third time wouldn't have fixed anything; it would have just re-measured the same disagreement.",
@@ -120,6 +120,9 @@ export const tracegauge: CaseStudy = {
     ],
     sourceRef: "tracegauge:heuristic-pivot",
   },
+  closing: [
+    "If you're building any rule-based detector where \"this seems right\" is currently the only validation, this is the test worth running: measure inter-rater agreement before you trust a heuristic, and be willing to structurally rearchitect around what the measurement actually shows instead of patching the rubric again.",
+  ],
   links: [
     { label: "Install from PyPI", href: "https://pypi.org/project/tracegauge/" },
     {

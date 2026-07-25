@@ -7,7 +7,7 @@ import type { CaseStudy } from "../types";
 export const styleMaitri: CaseStudy = {
   slug: "style-maitri",
   title: "Style Maitri",
-  dek: "A white-label AI shopping assistant for Indian fashion brands — and the adversarial audit that caught it lying to a bride.",
+  dek: "A white-label AI shopping assistant for Indian fashion brands, stress-tested by sending 6 agents to role-play skeptical shoppers on the live site — shipped only after that audit's two trust-breaking bugs were found and fixed.",
   depth: "full",
   problem: [
     "Indian D2C fashion brands want a conversational shopping assistant — something a shopper can chat with the way they'd ask a helpful store clerk — but grounded in their own real catalogue: their actual prices, sizes, and stock, never invented ones. Style Maitri is built white-label so any brand can run it: one Docker container (a packaged, portable copy of the whole app) plus one YAML config file (a small settings file) per brand.",
@@ -109,7 +109,7 @@ export const styleMaitri: CaseStudy = {
     },
   ],
   story: {
-    title: "Trusting gold-set numbers wasn't enough, so 6 agents role-played skeptical shoppers on the live site",
+    title: "6 agents went shopping as skeptics on the live site — and found what a 93.8%-accuracy eval set never could",
     body: [
       "The offline evals looked healthy: 93.8% intent accuracy, 96–99% retrieval precision on normal queries. But those numbers only measure what the eval set happens to ask. To find out what a real, skeptical shopper would experience, 6 independent agents were sent to drive the actual live production site as wedding shoppers would — 32 messy, realistic queries, judged honestly rather than graded against a rubric written in advance.",
       "15 of the 32 responses were judged disappointing, and two were worse than disappointing: a body-shape styling feature fabricated a confident claim about someone's body from a photo that had no person in it at all, and a bridal search ranked children's clothing above adult items in the results.",
@@ -117,6 +117,9 @@ export const styleMaitri: CaseStudy = {
     ],
     sourceRef: "style-maitri:live-audit",
   },
+  closing: [
+    "If your product's offline evals look healthy but you're not sure what a real, adversarial user would find, this is the audit pattern worth copying: agents role-playing skeptical real users on your actual live site, judged honestly rather than against a rubric you wrote yourself in advance.",
+  ],
   links: [
     { label: "Try Style Maitri", href: "https://stylemaitri.vercel.app" },
     {

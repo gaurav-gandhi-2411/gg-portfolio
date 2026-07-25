@@ -56,6 +56,7 @@ export function CaseStudyPage({
     ...((study.decisions?.length ?? 0) > 0 ? ["Key decisions — and why"] : []),
     ...((study.results?.length ?? 0) > 0 ? ["Results — the honest numbers"] : []),
     ...(study.story ? [study.story.title] : []),
+    ...((study.closing?.length ?? 0) > 0 ? ["What this means if you need something similar"] : []),
   ];
   let sectionIndex = 0;
   const next = () => ++sectionIndex;
@@ -211,6 +212,23 @@ export function CaseStudyPage({
           )}
 
           {demo}
+
+          {(study.closing?.length ?? 0) > 0 && (
+            <>
+              <SectionHeading
+                index={next()}
+                title="What this means if you need something similar"
+              />
+              {study.closing?.map((paragraph) => (
+                <p
+                  key={paragraph.slice(0, 32)}
+                  className="text-muted-foreground mt-4 text-base leading-relaxed"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </>
+          )}
 
           <div className="border-border/40 mt-16 flex flex-col items-center gap-5 border-t pt-10 text-center">
             <p className="text-muted-foreground text-sm">Want to see it for yourself?</p>

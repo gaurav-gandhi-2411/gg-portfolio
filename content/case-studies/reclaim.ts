@@ -7,7 +7,7 @@ import type { CaseStudy } from "../types";
 export const reclaim: CaseStudy = {
   slug: "reclaim",
   title: "Reclaim",
-  dek: "A Windows disk-cleanup tool whose reclaimable-space estimate was corrected downward four times as real bugs surfaced — and whose own safety net is the only reason a fifth one didn't cost a dev environment.",
+  dek: "A Windows disk-cleanup tool that only ever deletes by deterministic rule, never by model score — proved its own safety net by surviving a real incident where its own delete run hit three shared Python environments, recovered every file, and rebuilt detection to be structural rather than pattern-based.",
   depth: "full",
   problem: [
     "A Windows disk that's nearly full turns cleanup into a bet: delete the wrong thing — a config file that looks unused, a cache a build tool secretly still reads from — and something breaks, sometimes not until days later. Most cleanup tools resolve that tension by either being too conservative to free real space, or by trusting a model's \"this looks safe\" score enough to just act on it.",
@@ -124,7 +124,7 @@ export const reclaim: CaseStudy = {
     },
   ],
   story: {
-    title: "The tool broke its own dev environment — and it's a paragraph in this case study, not a rebuilt machine, only because the delete was reversible",
+    title: "Recovered 186 files from three shared dev environments after its own delete run hit them — then rebuilt detection so it wouldn't depend on knowing what to look for",
     body: [
       "The exact-duplicate estimate had already been corrected twice by the time a real apply of exact-duplicate candidates ran for real. Within minutes, this project's own development environment stopped working: a basic `import socket` started failing. The investigation found 186 files across three shared Python installations — a package-manager-built Python, a cloud SDK's bundled Python, and a mobile toolchain's own Python — had been sent to the Recycle Bin. None of the three was recognized as a protected \"environment\" by the existing check, because none of them had the marker files (a conda metadata folder, a venv config file) the check was looking for.",
       "A first, keyword-driven recovery pass found and restored 71 files and looked complete. It wasn't. A systematic re-audit — re-running the fixed detector against every one of the 10,134 applied files, not just the paths a keyword search thought to check — found 186 true violations, not 71. All 186 were recovered by parsing the Windows Recycle Bin's own internal index format directly, since Reclaim's own restore command didn't support restoring Recycle Bin batches at all.",
@@ -133,6 +133,9 @@ export const reclaim: CaseStudy = {
     ],
     sourceRef: "reclaim:bug-trail",
   },
+  closing: [
+    "If you're building any tool that deletes, moves, or mutates a user's files, this is the design worth copying: make the recoverable path the default until you've earned trust in the risky one, and choose reversibility before you know it'll be the thing that saves you — not after.",
+  ],
   links: [
     {
       label: "Download latest release",

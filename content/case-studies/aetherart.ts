@@ -6,7 +6,7 @@ import type { CaseStudy } from "../types";
 export const aetherart: CaseStudy = {
   slug: "aetherart",
   title: "AetherArt",
-  dek: "A Ukiyo-e style SDXL model squeezed into an 8GB consumer GPU budget — and the experiment that found the field's default quality metric can't be trusted.",
+  dek: "A Ukiyo-e style SDXL model squeezed into an 8GB consumer GPU budget — ran the experiment that found the field's default quality metric is structurally blind to real changes, and revised its own headline finding downward once a stricter statistical bar was applied.",
   depth: "full",
   problem: [
     "State-of-the-art image generators like Stable Diffusion XL (SDXL) normally need a 16GB+ GPU, which puts them out of reach on a consumer laptop. AetherArt fine-tunes SDXL into a Japanese ukiyo-e woodblock-print style and engineers the whole pipeline to run inside an 8GB VRAM budget, with a live public demo.",
@@ -96,7 +96,7 @@ export const aetherart: CaseStudy = {
     },
   ],
   story: {
-    title: "Quantization was supposed to save memory. Under CPU offload, it did the opposite.",
+    title: "Expected quantization to save memory — traced why, under CPU offload, it did the opposite",
     body: [
       "The natural assumption is that lower-precision weights use less memory. So it was surprising when switching from FP16 to INT8 quantization, with CPU offload active, increased peak VRAM rather than decreasing it — 2,210MB versus 1,803MB, a 407MB increase in the wrong direction.",
       "The mechanism traced back to how the quantization library (bitsandbytes) actually works: it allocates a full FP16 compute buffer to dequantize the INT8 weights on every single forward pass. That dequantization buffer is a real, recurring memory cost, and under CPU offload it outweighs whatever the smaller stored weights save — only NF4's larger 4-bit compression margin is wide enough to still come out ahead in that specific regime.",
@@ -104,6 +104,9 @@ export const aetherart: CaseStudy = {
     ],
     sourceRef: "aetherart:int8-surprise",
   },
+  closing: [
+    "If you're relying on CLIP score, or any single automated metric, as your quality gate, this is worth testing first: run the experiment that checks whether the metric actually moves with the changes you care about, and hold your own claims to a statistical bar strict enough to survive being wrong.",
+  ],
   links: [
     { label: "Try AetherArt", href: "https://aetherart-demo-473907703523.us-central1.run.app/" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/AetherArt" },

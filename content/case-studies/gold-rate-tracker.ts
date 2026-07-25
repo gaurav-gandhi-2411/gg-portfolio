@@ -6,7 +6,7 @@ import type { CaseStudy } from "../types";
 export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
   title: "Gold Rate Tracker",
-  dek: "A free-tier gold-price PWA that refused to ship an \"AI predicts prices\" feature once the honest baseline beat it.",
+  dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model — and shipped the honest forecast instead of the more exciting one.",
   depth: "full",
   problem: [
     "Indian retail gold buyers want to know today's Tanishq 22K jewelry price and whether now is a good time to buy — without paying for a subscription service, and without trusting a forecast that's really just marketing dressed up as intelligence.",
@@ -97,7 +97,7 @@ export const goldRateTracker: CaseStudy = {
     },
   ],
   story: {
-    title: "A baseline correction flipped \"the model works\" into \"the model has zero verified edge\" — and shipped anyway",
+    title: "Corrected its own baseline from a 50% coin-flip to gold's real ~70% base rate — and that correction made the model's edge disappear",
     body: [
       "Early on, the project reported directional-accuracy figures of 55.8% and 63.3% as beating \"the 50% naive floor\" — the standard textbook baseline for a binary up/down signal. That comparison looked reasonable, and it made the model look genuinely useful.",
       "A review caught the flaw: 50% is only the right baseline when the series is roughly balanced between up and down moves. Gold's price in this data rose roughly 70% of the time, which means a trivial rule — \"always predict up,\" no model required — already beats 50% by a wide margin. Once that true base rate was used as the comparison instead, the model's advantage didn't just shrink. It disappeared: on every window tested, the always-predict-up rule matched or beat the trained model.",
@@ -105,6 +105,9 @@ export const goldRateTracker: CaseStudy = {
     ],
     sourceRef: "gold:direction-baseline",
   },
+  closing: [
+    "If you're evaluating whether an ML feature is actually earning its complexity, this is the bar worth holding yourself to: define the promotion gate and the real baseline before you see the result, and if the naive baseline wins, that's the finding to ship — not the one to quietly bury.",
+  ],
   links: [
     { label: "Live tracker", href: "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/gold-rate-tracker" },

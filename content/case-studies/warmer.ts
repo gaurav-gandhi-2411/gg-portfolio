@@ -5,7 +5,7 @@ import type { CaseStudy } from "../types";
 export const warmer: CaseStudy = {
   slug: "warmer",
   title: "Warmer",
-  dek: "A daily semantic word game — and the embedding-model debugging story behind making it work in Hinglish.",
+  dek: "Diagnosed a Hinglish embedding model stuck at zero correlation, fixed the real root cause, then caught its own 'more data' fix making things worse — and shipped the LoRA model that actually worked.",
   depth: "full",
   problem: [
     "Daily word games like Wordle are hugely popular, but they're English-only and letter-based: a guess is either right or wrong. Warmer asks a different question — how close is your guess in meaning? You guess a secret word, and an AI language model scores how semantically near you are, from Freezing to Scorching.",
@@ -96,7 +96,7 @@ export const warmer: CaseStudy = {
     },
   ],
   story: {
-    title: "The Hinglish engine launched broken — and the fix wasn't more data",
+    title: "Zero correlation to a published, working model — the debugging trail, including the fixes that made it worse first",
     body: [
       "At launch, the Hinglish mode's semantic ranking measured a Spearman correlation of −0.003 against human similarity judgments — literally no correlation. The root cause was empirical, not speculative: the multilingual embedding model had learned Hindi in Devanagari script, so romanized Hinglish words were gibberish to it. \"Dil\" landed near Turkish words; \"dua\" near Italian — clustered by how they're spelled, not what they mean.",
       "The fix was a nine-candidate bake-off under a fixed evaluation harness — transliteration pipelines, code-mixed BERT variants, MuRIL — decided purely on measured metrics. A model trained natively on romanized code-mixed text won, taking Spearman to 0.639.",
@@ -105,5 +105,8 @@ export const warmer: CaseStudy = {
     ],
     sourceRef: "warmer:lora-reframe",
   },
+  closing: [
+    "If you need a model that has to work across code-mixed or low-resource languages, not just English demos, this is the debugging discipline that gets it there: falsify the easy hypothesis, measure the alternative, and don't ship a fix until it's beaten the baseline on held-out data.",
+  ],
   links: [{ label: "Play Warmer", href: "https://playwarmer.vercel.app/" }],
 };

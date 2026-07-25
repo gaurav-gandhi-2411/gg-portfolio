@@ -6,7 +6,7 @@ import type { CaseStudy } from "../types";
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
   title: "ReviewIQ",
-  dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals — and the bug where a safety complaint got scored as low-priority because it was written politely.",
+  dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals — caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
   problem: [
     "Indian D2C (direct-to-consumer) sellers get customer reviews in English, Hindi, and Hinglish (romanized, code-mixed Hindi-English — \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones, or the likely-fake ones, doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
@@ -85,7 +85,7 @@ export const reviewiq: CaseStudy = {
     },
   ],
   story: {
-    title: "Harm in a positive tone — and a bug found without one new API call",
+    title: "Found a safety-urgency bug — and diagnosed it using cassette-replay CI, without one new API call",
     body: [
       "A review that praised the product overall but mentioned a safety issue in passing came back scored as LOW urgency, because the original rubric keyed off tone: the review read as positive, so it scored as low-priority, regardless of the safety mention buried inside it. v2.2 rewrote the rubric to be signal-based instead of tone-based, so a harm signal drives urgency no matter how the rest of the review reads.",
       "v2.3 then dug into a related failure using cassette replay — re-running recorded LLM responses rather than calling the API again — and found the small model wasn't actually reasoning about the harm clause at all. It was pattern-matching the literal phrase \"poor fit,\" which happened to appear in one of the prompt's own few-shot examples, and copying that example's classification regardless of context. The fix was to remove that example from the prompt and add a regression fixture so the same shortcut couldn't silently return.",
@@ -93,6 +93,9 @@ export const reviewiq: CaseStudy = {
     ],
     sourceRef: "reviewiq:urgency-rubric",
   },
+  closing: [
+    "If your product has to catch safety-critical signals buried in ordinary-sounding text, this is the discipline worth copying: score on the signal, not the tone, and build CI so a real production bug can be diagnosed for free, from recordings, without spending a live API call to reproduce it.",
+  ],
   links: [
     { label: "Live API docs", href: "https://review-iq-ajjrytb3na-el.a.run.app/docs" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/review-iq" },

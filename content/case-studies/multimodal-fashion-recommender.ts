@@ -6,7 +6,7 @@ import type { CaseStudy } from "../types";
 export const mmfr: CaseStudy = {
   slug: "multimodal-fashion-recommender",
   title: "Multimodal Fashion Recommender",
-  dek: "A two-tower model that recommends fashion items from how they look and what they're described as — and the representation-collapse bug that nearly sank it.",
+  dek: "A two-tower recommender that beats a popularity baseline 3.06× on Recall@10 — reached by diagnosing a full representation collapse down to a warmup-schedule fix, and by writing the ADR that draws an honest line on how far one shared process can scale.",
   depth: "full",
   problem: [
     "Fashion e-commerce sites need a good \"you might also like\" — but the catalogue is huge, customers almost never leave ratings, and what makes two items similar depends on both how they look and what they actually are. A plain-text search misses the visual half; a plain-image search misses the descriptive half.",
@@ -109,7 +109,7 @@ export const mmfr: CaseStudy = {
     },
   ],
   story: {
-    title: "The model collapsed to a single point — then a scaling ADR drew the line on how far one process can go",
+    title: "Diagnosed a full representation collapse to a specific warmup-schedule fix, then wrote the scaling ADR that says exactly where this architecture stops working",
     body: [
       "Training with the paper-standard contrastive-learning recipe — temperature 0.07, learning rate 1e-3, no warmup — produced a suspiciously clean-looking loss curve and a completely useless model: every item and user embedding had converged to the same point in the 256-dimensional space. Cosine similarity between any two items was effectively 1.0. Nothing had been learned; the loss function had just found the cheapest way to look small.",
       "The fix came from empirical iteration rather than a known formula: raising the temperature to 0.1, dropping the learning rate to 3e-4, and — the change that mattered most — adding a 500-step warmup before the learning rate reached its full value. Warmup gives the towers a chance to spread out into distinct regions of the space before the optimizer starts taking large steps, which is exactly what a cold, aggressive learning rate short-circuits.",
@@ -117,6 +117,9 @@ export const mmfr: CaseStudy = {
     ],
     sourceRef: "mmfr:collapse-fix",
   },
+  closing: [
+    "If you're building contrastive or two-tower retrieval and your loss curve looks suspiciously clean, this is worth checking first: a collapsed representation can look like convergence. And if you're deciding how far a single-process architecture can scale, write the math down before you find out the hard way in production.",
+  ],
   links: [
     {
       label: "Try it on Hugging Face",

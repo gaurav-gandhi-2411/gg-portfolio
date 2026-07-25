@@ -5,7 +5,7 @@ import type { CaseStudy } from "../types";
 export const shelfsense: CaseStudy = {
   slug: "shelfsense",
   title: "ShelfSense",
-  dek: "Demand forecasting for 30,490 retail item×store series — and the story of an evaluation harness that lied about which models actually won.",
+  dek: "Demand forecasting for 30,490 retail item×store series, 36% more accurate than the naive baseline — reached partly by catching an evaluation harness that had been silently flipping which models actually won.",
   depth: "full",
   problem: [
     "Retailers need to forecast how much of each item each store will sell, every day, for thousands of item×store combinations at once — get it wrong and you either run out of stock or waste money on inventory that doesn't move. ShelfSense is a portfolio project built on Kaggle's M5 Forecasting Accuracy competition (the Walmart demand-forecasting dataset), demonstrating production-grade forecasting engineering rather than a one-off notebook.",
@@ -91,7 +91,7 @@ export const shelfsense: CaseStudy = {
     },
   ],
   story: {
-    title: "When your evaluation harness lies",
+    title: "Caught an evaluation harness reporting the wrong winner — four models that looked better on validation had actually gotten worse",
     body: [
       "Four new model variants were added late in the project, and every one of them looked like an improvement — on the 28-day validation holdout used to pick a winner before submitting to Kaggle. Then the private leaderboard scores came back, and all four had reversed.",
       "The clearest example: RMSE-MH scored 0.6699 on validation against the baseline's 0.6860 — a clear win on paper. On the private leaderboard, RMSE-MH scored 0.6205 against the baseline's 0.5693 — a clear loss. The direction of the result flipped depending on which window of time you measured it on.",
@@ -99,6 +99,9 @@ export const shelfsense: CaseStudy = {
     ],
     sourceRef: "shelfsense:val-divergence",
   },
+  closing: [
+    "If you're choosing between models based on a validation split, this is the check worth running before you trust it: confirm the validation window and the real evaluation window are actually statistically exchangeable, because a harness that silently disagrees with itself is worse than no harness at all.",
+  ],
   links: [
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/shelfsense-m5" },
   ],
