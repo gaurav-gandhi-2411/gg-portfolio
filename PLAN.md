@@ -557,6 +557,60 @@ multi-page portfolio (home teases → /projects indexes → /work/[slug] teaches
 - [ ] Large diff → **draft PR #20 for GG's manual review/merge**, same posture as prior
       waves. `explore/wave8-lab` deletion still deferred (unchanged standing note).
 
+## Wave 13 — autonomy, ordering, polish (2026-07-25, draft PR pending GG's merge)
+
+GG's brief: autonomous metric refresh (his #1), desktop density at 1280–1600px, tiering
+retirement + AI/ML-depth ordering + category filters, modern-CSS liveliness, copy pass, HF
+re-check, honest results untouched. Full report:
+`reports/wave13-autonomy-density-2026-07-25.md`.
+
+- [x] **Metric refresh pipeline:** `content/metrics.json` (per-metric value/source/sha/
+      measured_at, keyed by provenance IDs) + `lib/metrics.ts` (build fails on missing ID)
+      + weekly `metrics-refresh.yml` → `scripts/refresh-metrics.mjs` → **reviewed PR, never
+      a direct commit**. Fail-soft per repo, 90-day stale flags, link health w/ cold-start
+      retry, HF count tracked vs the 1,000 display bar. Both paths tested pre-ship.
+      **11 `.portfolio/metrics.json` PRs opened across the source repos (GG merges);**
+      Warmer's manifest lives in public mindmeld-payloads (mindmeld is private). Gotcha
+      documented: GITHUB_TOKEN PRs don't fire pull_request workflows → the Action
+      dispatches ci.yml onto its branch (ci.yml gained workflow_dispatch).
+- [x] **Pipeline caught 3 live drifts before its first scheduled run:** Warmer Hinglish
+      0.639 → **0.813** (a *successful* LoRA fine-tune published as
+      hinglish-relatedness-sbert on HF — card, figure, and the outdated "fine-tunes lost"
+      story all updated, held-out 0.435→0.704 reported beside the headline); **AgentGauge's
+      "8 scoring dimensions" claim was falsified by the repo's own predictive-validity
+      study** — card + case study rebuilt around the v2 statistical harness (founding null
+      leads the results; 8 new provenance IDs); gold-rate backtest 194 → 199 folds.
+- [x] **Also found/fixed:** getWarmerPuzzleNumber threw on the manifest's new hi-en-only
+      shape (would have broken the next production ISR pass) — now truly fail-soft.
+- [x] **Desktop density:** Section width steps (wide→5xl, grid→6xl at xl); About skills
+      rail, Experience meta rail, Research two-col spread, case-study sticky rail
+      (TOC + metric + links), 2-col card grid. Mobile/tablet untouched (verified 390).
+      Before/after at 1280/1440/1600 in `reports/screenshots/wave13/`.
+- [x] **Tiering retired; depth rubric** (4 axes, table + tie-breaks in the report) orders
+      all 12 on home + /projects; 6 multi-tag categories; filters are CSS-visibility over
+      server-rendered cards (instant), ?category= via history.replaceState +
+      useSyncExternalStore (NOT useSearchParams — would un-SSR the grid), aria-pressed
+      pills + aria-live count, no-JS safe.
+- [x] **Modern CSS:** View Transitions (TransitionLink + card-title↔h1 morph, 240ms
+      fallback preserved, 1.2s safety timeout), scroll-driven reading progress + halo
+      fade (@supports-gated; reduce-cascade bug caught in self-review), :has() sibling
+      dim on hover, container-query cards, text-wrap balance/pretty. Rejected: view()
+      reveal conversion (wave-9 axe-race class).
+- [x] **Copy pass:** 9 taglines rewritten (reasons per line in the report), stale
+      "single-page" README fixed; case studies confirmed strong as-is.
+- [x] **HF:** 739 cumulative (was 112) — still below the low-thousands bar, no stat;
+      weekly PR flags a 1,000-crossing.
+- [x] **Verification:** axe 0 × 14 routes (1 heading-order finding fixed) · Lighthouse
+      preview home 97/100/100 LCP 0.9s, /work/triageiq 100/100/100 LCP 0.6s (SEO 63 =
+      preview noindex artifact) · budget 204,765 B vs 220,160 (+1,978 justified) ·
+      filters/VT/deep-links driven on the deployed preview · reduced-motion stub
+      differential · no-JS SSR grep.
+- [ ] **Design-reviewer sign-off** — dispatched, pending at checkpoint time; findings +
+      fixes land on this branch before the wave closes.
+- [ ] Large diff → **draft PR for GG's manual review/merge** (same posture as prior
+      waves). GG also needs to merge the 11 source-repo manifest PRs for the weekly
+      pipeline's first live run to find them (it fail-softs until then).
+
 ## Wave 8 — creative delight pass, prototype-first (2026-07-17, holding for GG's pick)
 
 GG's read on waves 6/7: too restrained, feels dull — wants lively/modern (sliders,

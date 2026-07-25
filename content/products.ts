@@ -149,19 +149,6 @@ export const products: Product[] = [
     metric: refreshableMetric("dealhunter:test-coverage"),
   },
   {
-    slug: "expense-tracker",
-    name: "Expense Tracker",
-    tagline:
-      "Multi-user expense tracker that parses entries written in plain language, auto-categorizes them with embeddings, and forecasts spending — built production-shaped, with real auth and migrations.",
-    // Deliberately NO liveUrl: the documented demo deployment was found down
-    // on 2026-07-18 (frontend 404, backend 500 — caught by this repo's own
-    // lychee CI) — see provenance.md#expense-tracker:state.
-    repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
-    categories: ["retrieval", "forecasting"],
-    techChips: ["Groq", "Prophet", "IsolationForest"],
-    metric: refreshableMetric("expense-tracker:tests"),
-  },
-  {
     slug: "tracegauge",
     name: "tracegauge",
     tagline:
@@ -174,5 +161,18 @@ export const products: Product[] = [
       installCommand: "pip install tracegauge",
       badgeUrl: "https://img.shields.io/pypi/v/tracegauge.svg",
     },
+  },
+  {
+    slug: "expense-tracker",
+    name: "Expense Tracker",
+    tagline:
+      "Multi-user expense tracker that parses entries written in plain language, auto-categorizes them with embeddings, and forecasts spending — built production-shaped, with real auth and migrations.",
+    // Deliberately NO liveUrl: the documented demo deployment was found down
+    // on 2026-07-18 (frontend 404, backend 500 — caught by this repo's own
+    // lychee CI) — see provenance.md#expense-tracker:state.
+    repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
+    categories: ["retrieval", "forecasting"],
+    techChips: ["Groq", "Prophet", "IsolationForest"],
+    metric: refreshableMetric("expense-tracker:tests"),
   },
 ];
