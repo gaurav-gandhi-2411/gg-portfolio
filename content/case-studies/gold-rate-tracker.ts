@@ -72,8 +72,8 @@ export const goldRateTracker: CaseStudy = {
   ],
   results: [
     {
-      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (194-fold backtest, horizon 5 days)",
-      value: "MAE 258.28 vs. 297.19 — naive wins by ~15%",
+      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (199-fold backtest, horizon 5 days)",
+      value: "MAE 255.28 vs. 297.84 — naive wins by ~17%",
       detail: "Wilcoxon signed-rank p=0.0003 — the naive baseline's advantage is real, not noise",
       sourceRef: "gold-rate-tracker:headline",
     },

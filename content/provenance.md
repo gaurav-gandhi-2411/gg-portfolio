@@ -448,6 +448,71 @@ Fashion Recommender), 0 followers. **Decision per the wave-12 brief:** profile l
 hero button row and Contact; NO download stat shown anywhere — 112 cumulative downloads is
 real but too small to present as a headline number.
 
+## Wave 13 (2026-07-25) — machine metric layer + drift corrections
+
+### The metrics.json layer
+
+Every product-card metric now lives in `content/metrics.json`, keyed by the provenance IDs
+in this file, with per-entry `source_file`, `source_line`, `commit_sha`, and `measured_at`
+mirroring a `.portfolio/metrics.json` manifest committed to each source repo (11 PRs opened
+this wave, one per repo; the Warmer manifest lives in the public `mindmeld-payloads` repo
+because `mindmeld` is private). A weekly workflow diffs the store against those manifests
+and opens a reviewed PR — this file remains the narrative record; metrics.json is the
+machine layer. Verification of every initial value was done against each repo's artifact at
+HEAD on 2026-07-25 (three executor passes + orchestrator spot-checks); three real drifts
+were found and corrected on the site:
+
+| ID | Change | Source |
+|---|---|---|
+| `warmer:hinglish-fix` | hi-en Spearman 0.639 → **0.813** (a LoRA fine-tune took 0.639 → 0.800 — `mindmeld/PLAN.md:706` — and an eval-harness RNG fix took 0.800 → 0.813, EN 0.837 → 0.842 — `mindmeld/PLAN.md:1624`); current table read directly from `mindmeld/generator/evals/reports/baseline_report.md:24` @ `16f35d16`. Cross-language pass rate 54.2% → **78.0%** (`baseline_report.md:31`) |
+| `gold-rate-tracker:headline` | backtest grew 194 → **199 folds**; naive still wins (MAE 255.28 vs 297.84, Wilcoxon p≈0, run 2026-07-19) — `gold-rate-tracker/data/backtest.json` @ `a4d892c` |
+| `agentgauge:scoring-dimensions` | **retired** — see below |
+
+New ID `warmer:lora-reframe` (case-study decision + story): full-parameter fine-tunes v1/v2
+both regressed (v2 worse with 43% more data); a 13-config capacity sweep holding data fixed
+showed every LoRA config beating baseline, 3 CI-significantly; shipped model is
+`gauravgandhi2411/hinglish-relatedness-sbert` with a public benchmark, leading 7 comparators
+— `mindmeld/PLAN.md:590-600` ("The reframe: method was the fault, not data"), `:560-572`,
+`:1634-1667`. Held-out honest number 0.4350 → 0.7044 reported alongside the full-set 0.813
+(`PLAN.md:706-710` states the distinction; the case study carries both).
+
+### AgentGauge — stale claim caught and replaced
+
+The wave-10 card claim ("8 scoring dimensions, all implemented",
+`agentgauge:scoring-dimensions`) went stale: the repo's own predictive-validity study
+(`agentgauge/reports/predictive_validity_study.md`) found none of the 8 axes predicts real
+task success after multiple-comparison correction and length control, and the project
+rebuilt as a statistical regression harness (v2–v2.5). Caught by this wave's
+manifest-verification pass — exactly the drift class the weekly pipeline exists for. All
+claims below verified against `agentgauge` README.md @ `939abbf` (2026-07-25), which cites
+the named report files:
+
+| ID | Claim | Source |
+|---|---|---|
+| `agentgauge:predictive-validity` | v1's 8-axis LLM-judged score does not predict task success (survives neither multiple-comparison correction nor length control) | `reports/predictive_validity_study.md`; README v2.2 note |
+| `agentgauge:icc-mde` | ICC 0.793 across trial repeats → reallocate to 1 trial/task × 100 tasks/arm; MDE 8.5pp at 80% power, ship target (10pp) met | `reports/v2_1_estimator_rebuild.md`, `reports/v2_2_optimal_allocation.md` |
+| `agentgauge:blocking-causal` | one BLOCKING defect (type/enum contradiction) causes −13.3 to −28.9pp task success, CI excludes zero in 3 model families | `reports/v2_4_task1_blast_radius_audit.md` @ `78fff2f` (re-verified on a rebuilt instance) |
+| `agentgauge:false-alarm` | false-alarm <5% in every cluster-count stratum; 21.6% abstention under the null | `reports/v2_2_few_clusters_correction.md`, `reports/v2_1_estimator_rebuild.md` |
+| `agentgauge:judge-baseline` | single-prompt LLM-judge baseline: 97.1% false-alarm rate | `reports/v2_1_cross_model_validation.md` §Task 2e |
+| `agentgauge:retiering` | severity tiers re-set by measured causal impact; `required_references_missing_property` demoted BLOCKING→INFO on a measured null | `reports/v2_3_task2_retiering.md` |
+| `agentgauge:audit-gate` | `agentgauge audit` — standing pre-report gate (leakage/ceiling/degenerate/scoring-consistency), wired into diff/eval | README v2.4 note |
+| `agentgauge:v23-scoring-artifact` | the reported −76.7 to −80.0pp ADVISORY effect was a scoring bug (pre-rename param looked up against post-rename args); corrected = clean null in all 3 models; blast radius audited — the 5,535-trial calibration corpus untouched | `reports/v2_3_task1_advisory_audit.md`, `reports/v2_4_task1_blast_radius_audit.md` |
+| task pool | 62 → 253 gold-constraint tasks across 10 real-API domains | README v2.4 note, `reports/v2_4_task4_corpus_expansion.md` |
+
+The paper-layer refs from wave 12 (`agentgauge:frozen-protocol`, `:t18`,
+`:prevalence-null`, `:localizer`, `:seed-bug`, `:regime-framing`, `:mock-provider`,
+`:governance`) remain valid for the paper, which is unchanged; the case study now leads
+with the v2 harness and keeps the paper connection.
+
+### HuggingFace re-check (wave-13 brief item 6)
+
+Fetched via API 2026-07-25: **3** public models now — `hinglish-relatedness-sbert` is new
+(459 all-time; it's Warmer's shipped LoRA fine-tune) + `aetherart-ukiyo-sdxl` (249) +
+`aetherart-ukiyo-sd21` (31) = **739 cumulative downloads** (was 112 on 2026-07-18).
+**Decision:** still below the low-thousands bar → still no download stat on the site. The
+count is tracked in `metrics.json`'s informational block; the weekly PR flags it if it
+crosses 1,000.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).

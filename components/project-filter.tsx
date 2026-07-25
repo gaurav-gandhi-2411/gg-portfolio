@@ -1,0 +1,139 @@
+"use client";
+
+import { useMemo, useSyncExternalStore } from "react";
+import { CATEGORIES, type CategoryId } from "@/content/types";
+
+type Active = CategoryId | "all";
+
+const CATEGORY_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
+
+function readCategoryFromUrl(): Active {
+  const param = new URLSearchParams(window.location.search).get("category");
+  return param && CATEGORY_IDS.has(param) ? (param as CategoryId) : "all";
+}
+
+/**
+ * The active category lives in the URL, read via useSyncExternalStore:
+ * popstate re-reads it for back/forward, `emit` re-reads it after our own
+ * replaceState (which fires no event), and the server snapshot is "all" —
+ * matching the prerendered HTML, so a deep-linked ?category= applies at
+ * hydration with no mismatch.
+ */
+const listeners = new Set<() => void>();
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  window.addEventListener("popstate", cb);
+  return () => {
+    listeners.delete(cb);
+    window.removeEventListener("popstate", cb);
+  };
+}
+function emit() {
+  for (const cb of listeners) cb();
+}
+
+/**
+ * Wave 13 — category filter for the Work section and /projects.
+ *
+ * Design notes, all deliberate:
+ * - The project cards are SERVER-rendered and passed through as `children`;
+ *   filtering happens in CSS (`[data-active-category]` rules in
+ *   globals.css) against each card's `data-cats` attribute. Clicking a
+ *   pill changes one data attribute — no card re-renders, no server round
+ *   trip, instant at any project count.
+ * - URL-reflected via history.replaceState (?category=…), so a filtered
+ *   view is shareable and back/forward keeps working (popstate listener).
+ *   Deliberately NOT useSearchParams: on a static route that would drop
+ *   the whole subtree (all cards) from the prerendered HTML behind a
+ *   Suspense boundary — losing SSR/no-JS content for a query param read.
+ * - Initial state is always "all" (matches the server HTML, no hydration
+ *   mismatch); a deep-linked ?category= applies right after hydration.
+ * - No-JS: every card stays visible and the pills are inert — filtering
+ *   is an enhancement, never a gate on content.
+ * - Buttons with aria-pressed (single-select toggle group), visible focus
+ *   ring, result count announced politely for screen readers.
+ */
+export function ProjectFilter({
+  cats,
+  children,
+}: {
+  /** slug → category ids, in display order — used only for counts. */
+  cats: { slug: string; categories: readonly string[] }[];
+  children: React.ReactNode;
+}) {
+  const active = useSyncExternalStore(subscribe, readCategoryFromUrl, () => "all" as Active);
+
+  function select(next: Active) {
+    const url = new URL(window.location.href);
+    if (next === "all") url.searchParams.delete("category");
+    else url.searchParams.set("category", next);
+    window.history.replaceState(null, "", url);
+    emit();
+  }
+
+  const counts = useMemo(() => {
+    const byCat = new Map<string, number>();
+    for (const c of CATEGORIES) {
+      byCat.set(c.id, cats.filter((p) => p.categories.includes(c.id)).length);
+    }
+    return byCat;
+  }, [cats]);
+
+  const visible =
+    active === "all" ? cats.length : cats.filter((p) => p.categories.includes(active)).length;
+
+  const pillBase =
+    "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none";
+  const pillOn = "border-accent/70 bg-accent/15 text-foreground";
+  const pillOff =
+    "border-border/40 text-muted-foreground hover:border-accent/50 hover:text-foreground";
+
+  return (
+    <div>
+      <div
+        role="group"
+        aria-label="Filter projects by category"
+        className="flex flex-wrap justify-center gap-2"
+      >
+        <button
+          type="button"
+          aria-pressed={active === "all"}
+          onClick={() => select("all")}
+          className={`${pillBase} ${active === "all" ? pillOn : pillOff}`}
+        >
+          All <span className="font-mono text-xs opacity-70">{cats.length}</span>
+        </button>
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            aria-pressed={active === c.id}
+            onClick={() => select(c.id)}
+            className={`${pillBase} ${active === c.id ? pillOn : pillOff}`}
+          >
+            {c.label} <span className="font-mono text-xs opacity-70">{counts.get(c.id)}</span>
+          </button>
+        ))}
+      </div>
+
+      <p aria-live="polite" className="sr-only">
+        Showing {visible} of {cats.length} projects
+      </p>
+
+      <div data-active-category={active}>{children}</div>
+
+      {visible === 0 && (
+        <div className="border-border/40 bg-card/40 mt-8 rounded-xl border px-6 py-10 text-center">
+          <p className="text-foreground">Nothing in this category yet.</p>
+          <button
+            type="button"
+            onClick={() => select("all")}
+            className="text-accent focus-visible:outline-ring mt-2 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          >
+            Show all projects
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -8,9 +8,11 @@ export const site = {
   email: "gauravgandhi429@gmail.com",
   githubUrl: "https://github.com/gaurav-gandhi-2411",
   linkedinUrl: "https://www.linkedin.com/in/gauravgandhi03/",
-  // Real account, verified 2026-07-18: 2 public models (AetherArt LoRAs) +
-  // 4 Spaces. Linked as a profile; no download stat anywhere — the actual
-  // cumulative count (112) is too small to present as a headline number.
+  // Real account, re-verified 2026-07-25: 3 public models (2 AetherArt
+  // LoRAs + Warmer's hinglish-relatedness-sbert) + 4 Spaces. Linked as a
+  // profile; still no download stat — 739 cumulative (up from 112 on
+  // 2026-07-18) stays below the agreed low-thousands bar. The weekly
+  // metrics-refresh PR flags it if it crosses 1,000.
   huggingfaceUrl: "https://huggingface.co/gauravgandhi2411",
   resumeUrl: "/resume.pdf",
   // Feature-flagged: AgentGauge paper has no arXiv ID yet (see content/research.ts).

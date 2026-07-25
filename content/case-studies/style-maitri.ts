@@ -11,7 +11,7 @@ export const styleMaitri: CaseStudy = {
   depth: "full",
   problem: [
     "Indian D2C fashion brands want a conversational shopping assistant — something a shopper can chat with the way they'd ask a helpful store clerk — but grounded in their own real catalogue: their actual prices, sizes, and stock, never invented ones. Style Maitri is built white-label so any brand can run it: one Docker container (a packaged, portable copy of the whole app) plus one YAML config file (a small settings file) per brand.",
-      "It's been demoed across 8 real Indian fashion catalogues — H&M, Myntra, Flipkart, Snitch, Powerlook, Fashor, Virgio, plus a sample store — roughly 52,500 items in total. The core promise is that it can't hallucinate: it should never quote a price or describe a fabric that isn't actually in the catalogue it's serving.",
+    "It's been demoed across 8 real Indian fashion catalogues — H&M, Myntra, Flipkart, Snitch, Powerlook, Fashor, Virgio, plus a sample store — roughly 52,500 items in total. The core promise is that it can't hallucinate: it should never quote a price or describe a fabric that isn't actually in the catalogue it's serving.",
   ],
   approach: [
     "A shopper's message enters a LangGraph agent loop (a graph-shaped state machine that lets an LLM take one step at a time — pick a tool, act, decide the next step) with six tools: search, compare, filter, outfit-bundle, clarify, and respond. An LLM router (Groq's llama-3.1-8b-instant) reads the message and classifies intent to pick which tool runs next. Because an LLM's judgment can drift or loop, a plain code-level guard sits underneath it and forces a deterministic next step after search or compare complete — the agent physically cannot wander in circles forever.",
