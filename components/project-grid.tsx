@@ -29,7 +29,12 @@ function formatFreshness(iso: string): string {
  * section and /projects. Live freshness datelines and PyPI downloads are
  * ISR fetches that fail soft to no-badge (lib/live-data.ts).
  */
-export async function ProjectGrid() {
+export async function ProjectGrid({
+  cardHeadingLevel = "h3",
+}: {
+  /** See ProjectCard — h3 on home (under the section h2), h2 on /projects. */
+  cardHeadingLevel?: "h2" | "h3";
+} = {}) {
   const repoSlugs = products
     .map((p) => repoSlug(p.repoUrl))
     .filter((s): s is string => s !== null);
@@ -63,6 +68,7 @@ export async function ProjectGrid() {
             product={product}
             dateline={datelineFor(product)}
             downloads={product.pypi ? downloads : undefined}
+            headingLevel={cardHeadingLevel}
           />
         ))}
       </RevealGroup>

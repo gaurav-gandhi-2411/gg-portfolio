@@ -21,11 +21,15 @@ export function ProjectCard({
   product,
   dateline,
   downloads,
+  headingLevel = "h3",
 }: {
   product: Product;
   dateline?: string;
   downloads?: TracegaugeDownloads | null;
+  /** h3 under the home section's h2; h2 on /projects, whose h1 is the page title (heading order, axe). */
+  headingLevel?: "h2" | "h3";
 }) {
+  const Heading = headingLevel;
   return (
     <article
       data-cats={product.categories.join(" ")}
@@ -34,7 +38,7 @@ export function ProjectCard({
       <div className="grid gap-x-8 gap-y-6 @[30rem]:grid-cols-[minmax(0,1fr)_13rem]">
         <div className="flex min-w-0 flex-col">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <h3 className="font-heading text-lead font-semibold text-foreground">
+            <Heading className="font-heading text-lead font-semibold text-foreground">
               <TransitionLink
                 href={`/work/${product.slug}`}
                 className="focus-visible:outline-ring transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -42,7 +46,7 @@ export function ProjectCard({
               >
                 {product.name}
               </TransitionLink>
-            </h3>
+            </Heading>
             {dateline && (
               <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
             )}

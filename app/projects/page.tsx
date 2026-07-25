@@ -37,7 +37,7 @@ export default function ProjectsPage() {
       </div>
 
       <div className="mt-10">
-        <ProjectGrid />
+        <ProjectGrid cardHeadingLevel="h2" />
       </div>
 
       <p className="mt-12 text-center">
