@@ -290,6 +290,37 @@ separate verifier agent's 7/7-pass source audit of the width unification (no 6xl
 in app/ or components/; thresholds retuned). Recorded here rather than claimed as a
 fresh reviewer pass.
 
+## Resume sync (follow-up in the same PR)
+
+The resume (`.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx` → `public/resume.pdf`)
+was built from pre-correction provenance. Every resume metric was diffed against the
+corrected store; **two were stale, everything else matched** (Style Maitri 93.8%/52K,
+TriageIQ 82.5/90.4 + 1.9–9.1%, DealHunter 597/≥87.65%, MMFR 3.06×, AetherArt 6.2GB,
+ReviewIQ 83.8%, "Nine live AI products" = liveProductCount, gold-rate's qualitative claim —
+the resume never cited a fold count, so 194→199 needed no resume change):
+
+1. **Warmer**: "Spearman −0.003 → 0.639" → "−0.003 → 0.813, held-out 0.435 → 0.704", now
+   crediting the published LoRA fine-tune (hinglish-relatedness-sbert on Hugging Face) —
+   a strictly stronger resume line, because it's now a *published model*, not just a fix.
+2. **AgentGauge (Research line)**: "8 implemented scoring dimensions; 10-server pilot" →
+   the v2 truth: predictive-validity study falsified the v1 score; the rebuilt causal A/B
+   harness measures a BLOCKING defect at −13.3 to −28.9pp across 3 model families.
+
+Method: surgical run-level docx edits (formatting/hyperlinks untouched), re-exported via
+Word (FileFormat 17). **Verified still exactly 2 pages** (Word ComputeStatistics + pypdf),
+same page boundaries (p1 ends at Research, p2 Projects→Certifications), new strings
+present / stale strings absent in extracted text, `public/resume.pdf` hash-matched to the
+regenerated source. Backup of the pre-edit docx kept beside the source.
+
+**Pipeline extension — resume drift guard**: `content/resume-metrics.json` maps each
+resume-claimed metric to its store id, recording the store value at sync time + the PDF's
+sha256. `scripts/refresh-metrics.mjs` now emits a "Resume drift" section in the weekly PR
+when (a) any claimed metric's store value moves after the sync, or (b) `public/resume.pdf`
+changes without a manifest re-sync. Report-only by design — the resume is a designed
+document a human regenerates. Tested: clean run 0 drifts; seeded store change → drift row
+with site-now vs synced-at values; seeded hash mismatch → explicit warning; restored state
+back to 0.
+
 ## Process notes
 
 - 4 executor subagents (source-repo manifests ×3 batches + agentgauge follow-up), 1

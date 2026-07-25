@@ -13,6 +13,7 @@
 //
 // Zero dependencies; Node 20+ (global fetch).
 
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +21,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const METRICS_PATH = join(ROOT, "content", "metrics.json");
 const PRODUCTS_PATH = join(ROOT, "content", "products.ts");
+const RESUME_MANIFEST_PATH = join(ROOT, "content", "resume-metrics.json");
+const RESUME_PDF_PATH = join(ROOT, "public", "resume.pdf");
 const SUMMARY_PATH = process.env.SUMMARY_PATH ?? join(ROOT, "metrics-refresh-summary.md");
 
 const STALE_DAYS = 90;
@@ -170,7 +173,35 @@ for (const url of liveUrls) {
 }
 const brokenLinks = linkResults.filter((r) => !r.ok);
 
-// ── 4. Write store + summary ─────────────────────────────────────────────
+// ── 4. Resume drift (wave-13 follow-up: the resume shouldn't silently rot
+//       while the site self-heals). content/resume-metrics.json records,
+//       per resume claim, the STORE value at the last resume sync — so
+//       drift detection is an exact string compare against site truth, no
+//       PDF parsing. The recorded PDF hash catches the inverse failure: a
+//       resume swap that skipped the manifest. Both are report-only; fixing
+//       the resume is a human job (it's a designed document). ─────────────
+
+const resumeDrift = []; // { id, resume_says, at_sync, now }
+let resumeHashNote = null;
+try {
+  const manifest = JSON.parse(readFileSync(RESUME_MANIFEST_PATH, "utf8"));
+  const pdfHash = createHash("sha256").update(readFileSync(RESUME_PDF_PATH)).digest("hex");
+  if (pdfHash !== manifest.resume_pdf_sha256) {
+    resumeHashNote = `public/resume.pdf changed (sha256 ${pdfHash.slice(0, 12)}…) without a content/resume-metrics.json re-sync (manifest expects ${String(manifest.resume_pdf_sha256).slice(0, 12)}…, synced ${manifest.synced_at}). Re-run the resume sync so drift tracking stays truthful.`;
+  }
+  for (const [id, claim] of Object.entries(manifest.claims ?? {})) {
+    const current = store.metrics[id]?.value ?? null;
+    if (current === null) {
+      resumeDrift.push({ id, resume_says: claim.resume_says, at_sync: claim.store_value_at_sync, now: "(id no longer in metrics.json)" });
+    } else if (current !== claim.store_value_at_sync) {
+      resumeDrift.push({ id, resume_says: claim.resume_says, at_sync: claim.store_value_at_sync, now: current });
+    }
+  }
+} catch (err) {
+  notes.push(`Resume drift check unavailable this run (${err.message}).`);
+}
+
+// ── 5. Write store + summary ─────────────────────────────────────────────
 
 const metricChanges = changes.filter((c) => c.id !== "hf:downloads-alltime");
 const hfOnlyChange = changes.length > 0 && metricChanges.length === 0;
@@ -221,6 +252,21 @@ if (brokenLinks.length > 0) {
   lines.push("");
   lines.push("> Report-only: taking a live link off the site is a human decision (see wave 12's expense-tracker precedent).");
 }
+if (resumeDrift.length > 0 || resumeHashNote) {
+  lines.push("");
+  lines.push("### Resume drift (public/resume.pdf vs site metrics)");
+  lines.push("");
+  if (resumeHashNote) lines.push(`- ⚠ ${resumeHashNote}`);
+  for (const d of resumeDrift) {
+    lines.push(
+      `- \`${d.id}\`: the site now says **${d.now}**, but the resume was synced when it said "${d.at_sync}" (resume claims: "${d.resume_says}"). Regenerate the resume or consciously accept the gap.`
+    );
+  }
+  lines.push("");
+  lines.push(
+    "> Report-only: the resume is a designed 2-page document — a human regenerates it (see .assets/resume-sources/ + content/resume-metrics.json's _readme)."
+  );
+}
 if (notes.length > 0) {
   lines.push("");
   lines.push("### Notes");
@@ -235,5 +281,5 @@ lines.push(
 writeFileSync(SUMMARY_PATH, lines.join("\n") + "\n");
 console.log(lines.join("\n"));
 console.log(
-  `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${brokenLinks.length} broken link(s).`
+  `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
 );

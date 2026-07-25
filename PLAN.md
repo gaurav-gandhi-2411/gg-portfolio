@@ -613,6 +613,15 @@ re-check, honest results untouched. Full report:
       (1.47:1 → 3.38:1, WCAG 1.4.11), Experience rail 14→16rem (chip wrap), left-aligned
       mobile pills, grid columns lg→xl (1024–1279 band verified at 1100px). Follow-up
       logged: sitewide border-opacity token audit (pre-existing pattern).
+- [x] **Resume sync (GG follow-up, same PR):** resume metrics diffed against the
+      corrected store — 2 stale (Warmer 0.639→0.813 + held-out + published-model credit;
+      AgentGauge research line rewritten to the v2 harness), everything else matched
+      (gold-rate's resume line never cited a fold count). Run-level docx edits →
+      Word re-export → verified exactly 2 pages, same page boundaries, stale strings
+      absent. NEW: content/resume-metrics.json + a "Resume drift" section in the weekly
+      refresh (store-moved-since-sync per claim + resume.pdf hash-vs-manifest check,
+      report-only) — the resume can no longer rot silently while the site self-heals.
+      Both failure paths tested.
 - [ ] Large diff → **draft PR for GG's manual review/merge** (same posture as prior
       waves). GG also needs to merge the 11 source-repo manifest PRs for the weekly
       pipeline's first live run to find them (it fail-softs until then).

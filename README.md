@@ -82,6 +82,13 @@ re-asserted. Two caveats, both deliberate: PRs created with `GITHUB_TOKEN` don't
 drawn figures (`figure:` in `content/products.ts`) mirror their metric's numbers by rule —
 the PR body reminds the reviewer to update them together.
 
+The refresh also guards the **resume**: `content/resume-metrics.json` records, per metric
+the resume PDF claims, the store value at the last resume sync plus the PDF's sha256. The
+weekly PR flags any claim whose store value has since moved (regenerate the resume or
+consciously accept the gap) and any `public/resume.pdf` swap that skipped the manifest —
+report-only, since the resume is a designed 2-page document a human regenerates
+(`.assets/resume-sources/`, gitignored).
+
 **Adding a future project**: drop a `.portfolio/metrics.json` in its repo
 (`{"version": 1, "project": "<slug>", "metrics": [{"id", "label", "value", "source_file",
 "source_line", "commit_sha", "measured_at"}]}`), add matching entries to
