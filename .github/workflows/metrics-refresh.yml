@@ -1,0 +1,72 @@
+# Wave 13 — autonomous metric refresh. Weekly, PR-only (never a direct
+# commit): the PR is the human gate that keeps rule 65b intact. Fail-soft
+# end to end — an unreachable source repo skips that project with a note
+# in the PR body; the site is never blanked by automation.
+name: Metrics refresh
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: metrics-refresh
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write # to dispatch ci.yml onto the PR branch (see below)
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Refresh metrics from source repos
+        env:
+          SUMMARY_PATH: /tmp/metrics-summary.md
+        run: node scripts/refresh-metrics.mjs
+
+      - name: Open PR if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet content/metrics.json; then
+            echo "No metric changes — no PR this week."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/metrics-refresh"
+          git checkout -B "$BRANCH"
+          git add content/metrics.json
+          git commit -m "chore(metrics): weekly metric refresh from source repos"
+          # The refresh branch is owned by this workflow alone; force-push
+          # replaces any stale unmerged run with the freshest numbers
+          # (explicit single refspec per repo rule 38 — never --mirror/--all).
+          git push --force origin "$BRANCH:refs/heads/$BRANCH"
+
+          if ! gh pr create \
+            --title "chore(metrics): weekly metric refresh" \
+            --body-file /tmp/metrics-summary.md \
+            --base main --head "$BRANCH"; then
+            # PR from a previous week still open — refresh its body instead.
+            gh pr edit "$BRANCH" --body-file /tmp/metrics-summary.md
+          fi
+
+          # PRs created with GITHUB_TOKEN don't trigger pull_request
+          # workflows (GitHub anti-recursion rule), so the required `build`
+          # check would sit absent forever. Dispatch CI onto the branch
+          # explicitly — the check run lands on the same SHA the PR points
+          # at, which satisfies branch protection.
+          gh workflow run ci.yml --ref "$BRANCH"

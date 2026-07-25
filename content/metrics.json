@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "updated_at": "2026-07-25",
+  "_readme": "Machine-refreshable metric store (wave 13). Keys are provenance IDs (content/provenance.md). Values are refreshed weekly by .github/workflows/metrics-refresh.yml from each source repo's .portfolio/metrics.json — via a reviewed PR, never a direct commit. Hand-edit only to correct an error; the narrative provenance record stays in content/provenance.md.",
+  "metrics": {
+    "warmer:hinglish-fix": {
+      "label": "Hinglish embedding eval (Spearman correlation)",
+      "value": "-0.003 → 0.813",
+      "repo": "gaurav-gandhi-2411/mindmeld-payloads",
+      "source_file": "mindmeld (private): generator/evals/reports/baseline_report.md",
+      "source_line": 24,
+      "commit_sha": "16f35d168e33893bdd62fdee1a18bde6331b88bf",
+      "measured_at": "2026-07-18"
+    },
+    "style-maitri:intent-accuracy": {
+      "label": "Intent-parsing accuracy",
+      "value": "93.8% (n=211)",
+      "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
+      "source_file": "reports/final_scorecard_2026-07-12.txt",
+      "source_line": 109,
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
+      "measured_at": "2026-07-12"
+    },
+    "style-maitri:catalogue-size": {
+      "label": "Cross-store catalogue",
+      "value": "~52K items across 8 stores",
+      "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
+      "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
+      "source_line": 28,
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
+      "measured_at": "2026-07-12"
+    },
+    "triageiq:classifier-top3": {
+      "label": "Component classifier top-3 accuracy",
+      "value": "82.5% (k8s) / 90.4% (vscode)",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "reports/model_eval_audit.json",
+      "source_line": null,
+      "commit_sha": "62274339c045676e2fd6ba3a2dd086d1e6503487",
+      "measured_at": "2026-07-13"
+    },
+    "dealhunter:test-coverage": {
+      "label": "Test suite",
+      "value": "597 tests, ≥87.65% coverage",
+      "repo": "gaurav-gandhi-2411/agentic-travel-booking-system",
+      "source_file": "CURRENT_STATE.md",
+      "source_line": 645,
+      "commit_sha": "4dbc25e4b71e6560bde6ec11d1b19dd1aa88c6bb",
+      "measured_at": "2026-06-09"
+    },
+    "shelfsense:wrmsse": {
+      "label": "WRMSSE vs. naive baseline",
+      "value": "36% reduction (0.8956 → 0.5693)",
+      "repo": "gaurav-gandhi-2411/shelfsense-m5",
+      "source_file": "reports/leaderboard.md",
+      "source_line": 233,
+      "commit_sha": "2cf85c6deac76665352a9217d7386a282d73888b",
+      "measured_at": "2026-05-07"
+    },
+    "reviewiq:extraction-eval": {
+      "label": "Extraction accuracy (en/hi/hi-en)",
+      "value": "83.8% overall",
+      "repo": "gaurav-gandhi-2411/review-iq",
+      "source_file": "eval/report.md",
+      "source_line": 5,
+      "commit_sha": "13a4422e1705731e104c04b3d5c76200844b9df0",
+      "measured_at": "2026-07-06"
+    },
+    "mmfr:recall10": {
+      "label": "Recall@10 lift vs. popularity baseline",
+      "value": "3.06× (0.0328 vs. 0.0107)",
+      "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
+      "source_file": "README.md",
+      "source_line": 124,
+      "commit_sha": "7b5d84b0cc2eb497b98e84c63bb6436858e9e48d",
+      "measured_at": "2026-07-12"
+    },
+    "gold-rate-tracker:headline": {
+      "label": "Naive baseline vs. ML model (199-fold backtest)",
+      "value": "Naive wins — ships the honest baseline, not the model",
+      "repo": "gaurav-gandhi-2411/gold-rate-tracker",
+      "source_file": "data/backtest.json",
+      "source_line": 8,
+      "commit_sha": "a4d892cae3837048108c02d411adf1b13e964d73",
+      "measured_at": "2026-07-19"
+    },
+    "aetherart:vram": {
+      "label": "Full SDXL + LoRA pipeline, 8GB consumer-GPU budget",
+      "value": "6.2GB peak VRAM",
+      "repo": "gaurav-gandhi-2411/AetherArt",
+      "source_file": "docs/lab_notebook.md",
+      "source_line": 266,
+      "commit_sha": "dbde03d7b93f707531f4021113e662ac3994965c",
+      "measured_at": "2026-06-01"
+    },
+    "agentgauge:blocking-causal": {
+      "label": "Measured causal effect of one BLOCKING description defect on agent task success",
+      "value": "−13.3 to −28.9pp across 3 model families",
+      "repo": "gaurav-gandhi-2411/agentgauge",
+      "source_file": "reports/v2_4_task1_blast_radius_audit.md",
+      "source_line": null,
+      "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
+      "measured_at": "2026-07-25"
+    },
+    "expense-tracker:tests": {
+      "label": "Test suite",
+      "value": "143/143 passing",
+      "repo": "gaurav-gandhi-2411/expense-tracker",
+      "source_file": "CURRENT_STATE.md",
+      "source_line": 229,
+      "commit_sha": "0908205094bc2384ab1a7b2a46e9024e120d369f",
+      "measured_at": "2026-06-01"
+    }
+  },
+  "informational": {
+    "hf:downloads-alltime": {
+      "label": "Hugging Face cumulative model downloads",
+      "value": 739,
+      "source": "https://huggingface.co/api/models?author=gauravgandhi2411&expand[]=downloadsAllTime",
+      "measured_at": "2026-07-25",
+      "note": "Not displayed on the site — below the agreed low-thousands bar for a headline stat (wave 13). Tracked here so the weekly refresh PR surfaces growth."
+    }
+  }
+}
