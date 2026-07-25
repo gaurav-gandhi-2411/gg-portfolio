@@ -227,17 +227,137 @@ committed files before opening the PR; CI passed on first push (10s).
 
 ## Item 5 — expense-tracker on review-iq's Supabase
 
-Not started this pass — genuinely the highest-risk item in the wave (live production database
-shared with a real product, review-iq) and deserves undivided attention rather than being
-squeezed in after five other substantial items. Groundwork already done: read review-iq's `.env`
-(project `enqpluazgxewepchdeut`), confirmed its schema/RLS conventions (`public` schema,
-`current_org_id()` SECURITY DEFINER helper, service-role bypass), confirmed expense-tracker's own
-`.env` currently points at a **different, dead** Supabase project (`ckedawgfjwzefayhcybe` —
-matches wave 14's DNS-NXDOMAIN diagnosis), confirmed its backend deploys to Cloud Run via
-`scripts/deploy.ps1` (gcloud is authenticated and available in this environment, previously
-assumed blocked), and confirmed Vercel MCP tooling can drive the frontend redeploy. Full
-STRIDE pass, the `expense` schema migration, RLS scoping, and the redeploy are queued as the next
-piece of work.
+expense-tracker's own Supabase project (`ckedawgfjwzefayhcybe`) is dead (DNS NXDOMAIN, wave-14
+diagnosis) and the free tier caps at 2 projects, so it now lives inside review-iq's live
+production project (`enqpluazgxewepchdeut`) instead of a new one. Both apps' repos are checked
+out locally; all database/GCP/Vercel actions below were run directly (gcloud is authenticated in
+this environment — the wave-14 "standing exclusion" was a lack of credentials at the time, not a
+durable policy).
+
+### STRIDE pass (written before touching anything)
+
+- **Spoofing**: both apps now share one Supabase Auth (`auth.users`) namespace, so a valid JWT
+  from either app authenticates against both. This isn't new risk from isolation — it's the
+  direct, unavoidable consequence of "share one project," and it already existed the moment
+  review-iq's own web dashboard (`web/src/pages/Login.tsx`, confirmed via grep) started using
+  Supabase Auth. Mitigation: expense-tracker never had an access gate before either (any valid
+  JWT could already create expense rows) — see the auth-namespace note below for what changes and
+  what doesn't.
+- **Tampering**: could expense-tracker's backend touch review-iq's tables? Mitigated by a
+  dedicated `expense_app` Postgres role with zero grants anywhere in `public` — verified two ways:
+  `has_table_privilege('expense_app', 'public.organizations', 'SELECT')` → `false`, and directly
+  connecting AS `expense_app` and attempting `SELECT * FROM public.organizations` → denied at the
+  database level (`InsufficientPrivilege`), not just application convention.
+- **Repudiation**: no material change — no new logging/audit requirements introduced.
+- **Information Disclosure**: could review-iq's app read expense data? **Residual, documented
+  risk, not fully closed this pass**: review-iq's own backend connects as the `postgres`
+  superuser (confirmed via its `.env`), which bypasses all schema/table grants by construction —
+  Postgres superuser status cannot be scoped away by adding grants elsewhere. Changing review-iq's
+  own connection credentials to a scoped role would be the complete fix, but that's a live,
+  working production app's own credentials — out of scope for this pass given the risk/reward
+  (review-iq's application code has no logic that would ever reference an `expense.*` table;
+  the residual risk is theoretical — a future bug/injection in review-iq's own code — not
+  something this migration introduces). Recommended as a standalone follow-up with its own careful
+  testing, not bundled here.
+- **Denial of Service**: expense-tracker's connection uses `NullPool` (per `app/db.py`'s existing
+  comment, "avoids pgBouncer pooler incompatibilities on free tier") against the **direct**
+  connection host, same as before — no new pooling/contention risk introduced for review-iq's own
+  pooled connections.
+- **Elevation of Privilege**: `expense_app` is `LOGIN` only, explicitly not `SUPERUSER`/`CREATEDB`/
+  `CREATEROLE` — verified via `pg_roles.rolsuper = false`.
+
+### What was built
+
+- **`expense` schema + `expense_app` role** (`db.enqpluazgxewepchdeut.supabase.co`, superuser
+  connection used only for this one-time setup, never stored in any app config): schema created,
+  role created with `LOGIN` only, `search_path` defaulted to `expense`, grants scoped entirely to
+  that schema (`USAGE, CREATE` + `ALL` on existing/future tables via `ALTER DEFAULT PRIVILEGES`).
+  A strong random password generated for it (`secrets.token_urlsafe(32)`), stored only in
+  expense-tracker's own `.env`/Cloud Run env vars.
+- **Migrations run unchanged**: Alembic inherits `expense_app`'s `search_path`, so `upgrade head`
+  landed all 3 migrations (001/002/003) directly in `expense` with zero code changes to
+  `migrations/env.py` or any model. Verified directly: `information_schema.tables` for
+  `table_schema='expense'` shows exactly `alembic_version`, `app_profiles`, `expenses` — nothing
+  in `public`.
+- **New migration `003_app_profiles.py`** + `AppProfile` model + an `auth.py` hook
+  (`_ensure_profile`): see the shared-`auth.users` note below.
+- **Shared `auth.users` handling — decided and documented**: expense-tracker never gated access
+  by anything beyond "does this JWT verify" (no signup allowlist existed before this change
+  either, on its own now-dead project). Sharing review-iq's project changes *who* can obtain a
+  valid JWT (now includes review-iq's org admins), not the app's own access model. Rather than
+  bolt on a bigger allowlist/invite feature (a product decision beyond a database migration, and
+  risky to get wrong against the app's one real user), `app_profiles` records the first time each
+  `auth.users` id actually calls this API — an explicit, queryable fact ("who has touched
+  expense-tracker") instead of an implicit one, and a concrete place to add a real gate later
+  without a schema change. Documented here as the honest scope of what this does and doesn't
+  solve, per the task's "decide and document" ask.
+- **Namespaced migrations**: `expense_app`'s migration runner (Alembic, via its own role/schema)
+  cannot reach `public` at all — verified above. review-iq's own migration runner (raw SQL via
+  `supabase/push.py`) was never touched and has no reason to reference `expense.*`.
+
+### Regression-testing review-iq (it's a live product)
+
+- **review-iq's own default test suite** (mocked, no live DB): `1056 passed, 71 deselected` —
+  clean, unaffected (expected: no schema/role change to `public` or review-iq's own connection).
+- **review-iq's live-Supabase integration suite** (`-m integration`, real network calls against
+  the actual project this migration touched): first full run showed `65 passed / 6 errors`, all 6
+  in one file (`test_batch_job_rows_isolation.py`), all with the identical message — a
+  self-check the test suite runs *on purpose*: "`batch_job_rows` has N pending row(s)
+  system-wide before this test started... investigate/clear stray pending rows before
+  re-running." Investigated rather than assumed: this was a stray row left behind by **my own**
+  earlier integration-test run, which I had interrupted mid-flight (`TaskStop`) before its
+  teardown could run — not a consequence of the schema/role migration. Confirmed via direct
+  query (`SELECT ... FROM batch_job_rows WHERE status='pending'` → 0 rows once the suite's own
+  later cleanup had run), then re-ran the previously-failing file alone (**9/9 passed**), then
+  re-ran the **entire integration suite fresh end-to-end**: **71 passed, 0 failed, 0 errors**
+  (19m15s, real network calls against the live project throughout). **review-iq is unaffected
+  end-to-end, confirmed by its own live-database test suite, not just code inspection.**
+
+### Redeploy — both sides confirmed live
+
+- **Backend (Cloud Run, project `expense-tracker-498014`)**: was returning `500` on every route
+  (confirmed before touching anything, matching wave 14's diagnosis). Redeployed
+  (`gcloud run deploy`, revision `expense-tracker-00007-xhx`) with the corrected
+  `DATABASE_URL`/`SUPABASE_URL`/`SUPABASE_JWT_SECRET` pointed at review-iq's project via
+  `expense_app`. Now: `/health` → `200`, `/docs` → `200`, `/expenses` (no auth) → `401` with a
+  real error body (not a crash). A follow-up revision (`expense-tracker-00008-kth`) added the
+  real frontend origin to `CORS_ALLOWED_ORIGINS` once that URL was known.
+- **Frontend (Vercel)**: the previous deployment/project no longer existed (confirmed via
+  `vercel link`, which created a fresh project rather than finding one). Installed the Vercel CLI
+  (`npm i -g vercel`), linked a new project `expense-tracker`, set the three
+  `NEXT_PUBLIC_*` production env vars (Supabase URL/anon key pointed at the new project, API base
+  URL pointed at the Cloud Run service), and deployed to production. Live at
+  **https://expense-tracker-eight-xi-93.vercel.app** (`/` redirects to `/sign-in`, confirmed
+  `200` after following the redirect — this is the app's own auth-gated routing, not a deploy
+  problem).
+- **CORS verified end-to-end**: an `OPTIONS` preflight from the real frontend origin against
+  `/expenses` returns `access-control-allow-origin: https://expense-tracker-eight-xi-93.vercel.app`.
+- **Derived count**: once GG confirms this PR, the "demo currently offline" line in
+  `content/case-studies/expense-tracker.ts` / `content/products.ts`'s live-product count needs
+  updating — held for the merge rather than declaring it live in gg-portfolio before the actual
+  fix is confirmed durable (see "still needs GG" below).
+
+### Branch hygiene note
+
+The first commit accidentally landed on a stale local branch (`chore/portfolio-metrics`) that
+had already been squash-merged into `origin/master` under a different SHA — caught before
+pushing, via `git merge-base --is-ancestor`. Cherry-picked the real commit onto a fresh branch
+off `origin/master` (`feat/review-iq-supabase-migration`) and restored the stale branch to its
+original tip rather than leaving stray unrelated work on it.
+
+### Still needs GG (exact steps)
+
+1. **Review and merge** `gaurav-gandhi-2411/expense-tracker` PR
+   `feat/review-iq-supabase-migration` (schema isolation + `app_profiles`).
+2. **Rotate/confirm the `expense_app` password** if you want it recorded anywhere other than the
+   live Cloud Run env var + your local `.env` — it was generated with `secrets.token_urlsafe(32)`
+   and isn't written down anywhere in this report or any commit.
+3. **Decide whether to add a custom domain** to the new Vercel project (`expense-tracker`) — it
+   currently only has the auto-generated `expense-tracker-eight-xi-93.vercel.app`.
+4. **Once satisfied it's stable**, say so and this repo's `content/case-studies/expense-tracker.ts`
+   results block + `content/products.ts` live-product count can be updated to reflect the fix
+   (currently still says "demo currently offline" — deliberately not flipped yet, since a claim
+   like that should follow confirmed stability, not the moment a deploy command exits 0).
 
 ---
 
