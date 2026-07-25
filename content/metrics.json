@@ -119,6 +119,15 @@
       "source_line": 229,
       "commit_sha": "0908205094bc2384ab1a7b2a46e9024e120d369f",
       "measured_at": "2026-06-01"
+    },
+    "tracegauge:tests": {
+      "label": "Test suite",
+      "value": "601/601 passing",
+      "repo": "gaurav-gandhi-2411/token-efficiency-scorer",
+      "source_file": "CURRENT_STATE.md",
+      "source_line": 82,
+      "commit_sha": "6da6a64faeb3901ce5beb201b7b971a6d8debcbb",
+      "measured_at": "2026-07-04"
     }
   },
   "informational": {
