@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
+import { CaseStudyJsonLd } from "@/components/json-ld";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
@@ -78,5 +79,10 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
     );
   }
 
-  return <CaseStudyPage study={study} product={product} demo={demo} />;
+  return (
+    <>
+      <CaseStudyJsonLd study={study} product={product} />
+      <CaseStudyPage study={study} product={product} demo={demo} />
+    </>
+  );
 }

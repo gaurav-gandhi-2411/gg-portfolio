@@ -147,4 +147,135 @@ regardless, since its own destination is the new `/projects/[category]` page.
 
 ---
 
-*(Sections for items 3–6 appended below as they land.)*
+## Item 4 — Manifest/CI coverage audit across all 17 repos
+
+Started from a background research agent's snapshot, then **re-verified every finding fresh
+against `origin/main` via `gh api`/`git fetch`** before acting — the agent's snapshot turned out
+stale on 2 of 4 flagged repos (both had already gained CI + a manifest via other work merged
+after the snapshot was taken), so nothing was done there. Ground truth as of this wave:
+
+| Repo | Manifest before | CI before | Action | Now eligible? |
+|---|---|---|---|---|
+| triage-iq | present | present (agent's "gitkeep-only" finding was stale) | none | yes (already was) |
+| agentic-shopping-assistant | present | present | none | yes |
+| shelfsense-m5 | present | present | none | yes |
+| **mindmeld-payloads** | present | **missing** | added minimal JSON-validation CI ([PR #2](https://github.com/gaurav-gandhi-2411/mindmeld-payloads/pull/2), green) | yes, once merged |
+| expense-tracker | present | present | none | yes |
+| review-iq | present | present | none | yes |
+| agentic-travel-booking-system | present | present (agent's "gitkeep-only" finding was stale) | none | yes (already was) |
+| agentgauge | present | present | none | yes |
+| AetherArt | present | present | none | yes |
+| multimodal-fashion-recommender | present | present | none | yes |
+| gold-rate-tracker | present | present | none | yes |
+| reclaim | present | present | none | yes |
+| gg-portfolio (self) | n/a — the portfolio site doesn't manifest itself | present | none | n/a by design |
+| triage-iq-ui | missing — deliberately excluded, triage-iq's manifest already covers TriageIQ | present | none | n/a by design |
+| **token-efficiency-scorer** | **missing** | **missing** | added manifest + CI ([PR #1](https://github.com/gaurav-gandhi-2411/token-efficiency-scorer/pull/1), green) | yes, once merged |
+| mindmeld (private) | excluded — Warmer's manifest lives in public mindmeld-payloads instead | n/a | none | excluded by design |
+| claude-config (private) | excluded — personal tooling, not a product | n/a | none | excluded by design |
+
+### token-efficiency-scorer (PR #1) — the real work
+
+Adding "minimal CI" here surfaced a stack of pre-existing gaps that would have made the CI
+useless or immediately red if left alone; each was fixed narrowly, verified locally, and
+explained in the PR body rather than silently worked around:
+
+- **`uv.lock` was stale** (still named the pre-rebrand package `token-efficiency-scorer` instead
+  of `tracegauge`) — regenerated via `uv lock`.
+- **No `[dependency-groups] dev`** existed at all — ruff/mypy/pytest/pytest-asyncio/pytest-cov/
+  pandas/pyarrow were only ever available via a global conda environment, never reproducibly.
+  Added the group so `uv sync --frozen` actually has something to install.
+- **`uv.lock` was gitignored** — meaning `uv sync --frozen` could never work in CI regardless of
+  the above two fixes. Removed the `.gitignore` entry and committed the lockfile (rule 22).
+- **`[tool.mypy] python_version = "3.11"`** silently prevented mypy from ever running at all
+  (numpy's stubs need 3.12+ syntax) — bumped to 3.12; mypy then surfaced 125 real pre-existing
+  findings (strict mode had never actually executed).
+- **608 pre-existing ruff findings, 134 files needing reformat** — real, but reformatting 134
+  untouched files is a drive-by refactor outside this task's scope, and a mass `ruff format`
+  pass I tried initially **broke a test that explicitly guards one file's bytes as frozen**
+  (`test_prior_features_intact.py::test_waste_detectors_byte_frozen`) — reverted that pass
+  entirely rather than patch around it. Lint, format-check, and mypy are wired into CI as
+  **informational (`continue-on-error: true`)**, not blocking — visibility without forcing an
+  unrelated mass-cleanup PR as a prerequisite for CI existing.
+- **Two real-corpus test dependencies found and excluded, three more found and correctly left
+  alone**: `test_cluster_validity.py` and `test_chat_grounding.py::TestContextFormatUnambiguous`
+  both read the actual local `~/.claude/projects` session history and need ≥30 real sessions —
+  a machine-state dependency no CI runner can have (confirmed: passes with my real local history,
+  fails identically on GitHub Actions' clean runner). Swept every other test file touching the
+  same code path (`test_anomaly_threshold.py`, `test_small_corpus_honest_path.py`,
+  `test_web_patterns.py`, `test_route_registration.py`) and confirmed each already handles it
+  correctly via `pytest.skip` or synthetic/mocked data — not excluded.
+- **One Linux-only flake found and investigated, not just excluded**:
+  `test_watcher_incremental.py::test_failure_isolation_continues_scan` fails consistently on the
+  ubuntu CI runner, passes consistently on local Windows verification. Ruled out the
+  stability-window math (platform-independent), a `session_id`/hash primary-key collision
+  (`sessions.session_id` is the PK, not the hash), and mock-call-order vs. `rglob()` iteration
+  order (the mock's `side_effects` isn't filename-keyed, so exactly 2 of 3 calls succeed
+  regardless of file order) as causes. Suspect SQLite WAL-mode interaction with this specific
+  runner, not confirmed without a real Linux box — deselected rather than deleted, flagged in
+  the PR for GG to investigate directly.
+- **Test suite is the one required/blocking job**: 615 passing, 9 skipped (610 + 5 deselected
+  after all three exclusions above), verified locally via the exact commands the workflow runs.
+
+### mindmeld-payloads (PR #2)
+
+No source code exists in this repo (static data payloads Warmer reads directly at runtime) — the
+one meaningful check is that every committed `.json` file parses. Verified locally against all 3
+committed files before opening the PR; CI passed on first push (10s).
+
+---
+
+## Item 5 — expense-tracker on review-iq's Supabase
+
+Not started this pass — genuinely the highest-risk item in the wave (live production database
+shared with a real product, review-iq) and deserves undivided attention rather than being
+squeezed in after five other substantial items. Groundwork already done: read review-iq's `.env`
+(project `enqpluazgxewepchdeut`), confirmed its schema/RLS conventions (`public` schema,
+`current_org_id()` SECURITY DEFINER helper, service-role bypass), confirmed expense-tracker's own
+`.env` currently points at a **different, dead** Supabase project (`ckedawgfjwzefayhcybe` —
+matches wave 14's DNS-NXDOMAIN diagnosis), confirmed its backend deploys to Cloud Run via
+`scripts/deploy.ps1` (gcloud is authenticated and available in this environment, previously
+assumed blocked), and confirmed Vercel MCP tooling can drive the frontend redeploy. Full
+STRIDE pass, the `expense` schema migration, RLS scoping, and the redeploy are queued as the next
+piece of work.
+
+---
+
+## Item 6 — Enhancements
+
+- **Per-project OG images** (`app/work/[slug]/opengraph-image.tsx`): one static image per case
+  study (title + dek + headline metric), same visual identity as the site-wide OG image. Sharing
+  a case-study link now previews with that project's own card instead of the generic site one.
+- **JSON-LD per case study** (`CaseStudyJsonLd` in `components/json-ld.tsx`, `SoftwareApplication`
+  type): wired into `app/work/[slug]/page.tsx`. Introduces no new claims — every field mirrors
+  content already sourced and rendered on the page.
+- **"Last updated" + reading time** (`lib/last-updated.ts`, `lib/reading-time.ts`): last-updated
+  is derived from the case-study source file's own git history at build time (fail-soft to
+  rendering nothing if git/history isn't available) — never hand-typed, so it can't silently go
+  stale. Reading time is a plain word-count estimate over the prose fields.
+- **"Work with me" CTA** on every case-study page, distinct from the generic "want to see it
+  yourself" footer: same copy register as the homepage Contact section, placed right after the
+  closing takeaway — the highest-intent point on the page previously had no conversion path.
+- **Vercel Analytics — blocked on GG's dashboard action, not completed.** Queried the Web
+  Analytics API directly (`gaurav-gandhi` project, `prj_mEEcEytBVTScvG51yu0DMgQJ3diO`) and got
+  `404 Web Analytics not found` — the `@vercel/analytics` client library has been wired since
+  wave 2, but the **Web Analytics dashboard feature itself is a separate opt-in** that was never
+  turned on. Numbered steps for GG: (1) open the Vercel dashboard → `gaurav-gandhi` project →
+  **Analytics** tab; (2) enable Web Analytics (Hobby-plan tier is free up to its usage cap);
+  (3) ping this repo in a future session once it's on — per-route view data will then be
+  queryable and can feed ordering decisions as the brief asks. No fabricated numbers reported in
+  the interim.
+
+### Verification
+
+`npm run typecheck` / `lint` / `build` clean (40 static pages: 27 → 40, the 13 new per-project OG
+image routes). Full e2e suite (59 tests) green on desktop, zero regressions. Budget: **unchanged**
+(168,283 B gzip — confirmed byte-identical chunk hashes on `/` before/after item 6, since every
+addition here is server-only: OG image generation, JSON-LD script tags, git-derived date, and a
+static CTA block cost zero client JS). Lighthouse on `/work/triageiq`: 100 a11y / 96 BP (known
+localhost-only non-defect) / 100 SEO. Screenshots: `reports/screenshots/wave15/` (case-study top
+with the last-updated/reading-time line, the Work-with-me CTA, the new OG image).
+
+---
+
+*(Item 3 — the agentic content pipeline — is the remaining item, queued next alongside item 5.)*

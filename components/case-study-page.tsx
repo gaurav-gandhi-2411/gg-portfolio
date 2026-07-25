@@ -2,7 +2,10 @@ import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
 import { TransitionLink } from "@/components/transition-link";
+import { site } from "@/content/site";
 import type { CaseStudy, Product } from "@/content/types";
+import { getCaseStudyLastUpdated } from "@/lib/last-updated";
+import { caseStudyReadingMinutes } from "@/lib/reading-time";
 
 /**
  * Wave 12 — the /work/[slug] case-study template: numbered sections, one
@@ -61,6 +64,9 @@ export function CaseStudyPage({
   let sectionIndex = 0;
   const next = () => ++sectionIndex;
 
+  const lastUpdated = getCaseStudyLastUpdated(study.slug);
+  const readingMinutes = caseStudyReadingMinutes(study);
+
   return (
     <main
       id="main"
@@ -86,6 +92,18 @@ export function CaseStudyPage({
             {study.title}
           </h1>
           <p className="text-muted-foreground mt-4 text-lg leading-relaxed">{study.dek}</p>
+
+          {/* Wave 15 — signals the page is maintained (not a stale
+              write-once artifact) and helps a skimmer decide whether to
+              read now or bookmark. lastUpdated is derived from the source
+              file's own git history (lib/last-updated.ts) — never
+              hand-typed, so it can't silently go stale; renders nothing if
+              git history isn't available (fail-soft, same convention as
+              every other derived value on this site). */}
+          <p className="text-muted-foreground mt-3 font-mono text-xs">
+            {lastUpdated && <>Last updated {lastUpdated} · </>}
+            {readingMinutes} min read
+          </p>
 
           {(product?.techChips?.length ?? 0) > 0 && (
             <p className="mt-5 flex flex-wrap gap-2">
@@ -230,7 +248,28 @@ export function CaseStudyPage({
             </>
           )}
 
-          <div className="border-border/40 mt-16 flex flex-col items-center gap-5 border-t pt-10 text-center">
+          {/* Wave 15 — "Work with me": a client/hiring-manager reading this
+              far into a case study is the highest-intent visitor on the
+              site and previously had no conversion path here (only the
+              generic project links below, and Contact at the very bottom
+              of the homepage). Same copy register as components/sections/
+              contact.tsx, so it reads as one voice, not a bolted-on ad. */}
+          <div className="border-accent/30 bg-accent/5 mt-16 flex flex-col items-center gap-3 rounded-xl border px-6 py-8 text-center">
+            <p className="text-foreground text-base leading-relaxed">
+              Building something like this? I&apos;m looking for Senior or Principal Applied AI
+              roles, and I take on select AI/ML consulting engagements.
+            </p>
+            <p className="flex flex-wrap justify-center gap-3">
+              <LinkButton href={`mailto:${site.email}`} variant="primary">
+                Email me ↗
+              </LinkButton>
+              <LinkButton href={site.resumeUrl} variant="secondary">
+                View resume ↗
+              </LinkButton>
+            </p>
+          </div>
+
+          <div className="border-border/40 mt-10 flex flex-col items-center gap-5 border-t pt-10 text-center">
             <p className="text-muted-foreground text-sm">Want to see it for yourself?</p>
             <p className="flex flex-wrap justify-center gap-3">
               {study.links.map((link, i) => (
