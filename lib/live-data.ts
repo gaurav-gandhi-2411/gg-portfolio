@@ -43,10 +43,18 @@ export interface WarmerPuzzleInfo {
 
 export async function getWarmerPuzzleNumber(): Promise<WarmerPuzzleInfo | null> {
   const manifest = await safeFetchJson<{
-    langs: { en: { days: { date: string }[] } };
+    langs: Record<string, { days?: { date: string }[] }>;
   }>("https://raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json");
-  if (!manifest) return null;
-  const days = manifest.langs.en.days;
+  if (!manifest?.langs) return null;
+  // Wave 13: the manifest dropped the `en` track (hi-en only now) and the
+  // old hard `langs.en.days` access threw — the one function in this file
+  // that could violate its own fail-soft contract. Prefer `en` if it ever
+  // returns, else use the first track that has days; shape surprises
+  // degrade to no-badge, never a build/ISR failure.
+  const days =
+    manifest.langs.en?.days ??
+    Object.values(manifest.langs).find((lang) => (lang?.days?.length ?? 0) > 0)?.days;
+  if (!days || days.length === 0) return null;
   const todayIso = new Date().toISOString().slice(0, 10);
   // Puzzle N = today's 1-indexed position among precomputed days; falls back
   // to the most recent day at or before today if today isn't in the list yet.
