@@ -60,7 +60,10 @@ export async function ProjectGrid({
     <ProjectFilter cats={products.map((p) => ({ slug: p.slug, categories: p.categories }))}>
       <RevealGroup
         mode="onview"
-        className="project-grid mt-8 grid gap-4 lg:grid-cols-2 lg:gap-5"
+        // Columns engage at xl, exactly where Section's width step does —
+        // at lg the container is still 3xl and two columns would squeeze
+        // the cards (design-review finding 6).
+        className="project-grid mt-8 grid gap-4 xl:grid-cols-2 xl:gap-5"
       >
         {products.map((product) => (
           <ProjectCard

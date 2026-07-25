@@ -85,15 +85,21 @@ export function ProjectFilter({
   const pillBase =
     "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none";
   const pillOn = "border-accent/70 bg-accent/15 text-foreground";
+  // Full-opacity border: on an unselected pill the border is the ONLY
+  // boundary affordance, so WCAG 1.4.11's 3:1 applies — --border at 100%
+  // is 3.38:1; at the /40 first cut it computed ~1.47:1, the exact value
+  // the token was raised to escape (design-review finding 2).
   const pillOff =
-    "border-border/40 text-muted-foreground hover:border-accent/50 hover:text-foreground";
+    "border-border text-muted-foreground hover:border-accent/70 hover:text-foreground";
 
   return (
     <div>
+      {/* Left-aligned wrap below sm: centered ragged pill rows read as a
+          cloud on a 390px screen (design-review finding 4). */}
       <div
         role="group"
         aria-label="Filter projects by category"
-        className="flex flex-wrap justify-center gap-2"
+        className="flex flex-wrap justify-start gap-2 sm:justify-center"
       >
         <button
           type="button"

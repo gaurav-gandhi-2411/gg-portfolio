@@ -5,11 +5,14 @@
  *
  * Wave 13 — the column widths gain a desktop step (GG's standing
  * complaint: at 1280–1600px the site read as a narrow column in a void).
- * Three widths:
+ * Two widths:
  *   prose — unchanged reading column (About's text, Contact);
  *   wide  — steps up to 5xl at xl for sections with an internal desktop
- *           composition (Experience's meta rail, Research's two-column);
- *   grid  — steps up to 6xl at xl for the two-column project card grid.
+ *           composition (Experience's meta rail, Research's two-column,
+ *           the two-column project card grid).
+ * ONE xl width for every widened section + the nav — the design review
+ * blocked a first cut where Work sat at 6xl beside 5xl siblings: three
+ * widths on one continuous page read as an accident, not a decision.
  * Mobile and tablet are untouched; prose measure inside wide sections is
  * still capped by each component (max-w-measure), so line length never
  * rides the container.
@@ -17,7 +20,6 @@
 const WIDTHS = {
   prose: "max-w-2xl",
   wide: "max-w-3xl xl:max-w-5xl",
-  grid: "max-w-3xl xl:max-w-6xl",
 } as const;
 
 export function Section({

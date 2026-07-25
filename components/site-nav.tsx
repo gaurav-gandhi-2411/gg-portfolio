@@ -42,9 +42,9 @@ export function SiteNav() {
       >
         Skip to content
       </a>
-      {/* Wave 13: tracks the widest content column (xl:max-w-6xl) so the
-          nav's edges align with the project grid on desktop. */}
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-3 xl:max-w-6xl">
+      {/* Wave 13: tracks the one shared xl content width (xl:max-w-5xl)
+          so the nav's edges align with every widened section below. */}
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-3 xl:max-w-5xl">
         <TransitionLink
           href="/"
           className="focus-visible:outline-ring flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2"

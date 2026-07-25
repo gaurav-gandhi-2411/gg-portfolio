@@ -15,7 +15,7 @@ export function Work() {
     <Section
       id="work"
       label="Work"
-      width="grid"
+      width="wide"
       // Both counts derived, never hand-typed (rule 65b).
       labelNote={`${products.length} projects · ${liveProductCount(products)} live`}
       lede={workLede}

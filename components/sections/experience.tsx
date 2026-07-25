@@ -24,7 +24,10 @@ export function Experience() {
             key={entry.company}
             className="border-border/40 bg-card/40 rounded-xl border p-6 md:p-8"
           >
-            <div className="xl:grid xl:grid-cols-[14rem_minmax(0,1fr)] xl:gap-x-12">
+            {/* 16rem rail: the longest tech chip ("Bayesian Change-Point
+                Detection") wrapped into a stretched capsule at 14rem
+                (design-review finding 3). */}
+            <div className="xl:grid xl:grid-cols-[16rem_minmax(0,1fr)] xl:gap-x-10">
               <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 xl:flex-col xl:gap-y-2">
                   <h3 className="font-heading text-lead font-semibold text-foreground">

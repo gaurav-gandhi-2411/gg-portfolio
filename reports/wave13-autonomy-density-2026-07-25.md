@@ -238,6 +238,50 @@ than hidden.
   mitigate. A "collapse below the fold on mobile" pattern was considered and rejected this
   wave (hiding projects is what tiering did). Revisit if GG flags it.
 
+## Design-reviewer sign-off (T2 gate)
+
+First pass: **blocked on one finding, everything else suggestion-level.** Scores:
+structure 7 · density 7.5 · craft 7 · rhythm 6.5 · consistency 6.5. Verdict: "once
+finding 1 lands, this is approved."
+
+1. **BLOCKING — three content widths on one page** (About/Experience/Research at 5xl vs
+   Work/nav at 6xl = a 64px zigzag at 1600, pixel-measured by the reviewer). **Fixed by
+   unifying on ONE 5xl axis** (Section's `grid` step deleted; Work, /projects, and the nav
+   all at `xl:max-w-5xl`) — calmer than widening prose sections that can't fill 6xl.
+   Re-verified in-browser: nav content, About, Experience, and Work cards all sit at
+   x=304 at a 1600px viewport. Knock-on handled: half a 5xl grid computes to ~478px, so
+   the card container-query threshold moved 30rem → 28rem (figure rails re-verified
+   engaged).
+2. **SUGGESTION (taken) — border contrast on filter pills**: unselected pills used
+   `border-border/40` ≈ 1.47:1 — the exact value the border token was raised to escape,
+   and on a pill the border is the only boundary affordance (WCAG 1.4.11 applies). Now
+   full-opacity `border-border` (3.38:1). The reviewer's wider point — the sitewide
+   `/30–/60` border-opacity pattern predating wave 13 — is logged below as a follow-up
+   token audit, not silently absorbed.
+3. **SUGGESTION (taken) — wrapped tech chip**: Experience meta rail 14rem → 16rem; the
+   "Bayesian Change-Point Detection" chip no longer wraps into a stretched capsule.
+4. **SUGGESTION (taken) — mobile pill cloud**: pills wrap left-aligned below sm instead
+   of centered ragged rows.
+5. **SUGGESTION (partially taken) — empty state unverified**: the CSS zero-cards path was
+   forced live (stripping a category off every card + selecting it → 0 visible, URL and
+   pills correct). The React message branch itself keys off the server-provided `cats`
+   prop and is unreachable without a content change — verified by review of the 4-line
+   conditional plus the live-verified count computation that drives it (the same count
+   feeds the aria-live text, which matched CSS reality in every filter test). Honest
+   status: message JSX reviewed, not rendered.
+6. **SUGGESTION (taken) — 1024–1279 band**: grid columns moved lg → xl to match Section's
+   width step exactly; verified at 1100px (single column, 720px cards, figure rails on).
+   `after-home-1100.jpeg` added.
+7. Loading/error states: reviewer confirmed fail-soft omission is appropriate; no change.
+
+**Follow-up logged (not this wave):** sitewide border-opacity token audit — either a
+`--border-subtle` token that still clears 3:1, or reserve opacity borders for purely
+decorative dividers (reviewer finding 2's systemic half; predates wave 13).
+
+Post-fix numbers: axe 0 (home + /projects re-run; other routes untouched by the fixes),
+budget 204,770 B gzip (+5 B from class strings), all "after" screenshots re-captured at
+the unified width (the report's screenshot references are the final versions).
+
 ## Process notes
 
 - 4 executor subagents (source-repo manifests ×3 batches + agentgauge follow-up), 1

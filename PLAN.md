@@ -605,8 +605,14 @@ re-check, honest results untouched. Full report:
       preview noindex artifact) · budget 204,765 B vs 220,160 (+1,978 justified) ·
       filters/VT/deep-links driven on the deployed preview · reduced-motion stub
       differential · no-JS SSR grep.
-- [ ] **Design-reviewer sign-off** — dispatched, pending at checkpoint time; findings +
-      fixes land on this branch before the wave closes.
+- [x] **Design-reviewer sign-off:** blocked-then-approved. The one blocking finding —
+      three content widths at xl (5xl sections beside a 6xl Work/nav, a pixel-measured
+      64px zigzag) — fixed by unifying everything on ONE 5xl axis (verified: nav/About/
+      Experience/Work all at x=304 @1600; card container threshold 30→28rem so figure
+      rails still engage). Suggestions taken same-session: full-opacity pill borders
+      (1.47:1 → 3.38:1, WCAG 1.4.11), Experience rail 14→16rem (chip wrap), left-aligned
+      mobile pills, grid columns lg→xl (1024–1279 band verified at 1100px). Follow-up
+      logged: sitewide border-opacity token audit (pre-existing pattern).
 - [ ] Large diff → **draft PR for GG's manual review/merge** (same posture as prior
       waves). GG also needs to merge the 11 source-repo manifest PRs for the weekly
       pipeline's first live run to find them (it fail-softs until then).
