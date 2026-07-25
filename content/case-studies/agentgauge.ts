@@ -1,99 +1,120 @@
 import type { CaseStudy } from "../types";
 
-// Sources: agentgauge repo (README.md, docs/research/frozen_protocol.md,
-// docs/paper/paper.md) — see provenance.md's AgentGauge section.
+// Sources: agentgauge repo @ 939abbf (2026-07-25) — README.md (v2 rebuild
+// narrative + measured-metrics tables), reports/predictive_validity_study.md,
+// reports/v2_2_optimal_allocation.md, reports/v2_4_task1_blast_radius_audit.md,
+// docs/paper/paper.md — see provenance.md's AgentGauge wave-13 section.
+// Rewritten wave 13: the v1 "8 scoring dimensions" framing went stale when
+// the repo's own predictive-validity study falsified the 8-axis score.
 export const agentgauge: CaseStudy = {
   slug: "agentgauge",
   title: "AgentGauge",
-  dek: "Lighthouse, but for MCP interfaces — a pilot-scale research artifact (synthetic fixtures, two real-server mirrors, a 10-server pilot) for scoring whether an AI agent can actually use a given tool server, not a validated product claim.",
+  dek: "A statistical harness that measures whether a change to an MCP server's tool descriptions actually changed agent task success — built by falsifying its own first version and keeping only what survived.",
   depth: "full",
   problem: [
-    "MCP (Model Context Protocol) servers expose tools to AI agents through nothing but text descriptions — a name, a short blurb, a parameter schema. Agents frequently pick the wrong tool or call the right one incorrectly, and it's often not because the server's code is broken; it's because the interface handed to the agent is ambiguous, underspecified, or looks like three other tools. AgentGauge scores how well an agent can actually use a given MCP server, the way a Lighthouse report scores a web page, so a server author can find agent-usability problems before shipping.",
-    "It's also the benchmark behind a first-author research paper on tool-description quality — but the repo is explicit about its own limits: this is a pilot-scale research artifact, built on synthetic fixtures, two real-server mirrors, and a 10-server pilot sample. It is not a validated product claim, and the results below are reported with that scope attached rather than rounded up.",
+    "MCP (Model Context Protocol) servers expose tools to AI agents through nothing but text — a name, a short description, a parameter schema. When an agent picks the wrong tool or calls the right one incorrectly, the usual advice is \"improve your tool descriptions.\" But almost nobody measures whether a description change actually moved agent success, so teams polish text on faith.",
+    "AgentGauge v1 tried the obvious thing: a Lighthouse-style quality score, with an LLM judge rating every description across 8 dimensions. Then I ran a predictive-validity study on my own metric — and it failed. None of the 8 axes predicted real agent task success by a margin that survived multiple-comparison correction and controlling for description length. A score that doesn't predict the outcome it claims to measure is decoration, so v1 was retired and the project rebuilt around the two things the study showed actually work: a deterministic defect linter, and a statistical harness that measures task-success change directly.",
   ],
   approach: [
-    "Running `agentgauge scan <target>` connects to an MCP server over stdio (a subprocess) or HTTP/SSE, introspects every tool it exposes, and runs two kinds of analysis in parallel: static analysis checks schema completeness (are parameters typed, required fields marked, examples present), while an LLM-as-judge rates description quality — is it clear what this tool does and when to use it, versus a neighboring tool that sounds similar.",
-    "AgentGauge then generates realistic tasks for the server and runs a real agent through N trials, measuring tool-selection accuracy (did it pick the right tool) and call correctness (did it fill in the arguments correctly). The test-agent LLM is pluggable behind a Provider protocol (a defined interface any model can implement), and every test in the repository runs against a deterministic MockProvider — a stand-in that returns fixed, scripted responses instead of calling a real model — so the test suite costs nothing and needs no network access.",
-    "Underneath the CLI sits a research program: every experiment behind the paper runs under one frozen, pre-registered protocol — one fixed judge model, one fixed task generator, thresholds decided before the results were seen, and independence enforced between the model that judges, the model that generates tasks, and the model that acts as the agent.",
+    "The primary interface is `agentgauge diff`: you give it two versions of your server's tool descriptions (before and after a change), and it runs a real agent through a pool of gold-constraint tasks against each version, then reports whether task success genuinely improved, regressed, or the experiment wasn't sensitive enough to say — an explicit INSUFFICIENT_SENSITIVITY verdict rather than a confident-sounding guess.",
+    "Getting that verdict to be trustworthy was most of the work. Trial-level repeats of the same task turned out to carry almost no independent information (intra-class correlation 0.793), so the harness pairs tasks across arms, clusters errors at the task level, applies variance reduction (CUPED), and allocates one trial per task across many tasks instead of many trials on few tasks. At 100 tasks per arm it can detect an 8.5-percentage-point effect at 80% power — under the 10-point ship target the project set for itself before tuning began.",
+    "The linter (`agentgauge lint`) is deliberately the secondary utility, and its severity tiers are earned, not asserted: each rule's effect on task success was measured by injecting that defect and running real agents. The one BLOCKING rule (a type/enum contradiction between description and schema) causes a 13.3–28.9-point drop in task success across three model families. Rules whose measured effect was a clean null are labeled INFO or ADVISORY — demoted in public, with the null published.",
   ],
   architecture: {
     intro:
-      "A scan pipeline that runs static and LLM-based analysis in parallel, then hands off to a live agent trial — with a separate, protocol-frozen research layer alongside it for the paper's experiments.",
+      "An A/B measurement pipeline: two description sets, one shared task pool, paired agent trials, a cluster-aware estimator, and a pre-report audit gate that can block a result from being called a measurement.",
     stages: [
-      { label: "MCP server under test", kind: "input", detail: "stdio subprocess or HTTP/SSE" },
-      { label: "CLI", detail: "scan / try / fix / ci" },
-      { label: "MCP client introspection", detail: "enumerates every tool the server exposes" },
       {
-        label: "Analysis",
-        parallel: [
-          { label: "Static analysis", detail: "schema completeness" },
-          { label: "LLM-as-judge", detail: "description quality, discoverability" },
-          { label: "Agent runner", detail: "N trials → tool-selection accuracy, call correctness" },
-        ],
+        label: "Two tool-description sets",
+        kind: "input",
+        detail: "baseline vs. candidate — the change you want to measure",
       },
       {
-        label: "Weighted report + fix list",
+        label: "Gold-constraint task pool",
+        detail: "253 tasks across 10 real-API domains (GitHub, Stripe, Kubernetes, …)",
+      },
+      {
+        label: "Paired agent trials",
+        detail: "1 trial per task, 100 tasks/arm — the allocation the ICC finding dictated",
+      },
+      {
+        label: "Clustered estimator",
+        detail: "task-level pairing + CUPED variance reduction, few-cluster corrections",
+      },
+      {
+        label: "Audit gate",
+        detail: "leakage / ceiling / degenerate-metric / scoring-consistency checks — fails closed",
+      },
+      {
+        label: "Verdict",
         kind: "output",
-        detail: "Rich text or JSON, prioritized by impact",
+        detail: "improved / regressed / INSUFFICIENT_SENSITIVITY, with confidence interval",
       },
     ],
-    note: "Research layer alongside the CLI: a frozen protocol config feeds fixed experiment scripts over hash-verified fixtures, producing the paper (docs/paper/paper.md + LaTeX PDF).",
+    note: "The research layer alongside the CLI runs under a frozen, pre-registered protocol and produced the tool-description paper (docs/paper/paper.md + LaTeX PDF).",
   },
   decisions: [
     {
-      title: "Frozen, pre-registered evaluation protocol",
-      body: "Every paper experiment runs under one judge model (llama3.1:8b, fixed seed 42), a task generator that's always a different model family from the judge, and thresholds decided before any results existed. Null results are reported first-class rather than filtered out. That structure exists specifically to prevent tuning the pipeline until it finds a positive result and calling that the finding.",
-      sourceRef: "agentgauge:frozen-protocol",
+      title: "Falsify your own metric before anyone else has to",
+      body: "The predictive-validity study that killed v1's 8-axis score was run on purpose, on my own headline feature, before promoting it further. It's the project's founding decision: a metric that can't predict the outcome it claims to measure gets retired, publicly, and the study that killed it ships in the repo.",
+      sourceRef: "agentgauge:predictive-validity",
     },
     {
-      title: "A Provider protocol with a deterministic MockProvider as the CI default",
-      body: "The agent that gets tested is model-agnostic behind a Provider interface, but the test suite never calls a real model — it runs against a MockProvider that returns fixed, scripted outputs. That keeps CI free of network calls, API cost, and credentials, while still exercising the full scan pipeline.",
-      sourceRef: "agentgauge:mock-provider",
+      title: "Reallocate trials to tasks — the statistics dictated the design",
+      body: "v2.1 found repeat trials of the same task nearly duplicate each other (ICC 0.793), which made the initial minimum-detectable-effect estimate wildly optimistic. The fix came from the finding itself: spend the same budget on more tasks at one trial each. That single reallocation moved the detectable effect from 18.8 points to 8.5 — under the ship target, with no new compute.",
+      sourceRef: "agentgauge:icc-mde",
     },
     {
-      title: "Regime-bounded framing instead of a blanket \"improve your descriptions\" claim",
-      body: "The paper's own evidence shows the effect of better tool descriptions is real but narrow, and in some cases actively harmful when applied outside the conditions where it helps. Rather than ship a general \"better descriptions always help\" claim, the practical takeaway is a two-condition test: does the agent actually fail on this tool set, and does an oracle (best-case) description recover that failure? Only then is a description rewrite likely to pay off.",
-      sourceRef: "agentgauge:regime-framing",
+      title: "Severity tiers track measured causal impact, not plausibility",
+      body: "Every lint rule's tier reflects what defect injection actually measured. A rule with perfect precision but zero measured effect on task success sits at INFO, published as a null — because a linter that cries BLOCKING on cosmetic issues teaches people to ignore it.",
+      sourceRef: "agentgauge:retiering",
     },
     {
-      title: "Human-reviewed draft PRs for anything touching the judge, scorer, or rubric",
-      body: "Nothing in the research program auto-merges a change to the judge model, the scoring logic, or the rubric — every such change goes through a human-reviewed draft PR. That protects an artifact whose headline findings are largely nulls: it would be easy, and wrong, to let an automated change quietly nudge the numbers toward a more flattering story.",
-      sourceRef: "agentgauge:governance",
+      title: "A standing audit gate wired into the pipeline, not a one-time cleanup",
+      body: "After the v2.3 scoring-artifact incident (below), the checks that caught it — task/answer leakage, ceiling effects, degenerate metrics, scoring-reference consistency — became `agentgauge audit`, run automatically before any diff/eval result is reported. A failing check blocks the number from being presented as a measurement.",
+      sourceRef: "agentgauge:audit-gate",
     },
   ],
   results: [
     {
-      label: "Scoring dimensions implemented",
-      value: "8 of 8, 87% test coverage across 41 tests",
-      sourceRef: "agentgauge:scoring-dimensions",
+      label: "The founding null: v1's 8-axis LLM-judged score vs. real task success",
+      value: "No axis survived correction",
+      detail: "none of the 8 axes predicted agent task success after multiple-comparison correction and length control — the study that triggered the v2 rebuild",
+      sourceRef: "agentgauge:predictive-validity",
     },
     {
-      label: "Synthetic catalog: oracle vs. empty tool descriptions",
-      value: "+34.5pp tool-selection accuracy (62.9% → 97.4%, p<0.0001)",
-      detail: "holds on a stronger agent too (Llama-3.3-70B: +40.8pp, 59.2% → 100.0%) — explicitly not apples-to-apples across harnesses",
-      sourceRef: "agentgauge:t18",
+      label: "Minimum detectable effect at 100 tasks/arm, 80% power",
+      value: "8.5pp — ship target met",
+      detail: "target was detecting a 10-point regression; reached via pairing, task-clustering, CUPED, and the ICC-driven trial reallocation",
+      sourceRef: "agentgauge:icc-mde",
     },
     {
-      label: "The honest headline: real-world prevalence",
-      value: "0 of 9 real public MCP servers showed the in-regime effect",
-      detail: "pre-registered N=10 pilot on real public Python MCP servers with a testable confusable tool family — the dramatic synthetic-catalog effect mostly didn't appear in the wild",
-      sourceRef: "agentgauge:prevalence-null",
+      label: "Does a BLOCKING description defect actually cause task failure?",
+      value: "Yes: −13.3 to −28.9pp",
+      detail: "previously assumed, now measured — confidence interval excludes zero in all three model families tested",
+      sourceRef: "agentgauge:blocking-causal",
     },
     {
-      label: "Localizer precision, reported honestly as a failure",
-      value: "recall 1.00, precision 0.167",
-      detail: "under two independent framings — the tool that finds *which* description is the problem is not yet precise enough to trust unsupervised",
-      sourceRef: "agentgauge:localizer",
+      label: "False-alarm rate under the null",
+      value: "<5% in every cluster-count stratum",
+      detail: "and the harness abstains (INSUFFICIENT_SENSITIVITY) on 21.6% of null runs rather than over-claiming",
+      sourceRef: "agentgauge:false-alarm",
+    },
+    {
+      label: "The obvious alternative, measured: a single-prompt LLM judge",
+      value: "97.1% false-alarm rate",
+      detail: "a degenerate always-flag baseline — spot-checked to confirm genuine model hallucination, not a scoring bug",
+      sourceRef: "agentgauge:judge-baseline",
     },
   ],
   story: {
-    title: "The seed bug that reversed two findings",
+    title: "The −80-point effect that was actually a scoring bug",
     body: [
-      "An early experiment run accidentally passed one fixed random seed to all 5 nominal trials for a server, instead of varying it per trial — which meant the run sampled effectively zero real variance across trials. That run reported two servers as showing the in-regime effect, with gains of +50 and +25 percentage points.",
-      "Fixing the seeding and re-running the same experiment reversed both findings. Neither server actually showed the effect once real trial-to-trial variance was restored.",
-      "The paper reports the episode directly rather than quietly fixing the numbers and moving on, and then makes the harder point explicit: this particular mechanism — a surprising, too-good result triggering a recheck — catches false positives, but it has no equivalent for false negatives. A bug that silently suppresses a real signal produces a null result that looks statistically identical to a correctly-measured null. That's stated as an explicit epistemic bound of the whole research program, not a solved problem.",
+      "v2.2 reported that an ADVISORY-tier defect — renaming a parameter so the description no longer matches the schema — caused a 76.7 to 80.0-percentage-point drop in agent task success. That's an enormous effect, and enormous effects deserve suspicion, so v2.3 audited it before trusting it.",
+      "The audit found the checker was looking up the pre-rename parameter name against post-rename arguments — scoring correct agent responses as failures. Corrected, the effect is a clean null in all three models: the agents were mostly coping with the rename fine, and the harness had been failing them on a technicality. v2.4 then audited the blast radius: only this one defect class was ever affected (confirmed from source — the other four injection classes never rename a schema key), and the corpus behind the headline calibration numbers was never touched by the bug.",
+      "The lasting fix wasn't the correction, it was the institution: the class of check that caught it became `agentgauge audit`, a standing gate that runs before any result is reported. The incident is documented in the repo's own reports rather than silently patched — the same rule this portfolio runs on.",
     ],
-    sourceRef: "agentgauge:seed-bug",
+    sourceRef: "agentgauge:v23-scoring-artifact",
   },
   links: [{ label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/agentgauge" }],
 };

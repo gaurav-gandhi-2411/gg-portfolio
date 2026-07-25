@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/gaurav-gandhi-2411/gg-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/gaurav-gandhi-2411/gg-portfolio/actions/workflows/ci.yml)
 
-Gaurav Gandhi's portfolio site — a single-page, recruiter-facing site positioning him as a
-Senior/Principal Applied AI Scientist who ships production AI products and independent
-research under his own name. Live at
+Gaurav Gandhi's portfolio site — a recruiter-facing, multi-page site (home → /projects →
+per-project case studies) positioning him as a Senior/Principal Applied AI Scientist who
+ships production AI products and independent research under his own name. Live at
 [gaurav-gandhi.vercel.app](https://gaurav-gandhi.vercel.app).
 
 ## Quick start
@@ -54,13 +54,56 @@ npm run build        # production build (also used for all reports/ measurements
 npx @axe-core/cli http://localhost:3000 --exit   # against a running `npm run start`
 ```
 
+## Autonomous metric refresh
+
+Every product-card metric on the site lives in `content/metrics.json`, keyed by its
+provenance ID (`content/provenance.md`), with `value`, `source_file`, `source_line`,
+`commit_sha`, and `measured_at` per entry. `content/products.ts` reads values through
+`lib/metrics.ts`, which throws at build time on a missing ID — a metric can't render
+without a store entry.
+
+A weekly GitHub Action (`.github/workflows/metrics-refresh.yml`, Mondays 03:00 UTC) runs
+`scripts/refresh-metrics.mjs`, which:
+
+1. fetches each source repo's **`.portfolio/metrics.json`** (same IDs, same schema) from
+   its default branch;
+2. diffs against `content/metrics.json` and rewrites drifted entries;
+3. checks every product live link (two attempts — Cloud Run cold starts answer the retry);
+4. tracks the Hugging Face cumulative download count (report-only until it crosses the
+   1,000 bar agreed in wave 13);
+5. **opens a PR** — never a direct commit — whose body shows old → new per metric with its
+   source. The human review of that PR is the provenance gate (rule 65b), unchanged.
+
+Fail-soft rules: an unreachable repo or malformed manifest skips that project with a note
+in the PR body; a metric missing from its repo's manifest is kept and flagged, never
+blanked. Metrics not re-measured in 90+ days are flagged as stale rather than silently
+re-asserted. Two caveats, both deliberate: PRs created with `GITHUB_TOKEN` don't trigger
+`pull_request` workflows, so the Action dispatches `ci.yml` onto the branch itself; and
+drawn figures (`figure:` in `content/products.ts`) mirror their metric's numbers by rule —
+the PR body reminds the reviewer to update them together.
+
+The refresh also guards the **resume**: `content/resume-metrics.json` records, per metric
+the resume PDF claims, the store value at the last resume sync plus the PDF's sha256. The
+weekly PR flags any claim whose store value has since moved (regenerate the resume or
+consciously accept the gap) and any `public/resume.pdf` swap that skipped the manifest —
+report-only, since the resume is a designed 2-page document a human regenerates
+(`.assets/resume-sources/`, gitignored).
+
+**Adding a future project**: drop a `.portfolio/metrics.json` in its repo
+(`{"version": 1, "project": "<slug>", "metrics": [{"id", "label", "value", "source_file",
+"source_line", "commit_sha", "measured_at"}]}`), add matching entries to
+`content/metrics.json` (with `repo`), and reference them from `content/products.ts` via
+`refreshableMetric(id)`. The weekly run picks it up from there.
+
 ## Architecture notes
 
 - `app/` — Next.js App Router pages, layout, OG image generation, sitemap/robots.
-- `components/sections/` — one component per page section (Hero, About, Products, Research,
-  Experience, Contact), composed in `app/page.tsx`.
-- `content/` — typed data files (products, research, site copy, live "now" line) plus
-  `provenance.md`, which records the source for every claim/metric on the site.
+- `components/sections/` — one component per home section (Hero, About, Experience, Work,
+  Research, Contact), composed in `app/page.tsx`; the project grid + category filters are
+  shared with `/projects` (`components/project-grid.tsx`).
+- `content/` — typed data files (products, case studies, research, site copy) plus
+  `provenance.md` (the narrative source record for every claim) and `metrics.json` (the
+  machine-refreshable store behind the weekly metric refresh).
 - `lib/live-data.ts` — build-time/ISR fetches for live stats (GitHub API, PyPI, a sibling
   project's public manifest). Fail-soft: any fetch failure degrades to no-badge, never a
   broken page.

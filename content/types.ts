@@ -36,10 +36,21 @@ export interface ProductMetric {
   sourceRef: string;
 }
 
-export interface ProductStoryLine {
-  text: string;
-  sourceRef: string;
-}
+/**
+ * Wave 13 — project categories for the work filters. Multi-tag per
+ * project; ids are the URL vocabulary (?category=llm-agents), labels are
+ * the visible pill text. `as const` + derived union per rule 15.
+ */
+export const CATEGORIES = [
+  { id: "llm-agents", label: "LLM & Agents" },
+  { id: "retrieval", label: "Retrieval & Embeddings" },
+  { id: "vision", label: "Vision & Generative" },
+  { id: "forecasting", label: "Forecasting & Tabular" },
+  { id: "evals-research", label: "Evals & Research" },
+  { id: "tooling", label: "Developer Tooling" },
+] as const;
+
+export type CategoryId = (typeof CATEGORIES)[number]["id"];
 
 /**
  * Structured data behind a flagship row's eval figure (wave 7). Every value
@@ -59,12 +70,15 @@ export interface Product {
   repoUrl?: string;
   metric?: ProductMetric;
   secondaryMetric?: ProductMetric;
-  tier: "flagship" | "secondary";
+  /**
+   * Wave 13 — the flagship/secondary tiering is retired (GG: every project
+   * presents strongly, no second-class treatment). Projects are ordered by
+   * AI/ML depth in content/products.ts and tagged with categories instead.
+   */
+  categories: CategoryId[];
   techChips?: string[];
   pypi?: { packageName: string; installCommand: string; badgeUrl: string };
-  /** One-line "hard problem solved" — flagship cards only, sourced from provenance.md. */
-  storyLine?: ProductStoryLine;
-  /** The metric, drawn (flagship only) — values must match `metric`, see ProductFigure. */
+  /** The metric, drawn — values must match `metric`, see ProductFigure. */
   figure?: ProductFigure;
 }
 

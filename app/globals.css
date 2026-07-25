@@ -296,6 +296,122 @@ html[data-boot="1"] #boot-loader {
   }
 }
 
+/*
+ * ── Wave 13: modern-CSS pass ───────────────────────────────────────────
+ * Every technique below degrades gracefully: unsupported browsers get the
+ * wave-12 behavior, reduced-motion visitors get static equivalents, and
+ * no content is ever held below full opacity (the wave-9 lesson).
+ */
+
+/* Typographic polish — balance multi-line headings, avoid orphans in
+ * prose. Pure progressive enhancement (ignored where unsupported). */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Category filtering (components/project-filter.tsx). The pills set one
+ * data attribute; these rules do the actual filtering against each card's
+ * space-separated data-cats list. No JS touches the cards, so toggling is
+ * a single style recalc — instant at any project count. Keep the category
+ * ids in sync with CATEGORIES in content/types.ts. */
+[data-active-category="llm-agents"] [data-cats]:not([data-cats~="llm-agents"]),
+[data-active-category="retrieval"] [data-cats]:not([data-cats~="retrieval"]),
+[data-active-category="vision"] [data-cats]:not([data-cats~="vision"]),
+[data-active-category="forecasting"] [data-cats]:not([data-cats~="forecasting"]),
+[data-active-category="evals-research"] [data-cats]:not([data-cats~="evals-research"]),
+[data-active-category="tooling"] [data-cats]:not([data-cats~="tooling"]) {
+  display: none;
+}
+
+/* :has() — when one project card is hovered, its siblings recede a step.
+ * Focus-within is deliberately excluded: dimming cards while a keyboard
+ * user tabs through them would reduce, not aid, orientation. Opacity-only
+ * (no motion), so it stays on under prefers-reduced-motion. */
+@media (hover: hover) {
+  .project-grid:has(article:hover) article:not(:hover) {
+    opacity: 0.55;
+  }
+}
+
+/* Reading progress on case-study pages — scroll-driven animation, zero
+ * JS. Hidden entirely where animation-timeline is unsupported (a static
+ * full-width bar would be noise, not progress). Kept under reduced
+ * motion: it only moves in direct response to the visitor's own scroll,
+ * which is position feedback, not autonomous animation. */
+.reading-progress {
+  display: none;
+}
+@supports (animation-timeline: scroll()) {
+  .reading-progress {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    height: 2px;
+    width: 100%;
+    background: var(--indigo);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: reading-progress linear both;
+    animation-timeline: scroll(root);
+  }
+  @keyframes reading-progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Hero halo recedes as you scroll into the page — the wow moment stays
+   * a hero moment instead of glowing behind About. Composes with the
+   * existing 28s drift via the two-part animation list. */
+  .hero-halo {
+    animation:
+      halo-spin 28s linear infinite,
+      halo-fade linear both;
+    animation-timeline: auto, scroll(root);
+    animation-range: normal, 0 90vh;
+  }
+  @keyframes halo-fade {
+    to {
+      opacity: 0.04;
+    }
+  }
+  /* This block sits later in the file than the original reduced-motion
+   * override, so the static-halo guarantee must be restated here or the
+   * scroll-fade rule above would win the cascade under reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-halo {
+      animation: none;
+    }
+  }
+}
+
+/* View transitions (components/transition-link.tsx). The default UA
+ * cross-fade, tuned shorter to match the site's 240ms fallback feel; the
+ * per-slug vt-title-* names (project card title ↔ case-study h1) get the
+ * shared-element morph for free. Reduced-motion visitors never enter a
+ * transition (the JS gate skips startViewTransition), but belt-and-
+ * suspenders here too. */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 260ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 .boot-bar-fill {
   height: 100%;
   width: 100%;
