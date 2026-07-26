@@ -1,11 +1,14 @@
 import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
+import { PrintButton } from "@/components/print-button";
 import { TransitionLink } from "@/components/transition-link";
+import { availability } from "@/content/availability";
 import { site } from "@/content/site";
-import type { CaseStudy, Product } from "@/content/types";
+import { CATEGORIES, type CaseStudy, type Product } from "@/content/types";
 import { getCaseStudyLastUpdated } from "@/lib/last-updated";
 import { caseStudyReadingMinutes } from "@/lib/reading-time";
+import type { RelatedProduct } from "@/lib/related-products";
 
 /**
  * Wave 12 — the /work/[slug] case-study template: numbered sections, one
@@ -47,10 +50,13 @@ export function CaseStudyPage({
   study,
   product,
   demo,
+  related = [],
 }: {
   study: CaseStudy;
   product: Product | undefined;
   demo?: React.ReactNode;
+  /** Wave 16 — other projects sharing a category, most-related first (lib/related-products.ts). */
+  related?: RelatedProduct[];
 }) {
   const tocSections: string[] = [
     "The problem",
@@ -131,6 +137,11 @@ export function CaseStudyPage({
                 {link.label} ↗
               </LinkButton>
             ))}
+            {/* Wave 16 — printable case study: window.print() needs a client
+                boundary, kept as a one-component island (see print-button.tsx).
+                Hidden by the print stylesheet itself (no point printing a
+                print button). */}
+            <PrintButton />
           </p>
 
           <SectionHeading index={next()} title="The problem" />
@@ -254,10 +265,9 @@ export function CaseStudyPage({
               generic project links below, and Contact at the very bottom
               of the homepage). Same copy register as components/sections/
               contact.tsx, so it reads as one voice, not a bolted-on ad. */}
-          <div className="border-accent/30 bg-accent/5 mt-16 flex flex-col items-center gap-3 rounded-xl border px-6 py-8 text-center">
+          <div className="border-accent/30 bg-accent/5 print-hide mt-16 flex flex-col items-center gap-3 rounded-xl border px-6 py-8 text-center">
             <p className="text-foreground text-base leading-relaxed">
-              Building something like this? I&apos;m looking for Senior or Principal Applied AI
-              roles, and I take on select AI/ML consulting engagements.
+              Building something like this? {availability.summary}
             </p>
             <p className="flex flex-wrap justify-center gap-3">
               <LinkButton href={`mailto:${site.email}`} variant="primary">
@@ -291,7 +301,7 @@ export function CaseStudyPage({
           </div>
         </div>
 
-        <aside className="hidden xl:block">
+        <aside className="print-hide hidden xl:block">
           <div className="sticky top-20 flex flex-col gap-8 pt-16">
             <nav aria-label="On this page">
               <h2 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
@@ -329,6 +339,40 @@ export function CaseStudyPage({
                 </InlineLink>
               ))}
             </p>
+
+            {/* Wave 16 — related projects, derived from shared categories
+                (lib/related-products.ts); omitted entirely when a case
+                study shares no category with anything else, rather than
+                rendering an empty heading. */}
+            {related.length > 0 && (
+              <div>
+                <h2 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+                  Related projects
+                </h2>
+                <ul className="mt-3 flex flex-col gap-3">
+                  {related.map(({ product: relatedProduct, sharedCategories }) => (
+                    <li key={relatedProduct.slug}>
+                      <TransitionLink
+                        href={`/work/${relatedProduct.slug}`}
+                        className="focus-visible:outline-ring text-foreground block text-sm font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                      >
+                        {relatedProduct.name}
+                      </TransitionLink>
+                      <p className="mt-1 flex flex-wrap gap-1.5">
+                        {sharedCategories.map((categoryId) => (
+                          <span
+                            key={categoryId}
+                            className="border-border/40 text-muted-foreground rounded-full border px-2 py-0.5 font-mono text-xs"
+                          >
+                            {CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId}
+                          </span>
+                        ))}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </aside>
       </div>
