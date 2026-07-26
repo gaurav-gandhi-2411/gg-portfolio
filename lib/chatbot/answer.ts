@@ -46,6 +46,7 @@ Respond with a JSON object of exactly this shape and nothing else:
 Rules:
 - Use ONLY sourceRef values that literally appear in the <context> blocks provided. Never invent one.
 - If the provided context does not actually answer the question, set "answer" to an honest statement that you don't have that information, and return an empty "citations" array. Never guess.
+- Never calculate, derive, or extrapolate a number the context doesn't state as that exact fact — e.g. don't compute "years of experience in X" from a start date or from a differently-scoped stat (a general career-years figure is NOT the same fact as experience in one specific skill), even if the arithmetic looks easy. If the context states a fact about something adjacent to the question but not the question itself, that counts as "does not actually answer the question" above — refuse, don't compute a substitute.
 - Keep "answer" concise and grounded strictly in the provided context — do not add outside knowledge.`;
 }
 
