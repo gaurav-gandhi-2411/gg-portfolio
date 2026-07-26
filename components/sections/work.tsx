@@ -4,11 +4,14 @@ import { workLede } from "@/content/about";
 import { liveProductCount, products } from "@/content/products";
 
 /**
- * Wave 13 — the tiering (and the wave-12 five-card tease) is retired: the
- * home Work section now carries all 12 projects in AI/ML-depth order with
- * category filters, sharing one grid with /projects. Filtering 5 teaser
- * cards would have been pointless — the filters and the depth ordering
- * only mean something over the full set.
+ * Wave 13 — the tiering is retired: the home Work section carries every
+ * project in AI/ML-depth order with category filters, sharing one grid
+ * with /projects.
+ *
+ * Wave 15 — the flat full-set view is replaced with a progressive-disclosure
+ * tease: 4 cards per active filter (including "All"), then "See all N →" to
+ * the matching /projects or /projects/[category] page. Filters stay instant;
+ * the depth ordering now determines which 4 lead each view.
  */
 export function Work() {
   return (
@@ -20,7 +23,7 @@ export function Work() {
       labelNote={`${products.length} projects · ${liveProductCount(products)} live`}
       lede={workLede}
     >
-      <ProjectGrid />
+      <ProjectGrid capAllAt4 />
     </Section>
   );
 }

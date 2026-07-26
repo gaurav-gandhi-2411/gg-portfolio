@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
+import { TransitionLink } from "@/components/transition-link";
 import { CATEGORIES, type CategoryId } from "@/content/types";
 
 type Active = CategoryId | "all";
 
 const CATEGORY_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
+const TEASE_LIMIT = 4;
 
 function readCategoryFromUrl(): Active {
   const param = new URLSearchParams(window.location.search).get("category");
@@ -52,14 +54,32 @@ function emit() {
  *   is an enhancement, never a gate on content.
  * - Buttons with aria-pressed (single-select toggle group), visible focus
  *   ring, result count announced politely for screen readers.
+ *
+ * Wave 15 — progressive disclosure: any active view beyond TEASE_LIMIT
+ * matching cards caps to the first 4 (in content/products.ts order) with a
+ * "See all N" link to the dedicated destination (/projects for "All" on
+ * home, /projects/[category] otherwise). The cap is pure CSS keyed off the
+ * same data-active-category attribute the existing filter already uses, so
+ * it never costs extra client JS. A no-JS visitor's data-active-category is
+ * always "all" (see the module comment above) — for THAT case specifically,
+ * capping would become a permanent content gate instead of a tease, so a
+ * <noscript> override restores full visibility whenever scripting is off.
  */
 export function ProjectFilter({
   cats,
   children,
+  capAllAt4 = false,
 }: {
   /** slug → category ids, in display order — used only for counts. */
   cats: { slug: string; categories: readonly string[] }[];
   children: React.ReactNode;
+  /**
+   * Cap the "All" view to a 4-card tease + "See all N →" to /projects.
+   * Used on home; /projects itself is the see-all destination so its own
+   * "All" view stays uncapped. Category filters always cap regardless (their
+   * own see-all destination is /projects/[category]).
+   */
+  capAllAt4?: boolean;
 }) {
   const active = useSyncExternalStore(subscribe, readCategoryFromUrl, () => "all" as Active);
 
@@ -79,8 +99,20 @@ export function ProjectFilter({
     return byCat;
   }, [cats]);
 
-  const visible =
-    active === "all" ? cats.length : cats.filter((p) => p.categories.includes(active)).length;
+  const orderedForActive = useMemo(
+    () => (active === "all" ? cats : cats.filter((p) => p.categories.includes(active))),
+    [cats, active],
+  );
+  const totalMatching = orderedForActive.length;
+  const isCapped = active === "all" ? capAllAt4 : true;
+  const displayedCount = isCapped ? Math.min(TEASE_LIMIT, totalMatching) : totalMatching;
+  const overflowSlugs = isCapped ? orderedForActive.slice(TEASE_LIMIT).map((p) => p.slug) : [];
+  const showSeeAll = overflowSlugs.length > 0;
+  const seeAllHref = active === "all" ? "/projects" : `/projects/${active}`;
+  const seeAllLabel =
+    active === "all"
+      ? `See all ${totalMatching} →`
+      : `See all ${totalMatching} in ${CATEGORIES.find((c) => c.id === active)?.label ?? ""} →`;
 
   const pillBase =
     "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
@@ -143,14 +175,47 @@ export function ProjectFilter({
           filter applied was invisible to sighted users. For any category
           that still includes the top-of-viewport card, that left zero
           perceivable feedback: a working filter and a dead click looked
-          identical. Now visible, still aria-live for screen readers. */}
+          identical. Now visible, still aria-live for screen readers.
+          Wave 15: denominator is now the active view's own total (more
+          informative once a view can be capped — "4 of 6" beats "4 of 13"
+          at telling you how much more there is to see in THIS category). */}
       <p aria-live="polite" className="text-muted-foreground mt-4 text-center font-mono text-xs">
-        Showing {visible} of {cats.length} projects
+        Showing {displayedCount} of {totalMatching} projects
       </p>
+
+      {overflowSlugs.length > 0 && (
+        <>
+          <style>
+            {overflowSlugs
+              .map(
+                (slug) => `[data-active-category="${active}"] [data-slug="${slug}"]{display:none}`,
+              )
+              .join("")}
+          </style>
+          {/* Progressive tease, never a content gate: a no-JS visitor can
+              never click "See all" or change the category, so restore
+              every card for them. display:flex mirrors ProjectCard's own
+              article className. */}
+          <noscript>
+            <style>{`[data-active-category="${active}"] [data-slug]{display:flex!important}`}</style>
+          </noscript>
+        </>
+      )}
 
       <div data-active-category={active}>{children}</div>
 
-      {visible === 0 && (
+      {showSeeAll && (
+        <p className="mt-6 text-center">
+          <TransitionLink
+            href={seeAllHref}
+            className="text-accent focus-visible:outline-ring text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          >
+            {seeAllLabel}
+          </TransitionLink>
+        </p>
+      )}
+
+      {totalMatching === 0 && (
         <div className="border-border/40 bg-card/40 mt-8 rounded-xl border px-6 py-10 text-center">
           <p className="text-foreground">Nothing in this category yet.</p>
           <button

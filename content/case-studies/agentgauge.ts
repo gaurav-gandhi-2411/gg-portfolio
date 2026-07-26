@@ -9,7 +9,7 @@ import type { CaseStudy } from "../types";
 export const agentgauge: CaseStudy = {
   slug: "agentgauge",
   title: "AgentGauge",
-  dek: "A statistical harness that measures whether a change to an MCP server's tool descriptions actually changed agent task success — built by falsifying its own first version and keeping only what survived.",
+  dek: "A statistical harness that measures whether a change to an MCP server's tool descriptions actually changed agent task success — rebuilt after a predictive-validity study falsified its own first version, then audited again after catching its own scoring bug.",
   depth: "full",
   problem: [
     "MCP (Model Context Protocol) servers expose tools to AI agents through nothing but text — a name, a short description, a parameter schema. When an agent picks the wrong tool or calls the right one incorrectly, the usual advice is \"improve your tool descriptions.\" But almost nobody measures whether a description change actually moved agent success, so teams polish text on faith.",
@@ -108,7 +108,7 @@ export const agentgauge: CaseStudy = {
     },
   ],
   story: {
-    title: "The −80-point effect that was actually a scoring bug",
+    title: "Caught its own reported −80-point effect as a scoring bug, corrected it to a clean null, and turned the catch into a standing audit gate",
     body: [
       "v2.2 reported that an ADVISORY-tier defect — renaming a parameter so the description no longer matches the schema — caused a 76.7 to 80.0-percentage-point drop in agent task success. That's an enormous effect, and enormous effects deserve suspicion, so v2.3 audited it before trusting it.",
       "The audit found the checker was looking up the pre-rename parameter name against post-rename arguments — scoring correct agent responses as failures. Corrected, the effect is a clean null in all three models: the agents were mostly coping with the rename fine, and the harness had been failing them on a technicality. v2.4 then audited the blast radius: only this one defect class was ever affected (confirmed from source — the other four injection classes never rename a schema key), and the corpus behind the headline calibration numbers was never touched by the bug.",
@@ -116,5 +116,8 @@ export const agentgauge: CaseStudy = {
     ],
     sourceRef: "agentgauge:v23-scoring-artifact",
   },
+  closing: [
+    "If you're building any kind of LLM-judge or agent-eval harness, this is the standing lesson: an enormous effect size deserves suspicion before belief, and the audit that catches a scoring bug should become a permanent gate on every future result, not a one-time fix.",
+  ],
   links: [{ label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/agentgauge" }],
 };

@@ -1,8 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { caseStudySlugs } from "./fixtures/case-study-slugs";
+import { categoryIds } from "./fixtures/category-ids";
 
-const ROUTES = ["/", "/projects", ...caseStudySlugs.map((slug) => `/work/${slug}`)];
+const ROUTES = [
+  "/",
+  "/projects",
+  ...categoryIds.map((id) => `/projects/${id}`),
+  ...caseStudySlugs.map((slug) => `/work/${slug}`),
+];
 
 /**
  * components/reveal-group.tsx fades each section's children in via

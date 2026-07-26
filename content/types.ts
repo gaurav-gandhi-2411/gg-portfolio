@@ -119,6 +119,13 @@ export interface CaseStudy {
   results?: { label: string; value: string; detail?: string; sourceRef: string }[];
   /** The hardest documented engineering/debugging story. */
   story?: { title: string; body: string[]; sourceRef: string };
+  /**
+   * Wave 15 — practical takeaway for someone evaluating whether to hire GG or
+   * use the product. Synthesizes claims already sourced above; introduces no
+   * new numbers, so no sourceRef required. Rendered under the fixed heading
+   * "What this means if you need something similar".
+   */
+  closing?: string[];
   links: { label: string; href: string }[];
 }
 

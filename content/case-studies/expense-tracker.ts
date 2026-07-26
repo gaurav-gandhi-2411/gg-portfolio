@@ -65,6 +65,9 @@ export const expenseTracker: CaseStudy = {
       sourceRef: "expense-tracker:ml-features",
     },
   ],
+  closing: [
+    "If you need to evaluate whether someone can ship past a working demo to something that could hold real user data, this is the checklist worth applying: per-user isolation enforced at the query level (not just the UI), versioned migrations, and a real test suite — the boring production discipline a screenshot can't show you.",
+  ],
   links: [
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/expense-tracker" },
   ],

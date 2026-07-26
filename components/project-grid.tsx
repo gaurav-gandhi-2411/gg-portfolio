@@ -2,62 +2,35 @@ import { ProjectCard } from "@/components/project-card";
 import { ProjectFilter } from "@/components/project-filter";
 import { RevealGroup } from "@/components/reveal-group";
 import { products } from "@/content/products";
-import {
-  getRepoFreshness,
-  getTracegaugeDownloads,
-  getWarmerPuzzleNumber,
-} from "@/lib/live-data";
-
-function repoSlug(repoUrl: string | undefined): string | null {
-  if (!repoUrl) return null;
-  const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+?)\/?$/);
-  return match ? match[1] : null;
-}
-
-function formatFreshness(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  if (days <= 0) return "shipped today";
-  if (days === 1) return "shipped yesterday";
-  if (days < 30) return `shipped ${days}d ago`;
-  if (days < 365) return `shipped ${Math.floor(days / 30)}mo ago`;
-  return `shipped ${Math.floor(days / 365)}y ago`;
-}
+import { getProjectDisplayData } from "@/lib/project-display";
 
 /**
- * Wave 13 — the one project grid (all 12 projects, AI/ML-depth order from
+ * Wave 13 — the one project grid (all 13 projects, AI/ML-depth order from
  * content/products.ts, category-filterable), shared by the home Work
  * section and /projects. Live freshness datelines and PyPI downloads are
- * ISR fetches that fail soft to no-badge (lib/live-data.ts).
+ * ISR fetches that fail soft to no-badge (lib/live-data.ts via
+ * lib/project-display.ts).
+ *
+ * Wave 15 — capAllAt4 adds the home teaser behavior (4 cards + "See all 13
+ * →" to /projects); /projects itself stays uncapped for "All" since it IS
+ * the see-all destination. Category filters cap on both pages regardless
+ * (their own destination is /projects/[category]).
  */
 export async function ProjectGrid({
   cardHeadingLevel = "h3",
+  capAllAt4 = false,
 }: {
   /** See ProjectCard — h3 on home (under the section h2), h2 on /projects. */
   cardHeadingLevel?: "h2" | "h3";
+  capAllAt4?: boolean;
 } = {}) {
-  const repoSlugs = products
-    .map((p) => repoSlug(p.repoUrl))
-    .filter((s): s is string => s !== null);
-
-  const [freshness, puzzle, downloads] = await Promise.all([
-    getRepoFreshness(repoSlugs),
-    getWarmerPuzzleNumber(),
-    getTracegaugeDownloads(),
-  ]);
-
-  function datelineFor(product: (typeof products)[number]): string | undefined {
-    // Warmer's repo is private — its right-edge anchor is the stronger
-    // live signal it does have: the daily puzzle number (fail-soft).
-    if (product.slug === "warmer") {
-      return puzzle ? `puzzle #${puzzle.number} live today` : undefined;
-    }
-    const slug = repoSlug(product.repoUrl);
-    const repoData = slug ? freshness[slug] : undefined;
-    return repoData ? formatFreshness(repoData.lastCommitDate) : undefined;
-  }
+  const { datelineFor, downloads } = await getProjectDisplayData(products);
 
   return (
-    <ProjectFilter cats={products.map((p) => ({ slug: p.slug, categories: p.categories }))}>
+    <ProjectFilter
+      cats={products.map((p) => ({ slug: p.slug, categories: p.categories }))}
+      capAllAt4={capAllAt4}
+    >
       <RevealGroup
         mode="onview"
         // Columns engage at xl, exactly where Section's width step does —

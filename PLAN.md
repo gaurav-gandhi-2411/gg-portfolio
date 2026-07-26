@@ -4,6 +4,67 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Wave 15 — content framing, progressive disclosure, agentic pipeline (code-complete 2026-07-26, pending GG's merge)
+
+GG's brief: rewrite case-study framing to lead with capability not failure; progressive
+disclosure (4-card tease + category pages); replace the metric-refresh pipeline with a
+multi-agent extractor/curator/framer/verifier pipeline; audit manifest/CI coverage across all
+17 repos; migrate expense-tracker onto review-iq's Supabase; five forward-looking enhancements.
+Branch `feat/wave15-content-framing-pipeline`. Full report:
+`reports/wave15-content-pipeline-2026-07-25.md`.
+
+- [x] **Item 1 — framing rewrite**: all 13 case-study deks + story titles rewritten to lead
+      with the capability/action demonstrated; body/results/numbers unchanged. New `closing`
+      field ("What this means if you need something similar") added to all 13. Before/after
+      headline table in the wave report.
+- [x] **Item 2 — progressive disclosure**: home + `/projects` cap every filter view to 4 cards
+      + "See all N" (home's "All" caps too; `/projects`'s own "All" stays uncapped — it's the
+      destination). New `/projects/[category]` SSG route, one per category. `<noscript>`
+      override keeps the cap from becoming a permanent no-JS content gate (dedicated e2e
+      assertion). Budget +558B gzip.
+- [x] **Item 4 — manifest/CI audit, all 17 repos**: re-verified fresh against `origin/main`
+      (a research agent's snapshot was stale on 2 of 4 flagged repos — nothing done there).
+      Real gaps: `token-efficiency-scorer` (missing both — PR #1, green after 3 fix-rounds:
+      stale/gitignored `uv.lock`, a numpy-stub/mypy `python_version` mismatch, 2 real-corpus
+      test dependencies, 1 Linux-only flake, all investigated not blind-excluded) and
+      `mindmeld-payloads` (missing CI — PR #2, minimal JSON-validation check, green). Full
+      repo-by-repo table in the wave report.
+- [x] **Item 6 — enhancements**: per-project OG images, per-case-study JSON-LD
+      (SoftwareApplication), git-derived last-updated + reading time, a "Work with me" CTA on
+      every case study. Vercel Web Analytics data blocked on GG enabling the dashboard feature
+      itself (client lib already wired since wave 2) — numbered steps in the wave report, no
+      fabricated numbers.
+- [x] **Item 3 — agentic content pipeline**: done. `scripts/content-pipeline/`
+      (extractor→curator→framer→verifier), rubric documented at
+      `docs/content-pipeline-rubric.md`. Curator/framer on Groq/Llama-3.3-70B, verifier on
+      Groq/Qwen3.6-27B (genuinely different family — the OpenRouter path tried first for a
+      different *provider* used a dead reused key, found Qwen on Groq's own catalog instead, zero
+      new credentials). Output lands in `content/provenance.md` as a dated "LLM-consensus,
+      pending human review" section — never a direct edit to the case-study files. Validated
+      against real repos before wiring in: 3 proposals, and the verifier caught a real framer
+      hallucination (a flipped win/loss comparison) in the same test run. Wired into
+      `.github/workflows/metrics-refresh.yml` (renamed "Content + metrics refresh") as its own
+      job/PR, separate from the metric-value refresh. Shared-Groq-quota consideration (this key
+      also serves live traffic on other GG projects) surfaced in the wave report, not hidden —
+      bounded to ~20 candidates/run to keep the marginal impact small.
+- [x] **Item 5 — expense-tracker on review-iq's Supabase**: done. STRIDE pass written; dedicated
+      `expense` schema + non-superuser `expense_app` role (zero grants on `public`, verified by
+      direct denial test, not just convention); migrations 001-003 land in `expense` unchanged
+      (role's own `search_path`); new `app_profiles` table + auth hook documents the shared-
+      `auth.users` handling. review-iq regression-tested with its own live-Supabase integration
+      suite: **71 passed, 0 failed** — one transient failure investigated and traced to my own
+      interrupted prior test run, not this change. Backend redeployed to Cloud Run (was 500 on
+      every route, now 200/401 correctly); frontend redeployed fresh on Vercel (previous project
+      gone) at https://expense-tracker-eight-xi-93.vercel.app; CORS verified end-to-end. PR:
+      `gaurav-gandhi-2411/expense-tracker#3`. One residual, documented risk not closed this pass:
+      review-iq's own connection still uses the Postgres superuser role (pre-existing, not
+      introduced here), so full bidirectional isolation needs a follow-up on review-iq's side.
+      Numbered steps for GG in the wave report (PR review, password custody, custom domain,
+      when to flip the case-study's "offline" claim to live).
+- [ ] Large diff (6 substantial items) → **draft PR for GG's manual review/merge**, same posture
+      as prior waves. Also needs GG's merge on the two manifest/CI PRs (item 4) and the
+      expense-tracker Supabase-migration PR (item 5) opened on their own repos this wave.
+
 ## Wave 1 — identity + skeleton (done, pending GG review)
 
 Gate: GG reviews identity + copy before wave 2.

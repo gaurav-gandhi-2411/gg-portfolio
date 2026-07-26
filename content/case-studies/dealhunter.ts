@@ -7,7 +7,7 @@ import type { CaseStudy } from "../types";
 export const dealhunter: CaseStudy = {
   slug: "dealhunter",
   title: "DealHunter",
-  dek: "A flight-search agent that turns a plain-English trip request into two honestly-explained trade-offs, and the two-week silent outage that taught it to watch itself.",
+  dek: "A flight-search agent that turns a plain-English trip request into two honestly-explained trade-offs — hardened by finding and closing a two-week silent production outage caused by two unrelated bugs hiding behind each other.",
   depth: "full",
   problem: [
     "Flight search sites usually dump a wall of prices sorted one way, and leave you to manually weigh cost against convenience — is the cheaper flight worth a 6am departure and a layover? DealHunter answers that question directly: you type a request like \"Delhi to Dubai in June,\" and instead of forty rows to compare, it hands back a small, explained set of trade-offs.",
@@ -102,7 +102,7 @@ export const dealhunter: CaseStudy = {
     },
   ],
   story: {
-    title: "Production was silently broken for two weeks — and two unrelated bugs were hiding behind each other",
+    title: "Found two unrelated bugs hiding behind each other after two weeks of silent production failure",
     body: [
       "The Cloud Run backend was frozen at a stale image tag, missing three phases of work that had merged since. That alone would have been visible eventually, but it was compounded by a second, independent bug on the Vercel frontend: some required environment variables were set to an empty string rather than left unset.",
       "The frontend's fallback logic used the nullish-coalescing operator (`??`), which only kicks in for `null` or `undefined` — not for an empty string, which JavaScript treats as a perfectly valid, present value. So the app quietly sent requests with blank fields instead of falling back to a default or failing loudly, and every real search since launch had failed silently before it ever reached the backend.",
@@ -110,6 +110,9 @@ export const dealhunter: CaseStudy = {
     ],
     sourceRef: "dealhunter:silent-outage",
   },
+  closing: [
+    "If you're running an agentic pipeline on free-tier or multi-provider LLM infrastructure, this is the failure mode worth guarding against: two independent bugs can silently compound, and a fallback operator is not the same as validating that a value is actually meaningful — a canary/soak deploy and a staleness check catch what a single build-passing check won't.",
+  ],
   links: [
     { label: "Try DealHunter", href: "https://agentic-travel-booking-system.vercel.app" },
     {

@@ -8,7 +8,7 @@ import type { CaseStudy } from "../types";
 export const triageiq: CaseStudy = {
   slug: "triageiq",
   title: "TriageIQ",
-  dek: "An ML issue-triage assistant for busy open-source maintainers — and the 682-day MAE that turned out to be a data-splitting bug.",
+  dek: "An ML issue-triage assistant for busy open-source maintainers — caught a target-leakage bug that had inflated its own error estimate 8×, then found two more leaks nobody was looking for.",
   depth: "full",
   problem: [
     "On a busy open-source repository, a maintainer has to work out, for every new issue that lands: which subsystem does this touch, has someone already reported this, how long will this realistically take to fix, and what should happen next. Doing that by hand doesn't scale past a small team.",
@@ -109,7 +109,7 @@ export const triageiq: CaseStudy = {
     },
   ],
   story: {
-    title: "The model reported a 682-day error — and the fix was a data-splitting bug, not a better model",
+    title: "Caught a target-leakage bug that inflated error 8×, then found two more leaks nobody was looking for",
     body: [
       "An early version of the resolution-time predictor reported a mean absolute error of roughly 682 days — flagged immediately as suspicious rather than accepted at face value. The investigation found the root cause was the train/test split itself: it divided issues by closed_at, the date an issue was closed. That guarantees, by construction, that any issue still open at the cutoff date lands in the test set and every already-resolved issue lands in train. The train set's median resolution time came out to 1.0 day; the test set's came out to 677 days. The model wasn't failing to learn — it had never seen anything like its test set during training.",
       "Re-splitting by created_at (when an issue was filed, which doesn't leak information about how long it took to close) collapsed the MAE from 693 days down to 87 days. That 8x jump was entirely a bug fix, not a modeling improvement, and the team documented it as exactly that rather than presenting it as a win.",
@@ -117,6 +117,9 @@ export const triageiq: CaseStudy = {
     ],
     sourceRef: "triageiq:split-fix",
   },
+  closing: [
+    "If your model's metrics look implausibly bad — or implausibly good — this is the instinct that catches it before it ships: treat a suspicious number as a bug report on your own pipeline first, not a verdict on the model, and keep auditing once you find the first leak.",
+  ],
   links: [
     { label: "Try TriageIQ", href: "https://triage-iq-orcin.vercel.app/" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/triage-iq" },
