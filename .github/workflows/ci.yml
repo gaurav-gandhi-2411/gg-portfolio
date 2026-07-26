@@ -31,6 +31,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Wave 16 — the chatbot corpus index (content/chatbot/index.json) is a
+      # build artifact of content/*.ts + content/provenance.md, not hand-
+      # edited content itself. This catches someone editing a case study
+      # without re-running the indexer. `generatedAt` is real wall-clock
+      # time and always differs between the committed file and a fresh
+      # regen, so the comparison ignores that one field rather than doing a
+      # literal `git diff --exit-code` (which would fail every run on
+      # timestamp alone and give zero real signal).
+      - name: Verify chatbot index is up to date
+        run: |
+          cp content/chatbot/index.json /tmp/chatbot-index-committed.json
+          node scripts/chatbot/build-index.mjs
+          node -e "
+            const fs = require('fs');
+            const committed = JSON.parse(fs.readFileSync('/tmp/chatbot-index-committed.json', 'utf8'));
+            const fresh = JSON.parse(fs.readFileSync('content/chatbot/index.json', 'utf8'));
+            delete committed.generatedAt;
+            delete fresh.generatedAt;
+            if (JSON.stringify(committed) !== JSON.stringify(fresh)) {
+              console.error('content/chatbot/index.json is stale relative to content/*.ts + content/provenance.md.');
+              console.error('Run: node scripts/chatbot/build-index.mjs, then commit the result.');
+              process.exit(1);
+            }
+            console.log('content/chatbot/index.json is up to date.');
+          "
+
       - name: Lint
         run: npm run lint
 
