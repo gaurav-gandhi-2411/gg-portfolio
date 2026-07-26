@@ -331,10 +331,27 @@ p {
 /* :has() — when one project card is hovered, its siblings recede a step.
  * Focus-within is deliberately excluded: dimming cards while a keyboard
  * user tabs through them would reduce, not aid, orientation. Opacity-only
- * (no motion), so it stays on under prefers-reduced-motion. */
+ * (no motion), so it stays on under prefers-reduced-motion.
+ *
+ * 0.55 was a real WCAG AA failure at the settled (post-transition) state,
+ * not just a test artifact: each card is `bg-card/50` (already translucent
+ * over the page background), and `opacity` on the article composites that
+ * WHOLE translucent layer — card background and text together — against
+ * the page background a second time. Worked the actual compositing math
+ * (relative luminance, not a guessed percentage) for every text role that
+ * appears in a card against its true local background:
+ *   text-hi     16.45:1 -> 5.45:1 at 0.55 (needs 4.5:1)
+ *   text-lo      6.38:1 -> 2.68:1 at 0.55 (needs 4.5:1) — the actual failure
+ *   text-accent  ~7:1   -> below 4.5:1 at 0.55 too
+ * 0.90 keeps every role above 4.5:1 with real margin (text-lo 5.35:1,
+ * text-accent 5.37:1) — the minimum mathematically required is ~0.807;
+ * 0.90 isn't cut to the wire. Verified against the rendered DOM (not just
+ * this model) via a deliberate hover-and-wait-for-transition-end e2e case,
+ * `e2e/a11y.spec.ts`'s "hovering a card keeps its siblings AA-compliant".
+ */
 @media (hover: hover) {
   .project-grid:has(article:hover) article:not(:hover) {
-    opacity: 0.55;
+    opacity: 0.9;
   }
 }
 
