@@ -13,44 +13,136 @@ const ROUTES = [
 
 /**
  * components/reveal-group.tsx fades each section's children in via
- * Element.animate() the moment IntersectionObserver confirms they're in
- * view — deliberate, documented site behavior (wave 9's "axe race" note:
- * onload animation raced axe's contrast check on genuinely-compliant
- * settled-state colors). On /projects the card grid sits inside the
- * initial viewport, so this is the first route where a scan run
- * immediately after goto() can sample a mid-fade frame (measured: opacity
- * 0.21 at ~60ms, 1.0 by ~400ms) and flag a contrast "violation" that is a
- * paint-timing artifact, not a real defect — axe should assess the
- * settled page, same as every prior manual `npx axe-core/cli` run in this
- * repo's history implicitly did (those always had enough incidental delay
- * for animations to finish before the scan actually ran).
+ * Element.animate() — for `mode="onview"` (the default; used by the
+ * project grid), the stagger doesn't start at page load, it starts
+ * whenever an IntersectionObserver callback fires (threshold 0.15), and
+ * is SKIPPED ENTIRELY under `prefers-reduced-motion: reduce` (reveal-group
+ * checks `matchMedia` itself before ever calling `.animate()` — real
+ * reduced-motion visitors get the final, fully-visible state immediately,
+ * by construction, since the component "never sets an initial hidden
+ * state via CSS class or style").
+ *
+ * This wave's original fixed-wait approach (`page.waitForTimeout(1300)`,
+ * wave 9/14) raced that observer: on a slower run (CI load, browser
+ * parallelism) the observer fires late enough that the last card in the
+ * stagger is still mid-fade at the 1300ms mark. A `document.getAnimations()`
+ * poll was tried next and was STILL insufficient — proven by running the
+ * full suite under real parallel load (`--repeat-each=3`), not just in
+ * isolation: a "zero running" check can be vacuously true before the
+ * observer has fired at all (nothing has started, so nothing reports as
+ * "running"), and under real CPU contention the observer — and axe's own,
+ * non-instantaneous DOM scan — can both land inside that same window,
+ * sampling a genuinely mid-fade frame. Confirmed via real failing
+ * captures across two different fix attempts: scattered contrast ratios
+ * (4.07 / 3.48 / 1.96 / 1.98, different cards, same scan) that track
+ * stagger index, not the uniform-opacity hover-recede rule below.
+ *
+ * The actually-robust fix: don't race the animation at all. Emulate
+ * `prefers-reduced-motion: reduce` for every axe scan in this file, the
+ * same code path real reduced-motion visitors already get — this makes
+ * the "settled" state deterministic (no animation ever starts, so there
+ * is nothing to race), and it's the SAME rest state standard-motion
+ * visitors eventually reach too (the animation's own final keyframe is
+ * `{opacity:1, transform:'translateY(0)'}` — identical to the element's
+ * un-animated CSS state). A contrast audit cares about the page's real,
+ * static, readable content — not about sampling an in-flight decorative
+ * transition, which was never the intent of a WCAG contrast check.
  */
-async function waitForAnimationsToSettle(page: Page) {
-  // Not document.getAnimations()-polling: the hero halo (28s linear
-  // infinite) and the case-study reading-progress bar (a scroll()-timeline
-  // animation, "running" for as long as it's attached — it has no natural
-  // end) are deliberately continuous, so a "wait until nothing reports
-  // running" poll never resolves on those routes. A fixed wait comfortably
-  // past the worst-case entrance sequence (12 staggered cards: 12×55ms
-  // stepMs + 450ms duration ≈ 1.11s) is the robust choice given the site
-  // has animations by design that never finish.
-  await page.waitForTimeout(1300);
+async function gotoSettled(page: Page, route: string) {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(route);
+}
+
+/**
+ * Wave 16 — the project card hover-recede effect (`.project-grid:has(article:hover)
+ * article:not(:hover) { opacity: 0.9 }`, app/globals.css) is a CSSTransition
+ * (project-card.tsx's `transition-[...,opacity] duration-300`) that stays
+ * ON under reduced motion by design (its own comment: "Opacity-only (no
+ * motion), so it stays on under prefers-reduced-motion") — reduced-motion
+ * emulation above removes the entrance-fade race without touching this.
+ * Started synchronously the instant `:hover` state changes (no
+ * IntersectionObserver async-start uncertainty here, unlike the entrance
+ * fade), so waiting past its known 300ms duration is safe; polls the
+ * actual computed opacity rather than a bare timeout so a slow run still
+ * gets a correct read instead of a lucky/unlucky race.
+ */
+async function waitForHoverTransition(page: Page, selector: string, expectedOpacity: string) {
+  await page.waitForFunction(
+    ({ selector, expectedOpacity }) => {
+      const el = document.querySelector(selector);
+      return el ? getComputedStyle(el).opacity === expectedOpacity : false;
+    },
+    { selector, expectedOpacity },
+    { timeout: 2000 }
+  );
 }
 
 for (const route of ROUTES) {
   test(`axe: zero violations on ${route}`, async ({ page }) => {
-    await page.goto(route);
-    await waitForAnimationsToSettle(page);
+    await gotoSettled(page, route);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });
 }
 
 test("axe: zero violations on a filtered /projects view", async ({ page }) => {
-  await page.goto("/projects");
-  await waitForAnimationsToSettle(page);
+  await gotoSettled(page, "/projects");
   const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
   await filterGroup.getByRole("button").nth(1).click();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
+ * Wave 16 — deliberately drives the actual bug this wave fixed: a real
+ * mouse hover on one card recedes every sibling (app/globals.css,
+ * `.project-grid:has(article:hover) article:not(:hover)`). 0.55 passed
+ * this settled-state contrast at 3.28:1 (measured) against the required
+ * 4.5:1 — a real WCAG AA failure for any real mouse user, independent of
+ * the timing-race findings above. Fixed to 0.9 (worked via relative-
+ * luminance math against the card's true local background — bg-card/50
+ * composited over the page background, then receded again as a group —
+ * not guessed; see the CSS comment for the numbers). This test only runs
+ * where `(hover: hover)` actually applies — the mobile Playwright project
+ * emulates a touch device, confirmed via `matchMedia("(hover: hover)")`
+ * returning false there, so the rule (and this test) is a no-op on mobile
+ * by design, not an oversight.
+ */
+test("axe: zero violations while a project card is genuinely hovered (desktop only)", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "hover: hover doesn't apply on touch — nothing to hover-recede");
+  await gotoSettled(page, "/projects");
+  const cards = page.locator(".project-grid article");
+  await cards.first().hover();
+  await waitForHoverTransition(page, ".project-grid article:nth-of-type(2)", "0.9");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/** Wave 16 — the filter-active state doesn't introduce a new interaction with
+ * hover-recede: filtered-OUT cards are `display: none` (removed from layout
+ * entirely, not merely dimmed), so they never factor into a hover-recede
+ * contrast calculation. This test exercises the combination explicitly
+ * anyway, rather than assuming it from the CSS alone. */
+test("axe: zero violations while a filtered view AND hover are both active", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "mobile", "hover: hover doesn't apply on touch");
+  await gotoSettled(page, "/projects");
+  const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
+  await filterGroup.getByRole("button").nth(1).click();
+  const visibleCards = page.locator(".project-grid article:visible");
+  const count = await visibleCards.count();
+  test.skip(count < 2, "need at least 2 visible cards after filtering to exercise the sibling-recede rule");
+  await visibleCards.first().hover();
+  await page.waitForFunction(
+    () => {
+      const els = Array.from(document.querySelectorAll(".project-grid article")).filter(
+        (el) => getComputedStyle(el).display !== "none" && !el.matches(":hover")
+      );
+      return els.length > 0 && els.every((el) => getComputedStyle(el).opacity === "0.9");
+    },
+    { timeout: 2000 }
+  );
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
