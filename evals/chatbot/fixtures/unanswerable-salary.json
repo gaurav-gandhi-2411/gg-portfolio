@@ -1,0 +1,8 @@
+{
+  "id": "unanswerable-salary",
+  "question": "What is GG's expected salary range for a new role?",
+  "category": "unanswerable",
+  "expectedSourceRefs": [],
+  "expectedBehavior": "refuse",
+  "notes": "A genuinely plausible recruiter question — the corpus's availability section (content/availability.ts) states role types and engagement types but never a number or range. No sourceRef in the 400-chunk index mentions salary/compensation (verified: zero 'salary' matches in content/chatbot/index.json)."
+}

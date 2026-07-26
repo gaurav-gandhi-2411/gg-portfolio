@@ -1,0 +1,8 @@
+{
+  "id": "availability-role-types",
+  "question": "What kind of roles is GG currently open to?",
+  "category": "availability",
+  "expectedSourceRefs": ["availability:summary"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall of content/availability.ts's summary sentence (Senior/Principal Applied AI roles), sourceRef availability:summary."
+}

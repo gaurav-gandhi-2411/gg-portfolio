@@ -1,0 +1,67 @@
+# Wave 16 — the chatbot's eval harness (evals/chatbot/), wired into CI.
+#
+# Runs evals/chatbot/run-eval.mjs in its DEFAULT cassette-replay mode: real
+# retrieval (lib/chatbot/retrieve.ts, a local ONNX call, no API key), and
+# generation replayed from recorded cassettes (evals/chatbot/cassettes/) —
+# zero live Groq calls, so this job needs no GROQ_API_KEY secret and is safe
+# to run on every PR from a fork.
+#
+# TODO(wave16 follow-up, tracked separately): NO numeric pass/fail threshold
+# is wired here yet. As of this workflow's introduction, evals/chatbot/cassettes/
+# is empty — there are no recorded cassettes, so every fixture reports
+# "skipped: no cassette recorded" and all 4 summary metrics are n=0/n-a. There
+# is no real baseline yet to threshold against, and rule 65b/the eval-baseline
+# gate (rule 58d item 3) require reporting a real before/after mean before a
+# threshold can be set — not guessing one against zero data. Once the
+# orchestrator runs `node evals/chatbot/run-eval.mjs --live` with a real
+# GROQ_API_KEY, records real cassettes, and commits them, this job should gain
+# a step that fails the build below an agreed threshold for each of the 4
+# metrics (retrieval recall@5, citation-groundedness rate, refusal precision,
+# false-refusal rate) — see reports/wave16-chatbot-eval-*.md for the running
+# numbers in the meantime.
+name: Eval
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/api/chat/**"
+      - "lib/chatbot/**"
+      - "evals/chatbot/**"
+  workflow_dispatch:
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chatbot-eval:
+    name: chatbot eval (cassette-replay)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run chatbot eval (cassette-replay, no live API calls)
+        run: node evals/chatbot/run-eval.mjs
+
+      - name: Print report
+        if: always()
+        run: cat reports/wave16-chatbot-eval-*.md
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatbot-eval-report
+          path: reports/wave16-chatbot-eval-*.*
+          retention-days: 30

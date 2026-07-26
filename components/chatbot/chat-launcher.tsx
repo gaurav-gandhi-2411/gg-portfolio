@@ -21,24 +21,26 @@ export function ChatLauncher() {
   if (pathname === "/ask") return null;
 
   return (
-    <Link
-      href="/ask"
-      className="border-border/60 bg-card/90 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring fixed right-5 bottom-5 z-40 flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium backdrop-blur-md transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
+    <nav aria-label="Ask AI assistant" className="fixed right-5 bottom-5 z-40">
+      <Link
+        href="/ask"
+        className="border-border/60 bg-card/90 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium backdrop-blur-md transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
       >
-        <path d="M4 4.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1Z" />
-      </svg>
-      Ask about my work
-    </Link>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 4.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1Z" />
+        </svg>
+        Ask about my work
+      </Link>
+    </nav>
   );
 }

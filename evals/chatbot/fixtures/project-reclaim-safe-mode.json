@@ -1,0 +1,8 @@
+{
+  "id": "project-reclaim-safe-mode",
+  "question": "How does Reclaim guarantee that its optional AI layer can never delete a file directly?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["reclaim:ai-layer-boundary"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of a structural (not policy-based) safety guarantee: the AI layer's output types share zero fields with the deletion executor's Candidate object. Grounded in content/case-studies/reclaim.ts's decisions[0], tagged reclaim:ai-layer-boundary."
+}

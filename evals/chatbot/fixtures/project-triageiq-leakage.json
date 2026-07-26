@@ -1,0 +1,8 @@
+{
+  "id": "project-triageiq-leakage",
+  "question": "What target-leakage bug did TriageIQ find in its resolution-time predictor, and how much did fixing it improve the error?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["triageiq:split-fix"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of TriageIQ's headline debugging story — splitting by closed_at leaked the outcome into the split; re-splitting by created_at dropped MAE from 693 to 87 days (8x). Grounded in content/case-studies/triageiq.ts's decisions[2] and story, tagged triageiq:split-fix."
+}

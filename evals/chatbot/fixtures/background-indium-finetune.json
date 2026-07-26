@@ -1,0 +1,8 @@
+{
+  "id": "background-indium-finetune",
+  "question": "What accuracy did GG's document-extraction fine-tuning framework reach at Indium?",
+  "category": "background",
+  "expectedSourceRefs": ["resume:indium-senior-finetune"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall of a specific published number (97%+ field-level accuracy) from content/experience.ts, sourceRef resume:indium-senior-finetune."
+}

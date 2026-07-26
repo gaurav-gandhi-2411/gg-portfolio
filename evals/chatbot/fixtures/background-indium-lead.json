@@ -1,0 +1,8 @@
+{
+  "id": "background-indium-lead",
+  "question": "What team does GG lead at Indium Software, and what's the team size?",
+  "category": "background",
+  "expectedSourceRefs": ["resume:indium-senior-lead"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall from content/experience.ts's Senior Data Scientist bullet at Indium (client: Uber AI) — leads and mentors a 5-person data-science team, sourceRef resume:indium-senior-lead."
+}

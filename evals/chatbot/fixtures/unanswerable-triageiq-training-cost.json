@@ -1,0 +1,8 @@
+{
+  "id": "unanswerable-triageiq-training-cost",
+  "question": "What was the exact dollar cost of training TriageIQ's models?",
+  "category": "unanswerable",
+  "expectedSourceRefs": [],
+  "expectedBehavior": "refuse",
+  "notes": "Plausible because other case studies do publish training/serving cost figures (AetherArt's ~$3.50 LoRA training run, MMFR's $0.001-0.004/1,000-recommendation serving cost), but content/case-studies/triageiq.ts never states a training dollar cost — a same-analogy hallucination trap as the MMFR-GPU case."
+}

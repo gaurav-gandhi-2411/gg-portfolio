@@ -1,0 +1,8 @@
+{
+  "id": "background-fedex-forecasting",
+  "question": "What was GG's role at FedEx Express, and what forecasting improvement did he deliver?",
+  "category": "background",
+  "expectedSourceRefs": ["resume:fedex-forecasting"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall of the Decision Scientist role and the SARIMA/Box-Jenkins ~20% operational-inefficiency reduction from content/experience.ts, sourceRef resume:fedex-forecasting."
+}

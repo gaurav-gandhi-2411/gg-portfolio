@@ -1,0 +1,8 @@
+{
+  "id": "project-dealhunter-outage",
+  "question": "What caused DealHunter's two-week silent production outage?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["dealhunter:silent-outage"],
+  "expectedBehavior": "answer",
+  "notes": "The debugging-story fact for DealHunter: a stale Cloud Run image tag plus a frontend nullish-coalescing bug on empty-string env vars. Grounded in content/case-studies/dealhunter.ts's story, tagged dealhunter:silent-outage."
+}

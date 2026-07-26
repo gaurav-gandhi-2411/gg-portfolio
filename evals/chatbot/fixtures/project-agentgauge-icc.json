@@ -1,0 +1,8 @@
+{
+  "id": "project-agentgauge-icc",
+  "question": "What did AgentGauge's ICC finding change about how it allocates trials across tasks?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["agentgauge:icc-mde"],
+  "expectedBehavior": "answer",
+  "notes": "A specific statistical-design decision (repeat trials of the same task carry little independent information at ICC 0.793, so the harness reallocates to one trial per task across more tasks) — content/case-studies/agentgauge.ts's decisions[1] and results[1], tagged agentgauge:icc-mde."
+}

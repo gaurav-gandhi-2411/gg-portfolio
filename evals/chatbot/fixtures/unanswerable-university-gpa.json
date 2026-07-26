@@ -1,0 +1,8 @@
+{
+  "id": "unanswerable-university-gpa",
+  "question": "What university did GG graduate from, and what was his GPA?",
+  "category": "unanswerable",
+  "expectedSourceRefs": [],
+  "expectedBehavior": "refuse",
+  "notes": "The corpus documents work experience (content/experience.ts) and project case studies but no education section exists anywhere in content/*.ts — verified zero 'university'/'college' matches in content/chatbot/index.json."
+}

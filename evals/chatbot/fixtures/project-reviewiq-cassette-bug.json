@@ -1,0 +1,8 @@
+{
+  "id": "project-reviewiq-cassette-bug",
+  "question": "How did Samidha Reviews (ReviewIQ) diagnose its urgency-scoring bug without making a new API call?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["reviewiq:urgency-rubric"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of the cassette-replay debugging story — a few-shot example's literal phrase was being pattern-matched instead of reasoned about. Grounded in content/case-studies/reviewiq.ts's decisions[3] and story, tagged reviewiq:urgency-rubric."
+}

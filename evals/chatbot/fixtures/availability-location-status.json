@@ -1,0 +1,8 @@
+{
+  "id": "availability-location-status",
+  "question": "Where is GG based, and what's his current status?",
+  "category": "availability",
+  "expectedSourceRefs": ["site:identity"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall of content/site.ts's identity facts (Bengaluru, India; \"Open to Senior AI/ML roles\"), sourceRef site:identity — a recruiter's most basic logistics question."
+}

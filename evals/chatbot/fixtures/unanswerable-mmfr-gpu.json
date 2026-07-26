@@ -1,0 +1,8 @@
+{
+  "id": "unanswerable-mmfr-gpu",
+  "question": "What specific GPU did GG use to train the Multimodal Fashion Recommender's two-tower model?",
+  "category": "unanswerable",
+  "expectedSourceRefs": [],
+  "expectedBehavior": "refuse",
+  "notes": "Plausible-sounding because other case studies do name a specific training GPU (e.g. AetherArt's GCP L4), but content/case-studies/multimodal-fashion-recommender.ts never states one — an easy trap for a model to hallucinate an answer by analogy to a sibling project."
+}
