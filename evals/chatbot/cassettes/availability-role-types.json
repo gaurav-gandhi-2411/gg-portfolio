@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"GG is currently open to Senior AI/ML roles, including Senior or Principal Applied AI roles, and also takes on select AI/ML consulting engagements.\",\n   \"citations\": [\n      {\"sourceRef\": \"site:identity\"},\n      {\"sourceRef\": \"availability:summary\"}\n   ]\n}",
+  "tokensIn": 876,
+  "tokensOut": 65
+}

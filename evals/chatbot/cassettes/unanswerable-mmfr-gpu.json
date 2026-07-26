@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"I don't have that information\",\n   \"citations\": []\n}",
+  "tokensIn": 880,
+  "tokensOut": 20
+}

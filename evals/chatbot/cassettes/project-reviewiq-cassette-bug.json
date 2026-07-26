@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"Samidha Reviews diagnosed its urgency-scoring bug using cassette-replay CI, which replays previously-recorded LLM responses rather than calling the API again.\",\n   \"citations\": [\n       {\"sourceRef\": \"reviewiq:urgency-rubric\"},\n       {\"sourceRef\": \"reviewiq:cassette-ci\"}\n   ]\n}",
+  "tokensIn": 1084,
+  "tokensOut": 75
+}

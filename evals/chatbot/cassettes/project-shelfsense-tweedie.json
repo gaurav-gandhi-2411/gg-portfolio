@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"ShelfSense uses Tweedie loss instead of RMSE for its demand-forecasting models because 68% of the data is zero, and Tweedie loss is built for this shape of data, avoiding the over-forecasting issue that RMSE would cause.\",\n   \"citations\": [\n      {\"sourceRef\": \"shelfsense:tweedie\"}\n   ]\n}",
+  "tokensIn": 1021,
+  "tokensOut": 82
+}

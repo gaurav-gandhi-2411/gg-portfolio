@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"GG leads a 5-person data-science team at Indium Software\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-lead\"}\n   ]\n}",
+  "tokensIn": 796,
+  "tokensOut": 46
+}

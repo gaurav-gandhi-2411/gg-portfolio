@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"The provided context does not mention the dollar cost of training TriageIQ's models.\",\n   \"citations\": []\n}",
+  "tokensIn": 1121,
+  "tokensOut": 30
+}

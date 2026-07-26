@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"DealHunter's two-week silent production outage was caused by a stale Cloud Run tag and empty-string environment variables bypassing the nullish-coalescing operator (`??`), resulting in the app sending requests with blank fields instead of failing loudly or falling back to a default.\",\n   \"citations\": [\n      {\"sourceRef\": \"dealhunter:silent-outage\"}\n   ]\n}",
+  "tokensIn": 1010,
+  "tokensOut": 82
+}

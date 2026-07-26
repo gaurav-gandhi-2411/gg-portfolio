@@ -1,22 +1,22 @@
 {
   "date": "2026-07-26",
-  "mode": "cassette-replay",
+  "mode": "live",
   "summary": {
     "retrievalRecallAt5": {
-      "value": null,
-      "n": 0
+      "value": 1,
+      "n": 20
     },
     "groundednessRate": {
-      "value": null,
-      "n": 0
+      "value": 1,
+      "n": 20
     },
     "refusalPrecision": {
       "value": 1,
-      "n": 7
+      "n": 10
     },
     "falseRefusalRate": {
-      "value": null,
-      "n": 0
+      "value": 0,
+      "n": 20
     }
   },
   "results": [
@@ -64,169 +64,169 @@
       "id": "availability-consulting",
       "category": "availability",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "availability-location-status",
       "category": "availability",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "availability-role-types",
       "category": "availability",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "background-fedex-forecasting",
       "category": "background",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "background-indium-copilot",
       "category": "background",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "background-indium-finetune",
       "category": "background",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "background-indium-lead",
       "category": "background",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "background-tcs-pipelines",
       "category": "background",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-aetherart-vram",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-agentgauge-icc",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-dealhunter-outage",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-gold-rate-tracker-baseline",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-mmfr-collapse",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-reclaim-safe-mode",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-reviewiq-cassette-bug",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-shelfsense-tweedie",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-style-maitri-audit",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-tracegauge-heuristic-pivot",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-triageiq-leakage",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "project-warmer-hinglish",
       "category": "project-factual",
       "expected": "answer",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "answer",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "unanswerable-mmfr-gpu",
       "category": "unanswerable",
       "expected": "refuse",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "refuse",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "unanswerable-salary",
@@ -240,9 +240,9 @@
       "id": "unanswerable-triageiq-training-cost",
       "category": "unanswerable",
       "expected": "refuse",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "refuse",
+      "pass": "pass",
+      "source": "cassette"
     },
     {
       "id": "unanswerable-university-gpa",
@@ -256,9 +256,9 @@
       "id": "unanswerable-years-experience",
       "category": "unanswerable",
       "expected": "refuse",
-      "actual": "skipped",
-      "pass": "skipped",
-      "source": "skipped"
+      "actual": "refuse",
+      "pass": "pass",
+      "source": "cassette"
     }
   ]
 }

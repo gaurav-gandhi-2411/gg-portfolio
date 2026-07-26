@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"GG is based in Bengaluru, India, and is open to Senior AI/ML roles.\",\n   \"citations\": [\n      {\"sourceRef\": \"site:identity\"}\n   ]\n}",
+  "tokensIn": 944,
+  "tokensOut": 44
+}

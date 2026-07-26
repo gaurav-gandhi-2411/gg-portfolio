@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"Warmer had a Hinglish bug due to a script-mismatch where the model was trained on Devanagari Hindi instead of romanized/Latin-script Hinglish, and it was fixed by using a model trained natively on romanized code-mixed text, with further improvement from using LoRA variants.\",\n   \"citations\": [\n      {\"sourceRef\": \"provenance:warmer:p3\"},\n      {\"sourceRef\": \"warmer:hinglish-fix\"},\n      {\"sourceRef\": \"warmer:lora-reframe\"}\n   ]\n}",
+  "tokensIn": 1041,
+  "tokensOut": 120
+}
