@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"a production multi-agent copilot combining Hybrid RAG, NL2SQL, a schema knowledge graph, and LangChain tool orchestration\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-copilot\"}\n   ]\n}",
+  "tokensIn": 759,
+  "tokensOut": 59
+}

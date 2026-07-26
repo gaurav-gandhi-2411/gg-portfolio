@@ -1,0 +1,8 @@
+{
+  "id": "background-indium-copilot",
+  "question": "What did GG build to cut analytics turnaround from hours to seconds at Indium?",
+  "category": "background",
+  "expectedSourceRefs": ["resume:indium-senior-copilot"],
+  "expectedBehavior": "answer",
+  "notes": "Direct recall of the multi-agent copilot (Hybrid RAG + NL2SQL + schema knowledge graph + LangChain) bullet from content/experience.ts, sourceRef resume:indium-senior-copilot."
+}

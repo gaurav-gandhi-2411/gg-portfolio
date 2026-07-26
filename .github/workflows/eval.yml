@@ -1,0 +1,67 @@
+# Wave 16 — the chatbot's eval harness (evals/chatbot/), wired into CI.
+#
+# Runs evals/chatbot/run-eval.mjs in its DEFAULT cassette-replay mode: real
+# retrieval (lib/chatbot/retrieve.ts, a local ONNX call, no API key), and
+# generation replayed from recorded cassettes (evals/chatbot/cassettes/) —
+# zero live Groq calls, so this job needs no GROQ_API_KEY secret and is safe
+# to run on every PR from a fork.
+#
+# Thresholds below are real regression gates against the live baseline
+# recorded 2026-07-26 (see reports/wave16-chatbot-eval-2026-07-26.md/.json):
+# retrieval recall@5 100.0% (n=20), citation-groundedness 100.0% (n=20),
+# refusal precision 100.0% (n=10), false-refusal rate 0.0% (n=20). Retrieval
+# recall/groundedness/false-refusal thresholds are set a few points below the
+# measured value (small margin for future corpus/model drift, not an
+# artificially inflated bar); refusal precision is held at a hard 100% floor
+# per this feature's own safety design — it's a correctness requirement
+# (never fabricate an answer to something genuinely unanswerable/adversarial),
+# not a soft quality target, so it does not get a fluctuation allowance.
+name: Eval
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/api/chat/**"
+      - "lib/chatbot/**"
+      - "evals/chatbot/**"
+  workflow_dispatch:
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chatbot-eval:
+    name: chatbot eval (cassette-replay)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run chatbot eval (cassette-replay, no live API calls)
+        run: node evals/chatbot/run-eval.mjs
+
+      - name: Print report
+        if: always()
+        run: cat reports/wave16-chatbot-eval-*.md
+
+      - name: Check eval thresholds (regression gate)
+        run: node evals/chatbot/check-thresholds.mjs
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatbot-eval-report
+          path: reports/wave16-chatbot-eval-*.*
+          retention-days: 30

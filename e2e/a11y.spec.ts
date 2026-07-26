@@ -6,6 +6,7 @@ import { categoryIds } from "./fixtures/category-ids";
 const ROUTES = [
   "/",
   "/projects",
+  "/ask",
   ...categoryIds.map((id) => `/projects/${id}`),
   ...caseStudySlugs.map((slug) => `/work/${slug}`),
 ];

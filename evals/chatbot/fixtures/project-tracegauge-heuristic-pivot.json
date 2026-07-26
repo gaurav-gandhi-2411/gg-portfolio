@@ -1,0 +1,8 @@
+{
+  "id": "project-tracegauge-heuristic-pivot",
+  "question": "Why did tracegauge abandon its heuristic-primary design for detecting wasted tokens?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["tracegauge:heuristic-pivot"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of the inter-annotator-agreement finding that forced tracegauge's architecture pivot (3 of 4 waste heuristics scored well below the 0.60 kappa bar). Grounded in content/case-studies/tracegauge.ts's decisions[1] and story, tagged tracegauge:heuristic-pivot."
+}

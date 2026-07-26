@@ -1,0 +1,8 @@
+{
+  "id": "project-warmer-hinglish",
+  "question": "What Hinglish bug did Warmer have and how was it fixed?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["warmer:hinglish-fix"],
+  "expectedBehavior": "answer",
+  "notes": "Warmer's flagship debugging story — the multilingual embedding model was out-of-distribution on romanized text, fixed via a nine-candidate bake-off. Grounded in content/case-studies/warmer.ts's decisions[1] and results[0]/[1], both tagged warmer:hinglish-fix."
+}

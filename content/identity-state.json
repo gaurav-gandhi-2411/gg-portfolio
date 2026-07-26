@@ -1,0 +1,119 @@
+{
+  "updated_at": "2026-07-26",
+  "products": {
+    "triageiq": {
+      "checkedAt": "2026-07-26",
+      "name": "TriageIQ",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://triage-iq-orcin.vercel.app/",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "warmer": {
+      "checkedAt": "2026-07-26",
+      "liveUrl": "https://playwarmer.vercel.app/",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "multimodal-fashion-recommender": {
+      "checkedAt": "2026-07-26",
+      "name": "Multimodal Fashion Recommender",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://huggingface.co/spaces/gauravgandhi2411/multimodal-fashion-recommender",
+      "httpStatus": 200,
+      "hfPresence": 200,
+      "demoUrl": null
+    },
+    "style-maitri": {
+      "checkedAt": "2026-07-26",
+      "name": "Agentic Shopping Assistant",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://stylemaitri.vercel.app",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "shelfsense": {
+      "checkedAt": "2026-07-26",
+      "name": "ShelfSense-M5",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": null,
+      "demoUrl": null
+    },
+    "aetherart": {
+      "checkedAt": "2026-07-26",
+      "name": "AetherArt",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://aetherart-demo-473907703523.us-central1.run.app/",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "agentgauge": {
+      "checkedAt": "2026-07-26",
+      "name": "AgentGauge",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": null,
+      "demoUrl": null
+    },
+    "reclaim": {
+      "checkedAt": "2026-07-26",
+      "name": "Reclaim",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://github.com/gaurav-gandhi-2411/reclaim/releases/latest",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "reviewiq": {
+      "checkedAt": "2026-07-26",
+      "name": "review-iq",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://review-iq-ajjrytb3na-el.a.run.app/docs",
+      "httpStatus": 200,
+      "demoUrl": "https://gauravgandhi2411-review-iq.hf.space",
+      "demoStatus": 200
+    },
+    "gold-rate-tracker": {
+      "checkedAt": "2026-07-26",
+      "name": "Gold Rate Tracker",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "dealhunter": {
+      "checkedAt": "2026-07-26",
+      "name": "DealHunter — Agentic Flight Search",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://agentic-travel-booking-system.vercel.app",
+      "httpStatus": 200,
+      "demoUrl": null
+    },
+    "tracegauge": {
+      "checkedAt": "2026-07-26",
+      "name": "tracegauge",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": null,
+      "demoUrl": null,
+      "pypiPresence": 200
+    },
+    "expense-tracker": {
+      "checkedAt": "2026-07-26",
+      "name": "expense-tracker",
+      "repoVisibility": "public",
+      "repoArchived": false,
+      "liveUrl": "https://expense-tracker-tawny-eight-98.vercel.app",
+      "httpStatus": 404,
+      "demoUrl": null
+    }
+  }
+}

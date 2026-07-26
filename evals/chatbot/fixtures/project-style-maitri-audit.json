@@ -1,0 +1,8 @@
+{
+  "id": "project-style-maitri-audit",
+  "question": "What did Style Maitri's 6-agent live-site audit find that its offline evals missed?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["style-maitri:live-audit"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of the adversarial live-site audit story: a fabricated body-shape claim, a bridal-search ranking bug, and an honest-vs-confabulating inconsistency between two code paths. Grounded in content/case-studies/style-maitri.ts's results[3] and story, tagged style-maitri:live-audit."
+}

@@ -1,0 +1,8 @@
+{
+  "id": "project-aetherart-vram",
+  "question": "How does AetherArt fit Stable Diffusion XL into an 8GB consumer GPU budget?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["aetherart:vram"],
+  "expectedBehavior": "answer",
+  "notes": "Tests a specific engineering-decision recall (FP16 + corrected VAE + optional NF4 quantization) from content/case-studies/aetherart.ts's decisions[0] and results[0], both tagged aetherart:vram."
+}

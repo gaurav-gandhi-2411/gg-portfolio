@@ -1,0 +1,8 @@
+{
+  "id": "availability-consulting",
+  "question": "Is GG open to consulting engagements, or only full-time roles?",
+  "category": "availability",
+  "expectedSourceRefs": ["availability:summary"],
+  "expectedBehavior": "answer",
+  "notes": "A rephrasing of the same availability fact (content/availability.ts's engagementTypes: full-time roles AND select AI/ML consulting) to check the model doesn't drop the consulting half of the answer, sourceRef availability:summary."
+}

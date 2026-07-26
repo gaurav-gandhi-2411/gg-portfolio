@@ -425,3 +425,34 @@ p {
     transform: scaleX(1);
   }
 }
+
+/*
+ * ── Wave 16: printable case-study view ──────────────────────────────────
+ * Case studies are the one content type worth saving/handing off as a PDF.
+ * The site is dark-mode-only (no toggle by design), so printing verbatim
+ * would put light text on a dark background and burn ink for nothing —
+ * the token overrides below give print its own light theme without
+ * touching a single component. Everything chrome-y (site nav, the sticky
+ * rail, the "Work with me" CTA, the reading-progress bar, the print
+ * button itself) is stripped so only the numbered content column ships to
+ * paper.
+ */
+@media print {
+  :root {
+    --background: #ffffff;
+    --foreground: #0a0b0d;
+    --card: #ffffff;
+    --card-foreground: #0a0b0d;
+    --muted: #f1f1f2;
+    --muted-foreground: #45484f;
+    --border: #b7b9bf;
+    --accent: #4338ca;
+    --accent-foreground: #ffffff;
+  }
+
+  nav,
+  .reading-progress,
+  .print-hide {
+    display: none !important;
+  }
+}

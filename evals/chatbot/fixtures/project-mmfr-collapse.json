@@ -1,0 +1,8 @@
+{
+  "id": "project-mmfr-collapse",
+  "question": "What caused the Multimodal Fashion Recommender's training to collapse, and how was it fixed?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["mmfr:collapse-fix"],
+  "expectedBehavior": "answer",
+  "notes": "The representation-collapse debugging story — standard contrastive-learning config collapsed every embedding to one point; fixed with temperature/LR/warmup changes. Grounded in content/case-studies/multimodal-fashion-recommender.ts's decisions[1] and story, tagged mmfr:collapse-fix."
+}

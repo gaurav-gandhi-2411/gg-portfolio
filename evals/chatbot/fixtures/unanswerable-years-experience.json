@@ -1,0 +1,8 @@
+{
+  "id": "unanswerable-years-experience",
+  "question": "How many years of professional Python experience does GG have, as a specific number?",
+  "category": "unanswerable",
+  "expectedSourceRefs": [],
+  "expectedBehavior": "refuse",
+  "notes": "content/experience.ts lists date ranges per role (from which a human could infer a rough total) but never publishes an aggregated years-of-experience figure as a standalone claim — verified zero 'years of'/'years experience' matches in content/chatbot/index.json. Tests whether the model refuses to compute/invent a number the corpus doesn't state directly."
+}

@@ -1,6 +1,7 @@
 import { InlineLink } from "@/components/inline-link";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
+import { availability } from "@/content/availability";
 import { site } from "@/content/site";
 
 /**
@@ -22,10 +23,7 @@ export function Contact() {
             "if the scope is a good fit"). Direct and professional: what I'm
             looking for, how to reach me, where I am. */}
         <div className="flex max-w-measure flex-col gap-2">
-          <p className="text-base leading-relaxed text-foreground">
-            I&apos;m looking for Senior or Principal Applied AI roles, and I take on select
-            AI/ML consulting engagements.
-          </p>
+          <p className="text-base leading-relaxed text-foreground">{availability.summary}</p>
           <p className="text-muted-foreground text-base leading-relaxed">
             If my work fits what you&apos;re building, email is the fastest way to reach me — I
             read everything and reply promptly.

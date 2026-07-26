@@ -7,6 +7,13 @@
 # verifier curation of newly-discovered facts (docs/content-pipeline-rubric.md),
 # as its own separate PR from the metric-value refresh (see that job's header
 # comment for why they're kept apart).
+#
+# Wave 16 — added the identity-drift job below: pure deterministic fact-
+# checking (no LLM) of README display names, repo visibility/archived
+# state, and live/demo/PyPI/HF URL health against content/identity-state.json.
+# Its own PR too, same reasoning as content-pipeline's separation above —
+# a mechanical fact-check diff shouldn't share a review with either the
+# metric-value refresh or an LLM-curated content proposal.
 name: Content + metrics refresh
 
 on:
@@ -165,3 +172,95 @@ jobs:
           # job above — PRs opened with GITHUB_TOKEN don't trigger
           # pull_request-triggered workflows, so dispatch ci.yml explicitly.
           gh workflow run ci.yml --ref "$BRANCH"
+
+  identity-drift:
+    # Wave 16 — pure deterministic fact-check, no LLM: does the README still
+    # call the product what the site calls it, is the repo still public/
+    # unarchived, are the live/demo/PyPI/HF surfaces still up. Diffed against
+    # content/identity-state.json (same machine-owned-JSON convention as
+    # content/metrics.json), its own PR for the same reason content-pipeline
+    # gets one (see that job's header comment).
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run identity-drift check
+        env:
+          DRIFT_SUMMARY_PATH: /tmp/identity-drift-summary.md
+          DRIFT_RENAMES_PATH: /tmp/identity-drift-renames.json
+        run: node scripts/identity-drift.mjs
+
+      - name: Open PR if anything drifted
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet content/identity-state.json; then
+            echo "No identity drift this week."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/identity-drift"
+          git checkout -B "$BRANCH"
+          git add content/identity-state.json
+          git commit -m "chore(identity): weekly identity-drift check"
+          git push --force origin "$BRANCH:refs/heads/$BRANCH"
+
+          if ! gh pr create \
+            --title "chore(identity): weekly identity-drift check" \
+            --body-file /tmp/identity-drift-summary.md \
+            --base main --head "$BRANCH"; then
+            gh pr edit "$BRANCH" --body-file /tmp/identity-drift-summary.md
+          fi
+
+          # Same GITHUB_TOKEN anti-recursion workaround as the metrics-refresh
+          # job above — PRs opened with GITHUB_TOKEN don't trigger
+          # pull_request-triggered workflows, so dispatch ci.yml explicitly.
+          gh workflow run ci.yml --ref "$BRANCH"
+
+      # A README rename is a real content decision, but the PR above is a
+      # weekly-rotating chore branch that can sit unmerged (or unaddressed)
+      # for a while — an issue is the right vehicle so a rename doesn't get
+      # silently lost. One issue per renamed repo, stable-titled so it
+      # updates in place rather than spamming a new issue every week the
+      # same rename goes unaddressed (same pattern as the "new repos" issue
+      # step in the refresh job above).
+      - name: Open/update per-repo issues for README renames
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -s /tmp/identity-drift-renames.json ] || [ "$(cat /tmp/identity-drift-renames.json)" = "[]" ]; then
+            echo "No README renames found this week."
+            exit 0
+          fi
+
+          jq -c '.[]' /tmp/identity-drift-renames.json | while read -r entry; do
+            SLUG=$(echo "$entry" | jq -r '.slug')
+            TITLE="Identity drift: $SLUG renamed"
+            BODY=$(ENTRY_JSON="$entry" node -e '
+              const entry = JSON.parse(process.env.ENTRY_JSON);
+              console.log([
+                `The weekly identity-drift check (scripts/identity-drift.mjs) found that [\`${entry.repo}\`](${entry.repo})` + "'\''s README H1 changed:",
+                "",
+                `- Was: **${entry.oldName}**`,
+                `- Now: **${entry.newName}**`,
+                "",
+                `content/products.ts still lists this product as "${entry.oldName}" — decide whether the site name should follow the repo` + "'\''s rename, or whether this is an intentional divergence (several tracked products already use a nicer site name than their raw README, e.g. \"Samidha Reviews\" vs. review-iq" + "'\''s own README). Closing this issue is fine once addressed; it reopens/recreates next time the README name changes again."
+              ].join("\n"));
+            ')
+
+            existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue edit "$existing" --body "$BODY"
+            else
+              gh issue create --title "$TITLE" --body "$BODY"
+            fi
+          done

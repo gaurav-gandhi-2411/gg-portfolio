@@ -1,5 +1,7 @@
 import "server-only";
 
+import { products } from "@/content/products";
+
 // Wave 3 Tier 1: build-time/ISR live data. Every function here is
 // self-provenancing — it fetches from a real source rather than asserting a
 // claim, and every function fails soft (never throws) so a flaky third-party
@@ -94,3 +96,46 @@ export async function getRepoFreshness(
 // getShippingLog was removed in wave 5 along with the "Recently shipped"
 // band — GG's call, the building-in-public feed is out of the positioning.
 // Version control is the archive if it's ever wanted back.
+
+export interface CurrentlyBuilding {
+  slug: string;
+  name: string;
+  pushedAt: string;
+}
+
+function repoFullNameFromUrl(url: string): string | null {
+  const match = url.match(/github\.com\/([^/]+\/[^/]+?)\/?$/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Wave 16 — "currently building" hero signal: the tracked product whose
+ * GitHub repo was pushed to most recently. Warmer (mindmeld) has no
+ * `repoUrl` — private repo — so it's naturally excluded from the tracked
+ * set. Same fail-soft contract as every other function here: any shape
+ * surprise or API failure degrades to no signal, never a stale/fake one.
+ */
+export async function getCurrentlyBuilding(): Promise<CurrentlyBuilding | null> {
+  const trackedByFullName = new Map<string, { slug: string; name: string }>();
+  for (const product of products) {
+    if (!product.repoUrl) continue;
+    const fullName = repoFullNameFromUrl(product.repoUrl);
+    if (fullName) trackedByFullName.set(fullName.toLowerCase(), product);
+  }
+  if (trackedByFullName.size === 0) return null;
+
+  const repos = await safeFetchJson<{ full_name: string; pushed_at: string }[]>(
+    "https://api.github.com/users/gaurav-gandhi-2411/repos?per_page=100&type=public&sort=pushed"
+  );
+  if (!repos) return null;
+
+  let best: CurrentlyBuilding | null = null;
+  for (const repo of repos) {
+    const product = trackedByFullName.get(repo.full_name?.toLowerCase());
+    if (!product) continue;
+    if (!best || repo.pushed_at > best.pushedAt) {
+      best = { slug: product.slug, name: product.name, pushedAt: repo.pushed_at };
+    }
+  }
+  return best;
+}

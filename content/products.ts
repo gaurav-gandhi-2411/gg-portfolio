@@ -126,7 +126,7 @@ export const products: Product[] = [
   },
   {
     slug: "reviewiq",
-    name: "ReviewIQ",
+    name: "Samidha Reviews",
     tagline:
       "Turns customer reviews into structured insight across English, Hindi, and Hinglish — tiered LLM routing plus authenticity scoring.",
     // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
@@ -178,9 +178,11 @@ export const products: Product[] = [
     name: "Expense Tracker",
     tagline:
       "Multi-user expense tracker that parses entries written in plain language, auto-categorizes them with embeddings, and forecasts spending — built production-shaped, with real auth and migrations.",
-    // Deliberately NO liveUrl: the documented demo deployment was found down
-    // on 2026-07-18 (frontend 404, backend 500 — caught by this repo's own
-    // lychee CI) — see provenance.md#expense-tracker:state.
+    // liveUrl verified in wave 16 (2026-07-26): matches the repo's own
+    // homepageUrl, confirmed HTTP 200 with a live login page. Wave 15's
+    // report had cited a different URL (...eight-xi-93...) that is dead
+    // (404) — not the correct deployment. See provenance.md.
+    liveUrl: "https://expense-tracker-tawny-eight-98.vercel.app",
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
     categories: ["retrieval", "forecasting"],
     techChips: ["Groq", "Prophet", "IsolationForest"],

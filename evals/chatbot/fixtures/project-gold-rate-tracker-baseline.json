@@ -1,0 +1,8 @@
+{
+  "id": "project-gold-rate-tracker-baseline",
+  "question": "Did Gold Rate Tracker's Chronos-Bolt-Tiny model beat the naive flat-hold forecast?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["gold-rate-tracker:headline"],
+  "expectedBehavior": "answer",
+  "notes": "The project's honest-baseline headline finding: the naive flat-hold beat the ML model by ~17% on a 199-fold backtest. Grounded in content/case-studies/gold-rate-tracker.ts's decisions[0] and results[0], tagged gold-rate-tracker:headline."
+}

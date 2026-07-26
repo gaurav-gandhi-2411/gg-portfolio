@@ -7,6 +7,7 @@ import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-discl
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
 import { getWarmerPuzzleNumber } from "@/lib/live-data";
+import { relatedProducts } from "@/lib/related-products";
 
 export function generateStaticParams() {
   return Object.keys(caseStudies).map((slug) => ({ slug }));
@@ -37,6 +38,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
   if (!study) notFound();
 
   const product = products.find((p) => p.slug === slug);
+  const related = product ? relatedProducts(product, products) : [];
 
   let demo: React.ReactNode;
   if (slug === "warmer") {
@@ -82,7 +84,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
   return (
     <>
       <CaseStudyJsonLd study={study} product={product} />
-      <CaseStudyPage study={study} product={product} demo={demo} />
+      <CaseStudyPage study={study} product={product} demo={demo} related={related} />
     </>
   );
 }

@@ -1,0 +1,5 @@
+{
+  "groqResponse": "{\n  \"answer\": \"Reclaim guarantees that its optional AI layer can never delete a file directly because the AI layer's output types are structurally incompatible with the code path that actually deletes files, and every AI-produced suggestion goes through human confirmation and SafetyValidator check.\",\n   \"citations\": [\n       {\"sourceRef\": \"reclaim:approach:3\"},\n       {\"sourceRef\": \"reclaim:ai-layer-boundary\"}\n   ]\n}",
+  "tokensIn": 1217,
+  "tokensOut": 91
+}

@@ -1,0 +1,8 @@
+{
+  "id": "project-shelfsense-tweedie",
+  "question": "Why does ShelfSense use Tweedie loss instead of RMSE for its demand-forecasting models?",
+  "category": "project-factual",
+  "expectedSourceRefs": ["shelfsense:tweedie"],
+  "expectedBehavior": "answer",
+  "notes": "Tests recall of a specific modeling-choice justification (68% zero-inflated demand data, measured +0.02 WRMSSE gain). Grounded in content/case-studies/shelfsense.ts's decisions[0], tagged shelfsense:tweedie."
+}

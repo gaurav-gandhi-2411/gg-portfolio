@@ -9,6 +9,7 @@ import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
 import { liveProductCount, products } from "@/content/products";
 import type { Stat } from "@/content/types";
+import { getCurrentlyBuilding } from "@/lib/live-data";
 
 /**
  * Whole years since the first data-science role on the resume (TCS, Jul 2021
@@ -19,6 +20,11 @@ import type { Stat } from "@/content/types";
 function careerYears(): number {
   const start = Date.UTC(2021, 6, 1); // Jul 2021
   return Math.floor((Date.now() - start) / (365.25 * 24 * 3600 * 1000));
+}
+
+/** Whole days since an ISO timestamp — matches lib/project-display.ts's freshness math. */
+function daysSince(iso: string): number {
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 }
 
 /**
@@ -37,7 +43,9 @@ function careerYears(): number {
  * opacity from first paint (wave-9 axe-race lesson); the entrance feeling
  * is the boot loader's curtain reveal.
  */
-export function Hero() {
+export async function Hero() {
+  const currentlyBuilding = await getCurrentlyBuilding();
+
   const heroStats: Stat[] = [
     {
       value: String(careerYears()),
@@ -74,6 +82,14 @@ export function Hero() {
         I build <span className="stat-figure">AI products</span> and see them through — from
         first experiment to real users.
       </h1>
+
+      {currentlyBuilding && (
+        <p className="text-muted-foreground mt-4 text-sm">
+          Currently building:{" "}
+          <span className="font-medium text-foreground">{currentlyBuilding.name}</span> · updated{" "}
+          <span className="font-mono">{daysSince(currentlyBuilding.pushedAt)}d</span> ago
+        </p>
+      )}
 
       <p className="text-muted-foreground mt-6 text-lg">
         <span className="font-medium text-foreground">{site.name}</span> · Senior Data
