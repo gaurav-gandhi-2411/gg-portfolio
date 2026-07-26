@@ -5,12 +5,12 @@ import type { CaseStudy } from "../types";
 // review-iq-closeout-roadmap.md) — see provenance.md's ReviewIQ section.
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
-  title: "ReviewIQ",
+  title: "Samidha Reviews",
   dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals — caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
   problem: [
     "Indian D2C (direct-to-consumer) sellers get customer reviews in English, Hindi, and Hinglish (romanized, code-mixed Hindi-English — \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones, or the likely-fake ones, doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
-    "ReviewIQ turns unstructured review text into structured data: sentiment, pros/cons, an urgency flag, and an authenticity score — so a seller can triage what actually needs attention instead of reading everything.",
+    "Samidha Reviews (built and shipped under the name ReviewIQ, live-rebranded since) turns unstructured review text into structured data: sentiment, pros/cons, an urgency flag, and an authenticity score — so a seller can triage what actually needs attention instead of reading everything.",
   ],
   approach: [
     "A review first passes through a sanitizer that strips personally identifiable information, then a language detector classifies it as English, Hindi, or Hinglish, which routes it to a language-branched prompt (a prompt template tuned for that language's phrasing).",

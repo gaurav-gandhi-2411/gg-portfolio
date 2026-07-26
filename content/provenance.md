@@ -591,6 +591,38 @@ row. No number from `docs/CASE_STUDY.md` was used without a direct line-range re
 rounded beyond what the source document itself already rounds to (e.g. "~48GB" is the source's own
 approximation, not this pass's).
 
+## Wave 16 (2026-07-26) — ReviewIQ rebrand + expense-tracker liveUrl correction
+
+### ReviewIQ → "Samidha Reviews"
+
+| ID | Claim | Source |
+|---|---|---|
+| `reviewiq:rebrand` | Product's live display name is now "Samidha Reviews" (repo/slug/URLs unchanged) | Live Swagger UI title at the existing `liveUrl` (`https://review-iq-ajjrytb3na-el.a.run.app/docs`) reads "Samidha Reviews API - Swagger UI"; `review-iq/.env.example` sets `RESEND_FROM_NAME=Samidha Reviews` — both confirmed live 2026-07-26 |
+
+**Correction:** `content/products.ts`'s `reviewiq` entry and `content/case-studies/reviewiq.ts`'s
+`title` field both said "ReviewIQ" — stale against the live product's own rebrand. Renamed both
+to "Samidha Reviews." Explicitly **not** changed: no custom domain exists (`homepageUrl` is empty,
+no CNAME file in the repo — verified this wave), so no domain claim was added; the existing
+`liveUrl` is unchanged (still the correct, live Swagger UI URL); no "demo retired" language was
+added — the repo's own README states "v1 remains live for demo purposes." Repo path, slug, and
+GitHub links stay `review-iq`/`reviewiq` throughout (technical identifiers, not the product's
+display name) — only the product-facing name changed.
+
+### Expense Tracker — liveUrl corrected
+
+| ID | Claim | Source |
+|---|---|---|
+| `expense-tracker:liveurl-correction` | Live URL is `https://expense-tracker-tawny-eight-98.vercel.app` — confirmed HTTP 200, live login page | Matches the repo's own registered `homepageUrl`; HTTP 200 check performed this wave (2026-07-26) |
+
+**Correction:** wave 15's report (see `expense-tracker:state` above, dated 2026-07-18) cited
+`https://expense-tracker-eight-xi-93.vercel.app` as the (then-down) demo deployment. That URL is
+now confirmed **dead (404)** — it is not the project's real deployment. The correct, live
+deployment is `expense-tracker-tawny-eight-98.vercel.app`, which matches the repo's own
+`homepageUrl` field and returns a working login page (200). `content/products.ts`'s
+`expense-tracker` entry now carries this `liveUrl`, and the stale "found down on 2026-07-18 /
+no liveUrl" comment (which pointed at the wrong URL's outage, not this one) was replaced with a
+short note citing this correction.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
