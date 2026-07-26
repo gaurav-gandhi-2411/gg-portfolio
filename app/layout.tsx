@@ -3,6 +3,7 @@ import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
+import { ChatLauncher } from "@/components/chatbot/chat-launcher";
 import { PersonJsonLd } from "@/components/json-ld";
 import { SiteNav } from "@/components/site-nav";
 import "./globals.css";
@@ -85,6 +86,7 @@ export default function RootLayout({
         <BootLoader />
         <SiteNav />
         {children}
+        <ChatLauncher />
         <Analytics />
         <SpeedInsights />
       </body>
