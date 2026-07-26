@@ -249,16 +249,18 @@ durable policy).
   connecting AS `expense_app` and attempting `SELECT * FROM public.organizations` → denied at the
   database level (`InsufficientPrivilege`), not just application convention.
 - **Repudiation**: no material change — no new logging/audit requirements introduced.
-- **Information Disclosure**: could review-iq's app read expense data? **Residual, documented
-  risk, not fully closed this pass**: review-iq's own backend connects as the `postgres`
-  superuser (confirmed via its `.env`), which bypasses all schema/table grants by construction —
-  Postgres superuser status cannot be scoped away by adding grants elsewhere. Changing review-iq's
-  own connection credentials to a scoped role would be the complete fix, but that's a live,
-  working production app's own credentials — out of scope for this pass given the risk/reward
-  (review-iq's application code has no logic that would ever reference an `expense.*` table;
-  the residual risk is theoretical — a future bug/injection in review-iq's own code — not
-  something this migration introduces). Recommended as a standalone follow-up with its own careful
-  testing, not bundled here.
+- **Information Disclosure**: could review-iq's app read expense data? Flagged in this pass as a
+  residual risk (review-iq's own backend connected as the `postgres` superuser, which bypasses
+  all schema/table grants by construction) and **closed the same day at GG's request**, as its
+  own follow-up PR: `gaurav-gandhi-2411/review-iq#14` rotates review-iq's backend to a dedicated
+  `review_iq_app` role (non-superuser, member of `authenticated`, `BYPASSRLS` — matching how
+  Supabase's own `service_role` is configured). Verified before touching any deployed config: the
+  first attempt (role without `BYPASSRLS`) failed 26/71 of review-iq's own live-Supabase
+  integration tests, all with the identical root cause (the org-creation/deletion admin paths
+  need to cross the `org_id` RLS boundary); added `BYPASSRLS`, re-ran, 71/71 passing, then
+  rotated the live secret and redeployed. `review_iq_app` confirmed to have zero access to this
+  wave's `expense` schema both before and after adding `BYPASSRLS`. Bidirectional isolation is
+  now real, not just documented as an accepted gap.
 - **Denial of Service**: expense-tracker's connection uses `NullPool` (per `app/db.py`'s existing
   comment, "avoids pgBouncer pooler incompatibilities on free tier") against the **direct**
   connection host, same as before — no new pooling/contention risk introduced for review-iq's own
