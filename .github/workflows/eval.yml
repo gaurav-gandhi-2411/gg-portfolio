@@ -6,19 +6,16 @@
 # zero live Groq calls, so this job needs no GROQ_API_KEY secret and is safe
 # to run on every PR from a fork.
 #
-# TODO(wave16 follow-up, tracked separately): NO numeric pass/fail threshold
-# is wired here yet. As of this workflow's introduction, evals/chatbot/cassettes/
-# is empty — there are no recorded cassettes, so every fixture reports
-# "skipped: no cassette recorded" and all 4 summary metrics are n=0/n-a. There
-# is no real baseline yet to threshold against, and rule 65b/the eval-baseline
-# gate (rule 58d item 3) require reporting a real before/after mean before a
-# threshold can be set — not guessing one against zero data. Once the
-# orchestrator runs `node evals/chatbot/run-eval.mjs --live` with a real
-# GROQ_API_KEY, records real cassettes, and commits them, this job should gain
-# a step that fails the build below an agreed threshold for each of the 4
-# metrics (retrieval recall@5, citation-groundedness rate, refusal precision,
-# false-refusal rate) — see reports/wave16-chatbot-eval-*.md for the running
-# numbers in the meantime.
+# Thresholds below are real regression gates against the live baseline
+# recorded 2026-07-26 (see reports/wave16-chatbot-eval-2026-07-26.md/.json):
+# retrieval recall@5 100.0% (n=20), citation-groundedness 100.0% (n=20),
+# refusal precision 100.0% (n=10), false-refusal rate 0.0% (n=20). Retrieval
+# recall/groundedness/false-refusal thresholds are set a few points below the
+# measured value (small margin for future corpus/model drift, not an
+# artificially inflated bar); refusal precision is held at a hard 100% floor
+# per this feature's own safety design — it's a correctness requirement
+# (never fabricate an answer to something genuinely unanswerable/adversarial),
+# not a soft quality target, so it does not get a fluctuation allowance.
 name: Eval
 
 on:
@@ -57,6 +54,9 @@ jobs:
       - name: Print report
         if: always()
         run: cat reports/wave16-chatbot-eval-*.md
+
+      - name: Check eval thresholds (regression gate)
+        run: node evals/chatbot/check-thresholds.mjs
 
       - name: Upload eval report
         if: always()
