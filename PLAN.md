@@ -56,9 +56,14 @@ Branch `feat/wave15-content-framing-pipeline`. Full report:
       interrupted prior test run, not this change. Backend redeployed to Cloud Run (was 500 on
       every route, now 200/401 correctly); frontend redeployed fresh on Vercel (previous project
       gone) at https://expense-tracker-eight-xi-93.vercel.app; CORS verified end-to-end. PR:
-      `gaurav-gandhi-2411/expense-tracker#3`. One residual, documented risk not closed this pass:
-      review-iq's own connection still uses the Postgres superuser role (pre-existing, not
-      introduced here), so full bidirectional isolation needs a follow-up on review-iq's side.
+      `gaurav-gandhi-2411/expense-tracker#3`. **Residual risk (review-iq's own superuser
+      connection) closed same day at GG's request**: `gaurav-gandhi-2411/review-iq#14` rotates
+      it to a dedicated non-superuser `review_iq_app` role (member of `authenticated` +
+      `BYPASSRLS`, matching Supabase's own `service_role` shape). Verified via review-iq's own
+      71-test live-Supabase suite before touching any deployed config — first attempt (no
+      BYPASSRLS) failed 26/71 on the org-admin RLS-boundary paths, fixed, re-ran clean, then
+      rotated the live secret and redeployed per `ops/runbooks/secret-rotation.md`. Bidirectional
+      isolation between expense-tracker and review-iq is now real, not an accepted gap.
       Numbered steps for GG in the wave report (PR review, password custody, custom domain,
       when to flip the case-study's "offline" claim to live).
 - [ ] Large diff (6 substantial items) → **draft PR for GG's manual review/merge**, same posture
