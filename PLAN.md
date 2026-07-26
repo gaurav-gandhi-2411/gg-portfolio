@@ -4,6 +4,51 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Wave 16 — state reconciliation, identity-drift detection, portfolio chatbot (code-complete 2026-07-26, pending GG's merge + live eval baseline)
+
+GG's brief: reconcile all 13 projects to ground truth (three rebrands had gone unnoticed);
+extend the weekly Action to detect identity drift, not just metrics drift; build a RAG chatbot
+over GG's own case-study corpus as a flagship applied-AI demo, with a published eval; four
+think-ahead improvements. Branch `feat/wave16-reconciliation-chatbot`, off `main` post wave-15
+merge (`24a258d`). Full report: `reports/wave16-writeup-2026-07-26.md`.
+
+- [x] **Item 1 — reconciliation**: two premises in the brief didn't hold up under verification
+      against the real source repos (no Samidha custom domain at verification time, no MMFR
+      Vercel app) — reconciled to verified reality instead, documented plainly.
+      `reviewiq` renamed "Samidha Reviews" (the live rebrand checked out); `expense-tracker`
+      given its actual working `liveUrl` (wave 15's report had cited a dead one). Full 13-row
+      table: `reports/wave16-reconciliation-2026-07-26.md`.
+- [x] **Item 2 — identity-drift detection**: new `scripts/identity-drift.mjs` + machine-owned
+      `content/identity-state.json`, third job in `metrics-refresh.yml`. Rename detection is
+      diffed against the *previous run's* value (not README-vs-`products.ts` directly) so
+      permanently-intentional cosmetic name gaps don't reopen an issue every week. A real
+      name-mismatch also opens a per-repo GitHub issue.
+- [x] **Item 3 — portfolio chatbot (`/ask`)**: build-time corpus indexing (400 chunks, local
+      ONNX embeddings via `@huggingface/transformers` — not a hosted API, so corpus and query
+      embeddings share one vector space with zero external dependency at request time) → hybrid
+      dense+lexical retrieval with a threshold refusal gate → Groq JSON-mode generation with
+      every citation validated server-side before reaching the client → dedicated `/ask` page
+      (not a widget) + corner launcher → 30-case eval harness with cassette-replay CI. **Live
+      eval baseline still pending** — no `GROQ_API_KEY` in this environment; `/ask`'s eval-numbers
+      block shows placeholder "pending" copy, not fabricated numbers.
+- [x] **Item 4 — think-ahead**: structured `content/availability.ts`; related-projects section
+      (free from existing category tags); printable case-study view (`@media print`, no PDF
+      lib); "Currently building" signal on the hero from real GitHub push activity.
+- [x] **Verification**: full Playwright suite 131/132 passed — the 1 failure is a **pre-existing
+      bug on `main`** (confirmed via a clean worktree check before touching anything): the
+      `/projects` hover-recede opacity drops text contrast below WCAG AA on real mouse hover.
+      Attempted a fix, hit a second harder-to-explain compounding case, reverted rather than ship
+      a partially-understood tweak outside this wave's scope — flagged for a follow-up wave.
+      Lighthouse: home 0.91/1.00/0.96/1.00 (412 KiB), `/ask` 0.92/1.00/0.96/1.00 (392 KiB) — the
+      chatbot doesn't blow the home page's budget.
+- [ ] Large diff → **draft PR for GG's manual review/merge**. Needs GG's action on: a live
+      `GROQ_API_KEY` run to record the eval baseline and wire real CI thresholds; adding
+      `GROQ_API_KEY` as a Vercel production env var (live serving-config change, not done
+      autonomously); the pre-existing `/projects` contrast bug.
+- **Separate task, not part of this branch**: mid-wave, GG asked (explicitly separately) to get
+  `samidhareviews.xyz` live for the `review-iq` repo. Handled entirely outside `gg-portfolio` —
+  findings and remaining manual DNS/Cloudflare steps were reported directly, not duplicated here.
+
 ## Wave 15 — content framing, progressive disclosure, agentic pipeline (code-complete 2026-07-26, pending GG's merge)
 
 GG's brief: rewrite case-study framing to lead with capability not failure; progressive
