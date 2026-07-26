@@ -75,10 +75,12 @@ export default function AskPage() {
             {metrics.map(([key, metric]) => (
               <div key={key} className="flex flex-col gap-1">
                 <dt className="text-muted-foreground text-xs">{METRIC_LABELS[key]}</dt>
-                <dd className="font-mono text-lead font-semibold text-foreground">
-                  {formatMetric(metric)}
+                <dd className="flex flex-col gap-1">
+                  <span className="font-mono text-lead font-semibold text-foreground">
+                    {formatMetric(metric)}
+                  </span>
+                  <span className="text-muted-foreground font-mono text-xs">n={metric.n}</span>
                 </dd>
-                <span className="text-muted-foreground font-mono text-xs">n={metric.n}</span>
               </div>
             ))}
           </dl>
