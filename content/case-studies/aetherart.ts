@@ -1,8 +1,9 @@
 import type { CaseStudy } from "../types";
 
 // Sources: AetherArt repo (README.md, docs/lab_notebook.md,
-// reports/experiments/exp1_sdxl/results.json, reports/what_didnt_work.md) —
-// see provenance.md's AetherArt section.
+// reports/experiments/exp1_sdxl/results.json, reports/what_didnt_work.md,
+// docs/MODEL_VERDICT.md, docs/paper/measurement_defects.md) —
+// see provenance.md's AetherArt section (wave 12 and wave 17).
 export const aetherart: CaseStudy = {
   slug: "aetherart",
   title: "AetherArt",
@@ -62,6 +63,16 @@ export const aetherart: CaseStudy = {
       body: "The project's early claim was that CLIP score was blind to quality changes in 9 out of 9 experiments. Recomputing that claim under a stricter 1-standard-error significance threshold dropped the honest count to 4 out of 9 — and the corrected, smaller number is what the project reports, not the more dramatic original one.",
       sourceRef: "aetherart:clip-blindness",
     },
+    {
+      title: "The validated LoRA recipe: curate, train, pre-register an A/B, then sweep the adapter weight — the sweep is not optional",
+      body: "A second style adapter (Pattachitra, an Odishan scroll-painting style) followed the same recipe that produced the ukiyo-e adapter: a curated training set, a rank-8 LoRA, and a pre-registered A/B against the un-adapted base model before any publish decision. Evaluating only at the library-default adapter weight (1.0) would have ended the project there — the adapter loses to base on both axes at that weight. Running the same pre-registered comparison across a range of adapter weights instead is what actually found the adapter's usable region.",
+      sourceRef: "aetherart:validated-recipe",
+    },
+    {
+      title: "Publish the Pattachitra LoRA at weight 0.3–0.5, and say plainly that the library default (1.0) is the failure mode",
+      body: "At adapter_weight=1.0, both trained checkpoints significantly regress style adherence and figure preservation against the un-adapted base model — visually confirmed cases where a requested human figure is dropped from the image entirely. At weight 0.3–0.5, the same two checkpoints show a significant style-adherence lift with no figure-preservation regression (a modest improvement, in fact). The model card states both facts side by side: this adapter is good at a documented low weight and actively worse than not using it at the default weight most tooling assumes.",
+      sourceRef: "aetherart:pattachitra-weight-sweep",
+    },
   ],
   results: [
     {
@@ -94,6 +105,24 @@ export const aetherart: CaseStudy = {
       detail: "a rank-4 LoRA scores higher on CLIP than rank-8, and 20 training images beat 80 — read as CLIP rewarding literal keyword matching, not real quality; a calligraphy-cartouche artifact baked in from WikiArt caption text remains unresolved, only mitigated by negative prompting",
       sourceRef: "aetherart:caveats",
     },
+    {
+      label: "HF LoRA adapters — 3 live, downloads last 30 days (HF API)",
+      value: "124 · 14 · 0",
+      detail: "ukiyo-e SDXL · ukiyo-e SD 2.1 · Pattachitra SDXL (published most recently, hence 0 so far) — links below",
+      sourceRef: "aetherart:hf-downloads",
+    },
+    {
+      label: "Ukiyo-e curated-retrain promotion",
+      value: "Withdrawn under corrected scoring",
+      detail: "3.18×SEM under single-call judging fell to 0.58×SEM — below the promotion bar — once independent per-axis scoring removed a halo-effect risk; the published checkpoint was not re-promoted.",
+      sourceRef: "aetherart:ukiyo-promotion-withdrawn",
+    },
+    {
+      label: "Measurement-defect methodology finding",
+      value: "5 silent evaluation-validity defects found and fixed",
+      detail: "context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score — full writeup linked below.",
+      sourceRef: "aetherart:measurement-defects",
+    },
   ],
   story: {
     title: "Expected quantization to save memory — traced why, under CPU offload, it did the opposite",
@@ -106,9 +135,14 @@ export const aetherart: CaseStudy = {
   },
   closing: [
     "If you're relying on CLIP score, or any single automated metric, as your quality gate, this is worth testing first: run the experiment that checks whether the metric actually moves with the changes you care about, and hold your own claims to a statistical bar strict enough to survive being wrong.",
+    "The same discipline applied to a second style adapter turned up a further lesson: evaluating an adapter at only one operating point (the library default) produced a true but incomplete verdict — and evaluating the evaluation itself, repeatedly, is what caught five separate silent ways the measurements could have been wrong without ever throwing an error.",
   ],
   links: [
     { label: "Try AetherArt", href: "https://aetherart-demo-473907703523.us-central1.run.app/" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/AetherArt" },
+    { label: "Methodology writeup", href: "https://github.com/gaurav-gandhi-2411/AetherArt/blob/main/docs/paper/measurement_defects.md" },
+    { label: "Ukiyo-e LoRA (SDXL)", href: "https://huggingface.co/gauravgandhi2411/aetherart-ukiyo-sdxl" },
+    { label: "Ukiyo-e LoRA (SD 2.1)", href: "https://huggingface.co/gauravgandhi2411/aetherart-ukiyo-sd21" },
+    { label: "Pattachitra LoRA (SDXL)", href: "https://huggingface.co/gauravgandhi2411/aetherart-pattachitra-sdxl" },
   ],
 };
