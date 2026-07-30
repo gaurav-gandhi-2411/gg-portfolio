@@ -33,12 +33,15 @@ export async function ProjectGrid({
     >
       <RevealGroup
         mode="onview"
-        // Columns engage at xl, exactly where Section's width step does —
-        // at lg the container is still 3xl and two columns would squeeze
-        // the cards (design-review finding 6).
+        // Columns engage at lg, exactly where Section's width step does —
+        // container is 5xl there (2026-07-30: both moved from xl to lg
+        // together, see section.tsx — the original design-review finding-6
+        // objection was that two columns would squeeze the cards while the
+        // container was still 3xl at that breakpoint, which no longer
+        // applies now that the container itself steps up at the same point).
         // mt-6, not mt-8: the filter's now-visible result counter (wave 14)
         // already carries mt-4 of its own above this grid.
-        className="project-grid mt-6 grid gap-4 xl:grid-cols-2 xl:gap-5"
+        className="project-grid mt-6 grid gap-4 lg:grid-cols-2 lg:gap-5"
       >
         {products.map((product) => (
           <ProjectCard

@@ -15,11 +15,12 @@ import type { RelatedProduct } from "@/lib/related-products";
  * idea per section, novice-readable, everything server-rendered; `demo`
  * is the one interactive slot injected by the route.
  *
- * Wave 13 — desktop composition (GG's standing 1280–1600px complaint):
- * at xl the page becomes content column + sticky right rail (on-this-page
+ * Wave 13 — desktop composition (GG's standing 1024–1600px complaint):
+ * at lg the page becomes content column + sticky right rail (on-this-page
  * anchors, the headline metric, project links) so the case study reads
- * like a documented spread instead of a strand in a void. Below xl the
- * wave-12 single column is unchanged. The h1 carries the same
+ * like a documented spread instead of a strand in a void. Below lg the
+ * wave-12 single column is unchanged (breakpoint moved from xl to lg in
+ * the 2026-07-30 UI/UX wave — see section.tsx). The h1 carries the same
  * view-transition-name as its project-card title, so supporting browsers
  * morph the clicked title into the page heading; a scroll-driven reading
  * progress bar (pure CSS, @supports-gated) sits above the nav.
@@ -76,11 +77,11 @@ export function CaseStudyPage({
   return (
     <main
       id="main"
-      className="mx-auto w-full max-w-2xl flex-1 px-6 pt-12 pb-20 md:pt-16 xl:max-w-5xl"
+      className="mx-auto w-full max-w-2xl flex-1 px-6 pt-12 pb-20 md:pt-16 lg:max-w-5xl"
     >
       <div aria-hidden="true" className="reading-progress" />
 
-      <div className="xl:grid xl:grid-cols-[minmax(0,42rem)_15rem] xl:justify-between xl:gap-x-12">
+      <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_15rem] lg:justify-between lg:gap-x-12">
         <div className="min-w-0">
           <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
             <TransitionLink
@@ -301,7 +302,7 @@ export function CaseStudyPage({
           </div>
         </div>
 
-        <aside className="print-hide hidden xl:block">
+        <aside className="print-hide hidden lg:block">
           <div className="sticky top-20 flex flex-col gap-8 pt-16">
             <nav aria-label="On this page">
               <h2 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">

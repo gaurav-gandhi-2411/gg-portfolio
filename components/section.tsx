@@ -16,10 +16,19 @@
  * Mobile and tablet are untouched; prose measure inside wide sections is
  * still capped by each component (max-w-measure), so line length never
  * rides the container.
+ *
+ * UI/UX wave (2026-07-30) — the complaint kept recurring after wave 13
+ * because the step itself started at xl (1280px): 1024–1279px (a common
+ * laptop band, and exactly the 1024px breakpoint this audit was asked to
+ * cover) got the *tablet* layout, not the desktop one. The step now starts
+ * at lg (1024px) instead — same "one shared width" system, same 5xl cap,
+ * just triggered one breakpoint earlier. Every component keyed off this
+ * width's old `xl:` toggles (Experience, About, Research, the project
+ * grid, case-study-page, site-nav) moved to `lg:` in lockstep.
  */
 const WIDTHS = {
   prose: "max-w-2xl",
-  wide: "max-w-3xl xl:max-w-5xl",
+  wide: "max-w-3xl lg:max-w-5xl",
 } as const;
 
 export function Section({
