@@ -3,6 +3,7 @@ import { InlineLink } from "@/components/inline-link";
 import { TransitionLink } from "@/components/transition-link";
 import type { Product } from "@/content/types";
 import type { TracegaugeDownloads } from "@/lib/live-data";
+import { cn } from "@/lib/utils";
 
 /**
  * Wave 13 — the one project card, used identically by the home Work
@@ -53,7 +54,17 @@ export function ProjectCard({
               <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-xs">
                 <span
                   aria-hidden="true"
-                  className="bg-accent live-dot inline-block size-1.5 shrink-0 rounded-full"
+                  className={cn(
+                    "bg-accent inline-block size-1.5 shrink-0 rounded-full",
+                    // Design review (2026-07-30): a continuously-pulsing dot
+                    // reads as "happening right now" — right for Warmer's
+                    // daily puzzle, wrong for a past-tense "shipped 4mo ago"
+                    // fact (even though the value itself is ISR-refreshed).
+                    // Reserved for the genuinely present-tense case; every
+                    // other dateline gets the hero badge's existing static
+                    // dot instead of a new, unpulsed variant.
+                    dateline.includes("live today") && "live-dot"
+                  )}
                 />
                 {dateline}
               </span>
