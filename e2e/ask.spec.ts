@@ -100,6 +100,21 @@ test.describe("/ask", () => {
     const input = page.getByLabel("Ask a question about Gaurav's work");
     await expect(input).toHaveValue(LAST_CHIP);
   });
+
+  test("follow-up chips exclude a question already asked in this conversation", async ({
+    page,
+  }) => {
+    await page.goto("/ask");
+    await page.getByRole("button", { name: LAST_CHIP }).click();
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.getByText("Thinking…")).toHaveCount(0, { timeout: 20_000 });
+
+    // The turn itself still shows the asked question as its own bubble —
+    // this checks specifically the *follow-up chip row* below the
+    // transcript, which must not reoffer it.
+    await expect(page.getByText("Or ask about:")).toBeVisible();
+    await expect(page.getByRole("button", { name: LAST_CHIP })).toHaveCount(0);
+  });
 });
 
 /**

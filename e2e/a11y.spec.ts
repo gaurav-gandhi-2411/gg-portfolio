@@ -146,3 +146,25 @@ test("axe: zero violations while a filtered view AND hover are both active", asy
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
+
+/**
+ * UI/UX wave (2026-07-30) — the /ask route's own axe test above only ever
+ * scans the empty pre-question state; the answered state has new markup
+ * this wave added (the aria-hidden animated paragraph + its sr-only
+ * full-text twin, see components/chatbot/ask-panel.tsx's TurnAnswer, and
+ * the "Or ask about:" follow-up chip row). gotoSettled's reduced-motion
+ * emulation also makes useAnswerReveal skip the animation entirely
+ * (shouldReallyAnimate reads matchMedia directly), so the answer renders
+ * complete on the same tick — nothing to race here either.
+ */
+test("axe: zero violations on /ask after a turn completes (answer + follow-ups visible)", async ({
+  page,
+}) => {
+  await gotoSettled(page, "/ask");
+  const input = page.getByLabel("Ask a question about Gaurav's work");
+  await input.fill("What is Gaurav's current role and background?");
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByText("Thinking…")).toHaveCount(0, { timeout: 20_000 });
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
