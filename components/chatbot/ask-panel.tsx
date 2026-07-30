@@ -45,6 +45,28 @@ interface ConversationTurn {
 
 type Status = "idle" | "loading" | "error";
 
+// Matches the route's own `maxDuration = 30` (app/api/chat/route.ts) — the
+// client gives up at the same point the server would already have, so a
+// timeout here always means "the server-side bound was hit or exceeded,"
+// never "gave up early on a request that was about to succeed."
+const REQUEST_TIMEOUT_MS = 30_000;
+
+/**
+ * The four ways asking a question can genuinely fail, each with its own
+ * honest, specific message — rather than one generic "check your
+ * connection" that blames the user for a server fault. Rate-limit (429)
+ * and no-answer (refused:true, 200) are NOT failure states: both are
+ * well-formed answers from the route and render as normal conversation
+ * turns, not this banner.
+ */
+const ERROR_MESSAGES: Record<"offline" | "timeout" | "server" | "network", string> = {
+  offline: "You appear to be offline. Check your connection and try again.",
+  timeout: "The assistant is taking longer than expected. Please try again in a moment.",
+  server:
+    "Something went wrong on our end reaching the assistant. It's been logged — please try again shortly.",
+  network: "Couldn't reach the assistant — there may be a network issue. Please try again.",
+};
+
 // 4-5 starter questions spanning project depth, the debugging-story angle,
 // and the two things a recruiter/hiring manager actually wants to know
 // (background, availability) — sourced from content/case-studies/warmer.ts,
@@ -91,6 +113,7 @@ export function AskPanel() {
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<ConversationTurn[]>([]);
   const [status, setStatus] = useState<Status>("idle");
+  const [errorKind, setErrorKind] = useState<keyof typeof ERROR_MESSAGES>("network");
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
 
@@ -100,24 +123,55 @@ export function AskPanel() {
 
     setStatus("loading");
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: trimmed }),
+        signal: controller.signal,
       });
+
+      // A 5xx means the route itself faulted (app/api/chat/route.ts wraps
+      // its pipeline in try/catch and always returns well-formed JSON on
+      // this path — see serverErrorAnswer() — but the status is what marks
+      // it as a fault rather than a normal in-band answer/refusal/rate-limit
+      // turn). Distinct from every other failure mode: this one is ours.
+      if (res.status >= 500) {
+        setErrorKind("server");
+        setStatus("error");
+        return;
+      }
+
       const body = await parseChatResponse(res);
-      if (!body) throw new Error(`/api/chat returned an unparseable response (${res.status})`);
+      if (!body) {
+        // The response didn't even parse into the documented shape —
+        // unexpected regardless of status code, so treat it the same as a
+        // declared server fault rather than a transport failure.
+        setErrorKind("server");
+        setStatus("error");
+        return;
+      }
 
       setTurns((prev) => [...prev, { question: trimmed, ...body }]);
       setQuestion("");
       setStatus("idle");
-    } catch {
+    } catch (err) {
       // Keep the typed question in place so retrying is a single click on
-      // Ask, not a retype — this is a transport failure, not a rejected
-      // question.
+      // Ask, not a retype — every case here is a transport failure, not a
+      // rejected question.
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setErrorKind("timeout");
+      } else if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setErrorKind("offline");
+      } else {
+        setErrorKind("network");
+      }
       setStatus("error");
     } finally {
+      clearTimeout(timeoutId);
       // Focus stays in the input throughout (rule 15a: sensible focus
       // management, never yanked around) — whether the turn succeeded,
       // was refused, or the request errored, the next thing a keyboard
@@ -201,8 +255,7 @@ export function AskPanel() {
 
       {status === "error" ? (
         <p role="alert" className="text-destructive text-sm">
-          Something went wrong reaching the assistant. Please check your connection and try
-          again.
+          {ERROR_MESSAGES[errorKind]}
         </p>
       ) : null}
 

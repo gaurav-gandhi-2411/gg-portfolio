@@ -16,6 +16,9 @@ import { site } from "@/content/site";
 export const REFUSAL_MESSAGE =
   "I don't have grounded information to answer that. I can only answer questions about GG's AI/ML project portfolio, case studies, and experience — try asking about one of those.";
 
+export const SERVER_ERROR_MESSAGE =
+  "Something went wrong on our end handling that question. It's been logged — please try again in a moment.";
+
 export interface ChatCitation {
   sourceRef: string;
   label: string;
@@ -33,6 +36,15 @@ export interface ChatAnswer {
  * failed LLM call, or a response that cited nothing that validates). */
 export function refusalAnswer(): ChatAnswer {
   return { answer: REFUSAL_MESSAGE, citations: [], refused: true };
+}
+
+/** Returned (with an HTTP 500) when the pipeline throws unexpectedly — a
+ * genuine server fault, not a "this question is out of scope" refusal. Kept
+ * textually and (via the route's 500 status) behaviorally distinct from
+ * {@link refusalAnswer} so the client can tell "we don't know" apart from
+ * "we broke" instead of blaming the user's connection for both. */
+export function serverErrorAnswer(): ChatAnswer {
+  return { answer: SERVER_ERROR_MESSAGE, citations: [], refused: true };
 }
 
 export function buildSystemPrompt(): string {
