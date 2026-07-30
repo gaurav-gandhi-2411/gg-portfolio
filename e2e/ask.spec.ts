@@ -35,6 +35,29 @@ test.describe("/ask", () => {
     await expect(page.getByRole("link", { name: "Ask about my work" })).toHaveCount(0);
   });
 
+  /**
+   * Design review caught a real collision the density fix (xl→lg) newly
+   * exposed: the fixed bottom-right launcher can land on top of
+   * case-study-page.tsx's sticky right rail (on-this-page nav, metric,
+   * related-project links) at lg+, making rail links unclickable, not just
+   * visually crowded — that rail only renders at lg+ (`hidden lg:block`),
+   * so the launcher is hidden there in lockstep (chat-launcher.tsx) rather
+   * than computing the rail's variable horizontal position. Below lg the
+   * rail doesn't exist, so the launcher stays visible there unchanged.
+   */
+  test("the chat launcher hides on case-study pages at lg+ (rail collision) but stays visible below lg", async ({
+    page,
+  }) => {
+    await page.goto("/work/triageiq");
+    const launcher = page.getByRole("link", { name: "Ask about my work" });
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(launcher).toBeHidden();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(launcher).toBeVisible();
+  });
+
   test("suggested-question chips are visible, clickable, and populate the input", async ({
     page,
   }) => {
@@ -99,6 +122,21 @@ test.describe("/ask", () => {
     await chip.click();
     const input = page.getByLabel("Ask a question about Gaurav's work");
     await expect(input).toHaveValue(LAST_CHIP);
+  });
+
+  test("follow-up chips exclude a question already asked in this conversation", async ({
+    page,
+  }) => {
+    await page.goto("/ask");
+    await page.getByRole("button", { name: LAST_CHIP }).click();
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.getByText("Thinking…")).toHaveCount(0, { timeout: 20_000 });
+
+    // The turn itself still shows the asked question as its own bubble —
+    // this checks specifically the *follow-up chip row* below the
+    // transcript, which must not reoffer it.
+    await expect(page.getByText("Or ask about:")).toBeVisible();
+    await expect(page.getByRole("button", { name: LAST_CHIP })).toHaveCount(0);
   });
 });
 

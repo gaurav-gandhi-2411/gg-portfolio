@@ -254,7 +254,7 @@ export function HeatToy() {
             setError(false);
             setRetryNonce((n) => n + 1);
           }}
-          className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-card"
+          className="focus-visible:outline-ring rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:bg-card"
         >
           Try again
         </button>
@@ -288,7 +288,7 @@ export function HeatToy() {
         <button
           type="submit"
           disabled={won}
-          className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="focus-visible:outline-ring shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-[opacity,transform] focus-visible:outline-2 focus-visible:outline-offset-2 active:enabled:scale-95 motion-reduce:transition-none motion-reduce:active:enabled:scale-100 hover:opacity-80 disabled:opacity-50"
         >
           Guess
         </button>
@@ -302,7 +302,7 @@ export function HeatToy() {
               <button
                 type="button"
                 onClick={() => submitWord(w)}
-                className="rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs text-foreground transition-colors hover:border-ring"
+                className="focus-visible:outline-ring rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:border-ring"
               >
                 {w}
               </button>

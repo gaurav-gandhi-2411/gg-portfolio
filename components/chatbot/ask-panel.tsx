@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { TransitionLink } from "@/components/transition-link";
 import { cn } from "@/lib/utils";
 
@@ -9,9 +9,15 @@ import { cn } from "@/lib/utils";
  * page (app/ask/page.tsx). Talks directly to POST /api/chat
  * (app/api/chat/route.ts) — no new HTTP client, no client-side retrieval.
  *
- * Deliberately non-streaming (a backend scope decision, see route.ts's own
- * comment) — the loading state is a plain "Thinking…" indicator, not a
- * faked token stream.
+ * Deliberately non-streaming server-side (a backend scope decision, see
+ * route.ts's own comment — citation validation has to run to completion
+ * before anything reaches the client, so there is no partial answer that's
+ * safe to show early). UI/UX wave (2026-07-30): the already-complete,
+ * already-validated answer now reveals progressively on the client
+ * (useAnswerReveal, below) instead of appearing all at once — reads like a
+ * real response arriving, without ever risking showing text that citation
+ * validation would later have stripped. A real answer is never faked or
+ * altered by this — same bytes, paced reveal.
  *
  * A "refused" answer (the API's own honest "I don't have grounded
  * information for that" response, `refused: true`) is a normal, expected
@@ -79,6 +85,53 @@ const SUGGESTED_QUESTIONS = [
   "What roles is Gaurav looking for right now?",
   "Which project's evaluation numbers are the most interesting?",
 ] as const;
+
+// Characters revealed per tick and the tick interval — tuned for a natural
+// reading pace (~190 chars/sec), fast enough that a long answer never feels
+// like it's dragging, slow enough to read as arriving rather than a jump-cut.
+const REVEAL_CHARS_PER_TICK = 4;
+const REVEAL_INTERVAL_MS = 21;
+
+/**
+ * Reveals `fullText` a few characters at a time when `shouldAnimate` is
+ * true, or returns it whole immediately otherwise (including under
+ * prefers-reduced-motion, checked once per mount here rather than via CSS
+ * since this drives actual text content, not just a visual transition).
+ * The effect's dependency array is exactly [fullText, shouldAnimate] — a
+ * parent re-render that doesn't change either (e.g. typing in the input
+ * box while a past turn's `shouldAnimate` prop is still computed as the
+ * same boolean it was last render) does NOT restart or affect an
+ * already-running or already-finished reveal.
+ */
+function useAnswerReveal(fullText: string, shouldAnimate: boolean): string {
+  // This hook only ever mounts client-side in response to a user action
+  // (turns starts empty; nothing here renders during SSR or first paint),
+  // so reading matchMedia directly during render — rather than in an
+  // effect — is safe and avoids a render where the wrong choice was made
+  // before an effect could correct it.
+  const shouldReallyAnimate =
+    shouldAnimate &&
+    typeof window !== "undefined" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const [revealed, setRevealed] = useState(() => (shouldReallyAnimate ? "" : fullText));
+
+  useEffect(() => {
+    if (!shouldReallyAnimate) return;
+    let shown = 0;
+    const id = setInterval(() => {
+      shown += REVEAL_CHARS_PER_TICK;
+      setRevealed(shown >= fullText.length ? fullText : fullText.slice(0, shown));
+      if (shown >= fullText.length) clearInterval(id);
+    }, REVEAL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [fullText, shouldReallyAnimate]);
+
+  // Derived directly from shouldReallyAnimate rather than trusted-forever
+  // state — if a newer turn appends mid-animation (shouldAnimate flips to
+  // false), this immediately reflects the full text with no extra effect.
+  return shouldReallyAnimate ? revealed : fullText;
+}
 
 /**
  * Parses a fetch Response body defensively against the documented
@@ -194,6 +247,13 @@ export function AskPanel() {
 
   const isEmpty = turns.length === 0 && status !== "loading";
 
+  // Follow-ups (below) exclude anything already asked so the same chip
+  // never reoffers a question the visitor just got an answer to. Hidden
+  // entirely once the fixed catalog is exhausted rather than repeating —
+  // this is a small curated set, not an infinite generator.
+  const askedQuestions = new Set(turns.map((t) => t.question));
+  const remainingQuestions = SUGGESTED_QUESTIONS.filter((q) => !askedQuestions.has(q));
+
   return (
     <div className="flex flex-col gap-6">
       <div
@@ -205,48 +265,26 @@ export function AskPanel() {
             <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               Ask a question, or try one of these:
             </p>
-            <ChipRow onPick={handlePickSuggestion} />
+            <ChipRow questions={SUGGESTED_QUESTIONS} onPick={handlePickSuggestion} />
           </div>
         ) : (
           <ol className="flex flex-col gap-5">
             {turns.map((turn, i) => (
-              <li key={i} className="flex flex-col gap-3">
+              <li key={i} className="message-in flex flex-col gap-3">
                 <p className="text-foreground self-end rounded-xl rounded-br-sm bg-secondary px-4 py-2.5 text-sm font-medium">
                   {turn.question}
                 </p>
-                <div
-                  className={cn(
-                    "flex flex-col gap-2 rounded-xl rounded-bl-sm border px-4 py-3 text-sm leading-relaxed",
-                    turn.refused
-                      ? "border-border/60 bg-transparent text-muted-foreground"
-                      : "border-border/60 bg-card text-foreground"
-                  )}
-                >
-                  <p>{turn.answer}</p>
-                  {turn.citations.length > 0 ? (
-                    <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 border-t border-border/40 pt-2">
-                      {turn.citations.map((c) => (
-                        <li key={c.sourceRef} className="font-mono text-xs">
-                          {c.url ? (
-                            <TransitionLink
-                              href={c.url}
-                              className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-                            >
-                              {c.label}
-                            </TransitionLink>
-                          ) : (
-                            <span className="text-muted-foreground">{c.label}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
+                <TurnAnswer turn={turn} shouldAnimate={i === turns.length - 1} />
               </li>
             ))}
             {status === "loading" ? (
-              <li className="text-muted-foreground self-start rounded-xl rounded-bl-sm border border-border/60 px-4 py-3 text-sm">
-                Thinking…
+              <li className="message-in text-muted-foreground self-start rounded-xl rounded-bl-sm border border-border/60 px-4 py-3 text-sm">
+                <span className="sr-only">Thinking…</span>
+                <span aria-hidden="true" className="flex items-center gap-1 py-0.5">
+                  <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
+                  <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
+                  <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
+                </span>
               </li>
             ) : null}
           </ol>
@@ -259,7 +297,12 @@ export function AskPanel() {
         </p>
       ) : null}
 
-      {!isEmpty ? <ChipRow onPick={handlePickSuggestion} compact /> : null}
+      {!isEmpty && status !== "loading" && remainingQuestions.length > 0 ? (
+        <div className="message-in flex flex-col gap-2">
+          <p className="text-muted-foreground text-xs">Or ask about:</p>
+          <ChipRow questions={remainingQuestions} onPick={handlePickSuggestion} compact />
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="flex gap-2">
         <label htmlFor={inputId} className="sr-only">
@@ -277,7 +320,7 @@ export function AskPanel() {
         <button
           type="submit"
           disabled={status === "loading" || question.trim().length === 0}
-          className="bg-accent text-accent-foreground shrink-0 rounded-md px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-accent text-accent-foreground focus-visible:outline-ring shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ask
         </button>
@@ -286,10 +329,69 @@ export function AskPanel() {
   );
 }
 
+/**
+ * One conversation turn's assistant bubble. Reveals `turn.answer`
+ * progressively via useAnswerReveal when it's the newest turn (see that
+ * hook's own doc comment for why re-renders can't restart or disturb an
+ * in-progress or finished reveal). Citations wait for the reveal to finish
+ * before appearing — showing "what this is grounded in" before the answer
+ * itself has finished arriving would read backwards.
+ */
+function TurnAnswer({
+  turn,
+  shouldAnimate,
+}: {
+  turn: ConversationTurn;
+  shouldAnimate: boolean;
+}) {
+  const revealed = useAnswerReveal(turn.answer, shouldAnimate);
+  const isFullyRevealed = revealed.length === turn.answer.length;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-2 rounded-xl rounded-bl-sm border px-4 py-3 text-sm leading-relaxed",
+        turn.refused
+          ? "border-border/60 bg-transparent text-muted-foreground"
+          : "border-border/60 bg-card text-foreground"
+      )}
+    >
+      {/* The animated paragraph updates every ~21ms while revealing, which
+          would otherwise spam a screen reader with dozens of partial-text
+          announcements from the ancestor aria-live region — hidden from
+          the accessibility tree entirely. The sr-only paragraph carries the
+          complete, final answer from the start, so AT users get one atomic
+          announcement immediately, same as before this reveal existed. */}
+      <p aria-hidden="true">{revealed}</p>
+      <p className="sr-only">{turn.answer}</p>
+      {turn.citations.length > 0 && isFullyRevealed ? (
+        <ul className="message-in mt-1 flex flex-wrap gap-x-4 gap-y-1 border-t border-border/40 pt-2">
+          {turn.citations.map((c) => (
+            <li key={c.sourceRef} className="font-mono text-xs">
+              {c.url ? (
+                <TransitionLink
+                  href={c.url}
+                  className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                >
+                  {c.label}
+                </TransitionLink>
+              ) : (
+                <span className="text-muted-foreground">{c.label}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function ChipRow({
+  questions,
   onPick,
   compact = false,
 }: {
+  questions: readonly string[];
   onPick: (question: string) => void;
   compact?: boolean;
 }) {
@@ -300,12 +402,12 @@ function ChipRow({
         compact ? "justify-start" : "justify-center"
       )}
     >
-      {SUGGESTED_QUESTIONS.map((q) => (
+      {questions.map((q) => (
         <button
           key={q}
           type="button"
           onClick={() => onPick(q)}
-          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground rounded-full border px-3 py-1.5 text-left text-xs transition-colors motion-reduce:transition-none"
+          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring rounded-full border px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           {q}
         </button>

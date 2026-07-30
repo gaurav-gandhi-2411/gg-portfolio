@@ -8,10 +8,10 @@ import { researchPapers } from "@/content/research";
  * Wave 6: title, the abstract's thesis sentence in the body voice
  * (verbatim excerpt), and a one-line status in plain language.
  *
- * Wave 13 — desktop composition: at xl the paper splits into a two-column
+ * Wave 13 — desktop composition: at lg the paper splits into a two-column
  * spread (title + status + links left, thesis right), filling the
- * 1280–1600px band with the same content instead of stacking it in a
- * narrow strand. Below xl, unchanged.
+ * 1024–1600px band with the same content instead of stacking it in a
+ * narrow strand. Below lg, unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave).
  */
 export function Research() {
   return (
@@ -20,9 +20,9 @@ export function Research() {
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
-            className="flex flex-col gap-3 xl:grid xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] xl:gap-x-14 xl:gap-y-0"
+            className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
           >
-            <div className="contents xl:flex xl:flex-col xl:gap-3">
+            <div className="contents lg:flex lg:flex-col lg:gap-3">
               <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
                 {paper.title}
               </h3>
@@ -33,7 +33,7 @@ export function Research() {
                   : "Published and citable."}
               </p>
 
-              <p className="order-last flex flex-wrap gap-5 text-sm xl:order-none xl:mt-auto">
+              <p className="order-last flex flex-wrap gap-5 text-sm lg:order-none lg:mt-auto">
                 {paper.arxivUrl && <InlineLink href={paper.arxivUrl}>arXiv ↗</InlineLink>}
                 <InlineLink href={paper.repoUrl}>Repo ↗</InlineLink>
                 {/* Wave 12: the benchmark behind the paper has its own case study. */}

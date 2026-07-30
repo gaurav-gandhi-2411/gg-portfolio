@@ -10,10 +10,10 @@ import { site } from "@/content/site";
  * treatment: company cards with role, dates, location, every impact
  * bullet, and a tech-chip row per company.
  *
- * Wave 13 — desktop composition: at xl each card splits into a meta rail
+ * Wave 13 — desktop composition: at lg each card splits into a meta rail
  * (company, dates, location, tech) beside the bullet column — the classic
- * resume geometry — so the card's width at 1280–1600px is carrying
- * information, not padding. Below xl the wave-12 layout is unchanged.
+ * resume geometry — so the card's width at 1024–1600px is carrying
+ * information, not padding. Below lg the wave-12 layout is unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave — see section.tsx).
  */
 export function Experience() {
   return (
@@ -27,9 +27,9 @@ export function Experience() {
             {/* 16rem rail: the longest tech chip ("Bayesian Change-Point
                 Detection") wrapped into a stretched capsule at 14rem
                 (design-review finding 3). */}
-            <div className="xl:grid xl:grid-cols-[16rem_minmax(0,1fr)] xl:gap-x-10">
+            <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-x-10">
               <div>
-                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 xl:flex-col xl:gap-y-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 lg:flex-col lg:gap-y-2">
                   <h3 className="font-heading text-lead font-semibold text-foreground">
                     {entry.company}
                   </h3>
@@ -37,12 +37,12 @@ export function Experience() {
                     {entry.dateRange}
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1 text-sm xl:mt-2">
+                <p className="text-muted-foreground mt-1 text-sm lg:mt-2">
                   {entry.companyDetail ? `${entry.companyDetail} · ` : ""}
                   {entry.location}
                 </p>
 
-                <p className="mt-6 hidden flex-wrap gap-2 xl:flex">
+                <p className="mt-6 hidden flex-wrap gap-2 lg:flex">
                   {entry.techChips.map((chip) => (
                     <span
                       key={chip}
@@ -54,7 +54,7 @@ export function Experience() {
                 </p>
               </div>
 
-              <div className="mt-5 flex flex-col gap-5 xl:mt-0">
+              <div className="mt-5 flex flex-col gap-5 lg:mt-0">
                 {entry.subRoles?.map((role) => {
                   const showDates =
                     (entry.subRoles?.length ?? 0) > 1 || role.dateRange !== entry.dateRange;
@@ -85,7 +85,7 @@ export function Experience() {
               </div>
             </div>
 
-            <p className="mt-6 flex flex-wrap gap-2 xl:hidden">
+            <p className="mt-6 flex flex-wrap gap-2 lg:hidden">
               {entry.techChips.map((chip) => (
                 <span
                   key={chip}

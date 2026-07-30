@@ -52,7 +52,7 @@ export default async function CategoryProjectsPage({
   return (
     <main
       id="main"
-      className="mx-auto w-full max-w-3xl flex-1 px-6 pt-12 pb-20 md:pt-16 xl:max-w-5xl"
+      className="mx-auto w-full max-w-3xl flex-1 px-6 pt-12 pb-20 md:pt-16 lg:max-w-5xl"
     >
       <div className="flex flex-col items-center text-center">
         <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
@@ -75,7 +75,7 @@ export default async function CategoryProjectsPage({
       <div className="mt-10">
         <RevealGroup
           mode="onview"
-          className="project-grid mt-6 grid gap-4 xl:grid-cols-2 xl:gap-5"
+          className="project-grid mt-6 grid gap-4 lg:grid-cols-2 lg:gap-5"
         >
           {matching.map((product) => (
             <ProjectCard

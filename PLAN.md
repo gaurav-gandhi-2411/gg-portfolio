@@ -4,6 +4,43 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## UI/UX pass — desktop density, "feels alive," chatbot streaming (2026-07-30, draft PR pending GG's merge + design-reviewer sign-off)
+
+Branch `feat/uiux-live-pass`, off `main` post the chatbot hotfix. Full report:
+`reports/uiux-live-pass-2026-07-30.md`. Three commits:
+
+1. **Desktop density root cause** (`91b3db5`): wave 13's own desktop-composition pass
+   anchored the shared container width step to `xl` (1280px), not just the column-split
+   toggles — so 1024–1279px got the tablet layout, reproducing GG's exact standing
+   complaint. Moved the whole system (10 files) from `xl` to `lg` in lockstep.
+2. **Chatbot alive** (`1ddecd3`): client-side progressive reveal of the already-validated
+   answer (route.ts's non-streaming design stays — citation validation can't run on partial
+   output), real typing dots, message fade-in, follow-ups that exclude already-asked
+   questions, focus/press states on the Ask button and chips (previously had none).
+3. **Interaction feedback + live-data signal, site-wide** (`7df1ba2`): every embedded demo
+   widget (heat-toy, TriageIQ classifier toy + disclosure) was missing the focus-visible +
+   active-press pattern every "core" element already has; project-card datelines are
+   genuinely live-fetched data now marked with a small pulsing dot (hero's existing
+   availability-badge language, not a new one).
+
+Verified after every commit: typecheck/lint/build clean, full Playwright suite (74 desktop +
+72 mobile) green, axe zero-violations unchanged on all 22 routes. Lighthouse 100/96/100/100
+(a11y/best-practices/SEO/agentic) on `/`, `/ask`, `/projects` — the 96 is Vercel's own
+analytics scripts 404ing locally, not a real regression. LCP 323ms, CLS 0.00 on `/`. Eager JS
+169,504 B gzip vs. the 220,160 B ceiling (chunk-sum method, matching prior waves).
+
+**Design-reviewer sign-off:** first pass blocked on one real, evidenced issue — this wave's
+own `xl→lg` density fix newly exposed a collision between the fixed chat-launcher pill and
+case-study-page.tsx's sticky rail at 1024–1440px (rail links became unclickable, not just
+crowded). Fixed (`97bd728`): launcher hides on `/work/[slug]` at the rail's own `lg`
+breakpoint. Both non-blocking suggestions (the `.live-dot` pulse read as "happening now" on
+every card, including past-tense ones; a screenshot mislabeled as the typing state) also
+addressed. Follow-up review verified the fix directly (not the claim) and signed off:
+**approved with suggestions**. One tradeoff recorded rather than silently absorbed: case-
+study readers at lg+ lose the corner chatbot entry point on that page — judged acceptable
+given the rail's existing CTAs, flagged to revisit if usage data ever shows it costing the
+chatbot funnel.
+
 ## Hotfix — production /api/chat 500s (2026-07-30, draft PR pending GG's merge)
 
 GG reported the `/ask` chatbot broken in production with a generic "check your connection"
