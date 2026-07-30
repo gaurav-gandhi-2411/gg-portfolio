@@ -29,8 +29,17 @@ Verified after every commit: typecheck/lint/build clean, full Playwright suite (
 analytics scripts 404ing locally, not a real regression. LCP 323ms, CLS 0.00 on `/`. Eager JS
 169,504 B gzip vs. the 220,160 B ceiling (chunk-sum method, matching prior waves).
 
-**Still open:** design-reviewer sign-off (required for a T2-product UI wave per the
-standing rule) and the draft PR.
+**Design-reviewer sign-off:** first pass blocked on one real, evidenced issue — this wave's
+own `xl→lg` density fix newly exposed a collision between the fixed chat-launcher pill and
+case-study-page.tsx's sticky rail at 1024–1440px (rail links became unclickable, not just
+crowded). Fixed (`97bd728`): launcher hides on `/work/[slug]` at the rail's own `lg`
+breakpoint. Both non-blocking suggestions (the `.live-dot` pulse read as "happening now" on
+every card, including past-tense ones; a screenshot mislabeled as the typing state) also
+addressed. Follow-up review verified the fix directly (not the claim) and signed off:
+**approved with suggestions**. One tradeoff recorded rather than silently absorbed: case-
+study readers at lg+ lose the corner chatbot entry point on that page — judged acceptable
+given the rail's existing CTAs, flagged to revisit if usage data ever shows it costing the
+chatbot funnel.
 
 ## Hotfix — production /api/chat 500s (2026-07-30, draft PR pending GG's merge)
 

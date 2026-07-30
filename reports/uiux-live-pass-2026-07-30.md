@@ -107,6 +107,36 @@ Commit `7df1ba2`.
 Screenshots: `reports/screenshots/uiux-audit/` (breakpoint survey, before/after density
 comparison, chatbot typing indicator).
 
+## Design-reviewer sign-off (required for this T2 product)
+
+First pass found one real, evidenced **blocking** issue: this wave's own `xl→lg` density fix
+newly exposed a collision between the fixed bottom-right `ChatLauncher` pill and
+`case-study-page.tsx`'s sticky right rail at 1024–1440px — the launcher could sit directly
+over "Source on GitHub" and the related-projects links, intercepting clicks, not just
+crowding the view. Confirmed in the review's own crop of this wave's `case-study-1024-
+fixed.png`. Fixed (`97bd728`): the launcher now hides itself specifically on `/work/[slug]`
+at the exact same `lg` breakpoint the rail itself uses (`hidden lg:block`), rather than
+computing the rail's variable horizontal position — same token on both sides, can't drift
+out of sync. Verified with new screenshots (launcher absent + rail fully clickable at 1024px;
+launcher still visible at 390px where the rail doesn't exist) and a new Playwright test.
+
+Also addressed both non-blocking suggestions from the same pass: `.live-dot`'s pulse is now
+reserved for the genuinely present-tense "puzzle #N live today" case (every past-tense
+"shipped Nd/mo/y ago" dateline gets a static dot — a continuously-pulsing dot on 13
+simultaneous past-tense cards on /projects overloaded the "live" signal); the misleading
+typing-indicator screenshot (which didn't actually show the typing state after a second
+capture attempt under throttling) was removed rather than kept with a wrong caption.
+
+A follow-up review verified the fix against the actual code, both screenshots, and the new
+test (not just the commit message's claim) and signed off: **approved with suggestions**.
+One tradeoff was named as a recorded decision rather than a silent regression: case-study
+readers at lg+ (1024px+) now have no path to the chatbot from that page — they'd need to
+navigate back to `/` or `/projects`, where the launcher is untouched. Judged acceptable given
+the rail's own existing CTAs (try-it link, source, "Work with me"), but flagged to revisit if
+usage data ever shows the chatbot funnel dropping specifically from case-study traffic — e.g.
+by adding a text-link fallback to `/ask` inside the rail's own CTA stack instead of relying
+solely on the corner pill.
+
 ## Aside, unrelated to this wave
 
 Two pre-existing uncommitted files found in the working tree at session start
