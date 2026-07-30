@@ -50,7 +50,13 @@ export function ProjectCard({
               </TransitionLink>
             </Heading>
             {dateline && (
-              <span className="text-muted-foreground font-mono text-xs">{dateline}</span>
+              <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-xs">
+                <span
+                  aria-hidden="true"
+                  className="bg-accent live-dot inline-block size-1.5 shrink-0 rounded-full"
+                />
+                {dateline}
+              </span>
             )}
           </div>
 

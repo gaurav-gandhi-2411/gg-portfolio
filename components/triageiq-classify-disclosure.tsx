@@ -27,7 +27,7 @@ export function TriageiqClassifyDisclosure() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={TRIAGEIQ_PANEL_ID}
-        className="text-muted-foreground hover:text-accent border-border/40 mt-4 flex items-center gap-1.5 border-t pt-4 text-left text-xs underline decoration-1 underline-offset-4 transition-colors motion-reduce:transition-none"
+        className="text-muted-foreground hover:text-accent focus-visible:outline-ring border-border/40 mt-4 flex items-center gap-1.5 border-t pt-4 text-left text-xs underline decoration-1 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
       >
         {open ? "Hide" : "Try"} a live illustrative classifier (not the production model)
         <span aria-hidden>{open ? "▲" : "▼"}</span>

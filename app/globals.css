@@ -444,14 +444,38 @@ p {
 }
 
 /*
- * ── UI/UX wave (2026-07-30): the /ask chat feeling alive ────────────────
- * Three small, cheap animations rather than a redesign — a new assistant
- * turn fades/slides in instead of popping into existence, and the
- * "Thinking…" wait gets real bouncing dots instead of static text (see
- * components/chatbot/ask-panel.tsx for the reveal-on-arrival logic, which
- * is plain React state, not CSS). All motion-reduce-gated per the
- * site-wide convention above.
+ * ── UI/UX wave (2026-07-30) ──────────────────────────────────────────────
+ * A few small, cheap animations rather than a redesign. All
+ * motion-reduce-gated per the site-wide convention above.
  */
+
+/* Marks a value as live-fetched data (project-card.tsx's dateline — ISR
+ * freshness/GitHub push activity, not a hand-typed date) with the same
+ * accent-dot visual language the hero's availability badge already uses,
+ * given a gentle breathing pulse rather than the hero badge's static dot —
+ * one small, consistent "this is live" signal, not a new visual language. */
+.live-dot {
+  animation: live-pulse 2.4s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* The /ask chat feeling alive: a new assistant turn fades/slides in
+ * instead of popping into existence, and the "Thinking…" wait gets real
+ * bouncing dots instead of static text (see components/chatbot/ask-panel.tsx
+ * for the reveal-on-arrival logic, which is plain React state, not CSS). */
 .message-in {
   animation: message-in 0.28s cubic-bezier(0.33, 1, 0.68, 1);
 }

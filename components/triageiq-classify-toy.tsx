@@ -108,7 +108,7 @@ export function TriageiqClassifyToy() {
             key={s.number}
             type="button"
             onClick={() => classify(s.title)}
-            className="border-border bg-card hover:border-accent/40 rounded-md border px-2.5 py-1 text-left font-mono text-xs"
+            className="border-border bg-card hover:border-accent/40 focus-visible:outline-ring rounded-md border px-2.5 py-1 text-left font-mono text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
             title={s.url}
           >
             {s.repo} #{s.number}
@@ -137,7 +137,7 @@ export function TriageiqClassifyToy() {
         />
         <button
           type="submit"
-          className="bg-primary text-primary-foreground shrink-0 rounded-md px-4 py-2 text-sm font-medium"
+          className="bg-primary text-primary-foreground focus-visible:outline-ring shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           Classify
         </button>
