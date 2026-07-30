@@ -29,10 +29,18 @@ import {
   buildSystemPrompt,
   buildUserPrompt,
   refusalAnswer,
+  serverErrorAnswer,
   type ChatAnswer,
 } from "@/lib/chatbot/answer";
 
 const MAX_QUESTION_LENGTH = 500;
+
+// Bounds worst-case latency (cold-start local embedding load + retrieval +
+// the Groq call) well under Vercel's 300s function default — a chat demo
+// has no business holding a request open that long, and this gives the
+// client's own AbortController timeout (components/chatbot/ask-panel.tsx)
+// something to race against that the function itself also enforces.
+export const maxDuration = 30;
 
 // Portfolio demo traffic, not a production API with paying users — 10
 // requests per 10-minute window per client is generous for a real visitor
@@ -122,74 +130,102 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
     );
   }
 
-  const { chunks, maxScore } = await retrieve(question);
-  const retrievedSourceRefs = chunks.map((c) => c.sourceRef);
+  // Everything from here on can throw for reasons that have nothing to do
+  // with the question itself (the local embedding pipeline failing to load,
+  // a Groq client exception escaping its own fail-soft wrapper, a future
+  // regression) — a genuine server fault, not a "can't answer that"
+  // refusal. Without this boundary, an uncaught exception here means Next
+  // renders its own HTML error page instead of JSON, which is exactly what
+  // ask-panel.tsx's fetch can't parse — surfacing as the client's generic
+  // "check your connection" message for what is actually a server bug.
+  // Catching it here keeps every response well-formed JSON and logs the
+  // real exception (message + stack) against requestId so a report of "the
+  // assistant is broken" is diagnosable from `vercel logs` alone, no repro
+  // needed.
+  try {
+    const { chunks, maxScore } = await retrieve(question);
+    const retrievedSourceRefs = chunks.map((c) => c.sourceRef);
 
-  // Refusal gate: below threshold (or nothing retrieved), refuse without
-  // spending an LLM call at all — the honest answer and the cheap answer are
-  // the same answer here.
-  if (chunks.length === 0 || maxScore < RETRIEVAL_THRESHOLD) {
-    console.log(
+    // Refusal gate: below threshold (or nothing retrieved), refuse without
+    // spending an LLM call at all — the honest answer and the cheap answer
+    // are the same answer here.
+    if (chunks.length === 0 || maxScore < RETRIEVAL_THRESHOLD) {
+      console.log(
+        JSON.stringify({
+          requestId,
+          question,
+          retrievedSourceRefs,
+          refused: true,
+          citationCount: 0,
+          latencyMs: Date.now() - startedAt,
+          usdCost: 0,
+          tokensIn: 0,
+          tokensOut: 0,
+          provider: "none",
+          model: "none",
+        })
+      );
+      return NextResponse.json(refusalAnswer());
+    }
+
+    const systemPrompt = buildSystemPrompt();
+    const userPrompt = buildUserPrompt(question, chunks);
+    const completion = await groqProvider.complete(systemPrompt, userPrompt);
+
+    if (!completion) {
+      console.log(
+        JSON.stringify({
+          requestId,
+          question,
+          retrievedSourceRefs,
+          refused: true,
+          citationCount: 0,
+          latencyMs: Date.now() - startedAt,
+          usdCost: 0,
+          tokensIn: 0,
+          tokensOut: 0,
+          provider: "groq",
+          model: "llama-3.3-70b-versatile",
+        })
+      );
+      return NextResponse.json(refusalAnswer());
+    }
+
+    // Single source of truth for citation validation + the refusal decision
+    // — see lib/chatbot/answer.ts. evals/chatbot/run-eval.mjs calls this
+    // exact same function against cassette-recorded (or live) Groq
+    // responses, so the eval can never silently drift from what this route
+    // actually does.
+    const result = buildAnswer(completion.content, chunks);
+
+    const latencyMs = Date.now() - startedAt;
+    const logFields = {
+      requestId,
+      question,
+      retrievedSourceRefs,
+      citationCount: result.citations.length,
+      latencyMs,
+      usdCost: completion.usdCost,
+      tokensIn: completion.tokensIn,
+      tokensOut: completion.tokensOut,
+      provider: completion.provider,
+      model: completion.model,
+    };
+
+    console.log(JSON.stringify({ ...logFields, refused: result.refused }));
+    return NextResponse.json(result);
+  } catch (err) {
+    const error = err as Error;
+    console.error(
       JSON.stringify({
         requestId,
         question,
-        retrievedSourceRefs,
-        refused: true,
-        citationCount: 0,
         latencyMs: Date.now() - startedAt,
-        usdCost: 0,
-        tokensIn: 0,
-        tokensOut: 0,
-        provider: "none",
-        model: "none",
+        errorName: error?.name ?? "Error",
+        errorMessage: error?.message ?? String(err),
+        stack: error?.stack,
       })
     );
-    return NextResponse.json(refusalAnswer());
+    return NextResponse.json(serverErrorAnswer(), { status: 500 });
   }
-
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(question, chunks);
-  const completion = await groqProvider.complete(systemPrompt, userPrompt);
-
-  if (!completion) {
-    console.log(
-      JSON.stringify({
-        requestId,
-        question,
-        retrievedSourceRefs,
-        refused: true,
-        citationCount: 0,
-        latencyMs: Date.now() - startedAt,
-        usdCost: 0,
-        tokensIn: 0,
-        tokensOut: 0,
-        provider: "groq",
-        model: "llama-3.3-70b-versatile",
-      })
-    );
-    return NextResponse.json(refusalAnswer());
-  }
-
-  // Single source of truth for citation validation + the refusal decision —
-  // see lib/chatbot/answer.ts. evals/chatbot/run-eval.mjs calls this exact
-  // same function against cassette-recorded (or live) Groq responses, so the
-  // eval can never silently drift from what this route actually does.
-  const result = buildAnswer(completion.content, chunks);
-
-  const latencyMs = Date.now() - startedAt;
-  const logFields = {
-    requestId,
-    question,
-    retrievedSourceRefs,
-    citationCount: result.citations.length,
-    latencyMs,
-    usdCost: completion.usdCost,
-    tokensIn: completion.tokensIn,
-    tokensOut: completion.tokensOut,
-    provider: completion.provider,
-    model: completion.model,
-  };
-
-  console.log(JSON.stringify({ ...logFields, refused: result.refused }));
-  return NextResponse.json(result);
 }

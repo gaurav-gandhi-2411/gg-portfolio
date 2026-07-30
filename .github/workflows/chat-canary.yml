@@ -1,0 +1,129 @@
+# Wave 16 hotfix — uptime canary for /api/chat. The route crashed in
+# production for 4 days (missing onnxruntime-node native binary; see
+# next.config.ts's outputFileTracingIncludes and lib/chatbot/answer.ts's
+# serverErrorAnswer()) before GG found it by hand asking the chatbot
+# himself — nothing was watching. This closes that gap: a real question,
+# hitting the real production route, checked end to end (not just "did it
+# return 200" — a route that's silently fail-soft-refusing everything due
+# to a missing key or a broken retrieval index would still 200 and should
+# still page).
+#
+# Same fail-soft, stable-title, update-in-place issue pattern as the other
+# scheduled checks in metrics-refresh.yml.
+
+name: Chat canary
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch:
+
+concurrency:
+  group: chat-canary
+  cancel-in-progress: true
+
+permissions:
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the production chatbot a real, answerable question
+        id: probe
+        run: |
+          RESPONSE_FILE=$(mktemp)
+          HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
+            --max-time 45 \
+            -X POST "https://gaurav-gandhi.vercel.app/api/chat" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"What is Gaurav'"'"'s current role and background?"}' \
+            || echo "000")
+
+          echo "http_status=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
+          BODY=$(cat "$RESPONSE_FILE")
+          # GITHUB_OUTPUT can't hold raw newlines/quotes safely — heredoc form.
+          {
+            echo "body<<CANARY_BODY_EOF"
+            echo "$BODY"
+            echo "CANARY_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "non-200 status: $HTTP_STATUS"
+            exit 1
+          fi
+
+          # A 200 with refused:true or zero citations means the pipeline
+          # isn't actually answering (e.g. GROQ_API_KEY missing/revoked, or
+          # the retrieval index broken) — this is a genuinely answerable
+          # question, so that's still a real failure, not a normal refusal.
+          echo "$BODY" | node -e '
+            let d = "";
+            process.stdin.on("data", c => (d += c));
+            process.stdin.on("end", () => {
+              let parsed;
+              try {
+                parsed = JSON.parse(d);
+              } catch {
+                console.error("response body did not parse as JSON");
+                process.exit(1);
+              }
+              if (parsed.refused !== false || !Array.isArray(parsed.citations) || parsed.citations.length === 0) {
+                console.error("pipeline did not produce a grounded answer:", JSON.stringify(parsed));
+                process.exit(1);
+              }
+              console.log("canary OK:", parsed.answer.slice(0, 120));
+            });
+          '
+
+      - name: Open/update the failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HTTP_STATUS: ${{ steps.probe.outputs.http_status }}
+          RESPONSE_BODY: ${{ steps.probe.outputs.body }}
+        run: |
+          TITLE="Chat canary failing: /api/chat is not answering"
+          BODY=$(cat <<EOF
+          The scheduled canary (.github/workflows/chat-canary.yml) POSTed a
+          real, answerable question to https://gaurav-gandhi.vercel.app/api/chat
+          and did not get back a grounded answer.
+
+          - **When:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          - **HTTP status:** \`${HTTP_STATUS:-000}\`
+          - **Response body:**
+
+          \`\`\`
+          ${RESPONSE_BODY:-(no response — request may have timed out or failed to connect)}
+          \`\`\`
+
+          Check \`vercel logs\` / Vercel's runtime error dashboard for the
+          actual server-side exception (route.ts logs requestId + stack on
+          every 500 — see lib/chatbot/answer.ts's serverErrorAnswer()).
+          Closing this issue is fine once fixed; the next scheduled run
+          reopens it automatically if it's still broken, and this workflow
+          auto-closes it once a run succeeds.
+          EOF
+          )
+
+          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Auto-close the failure issue if this run succeeded
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="Chat canary failing: /api/chat is not answering"
+          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Canary run succeeded — /api/chat is answering again. Closing."
+            gh issue close "$existing"
+          fi

@@ -101,3 +101,89 @@ test.describe("/ask", () => {
     await expect(input).toHaveValue(LAST_CHIP);
   });
 });
+
+/**
+ * The bug this suite exists to prevent regressing: production /api/chat
+ * crashed (missing onnxruntime-node native binary — see next.config.ts's
+ * outputFileTracingIncludes), and every visitor saw "Something went wrong
+ * reaching the assistant. Please check your connection and try again" —
+ * blaming their connection for a server fault. ask-panel.tsx now
+ * distinguishes four real failure modes with honest, specific messages
+ * (lib/chatbot/answer.ts's serverErrorAnswer() backs the "server" case
+ * server-side). Each test here forces one specific failure via route
+ * interception — not a real network condition — so it's deterministic and
+ * fast in CI.
+ */
+test.describe("/ask error handling", () => {
+  async function submitAnyQuestion(page: import("@playwright/test").Page): Promise<void> {
+    await page.goto("/ask");
+    const input = page.getByLabel("Ask a question about Gaurav's work");
+    await input.fill("Any question");
+    await page.getByRole("button", { name: "Ask" }).click();
+  }
+
+  test("a well-formed 5xx from the route shows the server-fault message, not a connection message", async ({
+    page,
+  }) => {
+    await page.route("**/api/chat", (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: "Something went wrong on our end handling that question.",
+          citations: [],
+          refused: true,
+        }),
+      })
+    );
+    await submitAnyQuestion(page);
+    await expect(page.locator('p[role="alert"]')).toHaveText(
+      /went wrong on our end reaching the assistant/i
+    );
+  });
+
+  test("a crashed response that doesn't parse (Next's own HTML error page) shows the server-fault message", async ({
+    page,
+  }) => {
+    await page.route("**/api/chat", (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "text/html",
+        body: "<html><body>Internal Server Error</body></html>",
+      })
+    );
+    await submitAnyQuestion(page);
+    await expect(page.locator('p[role="alert"]')).toHaveText(
+      /went wrong on our end reaching the assistant/i
+    );
+  });
+
+  test("a hung request past the client timeout shows the timeout message", async ({ page }) => {
+    await page.route(
+      "**/api/chat",
+      () =>
+        // Never resolves — the AbortController's own 30s bound (ask-panel.tsx's
+        // REQUEST_TIMEOUT_MS) is what ends this, not a real network timeout.
+        new Promise(() => {})
+    );
+    await page.goto("/ask");
+    // Installed after goto (before the timer is created at submit-time) so
+    // the page's initial render is unaffected by the mocked clock.
+    await page.clock.install();
+    const input = page.getByLabel("Ask a question about Gaurav's work");
+    await input.fill("Any question");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await page.clock.fastForward(31_000);
+    await expect(page.locator('p[role="alert"]')).toHaveText(/taking longer than expected/i);
+  });
+
+  test("being offline shows the offline-specific message", async ({ page, context }) => {
+    await page.goto("/ask");
+    await context.setOffline(true);
+    const input = page.getByLabel("Ask a question about Gaurav's work");
+    await input.fill("Any question");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.locator('p[role="alert"]')).toHaveText(/you appear to be offline/i);
+    await context.setOffline(false);
+  });
+});
