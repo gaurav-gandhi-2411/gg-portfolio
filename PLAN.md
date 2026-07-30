@@ -4,6 +4,44 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Hotfix — production /api/chat 500s (2026-07-30, draft PR pending GG's merge)
+
+GG reported the `/ask` chatbot broken in production with a generic "check your connection"
+message. It wasn't the user's connection — two independent server-side bugs, both only
+reachable once wave 16's chatbot actually shipped to Vercel's real runtime (neither is
+visible locally, where node_modules/tmp are writable):
+
+1. `@huggingface/transformers`' onnxruntime-node native binding (`libonnxruntime.so.1`)
+   wasn't in the deployed function bundle — Next's static file-tracing can't see a
+   template-literal `require` path or a `dlopen`'d sibling `.so`. Fixed with
+   `outputFileTracingIncludes` in `next.config.ts`.
+2. Found only after #1 was fixed and the code ran further than ever before: transformers.js's
+   default model-file cache tried to `mkdir` inside its own (read-only on Vercel)
+   `node_modules` directory. Pointed `env.cacheDir` at `os.tmpdir()`.
+3. `GROQ_API_KEY` was set for Production (added when wave 16 shipped) but never for
+   Preview, per `vercel env ls` — closing wave 16's own pending TODO, and meaning no preview
+   deployment could ever have caught this even after a code fix. Added to Preview.
+
+Also fixed the complaint itself: `route.ts` now catches everything and always returns
+well-formed JSON (never Next's raw HTML crash page) with structured `console.error` logging;
+`ask-panel.tsx` distinguishes offline/timeout/server-fault/network instead of one generic
+message. New `chat-canary.yml` (every 6h) catches this class of regression going forward —
+dry-run against the still-broken prod during this fix correctly caught the live 500.
+
+Verified end-to-end on the fix's own Vercel preview (not just locally): real grounded answer
+with a working citation link, refusal path, and all four error states — via direct `curl`,
+the full Playwright suite pointed at the preview URL, and a real Chrome session. Cold-start
+on Vercel's actual network to Hugging Face Hub measured 4.3s (well inside the 30s
+client/server timeout bound chosen). Lighthouse on `/ask`: a11y 100, best-practices 100
+(`reports/lighthouse-chatbot-fix-ask-2026-07-30.report.json`). Branch
+`fix/chatbot-prod-runtime`, off `main` post the a11y-contrast PR (`b04f18f`).
+
+Found and preserved (not authored this session, not investigated) two uncommitted files in
+the working tree at session start — a "wave 17" AetherArt content update
+(`content/case-studies/aetherart.ts`, `content/provenance.md`) — WIP-committed on
+`fix/projects-hover-contrast` rather than touched or discarded. Flagged for GG: looks like
+real, source-verified work that never got its own PR.
+
 ## Wave 16 — state reconciliation, identity-drift detection, portfolio chatbot (code-complete 2026-07-26, pending GG's merge + live eval baseline)
 
 GG's brief: reconcile all 13 projects to ground truth (three rebrands had gone unnoticed);
