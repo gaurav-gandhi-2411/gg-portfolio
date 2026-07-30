@@ -623,6 +623,30 @@ deployment is `expense-tracker-tawny-eight-98.vercel.app`, which matches the rep
 no liveUrl" comment (which pointed at the wrong URL's outage, not this one) was replaced with a
 short note citing this correction.
 
+## Wave 17 (2026-07-30) — AetherArt: HF models live, weight-sweep reversal, measurement-defect methodology
+
+AetherArt's cross-family model-verdict audit (`AetherArt/docs/MODEL_VERDICT.md`, HEAD
+`eeb5f3a` as of this wave) closed since wave 12's case-study entries were written. Five new
+sourced claims added to `content/case-studies/aetherart.ts`; the existing wave-12 rows
+(`aetherart:clip-blindness`, `:checkpoint`, `:lora-quality`, `:360-sweep`, `:tests`,
+`:caveats`, `:int8-surprise`) are untouched and remain valid — this is the SDXL-era LoRA audit,
+a separate (later) body of work from the SD 2.1 CLIP-blindness project those rows describe.
+
+| ID | Claim | Source |
+|---|---|---|
+| `aetherart:validated-recipe` | Recipe: curated dataset → rank-8 LoRA → pre-registered A/B → adapter-weight sweep, sweep not optional — evaluating only at the library-default weight would have ended the Pattachitra adapter's evaluation with a "loses to base" verdict | `AetherArt/docs/MODEL_VERDICT.md` §7 (827-834), §7.4 (1298-1347); `AetherArt/docs/WEIGHT_SWEEP_PREREGISTRATION.md` |
+| `aetherart:pattachitra-weight-sweep` | At `weight=1.0` both checkpoints regress figure_preservation −5.5 to −7.8×SEM vs. `sdxl_base`, no style lift; at `weight=0.3–0.5` (4 operating points, both checkpoints) style_adherence lifts up to +3.622×SEM (ckpt-500/0.3) and +3.482×SEM (ckpt-1000/0.5), figure_preservation improves up to +2.080×SEM (ckpt-500/0.5), no regression | `AetherArt/docs/MODEL_VERDICT.md` §7.3 (1227-1297, table incl. −7.768 row), §7.4 (1298-1332) |
+| `aetherart:ukiyo-promotion-withdrawn` | Curated-retrain promotion (+0.0400, 3.182×SEM under correlated single-call judging) withdrawn once independent-axis scoring reran the same n=90 paired comparison (+0.0078, 0.583×SEM) — below the pre-registered 2×SEM bar. 95% CI [−0.0184, +0.0339]; MDE 0.0374 at 80% power; resolving the observed effect to that precision would need ≈1,963 paired samples (~22× n=90) | `AetherArt/docs/MODEL_VERDICT.md` §4.6 (443-541, table at 487-491), §4.7 (542-576, MDE table at 549-555) |
+| `aetherart:measurement-defects` | 5 silent measurement-validity defects found and fixed over the project's life (judge context-window truncation, phantom VRAM counter, CUDA context corruption, hardcoded judge question, stale reused reference arm); 3 caught only by re-auditing an already-accepted conclusion; the 4th invisible to every automated check built after the first 3. Standalone writeup drafted, not submitted anywhere | `AetherArt/docs/MODEL_VERDICT.md` §7.7 (1419-1483); `AetherArt/docs/paper/measurement_defects.md` (full draft, commit `eeb5f3a`) |
+| `aetherart:hf-models` | 3 published, live HF LoRA adapters: `gauravgandhi2411/aetherart-ukiyo-sdxl`, `gauravgandhi2411/aetherart-ukiyo-sd21`, `gauravgandhi2411/aetherart-pattachitra-sdxl` | Confirmed live via `curl https://huggingface.co/api/models/<id>` for all three, 2026-07-30 (each returns `private: false`) |
+| `aetherart:hf-downloads` | HF API `downloads` field (HF's own rolling **last-30-days** count, not all-time — shown with that caveat, not relabeled as cumulative): ukiyo-e SDXL 124, ukiyo-e SD 2.1 14, Pattachitra SDXL 0 (published most recently in this same audit, per `lastModified: 2026-07-26T06:00:02Z`) | `curl https://huggingface.co/api/models/gauravgandhi2411/<id>` → `.downloads`, fetched 2026-07-30 |
+
+**Not shown as a headline number:** HF's `downloads` field is a 30-day rolling count (confirmed
+by comparing this wave's 124/14 against wave 13's 2026-07-25 API pull of 249/31 for the same two
+models — a drop that only a rolling window explains, not a cumulative counter). Reported as-is,
+labeled precisely ("last 30 days, live via HF API"), rather than presented ambiguously as if it
+were a lifetime total.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
