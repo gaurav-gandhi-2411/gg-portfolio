@@ -185,11 +185,11 @@ export const products: Product[] = [
     name: "Expense Tracker",
     tagline:
       "Multi-user expense tracker that parses entries written in plain language, auto-categorizes them with embeddings, and forecasts spending — built production-shaped, with real auth and migrations.",
-    // liveUrl verified in wave 16 (2026-07-26): matches the repo's own
-    // homepageUrl, confirmed HTTP 200 with a live login page. Wave 15's
-    // report had cited a different URL (...eight-xi-93...) that is dead
-    // (404) — not the correct deployment. See provenance.md.
-    liveUrl: "https://expense-tracker-tawny-eight-98.vercel.app",
+    // Wave 19 (2026-07-31): liveUrl removed. Wave 16 verified this URL live
+    // (2026-07-26); it now 404s with DEPLOYMENT_NOT_FOUND — a second,
+    // distinct frontend outage since that check. A dead link on the live
+    // site is worse than no link; the backend (Cloud Run) is separately
+    // confirmed live. See provenance.md's wave-19 addendum.
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
     categories: ["retrieval", "forecasting"],
     techChips: ["Groq", "Prophet", "IsolationForest"],
