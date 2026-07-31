@@ -2,7 +2,8 @@ import type { CaseStudy } from "../types";
 
 // Sources: multimodal-fashion-recommender repo (README.md,
 // docs/architecture/adr/0001-multi-brand-scaling.md) — see provenance.md's
-// Multimodal Fashion Recommender section.
+// Multimodal Fashion Recommender section. Brand list corrected wave 19
+// (2026-07-31): Virgio went live 2026-07-11, missing from the prior text.
 export const mmfr: CaseStudy = {
   slug: "multimodal-fashion-recommender",
   title: "Multimodal Fashion Recommender",
@@ -16,7 +17,7 @@ export const mmfr: CaseStudy = {
     "The model is trained on the H&M Kaggle dataset — 1.37 million customers, 105,000 articles, 31 million past purchases — and it's a \"two-tower\" design: one tower turns an item into a single vector of numbers, the other turns a shopper into one, and training pulls a shopper's vector close to the items they actually bought.",
     "The item tower doesn't learn to see or read from scratch. It takes a frozen CLIP model's image embedding (CLIP already knows how to describe what's in a photo) and a frozen SBERT model's text embedding (SBERT already knows what a product description means), concatenates them, and passes the combination through a small neural network down to one 256-number vector. The user tower runs a small Transformer over a shopper's last 20 purchases and pools that into the same 256-number space.",
     "Training uses a contrastive loss (InfoNCE): for each shopper in a batch, their real next purchase should sit closer in that 256-dimensional space than every other item in the batch. At serving time, a FAISS index (a fast nearest-neighbor search library) finds the closest items to a shopper's vector, and a Groq-hosted LLM writes a one-sentence, cached explanation for why each item was picked.",
-    "The same pipeline was extended to ingest real Indian brand catalogues — Snitch, Fashor, Powerlook — from CSV, so a brand can get \"more like this\" recommendations from day one, before it has any purchase history of its own on the platform.",
+    "The same pipeline was extended to ingest real Indian brand catalogues — Snitch, Fashor, Powerlook, Virgio — from CSV, so a brand can get \"more like this\" recommendations from day one, before it has any purchase history of its own on the platform.",
   ],
   architecture: {
     intro:
@@ -25,7 +26,7 @@ export const mmfr: CaseStudy = {
       {
         label: "H&M dataset + brand catalogues",
         kind: "input",
-        detail: "1.37M customers, 105K articles, 31M transactions; Snitch/Fashor/Powerlook via CSV ingestion",
+        detail: "1.37M customers, 105K articles, 31M transactions; Snitch/Fashor/Powerlook/Virgio via CSV ingestion",
       },
       {
         label: "Item Tower and User Tower",

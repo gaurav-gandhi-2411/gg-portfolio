@@ -3,7 +3,8 @@ import type { CaseStudy } from "../types";
 // Sources: agentic-travel-booking-system repo (README.md, docs/architecture/adr/0005,
 // 0006, 0016, 0023, 0024-production-frontend-alignment.md, AUDIT_REPORT.md,
 // CURRENT_STATE.md, spec.md, apps/api/docs/evals/baselines/README.md) — see
-// provenance.md's DealHunter section.
+// provenance.md's DealHunter section. Test count refreshed wave 19 (2026-07-31,
+// pytest --collect-only) — CURRENT_STATE.md's 597 is a frozen 2026-06-09 snapshot.
 export const dealhunter: CaseStudy = {
   slug: "dealhunter",
   title: "DealHunter",
@@ -79,8 +80,8 @@ export const dealhunter: CaseStudy = {
   results: [
     {
       label: "Test suite",
-      value: "597 tests, ≥87.65% coverage",
-      detail: "579 passed, 3 skipped, 15 blocked by the Docker test environment (pre-existing)",
+      value: "727 tests collected",
+      detail: "coverage % not re-measured at this count (last confirmed ≥87.65% at 597 tests, 2026-06-09); pass/skip/blocked breakdown not re-run this pass",
       sourceRef: "dealhunter:test-coverage",
     },
     {

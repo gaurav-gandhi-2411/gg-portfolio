@@ -5,6 +5,9 @@ import type { CaseStudy } from "../types";
 // docs/architecture/adr/0010-conformal-quantile-regression.md,
 // docs/architecture/adr/0018-gold-set-train-contamination.md,
 // docs/architecture/adr/0028-per-model-eval-audit.md) — see provenance.md's TriageIQ section.
+// Numbers refreshed wave 19 (2026-07-31) against README.md's current eval table:
+// classifier retrained (ADR-0036, multi-label supervision fix, 2026-07-24);
+// retrieval Recall@5 corrected twice (ADR-0033, then a harness-bug fix in ADR-0035).
 export const triageiq: CaseStudy = {
   slug: "triageiq",
   title: "TriageIQ",
@@ -74,7 +77,7 @@ export const triageiq: CaseStudy = {
     },
     {
       title: "Report top-3 accuracy as the headline classifier metric",
-      body: "The product surfaces three candidate components to the maintainer, not one, so top-1 accuracy alone understates how useful the classifier actually is in the workflow it's built for. Reporting top-3 instead of top-1 is a 21–31 percentage-point difference — using the metric that matches what the product actually shows is more honest than picking whichever number looks best.",
+      body: "The product surfaces three candidate components to the maintainer, not one, so top-1 accuracy alone understates how useful the classifier actually is in the workflow it's built for. Reporting top-3 instead of top-1 is a 13–27 percentage-point difference — using the metric that matches what the product actually shows is more honest than picking whichever number looks best.",
       sourceRef: "triageiq:classifier-top3",
     },
     {
@@ -86,14 +89,14 @@ export const triageiq: CaseStudy = {
   results: [
     {
       label: "Component classifier accuracy (top-3 / top-1), p50 4.9ms",
-      value: "90.4% / 69.0% (vscode) · 82.5% / 51.4% (k8s)",
+      value: "89.8% / 76.5% (vscode) · 87.1% / 60.5% (k8s)",
       sourceRef: "triageiq:classifier-top3",
     },
     {
       label: "Similar-issue retrieval, Recall@5",
-      value: "23.5% (kubernetes) — \"genuinely weak\" per the project's own README",
+      value: "18.0% (kubernetes) · 50.5% (vscode)",
       detail:
-        "vscode's number was retired after an audit found its gold pairs were ~80% noise; three zero-training fixes (BM25 fusion, cross-encoder reranking, a stronger embedder) all failed to clear the bar, and reranking made it worse at 190–330x the latency",
+        "both corrected upward after a harness audit found the eval was querying title-only against a title+body production index; three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on top of the corrected baseline",
       sourceRef: "triageiq:retrieval",
     },
     {

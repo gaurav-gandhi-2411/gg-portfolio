@@ -36,8 +36,8 @@ export const products: Product[] = [
     figure: {
       kind: "bars",
       rows: [
-        { name: "k8s", pct: 82.5 },
-        { name: "vscode", pct: 90.4 },
+        { name: "k8s", pct: 87.1 },
+        { name: "vscode", pct: 89.8 },
       ],
     },
   },
@@ -68,13 +68,13 @@ export const products: Product[] = [
     slug: "style-maitri",
     name: "Style Maitri",
     tagline:
-      "AI stylist for Indian weddings and occasions — searches 8 store catalogues at once, with guardrails that keep it from inventing prices or sizes.",
+      "AI stylist for Indian weddings and occasions — searches 42 store catalogues at once, with guardrails that keep it from inventing prices or sizes.",
     liveUrl: "https://stylemaitri.vercel.app",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-shopping-assistant",
     categories: ["llm-agents", "retrieval", "vision"],
     techChips: ["LangGraph", "FAISS + BM25", "CLIP", "Groq"],
     metric: refreshableMetric("style-maitri:intent-accuracy"),
-    figure: { kind: "bar", pct: 93.8, valueText: "93.8% (n=211)" },
+    figure: { kind: "bar", pct: 94.4, valueText: "94.4% (n=378)" },
     secondaryMetric: refreshableMetric("style-maitri:catalogue-size"),
   },
   {

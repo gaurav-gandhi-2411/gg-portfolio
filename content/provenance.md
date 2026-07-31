@@ -103,8 +103,8 @@ Hinglish) — `mindmeld/spec-hinglish-fix.md:6-7`.
 
 | ID | Claim | Source |
 |---|---|---|
-| `style-maitri:intent-accuracy` | 93.8% intent-parsing accuracy (n=211) | `agentic-shopping-assistant/reports/soldout_filter_fix_2026-07-12.txt:41-46`, cross-checked same-day in `reports/model_eval_20260712T091248Z.md:7,19-25` |
-| `style-maitri:catalogue-size` | ~52K cross-store items | `agentic-shopping-assistant/reports/soldout_filter_fix_2026-07-12.txt:28` — "Catalogue size: 61,883 → 52,494 items" (current, post sold-out-filter fix, dated 2026-07-12, i.e. today) |
+| `style-maitri:intent-accuracy` | 94.4% intent-parsing accuracy (n=378) | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:7` (gitignored/regenerated report, verified live: `n=378 all-fields-exact=94.4%`). Superseded 93.8%/n=211, current when originally sourced (2026-07-12) but the eval set has since grown. |
+| `style-maitri:catalogue-size` | ~112,425 cross-store items across 42 stores | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/data/processed/unified/catalogue.parquet` (gitignored, verified live via pandas: 112,425 rows, 42 unique stores). Superseded 52,494/8 stores — catalogue rebuilt 2026-07-19 (`f0f0859`, +31 Shopify brands) then expanded further (`00fe1d7`, `cb4fe6b`). |
 
 **Correction vs. spec.md:** the spec's brand name "StyleMaitri" and figure "52–68K items" don't
 match the repo. Live branding (frontend metadata, live domain) is **"Style Maitri"** (two
@@ -127,7 +127,7 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 
 | ID | Claim | Source |
 |---|---|---|
-| `triageiq:classifier-top3` | Component classifier top-3 accuracy: 82.5% (k8s) / 90.4% (vscode) | `triage-iq/README.md` "Classifier metric correction (2026-07-11)" note; full methodology `triage-iq/reports/model_eval_audit.json` → `component_classifier` |
+| `triageiq:classifier-top3` | Component classifier top-3/top-1 accuracy: k8s 87.1%/60.5%, vscode 89.8%/76.5% | **Wave 19 correction (2026-07-31):** retrained via a one-vs-rest multi-label supervision fix, landed 2026-07-24 — `triage-iq/README.md:78-82`, `docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`. Prior value (82.5%/90.4% top-3) is superseded, was current at the case study's 2026-07-26 writing but the fix had already shipped by then — see the wave-19 provenance-failure note below. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
 on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9.1% (vscode)**
@@ -156,7 +156,7 @@ pass before use in card copy.
 
 | ID | Claim | Source |
 |---|---|---|
-| `dealhunter:test-coverage` | 597 tests (579 passed, 3 skipped, 15 Docker-blocked pre-existing), ≥87.65% coverage | `agentic-travel-booking-system/CURRENT_STATE.md:645` (itemized breakdown), `:135` (87.65% coverage figure); live `pytest --collect-only` re-run 2026-07-12 confirms the codebase has grown well past this floor (727 tests collected, includes eval/integration suites not all counted in the README figure) |
+| `dealhunter:test-coverage` | 727 tests collected (live `pytest --collect-only`, re-confirmed 2026-07-31 — identical to the 2026-07-12 count, no test-affecting commits landed between) | **Wave 19 correction (2026-07-31):** this row already recorded the 727 figure as of 2026-07-12 (below), but the shipped case-study `.ts` file was never updated to match — caught by this pass. `agentic-travel-booking-system/CURRENT_STATE.md:645` still pins the superseded 597 (579 passed, 3 skipped, 15 Docker-blocked pre-existing) as a frozen 2026-06-09 snapshot; `:135` (87.65% coverage figure, not re-measured at the new count). The repo's own `.portfolio/metrics.json` (added 2026-07-25, meant to auto-refresh this exact number) still hard-codes 597 too — see PR4. |
 
 **Correction, two rounds:** spec/inventory's original "demo-haiku: 24/24 completion, coherence
 4.625" describes an LLM profile removed from the live product on 2026-06-19 (commit `464e004`,
@@ -314,7 +314,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `style-maitri:hybrid-retrieval` | Hybrid FAISS+BM25 via RRF handles both vibe and exact-keyword queries | `README.md:15,167-172` |
 | `style-maitri:router-decision` | Router experiment: LLM 100% pass/~2100ms/~$0.10 per 1k vs DistilBERT 75%/31ms/$0 vs cascade 94%; kept LLM router + deterministic code guard | `reports/router_comparison.md:6-20`, `src/agents/graph.py:3345` |
 | `style-maitri:flywheel-ranking` | Transparent outfit-ranking boost: final_score = coherence × (1 + 0.25 × positive_rate), ≥10-signal cold-start gate | `docs/architecture/adr/0005-flywheel-ranking-blend.md:6-14,32-34` |
-| `style-maitri:retrieval-eval` | Retrieval P@5 96–99% occasion/search, 67% adversarial (n=92) | `reports/model_eval_20260712T091248Z.md:19-24` |
+| `style-maitri:retrieval-eval` | Retrieval P@5: 96% occasion (n=155), 88% search (n=49), 68% adversarial (n=23) | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:21-25` (gitignored/regenerated, verified live). Superseded "96–99% occasion/search, 67% adversarial (n=92)" — search P@5 has since dropped out of that combined range; occasion/adversarial n also changed. |
 | `style-maitri:live-audit` | Adversarial live audit: 15/32 skeptical-shopper queries disappointing; 2 trust-destroying bugs; outfit-board honest vs plain-search confabulating on identical missing inventory | `reports/deep_diagnosis_2026-07-12.md:3-9,125-138` |
 
 ### TriageIQ (triage-iq)
@@ -324,7 +324,8 @@ unchanged where they already covered a claim. Paths are relative to
 | `triageiq:classifier-bakeoff` | DistilBERT +1.2pp on vscode (needed +11pp for 20x latency), −5.1pp on kubernetes; TF-IDF wins at this data scale | `reports/03_classifier_comparison.md:257-260,395-412` |
 | `triageiq:cqr` | Raw quantile coverage unreliable (74.4%/38.2%); CQR gives distribution-free guaranteed coverage | `docs/architecture/adr/0010-conformal-quantile-regression.md:14-38` |
 | `triageiq:split-fix` | closed_at split leaked (train median 1.0d vs test 677d); created_at re-split dropped MAE 693→87 days; has_priority feature leak (corr 0.595, applied during triage) | `docs/architecture/adr/0009-resolution-predictor-diagnosis.md:60-93,184` |
-| `triageiq:retrieval` | k8s Recall@5 23.5% "genuinely weak"; vscode retired (gold pairs ~80% noise); 3 zero-training fixes all failed, reranking regressed at 190-330x latency | `README.md:86-90,117-120,193-207` |
+| `triageiq:retrieval` | k8s Recall@5 18.0% (related-issue task); vscode Recall@5 50.5% (duplicate-issue task, via the `dup_comment` channel) — both corrected upward from earlier, lower measurements; 3 zero-training fixes (BM25 fusion, cross-encoder reranking, a stronger embedder) still fail to clear the bar on the corrected baseline | **Wave 19 correction (2026-07-31):** `triage-iq/README.md:107-136` headline-finding blockquote — full correction chain: 23.5% (uncorrected, contaminated gold set) → 9.3%/vscode-retired (ADR-0033, clean eval) → 18.0%/50.5% (ADR-0035, harness-bug fix: eval was querying title-only against a title+body production index). Prior page text ("vscode retired, gold pairs ~80% noise") described the ADR-0032/pre-0033 state and was already superseded before the case study's 2026-07-26 writing. |
+| `triageiq:wave19-provenance-note` | The classifier retrain (ADR-0036) and retrieval harness fix (ADR-0035) both landed in `triage-iq` on **2026-07-24** — two days *before* this case study's own last edit (2026-07-26, commit `24a258d`). The page shipped already behind its own cited source, not merely overtaken by later work. Root cause: the wave-12/13 provenance pass read the repo once and cited specific README line ranges; nothing in this site's process re-reads a source repo at case-study-edit time, so a source that changed between "provenance last verified" and "case study last touched" isn't caught by construction. See PR4 (`.portfolio/metrics.json` pipeline / scheduled drift-check) for the systemic fix under discussion. | investigation this wave — `git log` timestamps on both repos, no code changed by this note |
 | `triageiq:resolution` | Resolution MAE: k8s 104.05d vs 106.29d naive (+2.1%); vscode 6.02d vs 3.53d naive (70.5% worse, served with transparency badge) | `README.md:91-98` |
 
 ### DealHunter (agentic-travel-booking-system)
@@ -373,6 +374,8 @@ unchanged where they already covered a claim. Paths are relative to
 | `mmfr:cost` | ≈$0.001–$0.004 per 1,000 recommendations with warm cache | `COST.md:26-27,64` |
 | `mmfr:brand-caveat` | New-brand /recommend is illustrative-only (synthetic users); /similar is the validated day-one capability | `README.md:178-190` |
 
+**Wave 19 correction (2026-07-31):** the brand-catalogue enumeration in `content/case-studies/multimodal-fashion-recommender.ts` ("Snitch, Fashor, Powerlook") was missing **Virgio**, live since 2026-07-11 (`README.md:7`: "Snitch, Fashor, Powerlook, Virgio"). All numeric claims above (`mmfr:recall10`, `:ndcg`, `:cost`) were re-checked and are unchanged. `mmfr:faiss-adr`'s "≤4 brands" framing is still accurate — Virgio brings the count to exactly 4.
+
 ### Gold Rate Tracker
 
 | ID | Claim | Source |
@@ -416,7 +419,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `tracegauge:judge-independence` | Judge deliberately non-Anthropic (Qwen) — structural self-enhancement-bias prevention | `research/05-architecture-pivot.md:383-388` |
 | `tracegauge:no-composite` | No composite score by design; three labeled signals with per-axis caveats | `README.md:19,81,167-168` |
 | `tracegauge:local-first` | Localhost-only bind by construction; redaction at ingestion; opt-in-only egress | `README.md:73-76,143-155` |
-| `tracegauge:tests` | 601/601 tests; baselines from 75 quality-gated sessions, 5 task types | `README.md:20,207` |
+| `tracegauge:tests` | 643/643 tests; baselines from 75 quality-gated sessions, 5 task types | **Wave 19 correction (2026-07-31):** `CHANGELOG.md:92` ("643/643 tests green, up from 601 in 0.9.0; 43 new tests"), confirmed live via `pytest --collect-only` (643 collected). The prior 601 figure came from `README.md:20` — a scope-limited claim ("The code, the content-free guard, the consent flow, and `tes corpus withdraw` are all built and tested (601 tests green)") describing only the 0.9.0-era community-corpus feature, not the whole suite; it was misread as a whole-suite result. Baselines citation (`README.md:207`) unchanged. |
 | `tracegauge:judge-validation` | Judge corroboration 84% strict / 96% top-2, ρ≈0.79 — no human gold labels (stated) | `README.md:67,208` |
 | `tracegauge:generalization` | 172 devs / 1,053 sessions: repeated-failed-retry generalizes at ~1.4% vs 6.6% calibration pool (pool labeled a high-waste outlier) | `README.md:65,126,210` |
 | `tracegauge:pypi` | Live on PyPI v0.10.0 | `pyproject.toml`; `pip index versions tracegauge` (2026-07-12, above) |

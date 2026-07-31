@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-25",
+  "updated_at": "2026-07-31",
   "_readme": "Machine-refreshable metric store (wave 13). Keys are provenance IDs (content/provenance.md). Values are refreshed weekly by .github/workflows/metrics-refresh.yml from each source repo's .portfolio/metrics.json — via a reviewed PR, never a direct commit. Hand-edit only to correct an error; the narrative provenance record stays in content/provenance.md.",
   "metrics": {
     "warmer:hinglish-fix": {
@@ -14,39 +14,39 @@
     },
     "style-maitri:intent-accuracy": {
       "label": "Intent-parsing accuracy",
-      "value": "93.8% (n=211)",
+      "value": "94.4% (n=378)",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "reports/final_scorecard_2026-07-12.txt",
-      "source_line": 109,
-      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
-      "measured_at": "2026-07-12"
+      "source_file": "reports/model_eval_20260731T060759Z.md (gitignored, regenerated — cited by repo HEAD + fetch date)",
+      "source_line": 7,
+      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
+      "measured_at": "2026-07-31"
     },
     "style-maitri:catalogue-size": {
       "label": "Cross-store catalogue",
-      "value": "~52K items across 8 stores",
+      "value": "~112K items across 42 stores",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
-      "source_line": 28,
-      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
-      "measured_at": "2026-07-12"
+      "source_file": "data/processed/unified/catalogue.parquet (gitignored, regenerated — verified live via pandas, cited by repo HEAD + fetch date)",
+      "source_line": null,
+      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
+      "measured_at": "2026-07-31"
     },
     "triageiq:classifier-top3": {
       "label": "Component classifier top-3 accuracy",
-      "value": "82.5% (k8s) / 90.4% (vscode)",
+      "value": "87.1% (k8s) / 89.8% (vscode)",
       "repo": "gaurav-gandhi-2411/triage-iq",
-      "source_file": "reports/model_eval_audit.json",
-      "source_line": null,
-      "commit_sha": "62274339c045676e2fd6ba3a2dd086d1e6503487",
-      "measured_at": "2026-07-13"
+      "source_file": "README.md",
+      "source_line": 79,
+      "commit_sha": "24304906617f0ed3f91a182b091a5582b6ac5999",
+      "measured_at": "2026-07-31"
     },
     "dealhunter:test-coverage": {
       "label": "Test suite",
-      "value": "597 tests, ≥87.65% coverage",
+      "value": "727 tests, ≥87.65% coverage",
       "repo": "gaurav-gandhi-2411/agentic-travel-booking-system",
-      "source_file": "CURRENT_STATE.md",
-      "source_line": 645,
-      "commit_sha": "4dbc25e4b71e6560bde6ec11d1b19dd1aa88c6bb",
-      "measured_at": "2026-06-09"
+      "source_file": "pytest --collect-only (CURRENT_STATE.md:645's 597 is a frozen 2026-06-09 snapshot; coverage % not re-measured this pass, carried forward)",
+      "source_line": null,
+      "commit_sha": "6b4f30509d69d6baa12ac60d8f15c831ac8d72f3",
+      "measured_at": "2026-07-31"
     },
     "shelfsense:wrmsse": {
       "label": "WRMSSE vs. naive baseline",
@@ -122,12 +122,12 @@
     },
     "tracegauge:tests": {
       "label": "Test suite",
-      "value": "601/601 passing",
+      "value": "643/643 passing",
       "repo": "gaurav-gandhi-2411/token-efficiency-scorer",
-      "source_file": "CURRENT_STATE.md",
-      "source_line": 82,
+      "source_file": "CHANGELOG.md (CURRENT_STATE.md:82's 601 is a 0.9.0-scoped feature subtotal, not the whole-suite count)",
+      "source_line": 92,
       "commit_sha": "6da6a64faeb3901ce5beb201b7b971a6d8debcbb",
-      "measured_at": "2026-07-04"
+      "measured_at": "2026-07-31"
     }
   },
   "informational": {
