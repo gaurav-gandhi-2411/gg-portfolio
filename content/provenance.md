@@ -717,3 +717,24 @@ sourceRef or underlying claim.
   wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
   what's already in the resume; nothing beyond the resume's own Indium/Uber bullets is used).
+
+## Wave 15 pipeline proposals — 2026-07-31 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — The candidate fact demonstrates a measured result with a clear comparison to a baseline, is verifiable from the provided source text, and is not redundant with the current case-study copy.; verifier: The draft accurately reflects all numerical values, technical terms, and the comparative improvement stated in the source table without adding unsupported claims or altering the tone.)
+  Source: `README.md:93`
+  Draft: "Improved the accuracy of a resolution predictor by 3.27 percentage points, from 29.97% to 33.24%, using a bucket classifier in a Kubernetes environment."
+  Suggested provenance ID: `triage-iq:resolution-predictor-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — This fact proves a skill by demonstrating a measured result of the LLM synthesis, is verifiable as it is present in the README, is current as there is no date mentioned to suggest otherwise, and isn't redundant as it provides a specific metric not mentioned in the current case-study copy.; verifier: The draft accurately and neutrally translates all numerical values and contextual details from the source table row without adding unsupported claims or tonal shifts.)
+  Source: `README.md:101`
+  Draft: "Achieved a mean-band score of 8.36/15 (55.8%) for LLM synthesis using a regression detector in a vscode environment."
+  Suggested provenance ID: `triage-iq:llm-synthesis-score`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 5/5 — This fact demonstrates a skill by showcasing the ability to handle a large dataset, apply stratified sampling, and achieve a competitive result on a Kaggle submission, with specific metrics and numbers that are verifiable from the source text.; verifier: The draft accurately reflects all numerical values, claims, and neutral tone from the source without introducing unsupported information or tone drift.)
+  Source: `README.md:109`
+  Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
+  Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 5/5 — This fact proves a skill by demonstrating the model's performance on a specific user archetype and providing insights into its strengths and weaknesses, and is verifiable as it is literally present in the source text.; verifier: The draft accurately reflects the source's specific metrics, user behavior description, and model performance observation without introducing unsupported claims or tone drift.)
+  Source: `README.md:202`
+  Draft: "Identified the lowest fused similarity scores (0.33–0.38) in users who browse a single colour across many product types, demonstrating the model's ability to retrieve the correct colour with weak confidence."
+  Suggested provenance ID: `multimodal-fashion-recommender:colour-browsing-patterns`
