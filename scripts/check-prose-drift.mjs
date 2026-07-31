@@ -1,95 +1,48 @@
 // Wave 20 — prose/semantic drift detection (report-only, never auto-edits).
-// Run against real case studies: `node scripts/check-prose-drift.mjs`
-// Run against the calibration control set: `node scripts/check-prose-drift.mjs --controls`
+// Full explanation, calibration numbers, and the real-world false-positive
+// finding that keeps this MANUAL rather than scheduled: docs/prose-drift-checker.md.
 //
-// WHAT THIS CATCHES THAT scripts/check-metric-freshness.mjs CANNOT:
-// architecture descriptions, status/outage claims, and enumerations have no
-// numeric anchor — gold-rate-tracker's inverted Tanishq/IBJA data-source
-// description and expense-tracker's half-wrong "both down" outage status
-// both survived weeks undetected precisely because nothing checks prose
-// for CONTRADICTION with its source, only numbers for presence/absence.
+// Run: `node scripts/check-prose-drift.mjs` (real case studies) or
+// `node scripts/check-prose-drift.mjs --controls` (calibration set).
 //
-// METHOD: for each case study, bundle its problem/approach/architecture/
-// closing prose and send it, alongside the source repo's current README,
-// to three local LLMs from different model families (gemma2:9b,
-// llama3.1:8b, qwen2.5:7b — the same three-family panel already used
-// elsewhere in this portfolio's own eval work, e.g. agentgauge's
-// predictive-validity study). Each judge runs BLIND: identical prompt, no
-// visibility into the other judges' answers, no hint about which case
-// study is a known-bad control. Majority vote (2 of 3) triggers a flag.
-// Labeled LLM-consensus in all output, matching this repo's existing
-// content-pipeline convention (docs/content-pipeline-rubric.md) — this is
-// model judgment, not verified fact, and is never used to auto-edit
-// content (rule: FLAGS for review, never writes).
+// scripts/check-metric-freshness.mjs checks numeric claims; it has no anchor
+// for architecture/status/enumeration prose. This bundles each case study's
+// problem/approach/architecture/closing text and sends it, alongside the
+// source repo's current README, to three local LLMs from different model
+// families (gemma2:9b, llama3.1:8b, qwen2.5:7b), run BLIND on an identical
+// prompt. A 2-of-3 majority vote that the prose contradicts the README
+// triggers a flag. Labeled LLM-consensus (docs/content-pipeline-rubric.md's
+// convention) — model judgment, not verified fact. FLAGS for review, never
+// auto-edits. Fails CLOSED (rule 98a): an unreachable judge or unparseable
+// output is UNVERIFIABLE, never silently "consistent."
 //
-// CALIBRATION (measured 2026-07-31, scripts/prose-drift-controls/):
-// 4/4 (100%) correct against the two prescribed positive/negative control
-// pairs — gold-rate-tracker and expense-tracker, pre-fix (should flag) vs.
-// post-fix (should not). llama3.1:8b and qwen2.5:7b both independently
-// identified the real contradiction in each positive control; gemma2:9b
-// voted "consistent" on all 4 controls (a conservative always-false judge
-// here, absorbed by the 2-of-3 majority rather than driving it).
-//
-// REAL-WORLD FALSE-POSITIVE RATE — NOT usable as a standing gate:
-// the same run against all 12 real (non-control) case studies flagged 3
-// (dealhunter, reclaim, triageiq). All 3 were hand-investigated against
-// actual source and are false positives: the "PRIMACY" contradiction
-// class (see buildPrompt) over-fires on ordinary sequentially-described
-// content that makes no actual competing-primacy claim (e.g. dealhunter's
-// README lists PlannerAgent first in a normal request pipeline — not a
-// primacy claim at all — and llama3.1:8b invented a contradiction from
-// that ordering). The two genuine positive controls both have judge
-// "evidence" that quotes BOTH sides of a real conflict; all 3 real-world
-// flags have evidence that only paraphrases one side, or nothing at all —
-// a distinguishing signature worth a human's 10-second glance before
-// trusting a flag. Given this, the checker is committed as a MANUAL,
-// on-demand tool (README's "real-model spot checks" convention) — NOT
-// wired into metrics-refresh.yml's scheduled jobs. A noisy weekly issue
-// nobody trusts is worse than no issue; the 30-day verifiedAt staleness
-// check (content/types.ts, wired in metric-freshness) remains the
-// standing backstop that forces a periodic human prose re-read.
-//
-// Fails CLOSED (rule 98a): an unreachable Ollama instance or a judge that
-// returns unparseable output is reported as UNVERIFIABLE for that
-// case-study/judge pair, never silently treated as "consistent." Live-
-// tested 2026-07-31 by pointing OLLAMA_URL at an unreachable port: all 12
-// real case studies correctly reported UNVERIFIABLE, zero false "clean"s.
-//
-// Zero external dependencies; requires a local Ollama with gemma2:9b,
-// llama3.1:8b, and qwen2.5:7b pulled. No paid provider, no
-// ANTHROPIC_API_KEY, no network egress beyond localhost:11434 and
-// (for real-case-study mode) raw.githubusercontent.com.
+// Requires a local Ollama with gemma2:9b, llama3.1:8b, qwen2.5:7b pulled. No
+// paid provider, no ANTHROPIC_API_KEY, no network egress beyond
+// localhost:11434 and (real-case-study mode) raw.githubusercontent.com.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CASE_STUDIES_INDEX_PATH = join(ROOT, "content", "case-studies", "index.ts");
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
+const CASE_STUDIES_INDEX_PATH = join(CASE_STUDIES_DIR, "index.ts");
 const CONTROLS_DIR = join(ROOT, "scripts", "prose-drift-controls");
 const SUMMARY_PATH = process.env.PROSE_DRIFT_SUMMARY_PATH ?? "/tmp/prose-drift-summary.md";
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
-const FETCH_TIMEOUT_MS = 20_000;
-const JUDGE_TIMEOUT_MS = 120_000;
+const FETCH_TIMEOUT_MS = 20_000, JUDGE_TIMEOUT_MS = 120_000;
 const JUDGES = ["gemma2:9b", "llama3.1:8b", "qwen2.5:7b"];
 
+// null = private repo, not fetchable.
 const CASE_STUDY_REPO = {
-  warmer: null,
-  "style-maitri": "gaurav-gandhi-2411/agentic-shopping-assistant",
-  triageiq: "gaurav-gandhi-2411/triage-iq",
-  dealhunter: "gaurav-gandhi-2411/agentic-travel-booking-system",
-  shelfsense: "gaurav-gandhi-2411/shelfsense-m5",
-  reviewiq: "gaurav-gandhi-2411/review-iq",
+  warmer: null, "style-maitri": "gaurav-gandhi-2411/agentic-shopping-assistant",
+  triageiq: "gaurav-gandhi-2411/triage-iq", dealhunter: "gaurav-gandhi-2411/agentic-travel-booking-system",
+  shelfsense: "gaurav-gandhi-2411/shelfsense-m5", reviewiq: "gaurav-gandhi-2411/review-iq",
   "multimodal-fashion-recommender": "gaurav-gandhi-2411/multimodal-fashion-recommender",
-  "gold-rate-tracker": "gaurav-gandhi-2411/gold-rate-tracker",
-  aetherart: "gaurav-gandhi-2411/AetherArt",
-  agentgauge: "gaurav-gandhi-2411/agentgauge",
-  reclaim: "gaurav-gandhi-2411/reclaim",
-  tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer",
-  "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
+  "gold-rate-tracker": "gaurav-gandhi-2411/gold-rate-tracker", aetherart: "gaurav-gandhi-2411/AetherArt",
+  agentgauge: "gaurav-gandhi-2411/agentgauge", reclaim: "gaurav-gandhi-2411/reclaim",
+  tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer", "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
 };
-
 async function fetchText(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -102,11 +55,8 @@ async function fetchText(url) {
   }
 }
 
-// Bundles the exact prose classes Task 3 targets — architecture, status,
-// enumeration — by taking everything that ISN'T a numeric results/decision
-// row (Task 2's territory). problem+approach carry brand enumerations and
-// framing; architecture carries the data-source-primacy class of claim;
-// closing is low-risk but cheap to include.
+// Everything that isn't a numeric results/decision row (check-metric-freshness.mjs's
+// territory) — architecture/status/enumeration prose has no numeric anchor.
 function buildProseBundle(study) {
   const parts = [
     ...study.problem,
@@ -213,9 +163,34 @@ async function runPanel(prose, readme) {
 
 function discoverCaseStudyModules() {
   const indexSrc = readFileSync(CASE_STUDIES_INDEX_PATH, "utf8");
-  return [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)].map(
-    ([, exportName, fileName]) => ({ exportName, fileName })
-  );
+  const matches = [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)];
+  return matches.map(([, exportName, fileName]) => ({ exportName, fileName }));
+}
+
+// Shared by both modes: load+bundle a case study's prose, fetch its repo's
+// README, run the judge panel. { error } means UNVERIFIABLE either way.
+async function checkStudy(dir, file, exportName, repo) {
+  if (repo === undefined) return { error: "no repo mapping" };
+  if (repo === null) return { error: "private repo, not fetchable" };
+  const mod = await import(pathToFileURL(join(dir, file)).href);
+  const prose = buildProseBundle(mod[exportName]);
+  let readme;
+  try {
+    readme = await fetchText(`https://raw.githubusercontent.com/${repo}/HEAD/README.md`);
+  } catch (err) {
+    return { error: `README fetch failed — ${err.message}` };
+  }
+  return { panel: await runPanel(prose, readme) };
+}
+
+function formatVerdicts(panel, evidenceChars) {
+  return panel.verdicts
+    .map((v) =>
+      v.ok
+        ? `${v.model}: ${v.contradicts ? "CONTRADICTS" : "consistent"} — ${v.evidence.slice(0, evidenceChars)}`
+        : `${v.model}: ERROR — ${v.error}`
+    )
+    .join("\n  ");
 }
 
 const isControlsMode = process.argv.includes("--controls");
@@ -229,38 +204,32 @@ if (isControlsMode) {
     "Positive controls (SHOULD be flagged): the actual pre-fix case-study text for gold-rate-tracker " +
       "(inverted Tanishq/IBJA architecture) and expense-tracker (wrong outage status), both real text " +
       "this site shipped before this session's remediation. Negative controls (should NOT be flagged): " +
-      "the current, corrected text for both, checked against the same current README."
+      "the current, corrected text for both (loaded live from content/case-studies/), checked against " +
+      "the same current README."
   );
   lines.push("");
 
   const controls = [
-    { name: "gold-rate-tracker (PRE-FIX, positive control)", file: "gold-pre.ts", export_: "goldRateTracker", repo: CASE_STUDY_REPO["gold-rate-tracker"], expectFlag: true },
-    { name: "gold-rate-tracker (POST-FIX, negative control)", file: "gold-post.ts", export_: "goldRateTracker", repo: CASE_STUDY_REPO["gold-rate-tracker"], expectFlag: false },
-    { name: "expense-tracker (PRE-FIX, positive control)", file: "expense-pre.ts", export_: "expenseTracker", repo: CASE_STUDY_REPO["expense-tracker"], expectFlag: true },
-    { name: "expense-tracker (POST-FIX, negative control)", file: "expense-post.ts", export_: "expenseTracker", repo: CASE_STUDY_REPO["expense-tracker"], expectFlag: false },
+    { name: "gold-rate-tracker (PRE-FIX, positive control)", dir: CONTROLS_DIR, file: "gold-pre.ts", export_: "goldRateTracker", repo: CASE_STUDY_REPO["gold-rate-tracker"], expectFlag: true },
+    { name: "gold-rate-tracker (POST-FIX, negative control)", dir: CASE_STUDIES_DIR, file: "gold-rate-tracker.ts", export_: "goldRateTracker", repo: CASE_STUDY_REPO["gold-rate-tracker"], expectFlag: false },
+    { name: "expense-tracker (PRE-FIX, positive control)", dir: CONTROLS_DIR, file: "expense-pre.ts", export_: "expenseTracker", repo: CASE_STUDY_REPO["expense-tracker"], expectFlag: true },
+    { name: "expense-tracker (POST-FIX, negative control)", dir: CASE_STUDIES_DIR, file: "expense-tracker.ts", export_: "expenseTracker", repo: CASE_STUDY_REPO["expense-tracker"], expectFlag: false },
   ];
 
   let correct = 0;
   const rows = [];
   for (const c of controls) {
-    const mod = await import(pathToFileURL(join(CONTROLS_DIR, c.file)).href);
-    const study = mod[c.export_];
-    const prose = buildProseBundle(study);
-    let readme;
-    try {
-      readme = await fetchText(`https://raw.githubusercontent.com/${c.repo}/HEAD/README.md`);
-    } catch (err) {
-      rows.push(`- **${c.name}**: UNVERIFIABLE — README fetch failed: ${err.message}`);
+    const { panel, error } = await checkStudy(c.dir, c.file, c.export_, c.repo);
+    if (error) {
+      rows.push(`- **${c.name}**: UNVERIFIABLE — ${error}`);
       continue;
     }
-    const panel = await runPanel(prose, readme);
     const isCorrect = panel.flagged === c.expectFlag;
     if (isCorrect) correct++;
     rows.push(
       `- **${c.name}**: expected ${c.expectFlag ? "FLAG" : "no flag"}, got **${panel.flagged ? "FLAGGED" : "not flagged"}** ` +
         `(${isCorrect ? "correct" : "WRONG"}) — ${panel.contradictCount}/${panel.usableCount} judges said contradicts, ` +
-        `all-agree: ${panel.allAgree}\n  ` +
-        panel.verdicts.map((v) => (v.ok ? `${v.model}: ${v.contradicts} (${v.evidence.slice(0, 150)})` : `${v.model}: ERROR — ${v.error}`)).join("\n  ")
+        `all-agree: ${panel.allAgree}\n  ${formatVerdicts(panel, 150)}`
     );
   }
 
@@ -279,36 +248,16 @@ if (isControlsMode) {
   );
   lines.push("");
 
-  const modules = discoverCaseStudyModules();
   const flagged = [];
   const clean = [];
   const unverifiable = [];
-  for (const { exportName, fileName } of modules) {
-    const repo = CASE_STUDY_REPO[fileName];
-    if (repo === undefined) {
-      unverifiable.push(`\`${fileName}\`: no repo mapping`);
-      continue;
-    }
-    if (repo === null) {
-      unverifiable.push(`\`${fileName}\`: private repo, not fetchable`);
-      continue;
-    }
-    const mod = await import(pathToFileURL(join(CASE_STUDIES_DIR, `${fileName}.ts`)).href);
-    const study = mod[exportName];
-    const prose = buildProseBundle(study);
-    let readme;
-    try {
-      readme = await fetchText(`https://raw.githubusercontent.com/${repo}/HEAD/README.md`);
-    } catch (err) {
-      unverifiable.push(`\`${fileName}\`: README fetch failed — ${err.message}`);
-      continue;
-    }
-    const panel = await runPanel(prose, readme);
-    if (panel.usableCount < 2) {
+  for (const { exportName, fileName } of discoverCaseStudyModules()) {
+    const { panel, error } = await checkStudy(CASE_STUDIES_DIR, `${fileName}.ts`, exportName, CASE_STUDY_REPO[fileName]);
+    if (error) {
+      unverifiable.push(`\`${fileName}\`: ${error}`);
+    } else if (panel.usableCount < 2) {
       unverifiable.push(`\`${fileName}\`: only ${panel.usableCount}/3 judges returned a usable verdict`);
-      continue;
-    }
-    if (panel.flagged) {
+    } else if (panel.flagged) {
       flagged.push({ fileName, panel });
     } else {
       clean.push(fileName);
@@ -320,9 +269,7 @@ if (isControlsMode) {
     lines.push("");
     for (const { fileName, panel } of flagged) {
       lines.push(`- \`${fileName}\`: ${panel.contradictCount}/${panel.usableCount} judges, all-agree: ${panel.allAgree}`);
-      for (const v of panel.verdicts) {
-        lines.push(`  - ${v.ok ? `${v.model}: ${v.contradicts ? "CONTRADICTS" : "consistent"} — ${v.evidence.slice(0, 200)}` : `${v.model}: ERROR — ${v.error}`}`);
-      }
+      lines.push(`  ${formatVerdicts(panel, 200)}`);
     }
     lines.push("");
   }

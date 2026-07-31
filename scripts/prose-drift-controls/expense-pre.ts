@@ -1,24 +1,12 @@
 import type { CaseStudy } from "../../content/types";
 
-// Sources: expense-tracker repo (CURRENT_STATE.md) — see provenance.md's
-// Expense Tracker section. NOTE (2026-07-18, caught by the lychee CI job on
-// PR #20; root-caused 2026-07-26): the demo deployment documented in
-// CURRENT_STATE.md is currently DOWN — the page says so honestly and links
-// only the repo; no liveUrl on the product card either. Root cause (read-
-// only gcloud diagnosis, wave 14): the backend's every cold start crashes
-// during its Alembic-migration startup step because its Supabase Postgres
-// hostname no longer resolves (DNS NXDOMAIN) — consistent with a paused/
-// deleted free-tier Supabase project, not a code defect. The frontend
-// separately 404s with Vercel's DEPLOYMENT_NOT_FOUND — that Vercel
-// project/deployment no longer exists. Both need GG's account-level action
-// (Supabase + Vercel dashboards); see reports/wave14-verification-audit-
-// 2026-07-26.md for the exact steps.
-export const expenseTracker: CaseStudy = {
-  slug: "expense-tracker",
-  verifiedAt: "2026-07-18", // historical pre-fix snapshot, predates this field — placeholder to satisfy the type
-  title: "Expense Tracker",
-  dek: "A multi-user personal-finance app built to practice production discipline — real auth, real data isolation, real migrations, real tests — with a few pragmatic ML features layered on top.",
-  depth: "short",
+// Real text this site shipped before wave 19's correction (source: git commit
+// 24a258d, content/case-studies/expense-tracker.ts). Trimmed to only the fields
+// scripts/check-prose-drift.mjs's buildProseBundle() reads (problem, approach,
+// architecture, closing) — see scripts/prose-drift-controls/README.md.
+type ProseFixture = Pick<CaseStudy, "problem" | "approach" | "architecture" | "closing">;
+
+export const expenseTracker: ProseFixture = {
   problem: [
     "This is a personal expense tracker, and it's framed honestly: it's a product used to practice the discipline that separates a working demo from something that could hold real user data — proper multi-user authentication, per-user data isolation enforced at the query level, versioned schema migrations, and a real test suite — not a research artifact chasing a novel metric.",
     "On top of that production base sit a few pragmatic ML features: natural-language expense entry, narrative spending insights, automatic categorization, anomaly detection, and short-term forecasting, each scoped to what a personal-finance tool actually needs rather than what's academically interesting.",
@@ -28,7 +16,8 @@ export const expenseTracker: CaseStudy = {
     "The Next.js 16 frontend deploys to Vercel and talks to the backend through a proxy that keeps Supabase's SSR cookie refresh working across redirects. On the ML side, a Groq-backed LLM parses free-text entries like \"coffee 150\" into structured expenses and writes short narrative insights, while three local models run without any external API call: a sentence-embedding categorizer, an IsolationForest anomaly detector, and a Prophet forecaster — each with documented low-confidence and fallback behavior, and each checked by a manual (non-CI) eval script rather than a CI-gated one.",
   ],
   architecture: {
-    intro: "A standard multi-user web app shape, with ML features bolted on as optional endpoints rather than load-bearing infrastructure.",
+    intro:
+      "A standard multi-user web app shape, with ML features bolted on as optional endpoints rather than load-bearing infrastructure.",
     stages: [
       { label: "Next.js 16 frontend", kind: "input", detail: "Vercel — sign-in, expense CRUD, NL entry hero" },
       { label: "Supabase Auth", detail: "JWT — ES256/JWKS in prod, HS256 locally" },
@@ -42,34 +31,14 @@ export const expenseTracker: CaseStudy = {
           { label: "Prophet", detail: "forecasting" },
         ],
       },
-      { label: "Postgres (prod) / SQLite (dev)", kind: "output", detail: "per-user filtered queries, Alembic-migrated" },
+      {
+        label: "Postgres (prod) / SQLite (dev)",
+        kind: "output",
+        detail: "per-user filtered queries, Alembic-migrated",
+      },
     ],
   },
-  results: [
-    {
-      label: "Test suite",
-      value: "143/143 passing",
-      detail: "ruff clean, mypy clean (strict=false)",
-      sourceRef: "expense-tracker:tests",
-    },
-    {
-      label: "Deployment",
-      value: "Cloud Run (backend) + Vercel (frontend) — demo currently offline",
-      detail:
-        "found down 2026-07-18, root-caused 2026-07-26: the backend's Supabase Postgres hostname no longer resolves (a paused/deleted free-tier project, not a code defect) and the frontend's Vercel deployment no longer exists — said here rather than hidden; 9/9 Playwright auth E2E scenarios pass locally",
-      sourceRef: "expense-tracker:state",
-    },
-    {
-      label: "Local ML features",
-      value: "categorizer, anomaly detection, forecasting — each with documented fallback behavior",
-      detail: "evaluated with manual scripts (scripts/eval_parser.py, scripts/eval_ml.py), not gated in CI",
-      sourceRef: "expense-tracker:ml-features",
-    },
-  ],
   closing: [
     "If you need to evaluate whether someone can ship past a working demo to something that could hold real user data, this is the checklist worth applying: per-user isolation enforced at the query level (not just the UI), versioned migrations, and a real test suite — the boring production discipline a screenshot can't show you.",
-  ],
-  links: [
-    { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/expense-tracker" },
   ],
 };
