@@ -497,7 +497,7 @@ the named report files:
 | `agentgauge:judge-baseline` | single-prompt LLM-judge baseline: 97.1% false-alarm rate | `reports/v2_1_cross_model_validation.md` §Task 2e |
 | `agentgauge:retiering` | severity tiers re-set by measured causal impact; `required_references_missing_property` demoted BLOCKING→INFO on a measured null | `reports/v2_3_task2_retiering.md` |
 | `agentgauge:audit-gate` | `agentgauge audit` — standing pre-report gate (leakage/ceiling/degenerate/scoring-consistency), wired into diff/eval | README v2.4 note |
-| `agentgauge:v23-scoring-artifact` | the reported −76.7 to −80.0pp ADVISORY effect was a scoring bug (pre-rename param looked up against post-rename args); corrected = clean null in all 3 models; blast radius audited — the 5,535-trial calibration corpus untouched | `reports/v2_3_task1_advisory_audit.md`, `reports/v2_4_task1_blast_radius_audit.md` |
+| `agentgauge:v23-scoring-artifact` | the reported −76.7 to −80.0pp ADVISORY effect was a scoring bug (pre-rename param looked up against post-rename args); corrected = clean null for gemma2:9b (+0.0pp), CI includes zero for llama3.1:8b (−13.3pp) and qwen2.5:7b (+6.7pp) — **wave-18 correction:** the wave-13 text here read "clean null in all 3 models," which does not match the source table (`v2_3_task1_advisory_audit.md:109-111` labels only gemma2:9b "clean null"); blast radius audited — the 5,535-trial calibration corpus untouched | `reports/v2_3_task1_advisory_audit.md`, `reports/v2_4_task1_blast_radius_audit.md` |
 | task pool | 62 → 253 gold-constraint tasks across 10 real-API domains | README v2.4 note, `reports/v2_4_task4_corpus_expansion.md` |
 
 The paper-layer refs from wave 12 (`agentgauge:frozen-protocol`, `:t18`,
@@ -647,12 +647,49 @@ models — a drop that only a rolling window explains, not a cumulative counter)
 labeled precisely ("last 30 days, live via HF API"), rather than presented ambiguously as if it
 were a lifetime total.
 
+## Wave 18 (2026-07-31) — AgentGauge rewrite: estimator + attribution work, v0.5.2
+
+Wave 13's rewrite reflected the `agentgauge` repo @ `939abbf` (2026-07-25); the estimator and
+attribution work in `v0.5.x` (all committed after that snapshot) is a second falsification-and-
+pivot the site hadn't caught up to. All claims below verified against `agentgauge` @ `ab62677`
+(2026-07-31, tag `v0.5.2`) directly, cross-checked against the repo's own consolidated
+`docs/paper2/provenance.md` (34-claim ledger, `b86831b`), which resolves this same repo's three
+mid-project number corrections explicitly — see its §0 supersession ledger for the full chain on
+each. `agentgauge:predictive-validity`, `:blocking-causal`, `:judge-baseline`, `:retiering`,
+`:audit-gate` (wave 13) are reused as-is below; only their case-study prose changed, not their
+sourceRef or underlying claim.
+
+| ID | Claim | Source |
+|---|---|---|
+| `agentgauge:mde-curve` | Minimum-detectable-effect curve at 80% power: naive trial-level (n=20) 0.433 → paired+CUPED (n=20) 0.188 → reallocated to full 253-task corpus 0.0537; false-alarm rate under the null 0.59% (13/2200, paired+CUPED estimator) | `reports/v2_1_estimator_rebuild.md` (ablation table + false-alarm) @ `78fff2f`, `reports/v2_5_task3_mde_completion.md:17-23` (n=253 point, independently re-verified to 4 decimals) @ `78fff2f` |
+| `agentgauge:replay-determinism` | 100% cassette-replay determinism, all 6 model-provider adapters, seed=42, zero live network calls — distinct from a separate, also-100% bootstrap/verdict-replay claim in `v2_harness_evaluation.md` (a different subsystem); this ID cites the cassette-replay claim only | `reports/v0_5_wave1_report.md:136` @ `3d79172` |
+| `agentgauge:homogenization-falsified` | Pre-registered mechanism hypothesis (LLM-rewritten descriptions "homogenize" toward each other, reducing discriminability) tested against 4 pre-registered falsifiers; all 4 triggered — measured similarity decreased (not increased) in 6/7 pairs, similarity-delta/outcome-delta correlations point the wrong sign. Verdict: falsified as stated | `reports/predictive_validity_study.md` §"Phase 3 mechanism test", lines 247-329 @ `78fff2f` |
+| `agentgauge:attribution-kill` | `greedy_bisection` regression-attribution accuracy at the below-detection-floor band (3.0-5.0pp): 58.33% top-1 — does not clear the pre-registered 70% ship bar; measured cost 1.01x-20.24x a full 253-task re-evaluation depending on candidate-set size, crossover to cheaper-than-re-evaluating at ~2-4 changed tools; shipped as unreleased research, disabled behind `--experimental` (`agentgauge/cli.py` `attribute()` command, `_ATTRIBUTION_COST_FINDING`) | `reports/v0_5_mde_discrepancy.md` §4b (accuracy) @ `3d79172`, `reports/v0_5_probe_power_fix.md` §5 / lines 213-253 (cost + ship/kill recommendation) @ `3d79172`; shipped state confirmed directly in `agentgauge/cli.py` lines 1265-1304 |
+| `agentgauge:artifact-taxonomy` | 10 distinct measurement-artifact classes found and fixed across this project, each with a named automated detector/regression test (taxonomy table, §4 of the ledger) | `docs/paper2/provenance.md` §4 @ `b86831b` |
+| `agentgauge:pypi` | Live on PyPI as `agentgauge-harness`, v0.5.2 | `agentgauge/pyproject.toml`; `pip index versions agentgauge-harness` (2026-07-31, above) |
+| `agentgauge:paper2` | Second paper (methods paper): "Powering Agent Evaluations: Variance Structure, Measurement Artifacts, and Minimum Detectable Effects in Tool-Use Benchmarks" — variance structure, the artifact taxonomy, the MDE estimator, and a falsification record | `agentgauge/docs/paper2/main.tex`, `agentgauge/docs/paper2/SUBMISSION.md` @ `78fff2f` (main.tex last touched) |
+
+**Two spec numbers deliberately not shipped — decided by GG, not guessed:**
+
+- **Total cloud spend.** The draft spec cited $29.19; the only sourced total in the repo is
+  `reports/v2_2_task_c_gcp_teardown.md`'s $28.39 (GCP compute), and a repo-wide grep for "29.19"
+  returns zero matches outside the spec file itself. GG's call: drop the total-spend line from
+  the case study entirely rather than cite either an unsourced or a reconstructed number.
+- **"4 hypotheses falsified."** Two doctrine reports (`v0_5_eval_doctrine.md:93`,
+  `v2_eval_doctrine.md:91`) and the paper2 abstract itself assert this count in passing, but no
+  report enumerates all four by name. Three are individually sourced and enumerable: the 8-axis
+  quality-score thesis (`agentgauge:predictive-validity`), the homogenization mechanism
+  (`agentgauge:homogenization-falsified`), and attribution's economic viability
+  (`agentgauge:attribution-kill`, tested against a pre-registered 70% ship bar rather than a
+  correlational decision rule, but the same falsify-and-kill pattern). GG's call: cite exactly
+  the three that are individually sourced; the case study does not state a headline count of 4.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
-- **arXiv ID for the AgentGauge paper:** not yet assigned — Research section ships with
-  `status: "preprint-pending"`, no live arXiv/Scholar link. Flip when assigned (separate from
-  Wave 3 "Living portfolio," which is the current wave — the original spec's post-arXiv wave 3
-  is still pending on GG getting a real ID).
+- **arXiv IDs for both AgentGauge papers:** not yet assigned for either — Research section ships
+  both entries with `status: "preprint-pending"`, no live arXiv/Scholar link. Flip each
+  independently when assigned (separate from Wave 3 "Living portfolio," which is the current
+  wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
   what's already in the resume; nothing beyond the resume's own Indium/Uber bullets is used).

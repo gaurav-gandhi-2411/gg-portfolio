@@ -2,6 +2,7 @@ import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
 import { PrintButton } from "@/components/print-button";
+import { StepCurve } from "@/components/step-curve";
 import { TransitionLink } from "@/components/transition-link";
 import { availability } from "@/content/availability";
 import { site } from "@/content/site";
@@ -64,6 +65,7 @@ export function CaseStudyPage({
     "How it works",
     ...(study.architecture ? ["Architecture"] : []),
     ...((study.decisions?.length ?? 0) > 0 ? ["Key decisions — and why"] : []),
+    ...(study.diagram ? [study.diagram.title] : []),
     ...((study.results?.length ?? 0) > 0 ? ["Results — the honest numbers"] : []),
     ...(study.story ? [study.story.title] : []),
     ...((study.closing?.length ?? 0) > 0 ? ["What this means if you need something similar"] : []),
@@ -200,6 +202,22 @@ export function CaseStudyPage({
                   </li>
                 ))}
               </ol>
+            </>
+          )}
+
+          {study.diagram && (
+            <>
+              <SectionHeading index={next()} title={study.diagram.title} />
+              <div className="mt-6">
+                <StepCurve
+                  points={study.diagram.points}
+                  unit={study.diagram.unit}
+                  label={study.diagram.title}
+                />
+              </div>
+              <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                {study.diagram.caption}
+              </p>
             </>
           )}
 
