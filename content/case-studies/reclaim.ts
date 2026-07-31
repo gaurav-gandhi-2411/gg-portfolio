@@ -6,6 +6,7 @@ import type { CaseStudy } from "../types";
 // tests/frontend/xss.test.mjs) — see provenance.md's reclaim section.
 export const reclaim: CaseStudy = {
   slug: "reclaim",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Reclaim",
   dek: "A Windows disk-cleanup tool that only ever deletes by deterministic rule, never by model score — proved its own safety net by surviving a real incident where its own delete run hit three shared Python environments, recovered every file, and rebuilt detection to be structural rather than pattern-based.",
   depth: "full",

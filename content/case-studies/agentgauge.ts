@@ -14,6 +14,7 @@ import type { CaseStudy } from "../types";
 // as the original v1 score.
 export const agentgauge: CaseStudy = {
   slug: "agentgauge",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "AgentGauge",
   dek: "A statistical harness that measures whether a change to an MCP server's tool descriptions actually moved real agent task success — built after three separately pre-registered hypotheses were tested and killed by their own decision rules, including the project's own founding commercial thesis.",
   depth: "full",

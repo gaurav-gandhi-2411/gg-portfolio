@@ -5,6 +5,7 @@ import type { CaseStudy } from "../types";
 // review-iq-closeout-roadmap.md) — see provenance.md's ReviewIQ section.
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Samidha Reviews",
   dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals — caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",

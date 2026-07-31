@@ -9,6 +9,7 @@ import type { CaseStudy } from "../types";
 // orphaned, see provenance.md's wave-19 investigation note.
 export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Gold Rate Tracker",
   dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model — and shipped the honest forecast instead of the more exciting one.",
   depth: "full",

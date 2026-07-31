@@ -47,19 +47,41 @@
 // convention as the "new repos"/"README renames" issues already in this
 // workflow), not a PR — no proposed fix to review, just a signal.
 //
-// Zero dependencies; Node 20+ (global fetch).
+// Wave 19, second half — the `verified-staleness` check below is a
+// DIFFERENT signal from the drift check above, added for a different
+// incident: triageiq's case study was touched by a commit (24a258d,
+// 2026-07-26) two days after its cited source had already changed
+// underneath it, and that commit's own message says every number was left
+// "unchanged" — it was a copy-only framing pass. Git's mtime said "fresh."
+// The page's numbers were already stale. A drift check (like the one
+// above) only catches staleness AFTER a number has visibly diverged from
+// its source text; it says nothing about whether anyone has actually
+// looked. `CaseStudy.verifiedAt` (content/types.ts) is a field a human (or
+// an explicit audit pass) sets ONLY when they've gone back to source and
+// confirmed the numbers — never advanced by an unrelated edit touching the
+// same file. This check flags any case study whose verifiedAt is more than
+// VERIFIED_STALE_DAYS old, regardless of whether any numeric drift was
+// separately detected — staleness of verification is its own signal, not
+// a proxy for numeric drift and not implied by its absence.
+//
+// Zero dependencies; Node 20+ (global fetch + dynamic import).
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Overridable for testing the failure path against a fixture that isn't
 // the real content/metrics.json (same override convention as
 // refresh-metrics.mjs's METRICS_REF).
 const METRICS_PATH = process.env.METRICS_PATH_OVERRIDE ?? join(ROOT, "content", "metrics.json");
+const CASE_STUDIES_INDEX_PATH = join(ROOT, "content", "case-studies", "index.ts");
+const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
 const SUMMARY_PATH = process.env.FRESHNESS_SUMMARY_PATH ?? "/tmp/metric-freshness-summary.md";
 const FETCH_TIMEOUT_MS = 20_000;
+// Suggested by the task that requested this check; a case study older than
+// this is flagged regardless of whether numeric drift was also found.
+const VERIFIED_STALE_DAYS = 30;
 // Numeric tokens shorter than this (after stripping a trailing '%') are
 // skipped as match candidates — a bare "5" or "0" appears in almost any
 // file by chance, which would make "at least one token found" a
@@ -101,6 +123,46 @@ function extractTokens(value) {
   if (!value) return [];
   const matches = value.match(/\d+(?:\.\d+)?/g) ?? [];
   return [...new Set(matches)].filter((t) => t.replace(".", "").length >= MIN_TOKEN_LEN);
+}
+
+// Same discovery convention as scripts/chatbot/build-index.mjs: parse
+// index.ts's own import statements rather than hardcoding the slug list,
+// so a newly-added case study is picked up automatically.
+function discoverCaseStudyModules() {
+  const indexSrc = readFileSync(CASE_STUDIES_INDEX_PATH, "utf8");
+  return [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)].map(
+    ([, exportName, fileName]) => ({ exportName, fileName })
+  );
+}
+
+async function checkVerifiedStaleness() {
+  const modules = discoverCaseStudyModules();
+  const today = new Date();
+  const rows = []; // { slug, verifiedAt, daysOld, stale: boolean } | { slug, error }
+
+  for (const { exportName, fileName } of modules) {
+    const fileUrl = pathToFileURL(join(CASE_STUDIES_DIR, `${fileName}.ts`)).href;
+    let mod;
+    try {
+      mod = await import(fileUrl);
+    } catch (err) {
+      rows.push({ slug: fileName, error: `failed to load: ${err.message}` });
+      continue;
+    }
+    const study = mod[exportName];
+    if (!study?.verifiedAt) {
+      rows.push({ slug: fileName, error: "no verifiedAt field set" });
+      continue;
+    }
+    const verifiedDate = new Date(study.verifiedAt);
+    if (Number.isNaN(verifiedDate.getTime())) {
+      rows.push({ slug: fileName, error: `verifiedAt "${study.verifiedAt}" is not a parseable date` });
+      continue;
+    }
+    const daysOld = Math.floor((today - verifiedDate) / (1000 * 60 * 60 * 24));
+    rows.push({ slug: study.slug ?? fileName, verifiedAt: study.verifiedAt, daysOld, stale: daysOld > VERIFIED_STALE_DAYS });
+  }
+  return rows;
 }
 
 const store = JSON.parse(readFileSync(METRICS_PATH, "utf8"));
@@ -152,6 +214,10 @@ const unverifiable = byStatus("UNVERIFIABLE");
 const current = byStatus("CURRENT");
 const skipped = byStatus("SKIPPED");
 
+const verifiedRows = await checkVerifiedStaleness();
+const staleVerification = verifiedRows.filter((r) => r.stale);
+const missingVerification = verifiedRows.filter((r) => r.error);
+
 const today = new Date().toISOString().slice(0, 10);
 const lines = [];
 lines.push(`## Weekly metric freshness check — ${today}`);
@@ -186,9 +252,41 @@ lines.push(
 );
 lines.push("");
 lines.push(
-  "_Generated by scripts/check-metric-freshness.mjs. Covers content/metrics.json's tracked " +
-    "product-card metrics only — not every number on every case-study page (most case-study " +
-    "prose/results numbers aren't wired through metrics.json and have no automated check at all)._"
+  "_Metric coverage: content/metrics.json's tracked product-card metrics only — not every " +
+    "number on every case-study page (most case-study prose/results numbers aren't wired " +
+    "through metrics.json and have no numeric-drift check above)._"
+);
+lines.push("");
+
+lines.push(`## Case-study verification staleness (>${VERIFIED_STALE_DAYS} days)`);
+lines.push("");
+lines.push(
+  "Independent of numeric drift above — a page with zero detected drift can still be overdue " +
+    "for a real re-check. `verifiedAt` is a human-set field (content/types.ts), never advanced " +
+    "by an unrelated edit touching the same file — see that field's own doc comment for the " +
+    "incident (triageiq, wave 15) this check exists to prevent recurring."
+);
+lines.push("");
+if (staleVerification.length > 0) {
+  lines.push(`### Overdue for re-verification — ${staleVerification.length} case stud${staleVerification.length === 1 ? "y" : "ies"}`);
+  lines.push("");
+  for (const r of staleVerification) {
+    lines.push(`- \`${r.slug}\`: verifiedAt ${r.verifiedAt}, ${r.daysOld} days ago`);
+  }
+  lines.push("");
+}
+if (missingVerification.length > 0) {
+  lines.push(`### Could not check — ${missingVerification.length} case stud${missingVerification.length === 1 ? "y" : "ies"}`);
+  lines.push("");
+  for (const r of missingVerification) lines.push(`- \`${r.slug}\`: ${r.error}`);
+  lines.push("");
+}
+if (staleVerification.length === 0 && missingVerification.length === 0) {
+  lines.push(`All ${verifiedRows.length} case studies verified within the last ${VERIFIED_STALE_DAYS} days.`);
+  lines.push("");
+}
+lines.push(
+  "_Generated by scripts/check-metric-freshness.mjs._"
 );
 
 const summary = lines.join("\n") + "\n";
@@ -203,5 +301,6 @@ writeFileSync(SUMMARY_PATH, summary);
 // expected "found some drift" outcome, which is the opposite of what a
 // weekly report job should do).
 console.log(
-  `\n--> ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ${skipped.length} skipped.`
+  `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ${skipped.length} skipped. ` +
+    `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
 );

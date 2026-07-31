@@ -6,6 +6,18 @@ verifiable citation were omitted, not softened (rule 65b). Built by reading the 
 **2026-07-12**, not from memory and not by trusting the June-12 project inventory without a
 spot-check — several numbers had already drifted by a month; corrections are logged below.
 
+**A file's git-commit date is not evidence its claims were re-verified (wave 19 rule).** Every
+`CaseStudy` carries a `verifiedAt` field (`content/types.ts`) separate from git mtime, bumped
+ONLY when a human or an explicit audit pass has gone back to the cited source repo(s) and
+confirmed the numbers still hold — never by an edit for copy, framing, typos, or anything else
+that leaves the numbers untouched. This exists because wave 15's commit `24a258d` touched every
+case study's dek/title in a site-wide framing pass ("every number [is] unchanged," per that
+commit's own message) two days after triageiq's cited source had already superseded the numbers
+the page still showed — the file looked fresh by git-mtime; it wasn't. `scripts/check-metric-
+freshness.mjs`'s weekly `metric-freshness` job flags any case study whose `verifiedAt` exceeds 30
+days, independent of whether it also finds numeric drift — see that field's doc comment for the
+full incident.
+
 **Reconciliation note:** an earlier version of this file (and a `content/provenance-audit.md`)
 was produced by a separate session working on this repo concurrently, now closed. Its research
 was audited against this pass: most claims matched independently (Warmer, ShelfSense,

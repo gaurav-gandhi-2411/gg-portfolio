@@ -307,6 +307,13 @@ jobs:
     # structurally cannot see. Report-only: a stable-titled issue, not a
     # PR, since there's no proposed fix to review, just a signal a human
     # should look at content/metrics.json's cited sources for.
+    #
+    # Also runs a second, independent check (scripts/check-metric-freshness.mjs's
+    # `checkVerifiedStaleness`): flags any case study whose `verifiedAt`
+    # field (content/types.ts) is more than 30 days old, regardless of
+    # whether any numeric drift was separately detected. Added after
+    # triageiq's case study went stale despite a recent-looking commit —
+    # see that field's own doc comment for the incident.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -326,7 +333,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! grep -qE "Possible drift|Unverifiable this run" /tmp/metric-freshness-summary.md; then
+          if ! grep -qE "Possible drift|Unverifiable this run|Overdue for re-verification|Could not check" /tmp/metric-freshness-summary.md; then
             echo "Nothing to report this week — closing any stale open issue."
             existing=$(gh issue list --search 'in:title "Weekly metric freshness check"' --state open --json number --jq '.[0].number')
             if [ -n "$existing" ]; then
@@ -335,7 +342,7 @@ jobs:
             exit 0
           fi
 
-          TITLE="Weekly metric freshness check: drift or unverifiable metrics found"
+          TITLE="Weekly metric freshness check: drift, unverifiable metrics, or overdue verification"
           existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --body-file /tmp/metric-freshness-summary.md

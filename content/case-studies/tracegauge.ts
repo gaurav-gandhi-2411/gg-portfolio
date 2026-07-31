@@ -7,6 +7,7 @@ import type { CaseStudy } from "../types";
 // feature subtotal, not the whole-suite result; CHANGELOG.md's 643 is.
 export const tracegauge: CaseStudy = {
   slug: "tracegauge",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "tracegauge",
   dek: "A local, three-axis scorer that replaces \"this agent felt efficient\" with a measurement — built by testing four candidate waste heuristics against real annotator agreement, and rebuilding the architecture around the one that survived.",
   depth: "full",

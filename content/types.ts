@@ -113,6 +113,37 @@ export interface CurvePoint {
  */
 export interface CaseStudy {
   slug: string;
+  /**
+   * Wave 19 — the last date every number/claim on this page was actually
+   * re-checked against its source repo(s), as YYYY-MM-DD. NOT derived from
+   * git, and NOT the same thing as "this file was recently edited."
+   *
+   * The incident this field exists to prevent: wave 15's commit 24a258d
+   * touched every case study's `dek`/`story.title` for a site-wide framing
+   * pass ("every dek... now opens with the capability/action demonstrated
+   * ... every number [is] unchanged" — the commit's own message). That
+   * commit landed 2026-07-26, two days AFTER triageiq's cited source
+   * (`triage-iq` ADR-0035/0036) had already superseded the exact numbers
+   * the page still displayed. The page's git-mtime said "fresh." It
+   * wasn't. Nothing distinguished a copy-only touch from a real
+   * verification pass — see docs/verified-at-rule.md if that file exists,
+   * or content/provenance.md's wave-19 section, for the full postmortem.
+   *
+   * THE RULE: bump this date ONLY when you have gone back to the source
+   * repo(s) this page cites and confirmed each number still matches
+   * current reality. Editing prose, fixing a typo, reframing a dek,
+   * reordering sections, adding a screenshot — none of that advances this
+   * date, no matter how recent the commit touching this file is. If
+   * you're not sure whether what you just did counts, it doesn't: re-check
+   * the numbers against source first, then bump the date.
+   *
+   * scripts/check-metric-freshness.mjs's `verified-staleness` check reads
+   * this field weekly and flags any case study whose verifiedAt is more
+   * than 30 days old — independent of whether it also detects a numeric
+   * drift. Staleness of verification is itself the signal: a page can have
+   * no detected drift and still be overdue for a real re-check.
+   */
+  verifiedAt: string;
   /** Page h1 — the product name. */
   title: string;
   /** One-line dek under the title. */
