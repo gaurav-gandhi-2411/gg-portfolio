@@ -2,6 +2,8 @@ import type { CaseStudy } from "../types";
 
 // Sources: mindmeld repo (README.md, spec.md, spec-hinglish-fix.md,
 // docs/known-limitations.md, PLAN.md) — see provenance.md wave-12 section.
+// Perf-budget claim refreshed wave 19 (2026-07-31): the app fires zero LCP
+// entries by design; README.md replaced the LCP budget with FCP on 2026-07-30.
 export const warmer: CaseStudy = {
   slug: "warmer",
   title: "Warmer",
@@ -90,8 +92,8 @@ export const warmer: CaseStudy = {
     },
     {
       label: "Web perf (tracked budget)",
-      value: "TBT 26ms · LCP 3,082ms",
-      detail: "LCP fails its own 3,000ms ceiling by 82ms — tracked openly as a known limitation, not hidden",
+      value: "FCP 992ms (≤1800ms) · TBT 26ms (≤200ms) · CLS 0",
+      detail: "LCP is deliberately not budgeted — this CanvasKit-rendered app fires zero LCP entries by design (no traditional largest-contentful DOM element for the Paint Timing API to key off), confirmed via a live PerformanceObserver check; FCP is the tracked load-speed proxy instead",
       sourceRef: "warmer:perf-budget",
     },
   ],

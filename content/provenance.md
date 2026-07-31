@@ -305,7 +305,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `warmer:wasm-decision` | `--wasm` adopted on measurement: TBT 221ms→13.5ms, −417KB page weight | `mindmeld/reports/renderer-decision-2026-07-12.md:43-53` |
 | `warmer:finetune-failures` | Two Hinglish fine-tune attempts both regressed held-out Spearman (0.435 → 0.376 → 0.324); shipped the off-the-shelf model | `mindmeld/docs/known-limitations.md:38-81` |
 | `warmer:tests` | 160/160 generator + 94/94 app + 2/2 emulator integration tests | `mindmeld/README.md:175-176` |
-| `warmer:perf-budget` | TBT 26ms (≤200ms budget, pass); LCP 3,082ms vs 3,000ms ceiling — failing by 82ms, tracked openly | `mindmeld/docs/known-limitations.md:369-375` |
+| `warmer:perf-budget` | FCP 992ms (≤1800ms), TBT 26ms (≤200ms), CLS 0 (≤0.1) — all passing; LCP deliberately unbudgeted (zero LCP entries ever fire on this CanvasKit-rendered page — confirmed via live `PerformanceObserver`, not a measurement gap) | **Wave 19 correction (2026-07-31):** `mindmeld/README.md:178-190`, commit `e8d03c7` (2026-07-30, "fix(docs): re-measure and correct stale performance budgets in README"). Superseded the "LCP 3,082ms, fails its own 3,000ms ceiling by 82ms" framing, which was accurate when originally sourced but replaced 5 days later. **Known cross-repo inconsistency, not fixed here (out of scope — a different repo):** `mindmeld/docs/known-limitations.md:383-402` still asserts the old LCP-ceiling framing as of its own last edit (commit `62b3ce9`, 2026-07-30 19:41 — *after* `e8d03c7`, but that commit touched an unrelated section of the file and never reconciled this one). `README.md` is treated as the more authoritative source here since it was the explicit, deliberate subject of the fix commit; `known-limitations.md` needs a matching correction in the `mindmeld` repo itself. |
 
 ### Style Maitri (agentic-shopping-assistant)
 
@@ -471,6 +471,24 @@ were found and corrected on the site:
 | `warmer:hinglish-fix` | hi-en Spearman 0.639 → **0.813** (a LoRA fine-tune took 0.639 → 0.800 — `mindmeld/PLAN.md:706` — and an eval-harness RNG fix took 0.800 → 0.813, EN 0.837 → 0.842 — `mindmeld/PLAN.md:1624`); current table read directly from `mindmeld/generator/evals/reports/baseline_report.md:24` @ `16f35d16`. Cross-language pass rate 54.2% → **78.0%** (`baseline_report.md:31`) |
 | `gold-rate-tracker:headline` | backtest grew 194 → **199 folds**; naive still wins (MAE 255.28 vs 297.84, Wilcoxon p≈0, run 2026-07-19) — `gold-rate-tracker/data/backtest.json` @ `a4d892c` |
 | `agentgauge:scoring-dimensions` | **retired** — see below |
+
+**Wave 19 continuation (2026-07-31):** backtest grew again, 199 → **204 folds** (naive still wins:
+MAE 251.99 vs 293.10, Wilcoxon p=0.0001) — `gold-rate-tracker/data/backtest.json` @ `d41372a`
+(run 2026-07-26T05:22:51Z, tracked, not gitignored). **Architecture also corrected:** the
+case-study's data-source description had Tanishq as primary with IBJA as calibration —
+inverted since `docs/adr/025-ibja-primary-source-decision.md` (2026-07-18): Tanishq's
+Cloudflare protection now blocks most automated access, so IBJA (the national benchmark) is
+primary and Tanishq is opportunistic confirmation. **Investigated: the "165-fold, 10.4% worse,
+p=0.0089" figure in `decisions[0]`, initially flagged by an audit as matching no known backtest
+snapshot.** It is NOT orphaned — it traces cleanly to `docs/adr/012-naive-headline-chronos-companion.md`
+(committed, main tree, `3ec3660d`, 2026-05-19), the *original* decision-triggering backtest, run
+before the 194/199/204-fold series existed. The earlier audit's "no known snapshot" conclusion
+was a search-depth miss (the ADR file wasn't checked), not a real provenance failure — this repo
+also has a stray, gitignored `.claude/worktrees/` directory containing duplicate copies of these
+same docs, which can make a shallow repo-wide grep look more ambiguous than the actual git
+history is. The case-study text now explicitly dates this as the original 2026-05-19 backtest,
+distinct from the current 204-fold figure in Results, to prevent the same "orphaned-looking"
+confusion recurring.
 
 New ID `warmer:lora-reframe` (case-study decision + story): full-parameter fine-tunes v1/v2
 both regressed (v2 worse with 43% more data); a 13-config capacity sweep holding data fixed

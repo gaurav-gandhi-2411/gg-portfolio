@@ -2,7 +2,11 @@ import type { CaseStudy } from "../types";
 
 // Sources: gold-rate-tracker repo (README.md, docs/adr/005-honest-baseline-reporting.md,
 // docs/adr/012, docs/adr/019, docs/DIRECTION_SIGNAL_STATUS.md, data/backtest.json) —
-// see provenance.md's Gold Rate Tracker section.
+// see provenance.md's Gold Rate Tracker section. Wave 19 (2026-07-31): architecture
+// corrected to IBJA-primary per ADR 025 (2026-07-18); backtest refreshed to 204 folds
+// (data/backtest.json, 2026-07-26 run). The 165-fold/10.4%/p=0.0089 figure in
+// decisions[0] is a real, distinct, earlier measurement (ADR 012, 2026-05-19) — not
+// orphaned, see provenance.md's wave-19 investigation note.
 export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
   title: "Gold Rate Tracker",
@@ -13,7 +17,7 @@ export const goldRateTracker: CaseStudy = {
     "The project's real differentiator isn't a clever model. It's a willingness to refuse shipping a price-prediction feature that doesn't actually beat a trivially simple baseline — even though \"AI predicts gold prices\" is a far more exciting headline than \"tomorrow will probably look like today.\"",
   ],
   approach: [
-    "A GitHub Actions cron job scrapes Tanishq's live 22K/24K/18K gold rates every three hours — a plain HTTP fetch first, falling back to a full browser (Playwright) only if that fails — and appends the reading to a committed prices.json file. Those raw retail prices are calibrated against the IBJA benchmark rate using a HuberRegressor (a regression method that's resistant to occasional bad data points), producing a consistent premium factor.",
+    "A GitHub Actions cron job fetches the IBJA (India Bullion and Jewellers Association) benchmark rate every three hours — the national reference price, and the primary source since Tanishq's retail site started blocking automated access behind Cloudflare's bot protection. A plain-HTTP Tanishq scrape still runs opportunistically alongside it, falling back to a full browser (Playwright), and confirms the IBJA-calibrated estimate against real retail pricing whenever it succeeds; when it doesn't, the IBJA estimate ships on its own. A HuberRegressor (a regression method that's resistant to occasional bad data points) converts the IBJA benchmark into a retail-price estimate, calibrated against historical Tanishq readings.",
     "The headline forecast shown to users is deliberately a naive flat-hold: tomorrow's price is predicted to be whatever today's price is. That's the model that ships, because measured honestly, nothing more sophisticated has beaten it yet.",
     "A small time-series model, Chronos-Bolt-Tiny, still runs every cycle as a \"directional companion\" — but its output is suppressed from the user interface (internally labeled \"DARK\") because it fails a pre-registered statistical bar for being trustworthy enough to show.",
     "Everything renders as an installable static Progressive Web App on GitHub Pages, reading the committed JSON files directly with no backend server, and price-drop alerts go out over ntfy.sh. The entire stack runs for ₹0 a month.",
@@ -22,15 +26,19 @@ export const goldRateTracker: CaseStudy = {
     intro:
       "A scraper feeds a naive baseline that ships, and a small ML model that runs in parallel but stays dark unless it earns its place.",
     stages: [
-      { label: "Tanishq price page", kind: "input", detail: "22K/24K/18K retail gold rates" },
       {
-        label: "Scraper (GitHub Actions, every 3h)",
-        detail: "plain HTTP fetch, Playwright browser fallback",
+        label: "IBJA benchmark rate",
+        kind: "input",
+        detail: "national reference price — primary source since Tanishq's Cloudflare protection started blocking most automated access",
+      },
+      {
+        label: "Fetcher (GitHub Actions, every 3h)",
+        detail: "IBJA fetch (primary) + opportunistic Tanishq scrape (plain HTTP, Playwright fallback) for retail confirmation when it succeeds",
       },
       { label: "prices.json", detail: "committed to the repo — the durable price history" },
       {
-        label: "IBJA-calibrated naive flat-hold forecast",
-        detail: "HuberRegressor premium factor; tomorrow = today — the headline shown to users",
+        label: "Naive flat-hold forecast",
+        detail: "IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor; tomorrow = today — the headline shown to users",
       },
       {
         label: "Chronos-Bolt-Tiny directional probe",
@@ -51,7 +59,7 @@ export const goldRateTracker: CaseStudy = {
   decisions: [
     {
       title: "Ship the naive flat-hold as the headline, not the ML model",
-      body: "A 165-fold walk-forward backtest (a test that repeatedly trains on the past and checks the very next prediction, sliding forward through time) showed Chronos-Bolt-Tiny performing 10.4% worse than the naive flat-hold on mean absolute error, with the difference statistically significant (p=0.0089). Shipping the model anyway as the headline number would violate the project's own honest-baseline-reporting rule, so the naive forecast ships instead.",
+      body: "The original 165-fold walk-forward backtest (2026-05-19, a test that repeatedly trains on the past and checks the very next prediction, sliding forward through time) showed Chronos-Bolt-Tiny performing 10.4% worse than the naive flat-hold on mean absolute error, with the difference statistically significant (p=0.0089) — the decision that shipped naive as the headline. Every larger backtest run since (see Results below) has confirmed the same conclusion, not reversed it.",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
@@ -72,9 +80,9 @@ export const goldRateTracker: CaseStudy = {
   ],
   results: [
     {
-      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (199-fold backtest, horizon 5 days)",
-      value: "MAE 255.28 vs. 297.84 — naive wins by ~17%",
-      detail: "Wilcoxon signed-rank p=0.0003 — the naive baseline's advantage is real, not noise",
+      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (204-fold backtest, horizon 5 days)",
+      value: "MAE 251.99 vs. 293.10 — naive wins by ~16%",
+      detail: "Wilcoxon signed-rank p=0.0001 — the naive baseline's advantage is real, not noise",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
