@@ -49,7 +49,7 @@
       "repoVisibility": "public",
       "repoArchived": false,
       "liveUrl": "https://aetherart-demo-473907703523.us-central1.run.app/",
-      "httpStatus": "timeout",
+      "httpStatus": 200,
       "demoUrl": null
     },
     "agentgauge": {
