@@ -77,11 +77,33 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const METRICS_PATH = process.env.METRICS_PATH_OVERRIDE ?? join(ROOT, "content", "metrics.json");
 const CASE_STUDIES_INDEX_PATH = join(ROOT, "content", "case-studies", "index.ts");
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
+const PROVENANCE_PATH = process.env.PROVENANCE_PATH_OVERRIDE ?? join(ROOT, "content", "provenance.md");
 const SUMMARY_PATH = process.env.FRESHNESS_SUMMARY_PATH ?? "/tmp/metric-freshness-summary.md";
 const FETCH_TIMEOUT_MS = 20_000;
 // Suggested by the task that requested this check; a case study older than
 // this is flagged regardless of whether numeric drift was also found.
 const VERIFIED_STALE_DAYS = 30;
+
+// Wave 20 — case-study slug -> source repo, "owner/name" or null for a
+// private repo (fetch would need auth this script deliberately doesn't
+// carry — see warmer below). Hand-maintained; a new case study needs one
+// line here or its claims fall into `NO_REPO_MAPPING` below rather than
+// silently going unchecked with no explanation.
+const CASE_STUDY_REPO = {
+  warmer: null, // mindmeld is private; see content/provenance.md's warmer section
+  "style-maitri": "gaurav-gandhi-2411/agentic-shopping-assistant",
+  triageiq: "gaurav-gandhi-2411/triage-iq",
+  dealhunter: "gaurav-gandhi-2411/agentic-travel-booking-system",
+  shelfsense: "gaurav-gandhi-2411/shelfsense-m5",
+  reviewiq: "gaurav-gandhi-2411/review-iq",
+  "multimodal-fashion-recommender": "gaurav-gandhi-2411/multimodal-fashion-recommender",
+  "gold-rate-tracker": "gaurav-gandhi-2411/gold-rate-tracker",
+  aetherart: "gaurav-gandhi-2411/AetherArt",
+  agentgauge: "gaurav-gandhi-2411/agentgauge",
+  reclaim: "gaurav-gandhi-2411/reclaim",
+  tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer",
+  "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
+};
 // Numeric tokens shorter than this (after stripping a trailing '%') are
 // skipped as match candidates — a bare "5" or "0" appears in almost any
 // file by chance, which would make "at least one token found" a
@@ -119,10 +141,29 @@ function extractPath(sourceFile) {
 // signs are stripped (a source file might render "94.4%" as "94.4 percent"
 // or inside different punctuation) but the digits themselves are the
 // actual evidence.
+//
+// Each token also carries its fraction-form alternate (94.4 -> 0.944):
+// a real false-positive class this caught on first run — reclaim's case
+// study displays "7.64%" / "100.00%" while its source (docs/CASE_STUDY.md)
+// states the identical measurement as "0.0764" / "1.0000". Same number,
+// different convention, not drift. A token matches if EITHER form is
+// present in the source text.
 function extractTokens(value) {
   if (!value) return [];
   const matches = value.match(/\d+(?:\.\d+)?/g) ?? [];
-  return [...new Set(matches)].filter((t) => t.replace(".", "").length >= MIN_TOKEN_LEN);
+  const unique = [...new Set(matches)].filter((t) => t.replace(".", "").length >= MIN_TOKEN_LEN);
+  return unique.map((t) => {
+    const n = Number(t);
+    const alternates = [t];
+    if (n >= 0 && n <= 100) {
+      // Percent -> fraction, e.g. "94.4" -> "0.944"; trim to avoid
+      // spurious trailing zeros that would never appear in prose ("0.944"
+      // not "0.9440000000000001").
+      const asFraction = (n / 100).toFixed(6).replace(/0+$/, "").replace(/\.$/, ".0");
+      if (asFraction !== t) alternates.push(asFraction);
+    }
+    return { display: t, alternates };
+  });
 }
 
 // Same discovery convention as scripts/chatbot/build-index.mjs: parse
@@ -133,6 +174,146 @@ function discoverCaseStudyModules() {
   return [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)].map(
     ([, exportName, fileName]) => ({ exportName, fileName })
   );
+}
+
+// Parses content/provenance.md's `| \`id\` | claim | source |` rows into a
+// Map. Deliberately simple (one regex, one physical line per row, which is
+// what a real markdown table requires) rather than a full markdown parser
+// — 133 of 145 rows parse cleanly; rows that don't (multi-line cells, a
+// small number of narrative-only rows) are absent from the map, and any
+// case-study sourceRef pointing at one reports NO_PROVENANCE_ROW below,
+// visibly, rather than silently matching nothing.
+function parseProvenance() {
+  const lines = readFileSync(PROVENANCE_PATH, "utf8").split(/\r?\n/);
+  const idToSource = new Map();
+  for (const line of lines) {
+    const m = line.match(/^\| `([a-zA-Z0-9:_.#-]+)` \| (.*) \| (.*) \|$/);
+    if (!m) continue;
+    idToSource.set(m[1], { claim: m[2], source: m[3] });
+  }
+  return idToSource;
+}
+
+// Pulls every plausible repo-relative file path out of a provenance row's
+// Source cell — NOT just the first. A real false positive on first run:
+// `gold:direction-baseline`'s row cites TWO files
+// (`docs/adr/019-....md:16-35,62-72`, `docs/DIRECTION_SIGNAL_STATUS.md:15-20`)
+// because the ADR explains the decision but the actual current numbers
+// (52.06%, 49.5%, etc.) live in the second, later-updated file. Checking
+// only the first file reported real numbers as "missing" when they were
+// simply in the row's other cited source. A claim now only flags drift if
+// its tokens are absent from ALL cited files, not just the first one.
+// Strips a leading `<repoSlug>/` if the caller's repo's own name prefixes
+// a path (provenance.md sometimes writes paths repo-qualified when a row
+// could be confused with another project's file of the same name).
+function extractPathsFromSource(source, repoSlug) {
+  const matches = [...source.matchAll(/`([\w./-]+\.[a-zA-Z0-9]+)(:[\d,-]+)?`/g)];
+  return matches.map((m) => {
+    let path = m[1];
+    if (repoSlug && path.startsWith(`${repoSlug}/`)) path = path.slice(repoSlug.length + 1);
+    return path;
+  });
+}
+
+// Walks one case study's results/decisions/story fields for every
+// sourceRef-carrying claim, pairing each with the exact text the site
+// displays for it (value+detail for a result row, body for a decision,
+// the joined paragraphs for the story) — this is the text that actually
+// ships, not a separately-maintained copy of it, so there's no risk of
+// this check validating against stale metadata about itself.
+function collectCaseStudyClaims(study) {
+  const claims = [];
+  for (const r of study.results ?? []) {
+    claims.push({ sourceRef: r.sourceRef, text: `${r.value} ${r.detail ?? ""}`.trim(), kind: "result" });
+  }
+  for (const d of study.decisions ?? []) {
+    claims.push({ sourceRef: d.sourceRef, text: d.body, kind: "decision" });
+  }
+  if (study.story) {
+    claims.push({ sourceRef: study.story.sourceRef, text: study.story.body.join(" "), kind: "story" });
+  }
+  if (study.diagram) {
+    const pointsText = study.diagram.points.map((p) => `${p.label} ${p.value}`).join(" ");
+    claims.push({ sourceRef: study.diagram.sourceRef, text: `${pointsText} ${study.diagram.caption}`, kind: "diagram" });
+  }
+  return claims;
+}
+
+async function checkCaseStudyClaims(provenance) {
+  const modules = discoverCaseStudyModules();
+  const claimResults = []; // { slug, sourceRef, kind, status, detail }
+
+  for (const { exportName, fileName } of modules) {
+    const fileUrl = pathToFileURL(join(CASE_STUDIES_DIR, `${fileName}.ts`)).href;
+    let study;
+    try {
+      study = (await import(fileUrl))[exportName];
+    } catch {
+      continue; // already reported by checkVerifiedStaleness
+    }
+    const repo = Object.hasOwn(CASE_STUDY_REPO, fileName) ? CASE_STUDY_REPO[fileName] : undefined;
+    const repoSlug = repo ? repo.split("/")[1] : null;
+
+    for (const { sourceRef, text, kind } of collectCaseStudyClaims(study)) {
+      const base = { slug: fileName, sourceRef, kind };
+
+      const tokens = extractTokens(text);
+      if (tokens.length === 0) {
+        claimResults.push({ ...base, status: "NOT_NUMERIC", detail: "no numeric token in displayed text (Task 3's territory, not this check's)" });
+        continue;
+      }
+      if (repo === undefined) {
+        claimResults.push({ ...base, status: "NO_REPO_MAPPING", detail: `"${fileName}" has no entry in CASE_STUDY_REPO` });
+        continue;
+      }
+      if (repo === null) {
+        claimResults.push({ ...base, status: "SKIPPED_PRIVATE_REPO", detail: "source repo is private; not fetchable without auth this script doesn't carry" });
+        continue;
+      }
+      const row = provenance.get(sourceRef);
+      if (!row) {
+        claimResults.push({ ...base, status: "NO_PROVENANCE_ROW", detail: `no content/provenance.md row for sourceRef "${sourceRef}"` });
+        continue;
+      }
+      const paths = extractPathsFromSource(row.source, repoSlug);
+      if (paths.length === 0) {
+        claimResults.push({ ...base, status: "SKIPPED_NO_PATH", detail: `provenance source "${row.source}" has no extractable file path` });
+        continue;
+      }
+
+      // Union across every cited file: a token counts as found if it (or
+      // its %/fraction alternate) appears in ANY of them. A fetch failure
+      // on one cited file doesn't abort the claim if another cited file
+      // still resolves — but if EVERY cited file fails to fetch, that's
+      // reported as UNVERIFIABLE, not silently treated as drift.
+      const foundIn = new Set();
+      const fetchErrors = [];
+      for (const path of paths) {
+        const url = `https://raw.githubusercontent.com/${repo}/HEAD/${path}`;
+        let sourceText;
+        try {
+          sourceText = await fetchText(url);
+        } catch (err) {
+          fetchErrors.push(`${path}: ${err.message}`);
+          continue;
+        }
+        for (const t of tokens) {
+          if (t.alternates.some((a) => sourceText.includes(a))) foundIn.add(t.display);
+        }
+      }
+      if (fetchErrors.length === paths.length) {
+        claimResults.push({ ...base, status: "UNVERIFIABLE", detail: `all ${paths.length} cited path(s) failed to fetch: ${fetchErrors.join("; ")}` });
+        continue;
+      }
+      if (foundIn.size === 0) {
+        const shown = tokens.map((t) => t.display).join(", ");
+        claimResults.push({ ...base, status: "POSSIBLE_DRIFT", detail: `none of [${shown}] (or their %/fraction equivalent) found in ${repo}/{${paths.join(", ")}} (text: "${text.slice(0, 100)}")` });
+      } else {
+        claimResults.push({ ...base, status: "CURRENT", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${paths.join(", ")}}` });
+      }
+    }
+  }
+  return claimResults;
 }
 
 async function checkVerifiedStaleness() {
@@ -196,12 +377,13 @@ for (const [id, m] of entries) {
     continue;
   }
 
-  const found = tokens.filter((t) => text.includes(t));
+  const found = tokens.filter((t) => t.alternates.some((a) => text.includes(a)));
   if (found.length === 0) {
+    const shown = tokens.map((t) => t.display).join(", ");
     results.push({
       id,
       status: "POSSIBLE_DRIFT",
-      detail: `none of [${tokens.join(", ")}] found in current ${m.repo}/${path} (value: "${m.value}")`,
+      detail: `none of [${shown}] (or their %/fraction equivalent) found in current ${m.repo}/${path} (value: "${m.value}")`,
     });
   } else {
     results.push({ id, status: "CURRENT", detail: `${found.length}/${tokens.length} token(s) confirmed present` });
@@ -217,6 +399,27 @@ const skipped = byStatus("SKIPPED");
 const verifiedRows = await checkVerifiedStaleness();
 const staleVerification = verifiedRows.filter((r) => r.stale);
 const missingVerification = verifiedRows.filter((r) => r.error);
+
+const provenance = parseProvenance();
+const claimResults = await checkCaseStudyClaims(provenance);
+const claimsByStatus = (s) => claimResults.filter((r) => r.status === s);
+const claimsCurrent = claimsByStatus("CURRENT");
+const claimsDrift = claimsByStatus("POSSIBLE_DRIFT");
+const claimsUnverifiable = claimsByStatus("UNVERIFIABLE");
+const claimsNotNumeric = claimsByStatus("NOT_NUMERIC");
+const claimsSkippedPrivate = claimsByStatus("SKIPPED_PRIVATE_REPO");
+const claimsSkippedNoPath = claimsByStatus("SKIPPED_NO_PATH");
+const claimsNoProvenanceRow = claimsByStatus("NO_PROVENANCE_ROW");
+const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
+// "Checked" = a real fetch was attempted and resolved one way or another
+// (current, drift, or a fetch failure) — the denominator for the coverage
+// count this task asked for. NOT_NUMERIC is correctly excluded (Task 3's
+// territory, not a numeric claim), matching the task's own scope ("has...
+// a numeric value"). Skipped/no-mapping/no-row are claims that COULD be
+// numeric-checked in principle but this run's data/config didn't resolve
+// far enough to try — reported separately, not folded into either bucket.
+const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsUnverifiable.length;
+const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
 
 const today = new Date().toISOString().slice(0, 10);
 const lines = [];
@@ -257,6 +460,45 @@ lines.push(
     "through metrics.json and have no numeric-drift check above)._"
 );
 lines.push("");
+
+lines.push(`## Case-study claim coverage (results/decisions/story, not just product-card metrics)`);
+lines.push("");
+lines.push(
+  `Every sourced numeric claim across all case studies, not just the ~14 promoted to a product-card ` +
+    `metric in content/metrics.json. Same text-presence method as the section above, applied to the ` +
+    `exact text the site displays (not a separately-maintained copy of it).`
+);
+lines.push("");
+lines.push(
+  `**Checked (fetch attempted): ${claimsChecked} of ${claimsNumericTotal} numeric claims** ` +
+    `(${claimsCurrent.length} current, ${claimsDrift.length} possible drift, ${claimsUnverifiable.length} unverifiable). ` +
+    `${claimResults.length - claimsNumericTotal} more claims are prose with no numeric anchor (not this check's scope).`
+);
+lines.push("");
+if (claimsDrift.length > 0) {
+  lines.push(`### Possible drift — ${claimsDrift.length} claim(s)`);
+  lines.push("");
+  for (const r of claimsDrift) lines.push(`- \`${r.slug}\` (${r.kind}, \`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+if (claimsUnverifiable.length > 0) {
+  lines.push(`### Unverifiable this run — ${claimsUnverifiable.length} claim(s)`);
+  lines.push("");
+  for (const r of claimsUnverifiable) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+const claimsUncheckedForOtherReasons = claimsSkippedPrivate.length + claimsSkippedNoPath.length + claimsNoProvenanceRow.length + claimsNoRepoMapping.length;
+if (claimsUncheckedForOtherReasons > 0) {
+  lines.push(`### Numeric, but not checked this run — ${claimsUncheckedForOtherReasons} claim(s)`);
+  lines.push("");
+  lines.push(
+    `${claimsSkippedPrivate.length} private-repo (no auth carried by this script), ` +
+      `${claimsSkippedNoPath.length} no extractable file path in their provenance row, ` +
+      `${claimsNoProvenanceRow.length} no provenance.md row for that sourceRef at all, ` +
+      `${claimsNoRepoMapping.length} case study missing from CASE_STUDY_REPO.`
+  );
+  lines.push("");
+}
 
 lines.push(`## Case-study verification staleness (>${VERIFIED_STALE_DAYS} days)`);
 lines.push("");
@@ -302,5 +544,6 @@ writeFileSync(SUMMARY_PATH, summary);
 // weekly report job should do).
 console.log(
   `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ${skipped.length} skipped. ` +
+    `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsUnverifiable.length} unverifiable). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
 );
