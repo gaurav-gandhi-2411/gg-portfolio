@@ -14,6 +14,37 @@
 # Its own PR too, same reasoning as content-pipeline's separation above —
 # a mechanical fact-check diff shouldn't share a review with either the
 # metric-value refresh or an LLM-curated content proposal.
+#
+# Wave 19 — two fixes, plus a new job:
+#   1. `issues: write` added below. It was missing — an explicit `permissions:`
+#      block makes every unlisted scope `none` (not "inherit the repo
+#      default"), so every `gh issue create`/`gh issue edit` call in this
+#      file (the "new repos" and "README renames" steps below) has been
+#      running with zero issues permission since wave 14/16. Never caught
+#      because both steps only run conditionally, and every real run to
+#      date happened to find zero new repos and zero renames — the failing
+#      code path was simply never exercised. Same root-cause SHAPE as the
+#      `can_approve_pull_request_reviews` fix below: an untested failure
+#      path sitting live in production.
+#   2. The repo-level "Allow GitHub Actions to create and approve pull
+#      requests" setting was OFF (`can_approve_pull_request_reviews: false`
+#      via the REST API) — this is a repository setting, not something
+#      fixable in this file, but it's the reason the content-pipeline and
+#      identity-drift jobs' very first scheduled run (2026-07-27) failed at
+#      their `gh pr create` step with "GitHub Actions is not permitted to
+#      create or approve pull requests." Fixed via `gh api -X PUT
+#      repos/.../actions/permissions/workflow -F can_approve_pull_request_reviews=true`;
+#      confirmed by a manual `workflow_dispatch` re-run where all three jobs
+#      (refresh, identity-drift, content-pipeline) succeeded and opened real
+#      PRs (#34, #35).
+#   3. New `metric-freshness` job: `refresh`'s diff is structurally blind to
+#      drift when a source repo's OWN `.portfolio/metrics.json` manifest is
+#      never refreshed (dealhunter's test count sat at a stale 597 for
+#      weeks this way — the weekly refresh ran, found no diff, said
+#      nothing). This job re-checks each metric against its cited source
+#      file's actual current content instead of trusting an intermediate
+#      manifest. See scripts/check-metric-freshness.mjs's header for the
+#      full mechanism and its stated limits.
 name: Content + metrics refresh
 
 on:
@@ -29,6 +60,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: write # to dispatch ci.yml onto the PR branch (see below)
+  issues: write # wave 19 fix — see header comment; was silently missing
 
 jobs:
   refresh:
@@ -264,3 +296,49 @@ jobs:
               gh issue create --title "$TITLE" --body "$BODY"
             fi
           done
+
+  metric-freshness:
+    # Wave 19 — see the file header comment (point 3) for why this exists
+    # alongside `refresh` rather than inside it: `refresh`'s diff is against
+    # each source repo's own possibly-stale manifest; this job re-checks
+    # against the actual current source file content instead. Runs
+    # independent of whether `refresh` found any change this week — that's
+    # the whole point, it's built to catch exactly the drift `refresh`
+    # structurally cannot see. Report-only: a stable-titled issue, not a
+    # PR, since there's no proposed fix to review, just a signal a human
+    # should look at content/metrics.json's cited sources for.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run metric freshness check
+        env:
+          FRESHNESS_SUMMARY_PATH: /tmp/metric-freshness-summary.md
+        run: node scripts/check-metric-freshness.mjs
+
+      - name: Open/update an issue if anything needs a look
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! grep -qE "Possible drift|Unverifiable this run" /tmp/metric-freshness-summary.md; then
+            echo "Nothing to report this week — closing any stale open issue."
+            existing=$(gh issue list --search 'in:title "Weekly metric freshness check"' --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Latest run found nothing to report — closing. Reopens automatically if drift is found again."
+            fi
+            exit 0
+          fi
+
+          TITLE="Weekly metric freshness check: drift or unverifiable metrics found"
+          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file /tmp/metric-freshness-summary.md
+          else
+            gh issue create --title "$TITLE" --body-file /tmp/metric-freshness-summary.md
+          fi
