@@ -88,9 +88,9 @@ export const goldRateTracker: CaseStudy = {
     },
     {
       label: "Chronos direction accuracy",
-      value: "52.06%",
+      value: "51.96%",
       detail: "barely above a coin flip, and below the true ~70% regime base rate",
-      sourceRef: "gold:direction-baseline",
+      sourceRef: "gold-rate-tracker:headline",
     },
     {
       label: "Direction-signal promotion gate",
