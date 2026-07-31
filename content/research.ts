@@ -19,4 +19,15 @@ export const researchPapers: ResearchPaper[] = [
     status: "preprint-pending",
     sourceRef: "agentgauge:paper-md",
   },
+  {
+    title:
+      "Powering Agent Evaluations: Variance Structure, Measurement Artifacts, and Minimum Detectable Effects in Tool-Use Benchmarks",
+    abstract:
+      "Agent evaluations are routinely reported without a power analysis, without a stated detection floor, and without screening for measurement artifacts. This paper measures the variance structure of agent task outcomes on a 253-task, 3-model tool-use corpus (intraclass correlation 0.793 within tool-set/task; 56.1% of outcome variance is between-task), shows the direct consequence for experimental design (repeated trials on the same task carry little independent information), and gives a paired, common-random-numbers, task-clustered-bootstrap, CUPED, sequential-testing estimator that reaches a minimum detectable effect of 0.0537 at n=253 tasks (from an uncorrected-baseline MDE of 0.433 at n=20). We catalogue ten measurement-artifact classes discovered during this project, each with an automated detector shipped in `agentgauge audit`, including two cases where an artifact produced a false positive the authors initially believed: a −76.7 to −80.0 percentage-point causal effect that a scoring bug corrected to a near-null, and a 100% top-1 localization-accuracy claim that a probe-noise miscalibration corrected to 58.33%.",
+    abstractExcerpt:
+      "Agent evaluations are routinely reported without a power analysis, without a stated detection floor, and without screening for measurement artifacts.",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
+    status: "preprint-pending",
+    sourceRef: "agentgauge:paper2",
+  },
 ];

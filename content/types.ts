@@ -96,6 +96,17 @@ export interface FlowStage {
 }
 
 /**
+ * One point on a step-curve diagram (wave 17) — a metric's value after a
+ * named method change, e.g. AgentGauge's minimum-detectable-effect curve
+ * across three estimator changes. Rendered by components/step-curve.tsx.
+ */
+export interface CurvePoint {
+  label: string;
+  value: number;
+  detail?: string;
+}
+
+/**
  * A /work/[slug] case-study page (wave 12). Written for a novice reader:
  * plain language, jargon explained in place. Every metric row carries a
  * sourceRef into content/provenance.md (rule 65b) — no sourceRef, no ship.
@@ -119,6 +130,12 @@ export interface CaseStudy {
   results?: { label: string; value: string; detail?: string; sourceRef: string }[];
   /** The hardest documented engineering/debugging story. */
   story?: { title: string; body: string[]; sourceRef: string };
+  /**
+   * Wave 17 — an embedded step-curve chart for a metric that improves
+   * across discrete, named method changes. Values must mirror the
+   * matching `results` row (rule 65b: same numbers, same sourceRef).
+   */
+  diagram?: { title: string; unit: string; points: CurvePoint[]; caption: string; sourceRef: string };
   /**
    * Wave 15 — practical takeaway for someone evaluating whether to hire GG or
    * use the product. Synthesizes claims already sourced above; introduces no

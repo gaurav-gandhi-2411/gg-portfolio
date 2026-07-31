@@ -112,6 +112,13 @@ export const products: Product[] = [
     // and the project rebuilt around a statistical harness. Caught by this
     // wave's metrics-manifest verification pass (see provenance.md).
     metric: refreshableMetric("agentgauge:blocking-causal"),
+    // Wave 17: live on PyPI as of v0.5.2 — confirmed via `pip index versions
+    // agentgauge-harness` (2026-07-31), see provenance.md.
+    pypi: {
+      packageName: "agentgauge-harness",
+      installCommand: "pip install agentgauge-harness",
+      badgeUrl: "https://img.shields.io/pypi/v/agentgauge-harness.svg",
+    },
   },
   {
     slug: "reclaim",
