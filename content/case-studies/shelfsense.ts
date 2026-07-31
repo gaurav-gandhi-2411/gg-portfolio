@@ -4,6 +4,7 @@ import type { CaseStudy } from "../types";
 // reports/leaderboard.md, PLAN.md) — see provenance.md's ShelfSense section.
 export const shelfsense: CaseStudy = {
   slug: "shelfsense",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "ShelfSense",
   dek: "Demand forecasting for 30,490 retail item×store series, 36% more accurate than the naive baseline — reached partly by catching an evaluation harness that had been silently flipping which models actually won.",
   depth: "full",

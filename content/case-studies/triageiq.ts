@@ -10,6 +10,7 @@ import type { CaseStudy } from "../types";
 // retrieval Recall@5 corrected twice (ADR-0033, then a harness-bug fix in ADR-0035).
 export const triageiq: CaseStudy = {
   slug: "triageiq",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "TriageIQ",
   dek: "An ML issue-triage assistant for busy open-source maintainers — caught a target-leakage bug that had inflated its own error estimate 8×, then found two more leaks nobody was looking for.",
   depth: "full",

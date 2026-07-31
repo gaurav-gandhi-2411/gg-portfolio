@@ -6,6 +6,7 @@ import type { CaseStudy } from "../types";
 // see provenance.md's AetherArt section (wave 12 and wave 17).
 export const aetherart: CaseStudy = {
   slug: "aetherart",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "AetherArt",
   dek: "A Ukiyo-e style SDXL model squeezed into an 8GB consumer GPU budget — ran the experiment that found the field's default quality metric is structurally blind to real changes, and revised its own headline finding downward once a stricter statistical bar was applied.",
   depth: "full",

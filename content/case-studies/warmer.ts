@@ -6,6 +6,7 @@ import type { CaseStudy } from "../types";
 // entries by design; README.md replaced the LCP budget with FCP on 2026-07-30.
 export const warmer: CaseStudy = {
   slug: "warmer",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Warmer",
   dek: "Diagnosed a Hinglish embedding model stuck at zero correlation, fixed the real root cause, then caught its own 'more data' fix making things worse — and shipped the LoRA model that actually worked.",
   depth: "full",

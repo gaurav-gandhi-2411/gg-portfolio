@@ -11,6 +11,7 @@ import type { CaseStudy } from "../types";
 // 2026-07-26 200-OK check and this wave.
 export const expenseTracker: CaseStudy = {
   slug: "expense-tracker",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Expense Tracker",
   dek: "A multi-user personal-finance app built to practice production discipline — real auth, real data isolation, real migrations, real tests — with a few pragmatic ML features layered on top.",
   depth: "short",

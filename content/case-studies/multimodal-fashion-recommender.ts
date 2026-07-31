@@ -6,6 +6,7 @@ import type { CaseStudy } from "../types";
 // (2026-07-31): Virgio went live 2026-07-11, missing from the prior text.
 export const mmfr: CaseStudy = {
   slug: "multimodal-fashion-recommender",
+  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "Multimodal Fashion Recommender",
   dek: "A two-tower recommender that beats a popularity baseline 3.06× on Recall@10 — reached by diagnosing a full representation collapse down to a warmup-schedule fix, and by writing the ADR that draws an honest line on how far one shared process can scale.",
   depth: "full",
