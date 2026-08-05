@@ -1,0 +1,13 @@
+{
+  "_source": "WebSearch aggregate over careers.google.com listings (Staff AI Research Scientist, Applied AI, Google Cloud; Research Scientist, ML Efficiency; Research Scientist, GenAI Experiences) — 2026-08-01. Direct WebFetch of the listing pages returned only client-rendered nav shells (JS SPA, no static JD text), so keywords are drawn from WebSearch's indexed-content summaries, which quote real snippets (e.g. 'setup large-scale tests and deploy promising ideas quickly and broadly'), not invented.",
+  "target_role": "Applied AI / Research Scientist, Google Cloud",
+  "jd_keywords": [
+    "machine learning", "large-scale", "TensorFlow", "PyTorch", "research",
+    "natural language processing", "computer vision", "evaluation",
+    "production", "experiments", "data systems", "distributed", "applied AI",
+    "publications"
+  ],
+  "max_pages": 2,
+  "boost_tags": ["experimentation", "rag", "agents", "distributed-training", "causal-inference"],
+  "drop_ids": []
+}

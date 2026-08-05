@@ -1,0 +1,13 @@
+{
+  "_source": "WebSearch aggregate over metacareers.com listings (Research Scientist, Machine Learning; Research Scientist, Artificial Intelligence; AI Research Scientist, Language) — 2026-08-01. Direct WebFetch returned only the 'Meta Careers' nav header (JS SPA), so keywords are drawn from WebSearch's indexed-content summaries, which quote real snippets (e.g. 'Design and execute machine learning research experiments, including model architecture design, training recipe development, and rigorous evaluation across benchmarks and production metrics').",
+  "target_role": "Research Scientist, AI/ML",
+  "jd_keywords": [
+    "large language models", "LLM", "reinforcement learning", "ranking",
+    "recommendation systems", "model architecture", "training recipe",
+    "evaluation", "benchmarks", "retrieval", "publications", "open-source",
+    "content understanding"
+  ],
+  "max_pages": 2,
+  "boost_tags": ["ranking", "contrastive-learning", "causal-inference", "experimentation", "distributed-training"],
+  "drop_ids": []
+}
