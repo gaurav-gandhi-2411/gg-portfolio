@@ -1,6 +1,6 @@
 // Hard-gate checks (amendment items 2, 4, 5, 6 + original spec item 5).
 // Every function returns a string[] of violations — empty array means pass.
-// scripts/build_resume.js treats any non-empty combined list as a build failure.
+// scripts/build_resume.mjs treats any non-empty combined list as a build failure.
 
 const BANNED_SUPERLATIVES = ["award-winning", "world-class"];
 const BANNED_EXACT_PHRASES = ["13 products", "11 live", "authored two preprints"];
@@ -14,7 +14,7 @@ const COUNT_PATTERN = new RegExp(
   "i",
 );
 
-function lintSummary(summaryEntry) {
+export function lintSummary(summaryEntry) {
   if (!summaryEntry) return [];
   const text = summaryEntry.text_runs.map((r) => r.text).join(" ");
   const lower = text.toLowerCase();
@@ -30,20 +30,20 @@ function lintSummary(summaryEntry) {
   return violations;
 }
 
-function lintSurfaceGate(renderedFullProjectEntries) {
+export function lintSurfaceGate(renderedFullProjectEntries) {
   return renderedFullProjectEntries
     .filter((e) => e.surface === "repo_only")
     .map((e) => `project "${e.id}" rendered as a full entry despite surface == "repo_only"`);
 }
 
-function lintUnverified(renderedEntries, allowUnverified) {
+export function lintUnverified(renderedEntries, allowUnverified) {
   if (allowUnverified) return [];
   return renderedEntries
     .filter((e) => e.verified_source === "UNVERIFIED")
     .map((e) => `bullet "${e.id}" has verified_source == "UNVERIFIED" and --allow-unverified was not passed`);
 }
 
-function lintCertifications(certs) {
+export function lintCertifications(certs) {
   return certs
     .filter((c) => c.status !== "held" && !c.expected)
     .map((c) => `certification "${c.name}" has status="${c.status}" but no "expected" date is set`);
@@ -58,7 +58,7 @@ const RESEARCH_STATUS_FORBIDDEN_WORDS = {
   published: [],
 };
 
-function lintResearchStatus(researchEntries) {
+export function lintResearchStatus(researchEntries) {
   const violations = [];
   for (const e of researchEntries) {
     const status = e.research_status;
@@ -79,7 +79,7 @@ function lintResearchStatus(researchEntries) {
 
 // amendment 2, item 5: the "More on GitHub" line caps at 200 chars and may
 // name a metric (a "(...)" parenthetical) for at most one project. Checked
-// independently of resume-select.js's buildCollapsedLine() construction logic
+// independently of resume-select.mjs's buildCollapsedLine() construction logic
 // per rule 85a — a control shouldn't just trust its own builder never to drift.
 // Root-cause check: buildCollapsedLine() wraps a project's headline_metric in
 // its own "(...)" — if the metric string itself embeds a paren (e.g. "−13.3
@@ -87,13 +87,13 @@ function lintResearchStatus(researchEntries) {
 // assumption in lintMoreOnGithubLine breaks even though exactly one project
 // was chosen to carry a metric. Catch it at the content level, not just as a
 // downstream character-count symptom (rule 85a: check the surface directly).
-function lintHeadlineMetricNoParens(projectEntries) {
+export function lintHeadlineMetricNoParens(projectEntries) {
   return projectEntries
     .filter((e) => e.headline_metric && e.headline_metric.includes("("))
     .map((e) => `project "${e.id}"'s headline_metric contains a paren, breaks the collapsed-line single-metric invariant: "${e.headline_metric}"`);
 }
 
-function lintMoreOnGithubLine(line) {
+export function lintMoreOnGithubLine(line) {
   if (!line) return [];
   const violations = [];
   if (line.length > 200) {
@@ -111,7 +111,7 @@ function lintMoreOnGithubLine(line) {
 // must carry a description of what was built instead.
 const CERTIFICATE_LANGUAGE = /\b(specialization|certification|certificate|course)\b/i;
 
-function lintCertificationKind(certs) {
+export function lintCertificationKind(certs) {
   const violations = [];
   for (const c of certs) {
     if (c.kind === "self_paced") {
@@ -134,7 +134,7 @@ function lintCertificationKind(certs) {
 // artifact_url so that claim traces to something, not just a hand-set enum
 // value. repo_only entries are exempt (surface itself says there's nothing
 // to link).
-function lintArtifactUrl(projectEntries) {
+export function lintArtifactUrl(projectEntries) {
   const violations = [];
   for (const e of projectEntries) {
     if (e.surface === "repo_only") continue;
@@ -154,7 +154,7 @@ function lintArtifactUrl(projectEntries) {
 // "8.45/10.0" has no nearby "test").
 const RAW_TEST_COUNT_PATTERN = /\b\d[\d,]*\s*\/\s*\d[\d,]*\s+(?:\w+\s+){0,3}tests?\b|\b\d[\d,]*\+?\s+tests?\b/i;
 
-function lintNoRawTestCounts(entries) {
+export function lintNoRawTestCounts(entries) {
   const violations = [];
   for (const e of entries) {
     const text = e.text_runs.map((r) => r.text).join(" ");
@@ -166,16 +166,3 @@ function lintNoRawTestCounts(entries) {
   }
   return violations;
 }
-
-module.exports = {
-  lintSummary,
-  lintSurfaceGate,
-  lintUnverified,
-  lintCertifications,
-  lintResearchStatus,
-  lintMoreOnGithubLine,
-  lintHeadlineMetricNoParens,
-  lintCertificationKind,
-  lintArtifactUrl,
-  lintNoRawTestCounts,
-};

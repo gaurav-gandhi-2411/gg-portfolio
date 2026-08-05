@@ -1,6 +1,6 @@
-// Assertion smoke test for resume-select.js — run directly with
-// `node scripts/lib/resume-select.smoketest.js`. No framework, same posture
-// as resume-lint.smoketest.js (this repo has no unit-test runner).
+// Assertion smoke test for resume-select.mjs — run directly with
+// `node scripts/lib/resume-select.smoketest.mjs`. No framework, same posture
+// as resume-lint.smoketest.mjs (this repo has no unit-test runner).
 //
 // Two things this proves:
 // 1. Unit coverage of the two-stage model + its tie-break/epsilon behavior
@@ -11,10 +11,14 @@
 //    score edit reorders the resume's project surfacing, this fails
 //    immediately instead of silently drifting.
 
-const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
-const { resolveWeights, twoStageRank, compareScored, buildCollapsedLine, selectForVariant } = require("./resume-select");
+import assert from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { resolveWeights, twoStageRank, compareScored, buildCollapsedLine, selectForVariant } from "./resume-select.mjs";
+import { lintArtifactUrl } from "./resume-lint.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function proj(overrides) {
   return {
@@ -153,10 +157,10 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
   // Amendment 4: every non-repo_only project must carry a verified artifact_url.
   const projectEntries = resumeData.entries.filter((e) => e.section === "project");
   assert.deepStrictEqual(
-    require("./resume-lint").lintArtifactUrl(projectEntries),
+    lintArtifactUrl(projectEntries),
     [],
     "every current project with a non-repo_only surface must have a real artifact_url — see spec-resume-variants.md",
   );
 }
 
-console.log("resume-select.smoketest.js: all assertions passed");
+console.log("resume-select.smoketest.mjs: all assertions passed");

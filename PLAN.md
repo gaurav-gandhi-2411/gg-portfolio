@@ -1074,15 +1074,15 @@ research/13 projects/6 skills/2 education, extracted from
 `.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx` + cross-referenced against
 `content/provenance.md`/`content/metrics.json`), `content/certifications.json`,
 `variants/{google-applied-scientist,meta-research-scientist,amazon-applied-scientist,
-salesforce-senior-ds}.json`, `scripts/build_resume.js` + `scripts/lib/{resume-select,
-resume-layout,resume-lint}.js`. New npm dep: `docx` v9.7.1 (pulls in `adm-zip` transitively,
+salesforce-senior-ds}.json`, `scripts/build_resume.mjs` + `scripts/lib/{resume-select,
+resume-layout,resume-lint}.mjs`. New npm dep: `docx` v9.7.1 (pulls in `adm-zip` transitively,
 which npm audit flags high-severity for zip-bomb-style crafted-file handling — not a live
 risk here since we only ever *write* docx files with it, never parse untrusted ones, but
 flagged for the record).
 
 **Mid-build amendment (surface gating, section renames, summary/cert/research lint gates)**
 folded in before implementation — see `spec-resume-variants.md`'s hard-gates section for the
-full list. `resume-lint.js` has a real smoke test (`resume-lint.smoketest.js`, no framework —
+full list. `resume-lint.mjs` has a real smoke test (`resume-lint.smoketest.mjs`, no framework —
 repo has no unit-test runner, only Playwright e2e) proving every gate actually fires, not
 just that it stays quiet on clean data; caught one real bug during that pass (the
 project/product-count regex only matched a bare number immediately before the noun — missed
@@ -1126,7 +1126,7 @@ research paper to the top; Amazon/Salesforce weight Reclaim/Expense Tracker/Shel
 mlops+forecasting work higher), the repo_only hard gate (ShelfSense, AgentGauge-as-project
 correctly force-collapse), the lint smoke test, and a standalone docx render (valid 12.7KB
 file, correct rendered-text extraction). Next step the moment `soffice` is on PATH: run
-`node scripts/build_resume.js --variant <name>` for each of the 4 variant names — no code
+`node scripts/build_resume.mjs --variant <name>` for each of the 4 variant names — no code
 changes needed, just execution.
 
 ### Amendment 2 (2026-08-01) — intrinsic quality scoring, cert kinds, More-on-GitHub cap
@@ -1199,7 +1199,7 @@ revisit the weight itself. Implemented and shipped with the seeded scores exactl
   at the content level (removed all embedded parens from `headline_metric` values) and added a
   dedicated root-cause lint (`lintHeadlineMetricNoParens`) plus smoke-test coverage, rather
   than just patching the symptom.
-- `resume-lint.smoketest.js` extended with real assertions for all 4 new/changed gates —
+- `resume-lint.smoketest.mjs` extended with real assertions for all 4 new/changed gates —
   re-ran clean after the fix.
 
 **Still blocked on the same `soffice` install as amendment 1** — nothing in amendment 2 needed
@@ -1221,10 +1221,10 @@ Expense Tracker, both 2.55 by hand) land on opposite sides of IEEE-754 rounding
 (`2.5499999999999998` vs. `2.5500000000000003`) — the tie-break silently never fired and order
 fell out of float noise instead of the spec'd rule, exactly the "no random/insertion-order
 fallback" determinism the brief required. Fixed with a `1e-9` epsilon compare
-(`compareScored` in `scripts/lib/resume-select.js`). Caught by hand-verifying the dry-run output
+(`compareScored` in `scripts/lib/resume-select.mjs`). Caught by hand-verifying the dry-run output
 against the hand-computed table below, not by a pre-existing test — the new regression test
 (below) now covers this specific case (`proj:higher-demo`/`proj:lower-demo` fixture in
-`resume-select.smoketest.js`).
+`resume-select.smoketest.mjs`).
 
 **Required verification (item 3) — result: matches the intended sequence for every gate-eligible
 project; does NOT and cannot include AgentGauge as a full entry, and that mismatch is structural,
@@ -1277,16 +1277,16 @@ that needs a real live surface or a deliberate one-off carve-out of the repo_onl
 ranker change, since the ranker was never what was excluding it.**
 
 **Other changes, all implemented and verified:**
-- `scripts/lib/resume-select.js`: `resolveWeights` now returns `{ stage1, stage2, stage1Cutoff }`;
+- `scripts/lib/resume-select.mjs`: `resolveWeights` now returns `{ stage1, stage2, stage1Cutoff }`;
   new `twoStageRank()`; `buildCollapsedLine` takes the same shape and scores collapsed entries
   (repo_only + page-fit drops) with stage-2 weights for a single consistent ordering, since
   collapsed entries are by construction never stage-1 material.
-- `scripts/build_resume.js`: `printRankingTable` now prints both stage tables plus the combined
+- `scripts/build_resume.mjs`: `printRankingTable` now prints both stage tables plus the combined
   final order (item 2's stdout requirement) instead of one linear table.
 - `variants/*.json` schema: `score_weights` retired, replaced by optional `stage1_weights`/
   `stage2_weights`/`stage1_cutoff`. None of the 4 shipped variants use any of these — no
   principled reason to yet, same as amendment 2.
-- New `scripts/lib/resume-select.smoketest.js` (item 4's regression test): unit coverage of the
+- New `scripts/lib/resume-select.smoketest.mjs` (item 4's regression test): unit coverage of the
   two-stage model, the tie-break rule (including the float-epsilon fix, as its own dedicated
   case), and a regression assertion of the exact full project sequence + forced-collapse set
   against the real, current `content/resume-data.json` — a future score or `surface` edit that
@@ -1313,7 +1313,7 @@ conda `base` env, per my standing environment defaults); re-ran as `python -m pi
 docx2pdf` to install into the interpreter that's actually invoked, verified via
 `python -c "import docx2pdf"`.
 
-**Backend detection (item 6) wired into `scripts/build_resume.js`:** `detectPdfBackend()` tries
+**Backend detection (item 6) wired into `scripts/build_resume.mjs`:** `detectPdfBackend()` tries
 soffice first (3 known paths, unchanged from amendment 1), falls back to Word COM only if both
 `WINWORD.EXE` and the `docx2pdf` Python package are independently confirmed present — returns
 `null`, never a guess, if neither backend is real. `findSoffice()`/`findWordCom()` no longer
@@ -1416,12 +1416,12 @@ section so a future session doesn't rediscover this from scratch.
   live_demo/hf_model, the canonical `pypi.org/project/<name>/` page for pypi (independently
   curled 200 for both tracegauge and agentgauge-harness), `null` for ShelfSense (repo_only,
   exempt).
-- **New hard gate, item 3 (`lintArtifactUrl` in `resume-lint.js`)**: any project with
+- **New hard gate, item 3 (`lintArtifactUrl` in `resume-lint.mjs`)**: any project with
   `surface != "repo_only"` and no well-formed `http(s)` `artifact_url` fails the build. Wired
-  into `build_resume.js`'s static-lint block (runs before any render, same as
-  `lintHeadlineMetricNoParens`). Smoke-test coverage added to `resume-lint.smoketest.js` (4 new
+  into `build_resume.mjs`'s static-lint block (runs before any render, same as
+  `lintHeadlineMetricNoParens`). Smoke-test coverage added to `resume-lint.smoketest.mjs` (4 new
   assertions: repo_only exempt, valid URL passes, missing URL caught, malformed URL caught).
-- **Regression test updated**: `resume-select.smoketest.js`'s `EXPECTED_SEQUENCE` now includes
+- **Regression test updated**: `resume-select.smoketest.mjs`'s `EXPECTED_SEQUENCE` now includes
   AgentGauge (it wins stage 2 outright, score 4.70 — highest of any project in either stage,
   driven by its 5/5/5 role/depth/metric with only demo_quality=2 dragging it down, which stage 2's
   substance-dominant weights barely penalize); `forcedCollapse` regression narrowed to
@@ -1457,7 +1457,7 @@ lost).
 
 Item A of GG's 2-item request (item B, the site sync, is the priority — see the separate
 `gg-portfolio` site-reconciliation log below). Added `max_full_entries` (default 8,
-per-variant override) to `build_resume.js`: the two-stage ranker's full sequence is unchanged;
+per-variant override) to `build_resume.mjs`: the two-stage ranker's full sequence is unchanged;
 only the top N of that sequence render as full entries, everything below collapses into "More on
 GitHub" alongside `repo_only`. The 2-page gate still applies on top — if the capped set still
 overflows, the existing page-fit loop trims further. Every collapse now carries an explicit,

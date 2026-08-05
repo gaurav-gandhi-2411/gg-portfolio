@@ -1,28 +1,29 @@
 #!/usr/bin/env node
 // Build a JD-tailored resume variant. See spec-resume-variants.md.
 //
-// Usage: node scripts/build_resume.js --variant <name> [--allow-unverified]
+// Usage: node scripts/build_resume.mjs --variant <name> [--allow-unverified]
 //
 // Pipeline: load content -> select/score/order -> print ranking table ->
 // page-fit loop (render -> soffice -> pypdf page count -> drop lowest-scored
 // project if over budget) -> hard-gate lint on the final selection -> write
 // .docx/.pdf -> keyword-coverage report.
 
-const fs = require("fs");
-const path = require("path");
-const { execFileSync } = require("child_process");
-const { Packer } = require("docx");
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { Packer } from "docx";
 
-const { selectForVariant, buildCollapsedLine } = require("./lib/resume-select");
-const { buildDocument, extractRenderedText } = require("./lib/resume-layout");
-const lint = require("./lib/resume-lint");
+import { selectForVariant, buildCollapsedLine } from "./lib/resume-select.mjs";
+import { buildDocument, extractRenderedText } from "./lib/resume-layout.mjs";
+import * as lint from "./lib/resume-lint.mjs";
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD_DIR = path.join(ROOT, "build", "resume");
 const REPORTS_DIR = path.join(ROOT, "reports");
 
 // Item A: independent of the ranker's own sequence. The two-stage model in
-// resume-select.js still produces the full best-first order; this just caps
+// resume-select.mjs still produces the full best-first order; this just caps
 // how many of that order render as full entries before the page-fit loop
 // even starts. A variant may override via `max_full_entries`.
 const DEFAULT_MAX_FULL_ENTRIES = 8;
@@ -34,7 +35,7 @@ function parseArgs(argv) {
     else if (argv[i] === "--allow-unverified") args.allowUnverified = true;
   }
   if (!args.variant) {
-    console.error("Usage: node scripts/build_resume.js --variant <name> [--allow-unverified]");
+    console.error("Usage: node scripts/build_resume.mjs --variant <name> [--allow-unverified]");
     process.exit(2);
   }
   return args;

@@ -1,26 +1,26 @@
-// Pure rendering — turns a selection (from resume-select.js) into a docx
+// Pure rendering — turns a selection (from resume-select.mjs) into a docx
 // Document. No scoring, no I/O, no page counting. Bullets are rendered as a
 // literal "•  " prefix run rather than the docx package's numbering API — a
 // deliberate simplification (identical visual result in a single-level list,
 // avoids wiring a numbering config) — see spec-resume-variants.md.
 
-const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } = require("docx");
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 
-const RESEARCH_STATUS_LABEL = {
+export const RESEARCH_STATUS_LABEL = {
   under_submission: "Under submission",
   in_preparation: "In preparation",
   published: "Published",
 };
 
 // certification/course kinds: terse "Name" or "Name (In progress, expected Mon YYYY)".
-function certStatusText(cert) {
+export function certStatusText(cert) {
   if (cert.status === "held") return cert.name;
   if (cert.expected) {
     const [y, m] = cert.expected.split("-");
     const monthName = new Date(Number(y), Number(m) - 1, 1).toLocaleString("en-US", { month: "short" });
     return `${cert.name} (In progress, expected ${monthName} ${y})`;
   }
-  // Should be unreachable — resume-lint.js's lintCertifications gates this.
+  // Should be unreachable — resume-lint.mjs's lintCertifications gates this.
   throw new Error(`certification "${cert.name}" has status="${cert.status}" and no expected date`);
 }
 
@@ -49,7 +49,7 @@ function plainParagraph(text_runs, opts = {}) {
   return new Paragraph({ spacing: { after: 60 }, children: runsToTextRuns(text_runs), ...opts });
 }
 
-function buildDocument(selection) {
+export function buildDocument(selection) {
   const {
     header, // [name, tagline, contact] entries
     summary,
@@ -153,7 +153,7 @@ function buildDocument(selection) {
 
 // Flat rendered text, used by the keyword-coverage report and by lint checks
 // that need to see what a human reader would actually see.
-function extractRenderedText(selection) {
+export function extractRenderedText(selection) {
   const parts = [];
   const collect = (entries) => entries.forEach((e) => parts.push(e.text_runs.map((r) => r.text).join(" ")));
   collect(selection.header);
@@ -170,5 +170,3 @@ function extractRenderedText(selection) {
   parts.push(selfPaced.map((c) => `${c.name}: ${c.description || ""}`).join(" "));
   return parts.join("\n");
 }
-
-module.exports = { buildDocument, extractRenderedText, certStatusText, RESEARCH_STATUS_LABEL };

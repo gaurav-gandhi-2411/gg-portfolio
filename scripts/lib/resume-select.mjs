@@ -13,11 +13,11 @@
 // drive project ordering — only research-entry scoring and the
 // keyword-coverage report.
 
-const DEFAULT_STAGE1_WEIGHTS = { demo_quality: 0.45, role_relevance: 0.25, technical_depth: 0.2, metric_strength: 0.1 };
-const DEFAULT_STAGE2_WEIGHTS = { demo_quality: 0.1, role_relevance: 0.35, technical_depth: 0.35, metric_strength: 0.2 };
-const DEFAULT_STAGE1_CUTOFF = 2;
+export const DEFAULT_STAGE1_WEIGHTS = { demo_quality: 0.45, role_relevance: 0.25, technical_depth: 0.2, metric_strength: 0.1 };
+export const DEFAULT_STAGE2_WEIGHTS = { demo_quality: 0.1, role_relevance: 0.35, technical_depth: 0.35, metric_strength: 0.2 };
+export const DEFAULT_STAGE1_CUTOFF = 2;
 
-function resolveWeights(variant) {
+export function resolveWeights(variant) {
   return {
     stage1: { ...DEFAULT_STAGE1_WEIGHTS, ...(variant.stage1_weights || {}) },
     stage2: { ...DEFAULT_STAGE2_WEIGHTS, ...(variant.stage2_weights || {}) },
@@ -25,7 +25,7 @@ function resolveWeights(variant) {
   };
 }
 
-function weightedScore(entry, weights) {
+export function weightedScore(entry, weights) {
   return (
     entry.demo_quality * weights.demo_quality +
     entry.role_relevance * weights.role_relevance +
@@ -46,7 +46,7 @@ const SCORE_EPSILON = 1e-9;
 // Deterministic tie-break, applied whenever two entries score identically
 // within a stage: demo_quality desc, then metric_strength desc, then project
 // id asc. No random or insertion-order fallback (amendment 3, item 1).
-function compareScored(a, b) {
+export function compareScored(a, b) {
   if (Math.abs(b.score - a.score) > SCORE_EPSILON) return b.score - a.score;
   if (b.entry.demo_quality !== a.entry.demo_quality) return b.entry.demo_quality - a.entry.demo_quality;
   if (b.entry.metric_strength !== a.entry.metric_strength) return b.entry.metric_strength - a.entry.metric_strength;
@@ -58,7 +58,7 @@ function compareScored(a, b) {
 // ranks everything left over with substance-dominant weights. Returns both
 // stage tables (for the required stdout audit trail) plus the combined
 // best-first list consumed by the rest of the pipeline.
-function twoStageRank(eligibleProjects, weights) {
+export function twoStageRank(eligibleProjects, weights) {
   const stage1Scored = eligibleProjects
     .map((entry) => ({ entry, score: weightedScore(entry, weights.stage1) }))
     .sort(compareScored);
@@ -80,7 +80,7 @@ function twoStageRank(eligibleProjects, weights) {
 }
 
 // Unchanged from before amendment 2 — still used for research entries only.
-function tagOverlapScore(entry, boostTags, jdKeywords) {
+export function tagOverlapScore(entry, boostTags, jdKeywords) {
   const tagOverlap = entry.tags.filter((t) => boostTags.includes(t)).length;
   const text = entry.text_runs.map((r) => r.text).join(" ").toLowerCase();
   const kwHits = jdKeywords.filter((kw) => text.includes(kw.toLowerCase())).length;
@@ -90,7 +90,7 @@ function tagOverlapScore(entry, boostTags, jdKeywords) {
 // Returns the full candidate pool, gated and scored, plus the always-included
 // sections. Does NOT apply the page-count cut — that's the build script's job,
 // since it requires an actual render to measure against.
-function selectForVariant(resumeData, certifications, variant) {
+export function selectForVariant(resumeData, certifications, variant) {
   const dropped = new Set(variant.drop_ids || []);
   const entries = resumeData.entries.filter((e) => !dropped.has(e.id));
   const weights = resolveWeights(variant);
@@ -140,7 +140,7 @@ function selectForVariant(resumeData, certifications, variant) {
 // Collapsed entries (repo_only force-collapses + anything dropped by the
 // page-fit loop) are, by construction, never stage-1 material — scored here
 // with stage-2 (substance-dominant) weights for a single consistent ordering.
-function buildCollapsedLine(collapsedProjectEntries, weights) {
+export function buildCollapsedLine(collapsedProjectEntries, weights) {
   if (collapsedProjectEntries.length === 0) return { line: null, tooLong: false };
 
   const stage2Weights = weights.stage2 || weights;
@@ -157,16 +157,3 @@ function buildCollapsedLine(collapsedProjectEntries, weights) {
   const line = `More on GitHub: ${parts.join(", ")}.`;
   return { line, tooLong: line.length > 200 };
 }
-
-module.exports = {
-  DEFAULT_STAGE1_WEIGHTS,
-  DEFAULT_STAGE2_WEIGHTS,
-  DEFAULT_STAGE1_CUTOFF,
-  resolveWeights,
-  weightedScore,
-  compareScored,
-  twoStageRank,
-  tagOverlapScore,
-  selectForVariant,
-  buildCollapsedLine,
-};

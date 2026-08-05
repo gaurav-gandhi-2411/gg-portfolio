@@ -1,11 +1,11 @@
-// Minimal assertion smoke test for resume-lint.js's hard gates — run directly
-// with `node scripts/lib/resume-lint.smoketest.js`. No framework: this repo
+// Minimal assertion smoke test for resume-lint.mjs's hard gates — run directly
+// with `node scripts/lib/resume-lint.smoketest.mjs`. No framework: this repo
 // has no unit-test runner (Playwright covers e2e only), and a full jest/vitest
 // setup isn't warranted for one new module. Proves each gate actually fires,
 // not just that it stays quiet on clean data (rule 80/81 in spirit).
 
-const assert = require("assert");
-const lint = require("./resume-lint");
+import assert from "node:assert";
+import * as lint from "./resume-lint.mjs";
 
 function makeEntry(overrides) {
   return {
@@ -188,4 +188,4 @@ assert.deepStrictEqual(
   "an unrelated N/N pattern with no nearby 'test' word (e.g. a GPA) must not false-positive",
 );
 
-console.log("resume-lint.smoketest.js: all assertions passed");
+console.log("resume-lint.smoketest.mjs: all assertions passed");
