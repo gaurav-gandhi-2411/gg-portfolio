@@ -38,7 +38,7 @@ export const warmer: CaseStudy = {
       },
       {
         label: "Gzipped daily payload → GitHub Pages CDN",
-        detail: "EN ~777 KB/day · hi-en ~146 KB/day",
+        detail: "EN ~777 KB/day · hi-en ~150 KB/day",
       },
       {
         label: "Flutter app (Android + web PWA)",
