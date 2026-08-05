@@ -27,6 +27,21 @@ const SUMMARY_PATH = process.env.SUMMARY_PATH ?? join(ROOT, "metrics-refresh-sum
 const NEW_REPOS_PATH = process.env.NEW_REPOS_PATH ?? join(ROOT, "new-repos.json");
 
 const STALE_DAYS = 90;
+// Wave 19 (2026-08-05) — manifest-staleness fail-closed gate. A `.portfolio/
+// metrics.json` manifest is a hand-maintained snapshot, not itself auto-
+// generated from the repo's tests/reports, so it can go stale exactly like
+// any other hand-maintained value. Incident: PR #44 (closed, not merged)
+// proposed reverting 4 already-corrected metrics on gg-portfolio's main back
+// to stale values, because the source repos' manifests were never updated
+// after a same-day hand correction (PR #32) used fresher, directly-verified
+// evidence the manifest didn't have. This script cannot see "the repo's
+// newest eval artifact" directly (it only has read access to one file via
+// raw.githubusercontent.com) — MANIFEST_STALE_DAYS is a proxy: a manifest
+// whose own freshest `measured_at` is older than this is presumed stale and
+// its changes are held rather than propagated. Not a substitute for a real
+// per-repo freshness signal, but strictly better than trusting an
+// arbitrarily old manifest forever.
+const MANIFEST_STALE_DAYS = 21;
 const FETCH_TIMEOUT_MS = 20_000;
 // Default HEAD = each repo's default branch. Overridable for testing the
 // pipeline against not-yet-merged manifest branches
@@ -52,6 +67,8 @@ const KNOWN_NON_PRODUCT_REPOS = new Set([
 const changes = []; // { id, field, old, new, source }
 const notes = []; // free-form markdown bullets
 const staleFlags = []; // { id, measured_at }
+const staleManifests = []; // { repo, ids, freshestMeasuredAt, ageDays } — wave 19, item 9
+const rejectedRegressions = []; // { id, repo, currentValue, currentMeasuredAt, incomingValue, incomingMeasuredAt } — wave 19, item 10
 
 async function fetchWithTimeout(url, init = {}) {
   const controller = new AbortController();
@@ -101,6 +118,21 @@ for (const repo of repos) {
     continue;
   }
 
+  // Fail-closed gate (wave 19, item 9): a manifest is only as trustworthy as
+  // its own freshest entry. If every metric in it was last measured more
+  // than MANIFEST_STALE_DAYS ago, hold ALL of this repo's changes rather
+  // than propagate a snapshot that's plausibly out of date — report it for
+  // a human to regenerate, don't silently open a PR off it.
+  const manifestDates = manifest.metrics.map((m) => m.measured_at).filter(Boolean);
+  const manifestAgeDays = manifestDates.length > 0 ? Math.min(...manifestDates.map(daysSince)) : Infinity;
+  if (manifestAgeDays > MANIFEST_STALE_DAYS) {
+    staleManifests.push({ repo, ids, freshestMeasuredAt: manifestDates.sort().at(-1) ?? null, ageDays: manifestAgeDays });
+    notes.push(
+      `**Held \`${repo}\`** (${ids.join(", ")}): manifest's freshest entry is ${manifestAgeDays}d old (> ${MANIFEST_STALE_DAYS}d gate) — presumed stale, not propagated. Regenerate \`.portfolio/metrics.json\` in that repo, then re-run.`
+    );
+    continue;
+  }
+
   const byId = new Map(manifest.metrics.map((m) => [m.id, m]));
   for (const id of ids) {
     const incoming = byId.get(id);
@@ -111,6 +143,37 @@ for (const repo of repos) {
       );
       continue;
     }
+
+    // Regression guard (wave 19, item 10): a manifest is only allowed to
+    // move a metric FORWARD in time. An incoming measured_at older than (or
+    // equal to) what's already recorded is rejected outright, not merged
+    // field-by-field — this is exactly the shape of PR #44's attempted
+    // revert (a stale manifest proposing an older, already-superseded
+    // value). Equal dates are also rejected: same measured_at with a
+    // different value is a same-day conflict, not a legitimate refresh, and
+    // needs a human, not an autonomous overwrite either way.
+    const currentMeasuredAt = current.measured_at ?? null;
+    const incomingMeasuredAt = incoming.measured_at ?? null;
+    if (currentMeasuredAt && incomingMeasuredAt && incomingMeasuredAt <= currentMeasuredAt) {
+      const wouldChange = ["value", "label", "source_file", "source_line", "commit_sha"].some(
+        (f) => (current[f] ?? null) !== (incoming[f] ?? null)
+      );
+      if (wouldChange) {
+        rejectedRegressions.push({
+          id,
+          repo,
+          currentValue: current.value,
+          currentMeasuredAt,
+          incomingValue: incoming.value,
+          incomingMeasuredAt,
+        });
+        notes.push(
+          `**Rejected \`${id}\`**: \`${repo}\`'s manifest proposes "${incoming.value}" (measured_at ${incomingMeasuredAt}), but the site already has "${current.value}" (measured_at ${currentMeasuredAt}) — incoming is not newer. Not applied.`
+        );
+      }
+      continue;
+    }
+
     for (const field of ["value", "label", "source_file", "source_line", "commit_sha", "measured_at"]) {
       const oldVal = current[field] ?? null;
       const newVal = incoming[field] ?? null;
@@ -281,6 +344,32 @@ if (staleFlags.length > 0) {
     lines.push(`- \`${s.id}\` — last measured ${s.measured_at}. Re-run its eval or consciously re-affirm it.`);
   }
 }
+if (staleManifests.length > 0) {
+  lines.push("");
+  lines.push(`### Stale manifests, held (not propagated) — freshest entry older than ${MANIFEST_STALE_DAYS}d`);
+  lines.push("");
+  for (const s of staleManifests) {
+    lines.push(
+      `- \`${s.repo}\` (${s.ids.join(", ")}) — freshest manifest entry ${s.freshestMeasuredAt ?? "unknown"} (${s.ageDays}d old). Regenerate \`.portfolio/metrics.json\` in that repo, then re-run this workflow.`
+    );
+  }
+  lines.push("");
+  lines.push("> Fail-closed by design (wave 19): this workflow no longer opens a PR off a manifest this old.");
+}
+if (rejectedRegressions.length > 0) {
+  lines.push("");
+  lines.push("### Regressions rejected (incoming value not newer than what's live)");
+  lines.push("");
+  for (const r of rejectedRegressions) {
+    lines.push(
+      `- \`${r.id}\` (\`${r.repo}\`): manifest proposed **"${r.incomingValue}"** (measured_at ${r.incomingMeasuredAt}) vs. the site's current **"${r.currentValue}"** (measured_at ${r.currentMeasuredAt}). Not applied — a manifest may only move a metric forward in time.`
+    );
+  }
+  lines.push("");
+  lines.push(
+    "> If the incoming value is actually correct and the site's current value is wrong, that's a human call — fix `content/metrics.json` by hand (rule 65b) rather than backdating the manifest to force it through."
+  );
+}
 if (brokenLinks.length > 0) {
   lines.push("");
   lines.push("### Live links failing right now");
@@ -333,5 +422,5 @@ writeFileSync(SUMMARY_PATH, lines.join("\n") + "\n");
 writeFileSync(NEW_REPOS_PATH, JSON.stringify(newRepos, null, 2) + "\n");
 console.log(lines.join("\n"));
 console.log(
-  `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
+  `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${staleManifests.length} manifest(s) held, ${rejectedRegressions.length} regression(s) rejected, ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
 );

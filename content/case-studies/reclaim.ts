@@ -17,7 +17,7 @@ export const reclaim: CaseStudy = {
   approach: [
     "A scan builds a local, read-only SQLite index of a drive — nothing is touched yet. Deterministic detectors then query that index for candidates: files whose path matches a known-safe pattern (a build tool's cache directory), files with a known-disposable extension, or files that are byte-for-byte identical to another file already being kept. Every candidate passes through SafetyValidator, a deny-first gate that excludes protected system roots, git repositories, protected file extensions, database and VM disk files, Docker/WSL roots, and cloud-sync placeholders — a BLOCKED verdict means the file is excluded entirely, never just downgraded to a lower-priority tier.",
     "What happens to a file once it's approved depends on its category, not the run. Caches a build tool can regenerate with one command (a package manager's cache, browser temp files, crash dumps, dev-environment artifacts) are deleted permanently, because their real recovery path was always the rebuild command, not a backup copy. Everything else — including every exact-duplicate match — moves into a recoverable vault or the Windows Recycle Bin, with a manifest that supports restoring an entire batch by ID. Nothing on disk changes at all unless the user passes an explicit `--apply` flag; the default is always a dry-run report.",
-    "An optional applied-AI layer sits beside the deterministic engine, available only if Reclaim is installed from source with the `[ai]` extra — the public installer doesn't ship it. It finds near-duplicate photos with a perceptual hash (pHash — a fingerprint that stays similar for visually similar images, compared by Hamming distance, the number of bits that differ between two fingerprints), backed by OpenCLIP for semantic grouping (finding photos of the same *kind* of thing, like two different beach photos, not just copies of the same photo). It groups near-duplicate documents with MinHash text-shingle prefiltering (a fast way to estimate how similar two documents are without comparing every word) plus a sentence-embedding confirmation pass, classifies screenshots so an OCR failure never gets silently read as \"safe to delete,\" and ranks review-queue items with a small model trained on cross-LLM-labeled data. None of it can delete anything on its own — every AI-produced suggestion goes through the exact same human confirmation and SafetyValidator check as everything else, and the AI layer's own output types are structurally incompatible with the code path that actually deletes files.",
+    "An applied-AI layer sits beside the deterministic engine — bundled directly into the public installer by default since a July 2026 rework (ADR-0030) replaced torch with ONNX-converted models, cutting the AI footprint from roughly 1GB down to under 200MB. It finds near-duplicate photos with a perceptual hash (pHash — a fingerprint that stays similar for visually similar images, compared by Hamming distance, the number of bits that differ between two fingerprints), backed by OpenCLIP for semantic grouping (finding photos of the same *kind* of thing, like two different beach photos, not just copies of the same photo). It groups near-duplicate documents with MinHash text-shingle prefiltering (a fast way to estimate how similar two documents are without comparing every word) plus a sentence-embedding confirmation pass, classifies screenshots so an OCR failure never gets silently read as \"safe to delete,\" and ranks review-queue items with a small model trained on cross-LLM-labeled data. None of it can delete anything on its own — every AI-produced suggestion goes through the exact same human confirmation and SafetyValidator check as everything else, and the AI layer's own output types are structurally incompatible with the code path that actually deletes files.",
   ],
   architecture: {
     intro:
@@ -43,7 +43,7 @@ export const reclaim: CaseStudy = {
           "dry-run report by default; retention is a property of the category — rebuild-recoverable caches delete permanently, everything else stays vault- or Recycle-Bin-recoverable",
       },
       {
-        label: "Optional AI layer (source installs only)",
+        label: "AI layer (bundled by default)",
         detail: "recommend-only — structurally unable to call the delete path",
         parallel: [
           { label: "Near-dup images", detail: "pHash + OpenCLIP semantic grouping" },
@@ -63,7 +63,7 @@ export const reclaim: CaseStudy = {
         detail: "vault/Recycle-Bin batch, restorable by batch ID — or Windows' own Recycle Bin under safe mode",
       },
     ],
-    note: "The public installer (Nuitka + Inno Setup) ships the deterministic engine only — 13.6MB core vs. ~1,028MB for the optional [ai] extra (torch alone is 464MB, shared by the document-dedup and CLIP-grouping features).",
+    note: "The public installer (Nuitka + Inno Setup) bundles the AI layer by default as of ADR-0030 — torch was dropped in favor of ONNX-converted CLIP + MiniLM models (199.4MB total), for a 309.3MB installer and an 884.0MB installed footprint. This supersedes the project's earlier core/optional-extra split (ADR-0024).",
   },
   decisions: [
     {

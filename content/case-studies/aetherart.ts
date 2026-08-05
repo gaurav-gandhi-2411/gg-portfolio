@@ -55,8 +55,8 @@ export const aetherart: CaseStudy = {
       sourceRef: "aetherart:clip-blindness",
     },
     {
-      title: "Checkpoint 1000 selected by multi-scorer review, not by training loss alone",
-      body: "Training loss at checkpoint 1500 dipped further than at checkpoint 1000, which would normally suggest picking 1500. But that loss drop correlated with a visible quality regression under both HPSv2.1/ImageReward scoring and human review, so checkpoint 1000 was selected instead — a case where the loss curve alone would have picked the worse model.",
+      title: "Checkpoint 1000 selected after quality scoring confirmed what the loss curve already flagged",
+      body: "Training loss jumped roughly 10× between checkpoint 1000 and checkpoint 1500 (0.008 → ~0.08) — a warning sign on its own, not by itself proof the model had gotten worse. HPSv2.1/ImageReward scoring plus human review confirmed a real, visible quality regression at checkpoint 1500, so checkpoint 1000 was selected instead — the independent quality check corroborated the loss signal rather than overriding it.",
       sourceRef: "aetherart:checkpoint",
     },
     {

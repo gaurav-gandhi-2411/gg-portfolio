@@ -1,0 +1,13 @@
+{
+  "_source": "Direct WebFetch of amazon.jobs/en/jobs/10421937/applied-scientist-i (Applied Scientist I, AWS AI, Speech & Language) — 2026-08-01. This one loaded as static content, so keywords are extracted directly from the live posting rather than a search aggregate.",
+  "target_role": "Applied Scientist",
+  "jd_keywords": [
+    "machine learning", "reinforcement learning", "deep learning",
+    "computer vision", "natural language processing", "NLP",
+    "large language models", "distributed systems", "Spark", "Python",
+    "model optimization", "speech", "dialog"
+  ],
+  "max_pages": 2,
+  "boost_tags": ["forecasting", "ranking", "distributed-training", "mlops", "multilingual-nlp"],
+  "drop_ids": []
+}

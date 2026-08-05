@@ -1,0 +1,980 @@
+{
+  "_readme": "Bullet-level resume content, separated from layout (scripts/build_resume.mjs + scripts/lib/resume-layout.mjs render this). Extracted from the master docx (.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx, gitignored) 2026-08-01, cross-referenced against content/provenance.md and content/metrics.json for project metrics. text_runs omit the leading bullet glyph and trailing tab/date formatting present in the source docx — those are layout, added by the renderer, not content. 4 project entries (shelfsense, reclaim, agentgauge, expense-tracker) are NOT in the current docx; they're added here, in the same voice/format as the existing project bullets, sourced entirely to already-verified case-study/metrics.json content, so the variant selector has the full 13-project pool to choose from rather than only the 9 the static resume already features. Flagged explicitly in reports/resume-variants-build-2026-08-01.md.",
+  "entries": [
+    {
+      "id": "header:name",
+      "section": "header",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "GAURAV GANDHI",
+          "bold": true
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para0",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "header:tagline",
+      "section": "header",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Senior Data Scientist — Applied AI · GenAI & LLM Systems · Agents, RAG & Evaluation · 5 Years",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para1",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "header:contact",
+      "section": "header",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Bengaluru, India  |  gauravgandhi429@gmail.com  |  +91-8789321250  |  LinkedIn  |  GitHub  |  Portfolio",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/canonical-resume.pdf (contact, verbatim per provenance.md); .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para2",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "summary:main",
+      "section": "summary",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "I build AI systems and see them through — from first experiment to production. Five years across enterprise GenAI and ML: I currently lead and mentor a 5-person data-science team in Uber's AI org (via Indium), shipping document intelligence, multi-agent RAG copilots, and LLM fine-tuning pipelines — including a document-understanding transformer pretrained on 50M+ documents that displaced manual review for $10M+ in annual savings. Outside work I build and publish independent AI systems, with a research focus on agent tool-use quality. I care most about honest evaluation: every number I ship is measured, and I say so when a simple baseline wins.",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para4 — REWRITTEN vs. source to satisfy the summary lint rule (amendment item 4). Original clause was \"Outside work I run nine live AI products and publish research on agent tool-use quality\" (a product count). Generalized to \"I build and publish independent AI systems, with a research focus on agent tool-use quality\" — same fact, no count.",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "exp:indium-senior:header",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Senior Data Scientist",
+          "bold": true
+        },
+        {
+          "text": "May 2025 – Present · Bengaluru, India",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para6-7",
+      "surface": null,
+      "research_status": null,
+      "kind": "header"
+    },
+    {
+      "id": "exp:indium-senior-lead",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Lead and mentor a 5-person data-science team across GenAI document-intelligence and conversational-AI workstreams — owning the modeling roadmap, evaluation strategy, and technical review.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "leadership"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para8",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:indium-senior-finetune",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "LLM fine-tuning for document intelligence: ",
+          "bold": true
+        },
+        {
+          "text": "raised field-level extraction accuracy to 97%+ with a parameter-efficient fine-tuning framework (Llama 3.1, GPT-Neo; LoRA/QLoRA, layer freezing, instruction-tuning data design) and an automated field-accuracy eval harness; mentored multiple teams on prompt and evaluator design.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para9",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:indium-senior-vit",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Vision document-quality gate (ViT): ",
+          "bold": true
+        },
+        {
+          "text": "removed the manual-review bottleneck in earner document verification — a Vision Transformer scores each upload against 9 rejection reasons across 55 document types, auto-approving only below a calibrated per-(type, reason) human-recall threshold.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "calibration"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para10",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:indium-senior-copilot",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Multi-agent GenAI copilot (hybrid RAG + NL2SQL): ",
+          "bold": true
+        },
+        {
+          "text": "cut analytics turnaround from hours to seconds for non-technical teams — dense + sparse retrieval, NL2SQL over a schema knowledge graph, LangChain tool orchestration; live across business units.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "rag",
+        "agents"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para11",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:indium-ds:header",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Data Scientist",
+          "bold": true
+        },
+        {
+          "text": "Jun 2024 – May 2025 · Bengaluru, India",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para12",
+      "surface": null,
+      "research_status": null,
+      "kind": "header"
+    },
+    {
+      "id": "exp:indium-ds-docunderstanding",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Document-understanding transformer at production scale: ",
+          "bold": true
+        },
+        {
+          "text": "owned the multi-task training objective and extraction head for an encoder–decoder transformer pretrained on 50M+ documents across 144 A100 GPUs (PyTorch, Ray Train, DeepSpeed ZeRO-3) — shipped at 95%+ field accuracy, displacing manual review for $10M+ in annual cost savings.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "distributed-training"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para13",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:indium-ds-recommender",
+      "section": "experience",
+      "company": "Indium Software (Client: Uber Technologies — Uber AI)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Session-aware recommendations (BERT): ",
+          "bold": true
+        },
+        {
+          "text": "drove a sustained 27% lift in user engagement by replacing static collaborative filtering with a session-aware sequence model capturing evolving intent — validated via A/B tests across releases.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "ranking",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para14",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:fedex:header",
+      "section": "experience",
+      "company": "FedEx Express — Consumer Logistics & Supply Chain",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Decision Scientist",
+          "bold": true
+        },
+        {
+          "text": "Aug 2022 – Jun 2024 · Bengaluru, India (Remote)",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para15-16",
+      "surface": null,
+      "research_status": null,
+      "kind": "header"
+    },
+    {
+      "id": "exp:fedex-anomaly",
+      "section": "experience",
+      "company": "FedEx Express — Consumer Logistics & Supply Chain",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Probabilistic anomaly detection for account retention: ",
+          "bold": true
+        },
+        {
+          "text": "recovered lost enterprise shipping volume, surfaced via average-daily-volume decline, with an ensemble of Bayesian change-point detection, probabilistic clustering, and profitability scoring — shaping regional supply strategy.",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para17",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:fedex-forecasting",
+      "section": "experience",
+      "company": "FedEx Express — Consumer Logistics & Supply Chain",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Demand forecasting (SARIMA + Bayesian tuning): ",
+          "bold": true
+        },
+        {
+          "text": "reduced operational inefficiencies ~20% by upgrading ARIMA pipelines to SARIMA with Box-Jenkins tuning, Fourier seasonality, and automated anomaly filtering.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "forecasting"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para18",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "exp:tcs:header",
+      "section": "experience",
+      "company": "Tata Consultancy Services (TCS)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Data Engineer",
+          "bold": true
+        },
+        {
+          "text": "Jul 2021 – Jul 2022 · Bengaluru, India (Remote)",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para19-20",
+      "surface": null,
+      "research_status": null,
+      "kind": "header"
+    },
+    {
+      "id": "exp:tcs-pipelines",
+      "section": "experience",
+      "company": "Tata Consultancy Services (TCS)",
+      "project": null,
+      "text_runs": [
+        {
+          "text": "High-volume data pipelines (GCP): ",
+          "bold": true
+        },
+        {
+          "text": "designed end-to-end ETL pipelines and analytics dashboards for a high-volume booking/transaction client — campaign targeting, segmentation, trend monitoring.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "mlops"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para21",
+      "surface": null,
+      "research_status": null,
+      "kind": "bullet"
+    },
+    {
+      "id": "research:agentgauge-paper",
+      "section": "research",
+      "company": null,
+      "project": "agentgauge",
+      "text_runs": [
+        {
+          "text": "“Tool-Description Quality Is Not One Axis: A Regime Analysis of Where It Helps and Where It Backfires”",
+          "bold": true
+        },
+        {
+          "text": " — first-author preprint (arXiv ID pending). Built AgentGauge, the statistical harness behind it — its own predictive-validity study falsified the v1 quality score; the rebuilt causal A/B harness measures a BLOCKING description defect at −13.3 to −28.9pp agent task success (3 model families); frozen protocol, CI-enforced. github.com/gaurav-gandhi-2411/agentgauge",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "causal-inference",
+        "experimentation",
+        "agents"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para23; content/provenance.md#agentgauge:paper-md (arXiv status: 'TO FILL after upload' placeholder, no Tier-2 paper found — ships preprint-pending)",
+      "surface": null,
+      "research_status": "in_preparation"
+    },
+    {
+      "id": "proj:warmer",
+      "section": "project",
+      "company": null,
+      "project": "warmer",
+      "text_runs": [
+        {
+          "text": "Warmer — daily semantic word game",
+          "bold": true
+        },
+        {
+          "text": " — built the full product (Flutter, sentence-transformers, Firebase), running live daily. Diagnosed Hinglish embeddings scoring near-random as a script-mismatch bug, then trained and published the LoRA fine-tune that now serves production (hinglish-relatedness-sbert on Hugging Face): Spearman −0.003 → 0.813, held-out 0.435 → 0.704.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "multilingual-nlp",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para27; content/metrics.json#warmer:hinglish-fix",
+      "surface": "live_demo",
+      "artifact_url": "https://playwarmer.vercel.app/",
+      "research_status": null,
+      "demo_quality": 5,
+      "role_relevance": 3,
+      "technical_depth": 4,
+      "metric_strength": 4,
+      "headline_metric": "Spearman −0.003 → 0.813"
+    },
+    {
+      "id": "proj:style-maitri",
+      "section": "project",
+      "company": null,
+      "project": "style-maitri",
+      "text_runs": [
+        {
+          "text": "Style Maitri — AI stylist for Indian occasions",
+          "bold": true
+        },
+        {
+          "text": " — LangGraph agent over hybrid retrieval (FAISS + BM25, reciprocal-rank fusion) across 52,494 items from 8 store catalogues, with sentence-level grounding that scrubs hallucinated price/size claims. Intent-parsing accuracy 93.8% (n=211).",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "agents",
+        "rag",
+        "ranking",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para28; content/metrics.json#style-maitri:intent-accuracy | corrected 2026-08-05 (site-vs-repo reconciliation): was 93.8%/n=211 and ~52K/8 stores, both stale as of reports/model_eval_20260712T091248Z.md (2026-07-12) and reports/soldout_filter_fix_2026-07-12.txt (2026-07-12, git commit 5996226). Current values verified against reports/model_eval_20260805T070638Z.md (94.4%, n=378 — stable across 9 runs from 2026-07-30 to 2026-08-05) and data/processed/unified/catalogue.parquet (112,425 rows / 42 stores, built 2026-07-24, independently loaded and counted). Neither report file is git-tracked (reports/ and data/processed/ are both gitignored in agentic-shopping-assistant) — dating evidence is each file's self-reported UTC run-timestamp plus filesystem mtime, not a git commit date. | 2026-08-05: briefly changed to 94.4%/n=378 and 112,425/42 stores, then reverted same session — those numbers came from gitignored, never-committed local eval reports with no git commit date (reports/ and data/processed/ are both gitignored in agentic-shopping-assistant). Reverted to match reports/final_scorecard_2026-07-12.txt:109 (commit 57e7e60, git-tracked, titled 'final honest scorecard') and reports/soldout_filter_fix_2026-07-12.txt:28 (commit 5996226, git-tracked).",
+      "surface": "live_demo",
+      "artifact_url": "https://stylemaitri.vercel.app",
+      "research_status": null,
+      "demo_quality": 5,
+      "role_relevance": 4,
+      "technical_depth": 4,
+      "metric_strength": 4,
+      "headline_metric": "93.8% intent accuracy, n=211"
+    },
+    {
+      "id": "proj:triageiq",
+      "section": "project",
+      "company": null,
+      "project": "triageiq",
+      "text_runs": [
+        {
+          "text": "TriageIQ — ML issue-triage service",
+          "bold": true
+        },
+        {
+          "text": " — four-stage triage (TF-IDF classifier, BGE+FAISS retrieval, LightGBM estimate, LLM synthesis); component classifier top-3 accuracy 87.1% (k8s) / 89.8% (vscode). Built the disjointness guard that caught 3 months of silent train/eval contamination, then audited and published the LLM stage's fabrication rate (1.9–9.1%) rather than hiding it.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "ranking",
+        "calibration",
+        "rag",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": "triage-iq/README.md:79,81 (ADR-0036, 2026-07-24 multi-label supervision fix — supersedes the 82.5%/90.4% figure in the current docx and in content/metrics.json, both stale as of this build; see this session's resume-metrics verification pass)",
+      "surface": "live_demo",
+      "artifact_url": "https://triage-iq-orcin.vercel.app/",
+      "research_status": null,
+      "demo_quality": 4,
+      "role_relevance": 5,
+      "technical_depth": 5,
+      "metric_strength": 5,
+      "headline_metric": "top-3 87.1% k8s / 89.8% vscode"
+    },
+    {
+      "id": "proj:dealhunter",
+      "section": "project",
+      "company": null,
+      "project": "dealhunter",
+      "text_runs": [
+        {
+          "text": "DealHunter — multi-agent flight search",
+          "bold": true
+        },
+        {
+          "text": " — natural-language trip requests to Pareto-ranked itineraries via SSE streaming — planner/optimizer agents with an LLM-as-judge eval harness; ≥87.65% test coverage.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "agents",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para30; agentic-travel-booking-system/CURRENT_STATE.md:645 | 2026-08-05: raw test count (597) removed per GG's explicit instruction — coverage percentage kept since it's a ratio, not a raw count that drifts as tests are added.",
+      "surface": "live_demo",
+      "artifact_url": "https://agentic-travel-booking-system.vercel.app",
+      "research_status": null,
+      "demo_quality": 4,
+      "role_relevance": 3,
+      "technical_depth": 3,
+      "metric_strength": 3,
+      "headline_metric": "≥87.65% test coverage"
+    },
+    {
+      "id": "proj:mmfr",
+      "section": "project",
+      "company": null,
+      "project": "multimodal-fashion-recommender",
+      "text_runs": [
+        {
+          "text": "Multimodal Fashion Recommender",
+          "bold": true
+        },
+        {
+          "text": " — two-tower model fusing CLIP image and SBERT text embeddings (in-batch InfoNCE); Recall@10 3.06× over a popularity baseline (0.0328 vs 0.0107), validated by modality ablation.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "contrastive-learning",
+        "ranking"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para31; content/metrics.json#mmfr:recall10",
+      "surface": "hf_model",
+      "artifact_url": "https://huggingface.co/spaces/gauravgandhi2411/multimodal-fashion-recommender",
+      "research_status": null,
+      "demo_quality": 4,
+      "role_relevance": 5,
+      "technical_depth": 4,
+      "metric_strength": 4,
+      "headline_metric": "Recall@10 3.06× baseline"
+    },
+    {
+      "id": "proj:aetherart",
+      "section": "project",
+      "company": null,
+      "project": "aetherart",
+      "text_runs": [
+        {
+          "text": "AetherArt — diffusion art within a consumer-GPU budget",
+          "bold": true
+        },
+        {
+          "text": " — custom rank-8 Ukiyo-e SDXL LoRA composed with Hyper-SD and ControlNet, served on Cloud Run — full pipeline at 6.2GB peak VRAM against an 8GB budget.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "diffusion",
+        "experimentation"
+      ],
+      "priority": 2,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para32; content/metrics.json#aetherart:vram",
+      "surface": "live_demo",
+      "artifact_url": "https://aetherart-demo-473907703523.us-central1.run.app/",
+      "research_status": null,
+      "demo_quality": 5,
+      "role_relevance": 3,
+      "technical_depth": 4,
+      "metric_strength": 3,
+      "headline_metric": "6.2GB peak VRAM, 8GB budget"
+    },
+    {
+      "id": "proj:reviewiq",
+      "section": "project",
+      "company": null,
+      "project": "reviewiq",
+      "text_runs": [
+        {
+          "text": "Samidha Reviews",
+          "bold": true
+        },
+        {
+          "text": " — multilingual (English/Hindi/Hinglish) customer-review extraction with tiered LLM routing and cassette-replay CI; 83.8% accuracy on a CI-gated eval (threshold 83%).",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "multilingual-nlp"
+      ],
+      "priority": 3,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#reviewiq:extraction-eval",
+      "surface": "live_demo",
+      "artifact_url": "https://review-iq-ajjrytb3na-el.a.run.app/docs",
+      "research_status": null,
+      "demo_quality": 2,
+      "role_relevance": 3,
+      "technical_depth": 3,
+      "metric_strength": 4,
+      "headline_metric": "83.8% vs. 83% CI gate"
+    },
+    {
+      "id": "proj:tracegauge",
+      "section": "project",
+      "company": null,
+      "project": "tracegauge",
+      "text_runs": [
+        {
+          "text": "tracegauge",
+          "bold": true
+        },
+        {
+          "text": " — published PyPI package scoring AI-coding-session efficiency across token economy, trajectory quality, and deterministic waste detection; judge validated at 84% strict agreement (Spearman ρ≈0.79) against a reference LLM.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "experimentation",
+        "mlops"
+      ],
+      "priority": 3,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#tracegauge:tests | 2026-08-05: raw test count (601/601, later found stale at 643/643) removed per GG's explicit instruction — test counts drift between builds and can't stay true on a printed document. Replaced with the judge-validation figure (stable, not a running test count). See content/case-studies/tracegauge.ts's judge-validation result for the full citation.",
+      "surface": "pypi",
+      "artifact_url": "https://pypi.org/project/tracegauge/",
+      "research_status": null,
+      "demo_quality": 2,
+      "role_relevance": 3,
+      "technical_depth": 3,
+      "metric_strength": 4,
+      "headline_metric": "84% strict judge agreement, ρ≈0.79"
+    },
+    {
+      "id": "proj:gold-rate-tracker",
+      "section": "project",
+      "company": null,
+      "project": "gold-rate-tracker",
+      "text_runs": [
+        {
+          "text": "Gold Rate Tracker",
+          "bold": true
+        },
+        {
+          "text": " — zero-cost gold-price PWA; ships the naive flat-hold forecast because a 199-fold backtest shows it honestly beats the ML model (Chronos-Bolt-Tiny), Wilcoxon p < 0.001.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "forecasting",
+        "calibration",
+        "experimentation"
+      ],
+      "priority": 3,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#gold-rate-tracker:headline | corrected 2026-08-05: was p=0.0003, which belonged to a different (194-fold) snapshot than the 199-fold MAE numbers in the same claim — an internal-consistency bug, not a new measurement. Single-snapshot recompute at commit a4d892c (data/backtest.json, tracked, committed 2026-07-19T10:46:27+05:30, backtest_run_at 2026-07-19T05:12:36 UTC): wilcoxon_signed_rank_p stored as exactly 0.0 (underflow, not a literal zero) — rendered as 'p < 0.001' per GG's explicit never-render-p-approx-0 instruction.",
+      "surface": "live_demo",
+      "artifact_url": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
+      "research_status": null,
+      "demo_quality": 4,
+      "role_relevance": 3,
+      "technical_depth": 3,
+      "metric_strength": 4,
+      "headline_metric": "naive beats model, p<0.001"
+    },
+    {
+      "id": "proj:shelfsense",
+      "section": "project",
+      "company": null,
+      "project": "shelfsense",
+      "text_runs": [
+        {
+          "text": "ShelfSense — retail demand forecasting",
+          "bold": true
+        },
+        {
+          "text": " — LightGBM models across all 30,490 M5 Walmart item×store series, orchestrated with Dagster; Tweedie loss for 68% zero-inflated demand. WRMSSE 0.5693 vs. 0.8956 naive baseline (36% reduction).",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "forecasting"
+      ],
+      "priority": 4,
+      "verified_source": "NOT in current docx — added for variant pool coverage. content/metrics.json#shelfsense:wrmsse; shelfsense-m5/README.md:7",
+      "surface": "repo_only",
+      "artifact_url": null,
+      "research_status": null,
+      "demo_quality": 1,
+      "role_relevance": 4,
+      "technical_depth": 4,
+      "metric_strength": 5,
+      "headline_metric": "WRMSSE 0.5693 vs. 0.8956 naive"
+    },
+    {
+      "id": "proj:reclaim",
+      "section": "project",
+      "company": null,
+      "project": "reclaim",
+      "text_runs": [
+        {
+          "text": "Reclaim — rules-first Windows disk-cleanup tool",
+          "bold": true
+        },
+        {
+          "text": " — a deterministic SafetyValidator gate decides what's safe to remove; the reclaimable-space estimate was corrected downward four times as real safety bugs were found, never once upward (~48GB → 3.92GB honest final figure).",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "mlops",
+        "experimentation",
+        "ranking"
+      ],
+      "priority": 4,
+      "verified_source": "NOT in current docx — added for variant pool coverage. content/metrics.json#reclaim:honesty-arc; reclaim/docs/CASE_STUDY.md:761",
+      "surface": "live_demo",
+      "artifact_url": "https://github.com/gaurav-gandhi-2411/reclaim/releases/latest",
+      "research_status": null,
+      "demo_quality": 2,
+      "role_relevance": 2,
+      "technical_depth": 3,
+      "metric_strength": 3,
+      "headline_metric": "corrected ~48GB → 3.92GB"
+    },
+    {
+      "id": "proj:agentgauge",
+      "section": "project",
+      "company": null,
+      "project": "agentgauge",
+      "text_runs": [
+        {
+          "text": "AgentGauge — causal measurement harness for MCP tool descriptions",
+          "bold": true
+        },
+        {
+          "text": " — statistical A/B harness measuring whether a tool-description change actually moves agent task success; the one BLOCKING defect class it flags causes a measured −13.3 to −28.9pp drop across 3 model families. Rebuilt after falsifying its own v1 quality score.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "causal-inference",
+        "experimentation",
+        "agents"
+      ],
+      "priority": 4,
+      "verified_source": "NOT in current docx as a project card (only as the research bullet above) — added for variant pool coverage. content/metrics.json#agentgauge:blocking-causal | surface corrected 2026-08-05 (amendment 4): verified published on PyPI as agentgauge-harness v0.5.2 (https://pypi.org/pypi/agentgauge-harness/json HTTP 200, tag v0.5.2, release.yml green) — was repo_only only because content/products.ts's pypi field was never added post-publication, not because the package isn't real.",
+      "surface": "pypi",
+      "artifact_url": "https://pypi.org/project/agentgauge-harness/",
+      "research_status": null,
+      "demo_quality": 2,
+      "role_relevance": 5,
+      "technical_depth": 5,
+      "metric_strength": 5,
+      "headline_metric": "−13.3 to −28.9pp across 3 model families"
+    },
+    {
+      "id": "proj:expense-tracker",
+      "section": "project",
+      "company": null,
+      "project": "expense-tracker",
+      "text_runs": [
+        {
+          "text": "Expense Tracker — multi-user expense tracker",
+          "bold": true
+        },
+        {
+          "text": " — parses plain-language entries, auto-categorizes with embeddings, forecasts spending with Prophet; Supabase auth with per-user isolation, ruff/mypy clean.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "forecasting",
+        "mlops"
+      ],
+      "priority": 4,
+      "verified_source": "NOT in current docx — added for variant pool coverage. content/metrics.json#expense-tracker:tests; expense-tracker/CURRENT_STATE.md:228-231 | 2026-08-05: raw test count (143/143) removed per GG's explicit instruction — no coverage-percentage substitute exists for this repo, so replaced with a non-volatile qualitative signal (ruff/mypy clean, per CURRENT_STATE.md:230-231) rather than any count.",
+      "surface": "live_demo",
+      "artifact_url": "https://expense-tracker-tawny-eight-98.vercel.app",
+      "research_status": null,
+      "demo_quality": 4,
+      "role_relevance": 3,
+      "technical_depth": 2,
+      "metric_strength": 2,
+      "headline_metric": "Supabase auth, per-user isolation"
+    },
+    {
+      "id": "skills:llm-genai",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "LLMs, GenAI & Fine-Tuning: ",
+          "bold": true
+        },
+        {
+          "text": "LLM APIs (OpenAI, Anthropic, Gemini, Groq, Hugging Face), LoRA/QLoRA, PEFT, instruction tuning, RLHF/DPO, prompt engineering, guardrails & grounding",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "experimentation"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para35",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "skills:eval-observability",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Evaluation & LLM Observability: ",
+          "bold": true
+        },
+        {
+          "text": "LLM-as-judge design, eval-harness & fixture design, CI-gated regression evals, contamination audits, A/B testing, MLflow, Prometheus, structured logging",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "experimentation",
+        "calibration"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para36",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "skills:rag-agents",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "RAG, Retrieval & Agents: ",
+          "bold": true
+        },
+        {
+          "text": "hybrid retrieval (dense + BM25/RRF), FAISS, pgvector, Pinecone, NL2SQL, knowledge graphs, multi-agent systems, LangChain, LangGraph, MCP",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "rag",
+        "agents",
+        "ranking"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para37",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "skills:ml-dl",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "ML & Deep Learning: ",
+          "bold": true
+        },
+        {
+          "text": "transformers (BERT, GPT, Llama, CLIP, ViT), diffusion (SDXL), two-tower/contrastive (InfoNCE), recommenders, sequence models, Bayesian inference, time-series",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "contrastive-learning",
+        "diffusion",
+        "forecasting",
+        "ranking"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para38",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "skills:stack",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Modeling Stack & Engineering: ",
+          "bold": true
+        },
+        {
+          "text": "PyTorch, Hugging Face (transformers, diffusers, PEFT, sentence-transformers), scikit-learn, LightGBM, Python (advanced), SQL, PySpark, FastAPI, unit & integration testing",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "mlops"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para39",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "skills:mlops-deploy",
+      "section": "skills",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Deployment, MLOps & Distributed Training: ",
+          "bold": true
+        },
+        {
+          "text": "Docker, GCP (Cloud Run, Vertex AI), Azure, GitHub Actions, Vercel, Firebase; Ray Train, DeepSpeed ZeRO-3",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "mlops",
+        "distributed-training"
+      ],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para40",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "edu:great-lakes",
+      "section": "education",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "Post Graduate Diploma in Data Science — Great Lakes Institute of Management",
+          "bold": true
+        },
+        {
+          "text": "Feb 2022 – Nov 2022 · GPA 8.45/10.0 · Chennai, India (Remote)",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/canonical-resume.pdf (education, verbatim per provenance.md); .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para42-43",
+      "surface": null,
+      "research_status": null
+    },
+    {
+      "id": "edu:manipal",
+      "section": "education",
+      "company": null,
+      "project": null,
+      "text_runs": [
+        {
+          "text": "B.Tech, Electronics & Communication Engineering — Manipal University Jaipur",
+          "bold": true
+        },
+        {
+          "text": "Jul 2017 – May 2021 · GPA 8.05/10.0 · Jaipur, India",
+          "bold": false
+        }
+      ],
+      "tags": [],
+      "priority": 1,
+      "verified_source": ".assets/resume-sources/canonical-resume.pdf (education, verbatim per provenance.md); .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para44-45",
+      "surface": null,
+      "research_status": null
+    }
+  ]
+}
