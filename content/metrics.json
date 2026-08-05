@@ -14,21 +14,23 @@
     },
     "style-maitri:intent-accuracy": {
       "label": "Intent-parsing accuracy",
-      "value": "94.4% (n=378)",
+      "value": "93.8% (n=211)",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "reports/model_eval_20260731T060759Z.md (gitignored, regenerated — cited by repo HEAD + fetch date)",
-      "source_line": 7,
-      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
-      "measured_at": "2026-07-31"
+      "source_file": "reports/final_scorecard_2026-07-12.txt",
+      "source_line": 109,
+      "commit_sha": "57e7e6078a04d7fafb33219d597afd3548870a35",
+      "measured_at": "2026-07-12",
+      "note": "Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
     },
     "style-maitri:catalogue-size": {
       "label": "Cross-store catalogue",
-      "value": "~112K items across 42 stores",
+      "value": "52,494 items across 8 stores",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "data/processed/unified/catalogue.parquet (gitignored, regenerated — verified live via pandas, cited by repo HEAD + fetch date)",
-      "source_line": null,
-      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
-      "measured_at": "2026-07-31"
+      "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
+      "source_line": 28,
+      "commit_sha": "59962265b85f5a159e60c2a18db32d1b3650385c",
+      "measured_at": "2026-07-12",
+      "note": "Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
     },
     "triageiq:classifier-top3": {
       "label": "Component classifier top-3 / top-1 accuracy",

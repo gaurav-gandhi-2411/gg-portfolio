@@ -124,6 +124,13 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Wave 20 — same-project card-vs-case-study consistency (see
+      # scripts/check-card-consistency.mjs's header for the incident this
+      # closes). Zero network calls, same-repo only, fails closed on any
+      # products.ts/metrics.json value contradicting its own case study.
+      - name: Card/metrics/case-study consistency
+        run: node scripts/check-card-consistency.mjs
+
       - name: Build
         run: npm run build
 
