@@ -45,17 +45,23 @@ test.describe("Case-study metric provenance", () => {
   }) => {
     await page.goto("/work/triageiq");
 
+    // "Resolution-time interval coverage" (triageiq:cqr-coverage) used to be
+    // this test's example, but issue #45's sourceRef-split fix gave it its
+    // own content/metrics.json entry — it's structured-tier now (see the
+    // dedicated regression test below). "Resolution-time predictor MAE"
+    // (triageiq:resolution) has no metrics.json entry, so it stays a clean
+    // example of the prose-only path.
     const trigger = page.getByRole("button", {
-      name: /show source for Resolution-time interval coverage/,
+      name: /show source for Resolution-time predictor MAE/,
     });
     await trigger.click();
 
-    const panel = page.getByRole("group", { name: /Source for Resolution-time interval coverage/ });
+    const panel = page.getByRole("group", { name: /Source for Resolution-time predictor MAE/ });
     await expect(panel).toHaveCSS("opacity", "1");
     await expect(panel).toContainText("Cited in provenance.md");
     // the raw provenance.md Source cell text, unprocessed — proves this
     // isn't a parser-derived citation
-    await expect(panel).toContainText("0010-conformal-quantile-regression.md");
+    await expect(panel).toContainText("README.md:91-98");
     // GG's 2026-08-06 call: a prose-tier metric never renders this
     // component's own regex-extracted file citation as a link (a wrong
     // citation next to a real number is worse than no citation) — the
@@ -65,6 +71,32 @@ test.describe("Case-study metric provenance", () => {
     await expect(links.first()).toHaveAttribute(
       "href",
       "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md"
+    );
+  });
+
+  test("the CQR coverage metric resolves via metrics.json to the shipped figure, not the design-decision ADR's earlier exploratory numbers (regression test, issue #45)", async ({
+    page,
+  }) => {
+    await page.goto("/work/triageiq");
+
+    const trigger = page.getByRole("button", {
+      name: /show source for Resolution-time interval coverage/,
+    });
+    await trigger.click();
+
+    const panel = page.getByRole("group", { name: /Source for Resolution-time interval coverage/ });
+    await expect(panel).toHaveCSS("opacity", "1");
+    // structured tier, backed by content/metrics.json's own
+    // triageiq:cqr-coverage entry — proves this no longer shares sourceRef
+    // "triageiq:cqr" with the CQR design-decision text below it, which cites
+    // the ADR's earlier, uncalibrated 74.4%/38.2% numbers, not this row's
+    // shipped 76.2%/74.6%.
+    await expect(panel).toContainText("Verified source");
+    await expect(panel).not.toContainText("0010-conformal-quantile-regression");
+    const link = panel.getByRole("link").first();
+    await expect(link).toHaveAttribute(
+      "href",
+      /github\.com\/gaurav-gandhi-2411\/triage-iq\/blob\/.*README\.md/
     );
   });
 
