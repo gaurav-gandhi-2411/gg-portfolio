@@ -105,7 +105,7 @@ export const triageiq: CaseStudy = {
       label: "Resolution-time interval coverage after Conformal Quantile Regression",
       value: "76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target",
       detail: "post-calibration, and what's actually loaded in the live-serving artifact — see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
-      sourceRef: "triageiq:cqr",
+      sourceRef: "triageiq:cqr-coverage",
     },
     {
       label: "Similar-issue retrieval, Recall@5",

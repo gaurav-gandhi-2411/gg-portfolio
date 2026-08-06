@@ -206,13 +206,55 @@ function parseProvenance() {
 // Strips a leading `<repoSlug>/` if the caller's repo's own name prefixes
 // a path (provenance.md sometimes writes paths repo-qualified when a row
 // could be confused with another project's file of the same name).
+//
+// A path may carry an optional trailing `@<sha>` pin (e.g.
+// `` `data/backtest.json@d41372a` ``), checked AFTER the optional
+// `:line-range` — this is the fix for issue #45 (rule 98a-adjacent): a
+// claim sourced from a file that's rewritten by scheduled automation
+// (bot-refreshed continuously, not human-edited) is a moving target at
+// `HEAD` — the claim was true of one specific commit's snapshot, and
+// checking a LATER commit's content answers a different question ("does
+// the bot's current output still say this" rather than "did the site
+// correctly report what its cited source said"), producing a false
+// POSSIBLE_DRIFT every time the bot runs. A human-committed file (README,
+// a one-off report) deliberately stays unpinned, fetched at HEAD — that's
+// what lets a real future edit (someone updating the number without
+// updating the site) still get caught. Pin only sources the claim's own
+// note documents as automated; see `content/provenance.md`'s
+// `gold-rate-tracker:headline` row for the convention.
 function extractPathsFromSource(source, repoSlug) {
-  const matches = [...source.matchAll(/`([\w./-]+\.[a-zA-Z0-9]+)(:[\d,-]+)?`/g)];
+  const matches = [...source.matchAll(/`([\w./-]+\.[a-zA-Z0-9]+)(:[\d,-]+)?(@[0-9a-f]{7,40})?`/g)];
   return matches.map((m) => {
     let path = m[1];
     if (repoSlug && path.startsWith(`${repoSlug}/`)) path = path.slice(repoSlug.length + 1);
-    return path;
+    const ref = m[3] ? m[3].slice(1) : null;
+    return { path, ref };
   });
+}
+
+// Display label for a {path, ref} pair — `path@sha` when pinned, bare
+// `path` when it resolves at HEAD (the common case), so report text makes
+// the pin visible without cluttering every unpinned citation.
+function pathLabel(p) {
+  return p.ref ? `${p.path}@${p.ref}` : p.path;
+}
+
+// Extensions this check cannot verify by text search — a binary file
+// doesn't contain the claim's digits as matchable text (a parquet file's
+// "52494" is encoded, not printed), so a text-presence check against one
+// can only ever fail, and reporting that failure as UNVERIFIABLE implies
+// "try again later" when re-trying changes nothing: the check is
+// structurally incapable of verifying this source, full stop (issue #45
+// task 3). Claims citing a binary must cite a text artifact (a report or
+// JSON summary) that carries the same number instead.
+const BINARY_EXTENSIONS = new Set([
+  ".parquet", ".pkl", ".pickle", ".npz", ".npy", ".db", ".sqlite", ".sqlite3",
+  ".bin", ".pt", ".pth", ".ckpt", ".onnx", ".h5", ".hdf5", ".feather", ".arrow",
+]);
+function isBinaryPath(path) {
+  const dot = path.lastIndexOf(".");
+  if (dot === -1) return false;
+  return BINARY_EXTENSIONS.has(path.slice(dot).toLowerCase());
 }
 
 // Walks one case study's results/decisions/story fields for every
@@ -275,9 +317,30 @@ async function checkCaseStudyClaims(provenance) {
         claimResults.push({ ...base, status: "NO_PROVENANCE_ROW", detail: `no content/provenance.md row for sourceRef "${sourceRef}"` });
         continue;
       }
-      const paths = extractPathsFromSource(row.source, repoSlug);
-      if (paths.length === 0) {
+      const allPaths = extractPathsFromSource(row.source, repoSlug);
+      if (allPaths.length === 0) {
         claimResults.push({ ...base, status: "SKIPPED_NO_PATH", detail: `provenance source "${row.source}" has no extractable file path` });
+        continue;
+      }
+
+      // Binary paths are split out before any fetch is attempted — a
+      // text-presence check against a parquet/pickle/etc. can only ever
+      // fail, so it's not "unverifiable this run" (implying a retry might
+      // help), it's structurally unverifiable by this method, always
+      // (issue #45 task 3). If EVERY cited path is binary, report that
+      // distinctly; if some are binary and at least one is text, the text
+      // path(s) still carry the check (same union logic as multi-path
+      // fetches below) and the binary path is silently excluded from the
+      // fetch loop — its presence doesn't block verification via the
+      // text sibling, it just can't contribute evidence itself.
+      const paths = allPaths.filter((p) => !isBinaryPath(p.path));
+      const binaryPaths = allPaths.filter((p) => isBinaryPath(p.path));
+      if (paths.length === 0) {
+        claimResults.push({
+          ...base,
+          status: "STRUCTURALLY_UNVERIFIABLE",
+          detail: `all ${binaryPaths.length} cited path(s) are binary — a text-presence check cannot verify ${binaryPaths.map(pathLabel).join(", ")}; cite a text artifact (report or JSON summary) that carries the same number instead`,
+        });
         continue;
       }
 
@@ -288,8 +351,8 @@ async function checkCaseStudyClaims(provenance) {
       // reported as UNVERIFIABLE, not silently treated as drift.
       const foundIn = new Set();
       const fetchErrors = [];
-      for (const path of paths) {
-        const url = `https://raw.githubusercontent.com/${repo}/HEAD/${path}`;
+      for (const { path, ref } of paths) {
+        const url = `https://raw.githubusercontent.com/${repo}/${ref ?? "HEAD"}/${path}`;
         let sourceText;
         try {
           sourceText = await fetchText(url);
@@ -305,11 +368,12 @@ async function checkCaseStudyClaims(provenance) {
         claimResults.push({ ...base, status: "UNVERIFIABLE", detail: `all ${paths.length} cited path(s) failed to fetch: ${fetchErrors.join("; ")}` });
         continue;
       }
+      const shownPaths = paths.map(pathLabel).join(", ");
       if (foundIn.size === 0) {
         const shown = tokens.map((t) => t.display).join(", ");
-        claimResults.push({ ...base, status: "POSSIBLE_DRIFT", detail: `none of [${shown}] (or their %/fraction equivalent) found in ${repo}/{${paths.join(", ")}} (text: "${text.slice(0, 100)}")` });
+        claimResults.push({ ...base, status: "POSSIBLE_DRIFT", detail: `none of [${shown}] (or their %/fraction equivalent) found in ${repo}/{${shownPaths}} (text: "${text.slice(0, 100)}")` });
       } else {
-        claimResults.push({ ...base, status: "CURRENT", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${paths.join(", ")}}` });
+        claimResults.push({ ...base, status: "CURRENT", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${shownPaths}}` });
       }
     }
   }
@@ -364,6 +428,15 @@ for (const [id, m] of entries) {
     continue;
   }
 
+  if (isBinaryPath(path)) {
+    results.push({
+      id,
+      status: "STRUCTURALLY_UNVERIFIABLE",
+      detail: `source_file "${path}" is binary — a text-presence check cannot verify it; cite a text artifact (report or JSON summary) instead`,
+    });
+    continue;
+  }
+
   const url = `https://raw.githubusercontent.com/${m.repo}/HEAD/${path}`;
   let text;
   try {
@@ -393,6 +466,7 @@ for (const [id, m] of entries) {
 const byStatus = (s) => results.filter((r) => r.status === s);
 const drift = byStatus("POSSIBLE_DRIFT");
 const unverifiable = byStatus("UNVERIFIABLE");
+const structurallyUnverifiable = byStatus("STRUCTURALLY_UNVERIFIABLE");
 const current = byStatus("CURRENT");
 const skipped = byStatus("SKIPPED");
 
@@ -406,6 +480,7 @@ const claimsByStatus = (s) => claimResults.filter((r) => r.status === s);
 const claimsCurrent = claimsByStatus("CURRENT");
 const claimsDrift = claimsByStatus("POSSIBLE_DRIFT");
 const claimsUnverifiable = claimsByStatus("UNVERIFIABLE");
+const claimsStructurallyUnverifiable = claimsByStatus("STRUCTURALLY_UNVERIFIABLE");
 const claimsNotNumeric = claimsByStatus("NOT_NUMERIC");
 const claimsSkippedPrivate = claimsByStatus("SKIPPED_PRIVATE_REPO");
 const claimsSkippedNoPath = claimsByStatus("SKIPPED_NO_PATH");
@@ -450,8 +525,22 @@ if (unverifiable.length > 0) {
   lines.push("");
 }
 
+if (structurallyUnverifiable.length > 0) {
+  lines.push(`### Structurally unverifiable — ${structurallyUnverifiable.length} metric(s) (binary source; needs a text-artifact citation)`);
+  lines.push("");
+  lines.push(
+    "Distinct from a fetch failure above: a binary file has nothing this check can retry — " +
+      "re-running the job will never resolve it. Repoint `source_file` at a text artifact " +
+      "(a report or JSON summary) that carries the same number."
+  );
+  lines.push("");
+  for (const r of structurallyUnverifiable) lines.push(`- \`${r.id}\`: ${r.detail}`);
+  lines.push("");
+}
+
 lines.push(
-  `### Summary: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ${skipped.length} skipped (no fetchable path or no numeric tokens)`
+  `### Summary: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ` +
+    `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped (no fetchable path or no numeric tokens)`
 );
 lines.push("");
 lines.push(
@@ -487,13 +576,46 @@ if (claimsUnverifiable.length > 0) {
   for (const r of claimsUnverifiable) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
   lines.push("");
 }
-const claimsUncheckedForOtherReasons = claimsSkippedPrivate.length + claimsSkippedNoPath.length + claimsNoProvenanceRow.length + claimsNoRepoMapping.length;
+if (claimsStructurallyUnverifiable.length > 0) {
+  lines.push(`### Structurally unverifiable — ${claimsStructurallyUnverifiable.length} claim(s) (binary source; needs a text-artifact citation)`);
+  lines.push("");
+  lines.push(
+    "Distinct from a fetch failure above: a binary file has nothing this check can retry — " +
+      "re-running the job will never resolve it. Repoint the provenance.md row at a text " +
+      "artifact (a report or JSON summary) that carries the same number."
+  );
+  lines.push("");
+  for (const r of claimsStructurallyUnverifiable) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+
+// Deliberately its own prominent, always-visible-when-nonzero section
+// rather than a clause inside a denser paragraph (issue #45 task 4):
+// silent non-coverage reads as passing. GG's call (documented in the PR
+// that added this section) was to surface the gap loudly rather than
+// grant this script a cross-repo read token for 6 private repos — a new
+// standing credential is a bigger, harder-to-reverse commitment than a
+// clearly labeled coverage hole, and the choice is revisitable if the
+// gap grows.
+if (claimsSkippedPrivate.length > 0) {
+  lines.push(`### ${claimsSkippedPrivate.length} claims UNCHECKED (no auth) — private source repo`);
+  lines.push("");
+  lines.push(
+    "This script carries no credential for private repos, so these claims are neither " +
+      "confirmed current nor flagged as drift — they are simply not covered this run. Not a " +
+      "footnote: treat as unverified, not as passing."
+  );
+  lines.push("");
+  for (const r of claimsSkippedPrivate) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+
+const claimsUncheckedForOtherReasons = claimsSkippedNoPath.length + claimsNoProvenanceRow.length + claimsNoRepoMapping.length;
 if (claimsUncheckedForOtherReasons > 0) {
   lines.push(`### Numeric, but not checked this run — ${claimsUncheckedForOtherReasons} claim(s)`);
   lines.push("");
   lines.push(
-    `${claimsSkippedPrivate.length} private-repo (no auth carried by this script), ` +
-      `${claimsSkippedNoPath.length} no extractable file path in their provenance row, ` +
+    `${claimsSkippedNoPath.length} no extractable file path in their provenance row, ` +
       `${claimsNoProvenanceRow.length} no provenance.md row for that sourceRef at all, ` +
       `${claimsNoRepoMapping.length} case study missing from CASE_STUDY_REPO.`
   );
@@ -543,7 +665,9 @@ writeFileSync(SUMMARY_PATH, summary);
 // expected "found some drift" outcome, which is the opposite of what a
 // weekly report job should do).
 console.log(
-  `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ${skipped.length} skipped. ` +
-    `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsUnverifiable.length} unverifiable). ` +
+  `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ` +
+    `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
+    `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
+    `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
 );
