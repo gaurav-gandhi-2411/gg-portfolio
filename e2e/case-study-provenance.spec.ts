@@ -52,7 +52,7 @@ test.describe("Case-study metric provenance", () => {
 
     const panel = page.getByRole("group", { name: /Source for Resolution-time interval coverage/ });
     await expect(panel).toHaveCSS("opacity", "1");
-    await expect(panel).toContainText("cqr_conformal_adjustments.json");
+    await expect(panel).toContainText("0010-conformal-quantile-regression.md");
   });
 
   test("a repo-qualified citation path (`triage-iq/docs/...`) is stripped to a real GitHub blob link", async ({
