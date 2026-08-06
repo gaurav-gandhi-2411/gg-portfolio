@@ -1,6 +1,7 @@
 import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
+import { MetricProvenance } from "@/components/metric-provenance";
 import { PrintButton } from "@/components/print-button";
 import { StepCurve } from "@/components/step-curve";
 import { TransitionLink } from "@/components/transition-link";
@@ -8,6 +9,7 @@ import { availability } from "@/content/availability";
 import { site } from "@/content/site";
 import { CATEGORIES, type CaseStudy, type Product } from "@/content/types";
 import { getCaseStudyLastUpdated } from "@/lib/last-updated";
+import { getProvenance } from "@/lib/provenance";
 import { caseStudyReadingMinutes } from "@/lib/reading-time";
 import type { RelatedProduct } from "@/lib/related-products";
 
@@ -225,22 +227,27 @@ export function CaseStudyPage({
             <>
               <SectionHeading index={next()} title="Results — the honest numbers" />
               <dl className="mt-4 flex flex-col">
-                {study.results?.map((result) => (
-                  <div
-                    key={result.sourceRef + result.label}
-                    className="border-border/30 flex flex-col gap-1 border-b py-4 first:pt-0 last:border-b-0"
-                  >
-                    <dd className="font-mono text-base font-medium text-foreground">
-                      {result.value}
-                    </dd>
-                    <dt className="text-muted-foreground text-sm leading-relaxed">
-                      {result.label}
-                      {result.detail && (
-                        <span className="text-muted-foreground/80"> — {result.detail}</span>
-                      )}
-                    </dt>
-                  </div>
-                ))}
+                {study.results?.map((result) => {
+                  const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
+                  return (
+                    <div
+                      key={result.sourceRef + result.label}
+                      className="border-border/30 flex flex-col gap-1 border-b py-4 first:pt-0 last:border-b-0"
+                    >
+                      <dd className="font-mono text-base font-medium text-foreground">
+                        <MetricProvenance info={provenance} label={result.label}>
+                          {result.value}
+                        </MetricProvenance>
+                      </dd>
+                      <dt className="text-muted-foreground text-sm leading-relaxed">
+                        {result.label}
+                        {result.detail && (
+                          <span className="text-muted-foreground/80"> — {result.detail}</span>
+                        )}
+                      </dt>
+                    </div>
+                  );
+                })}
               </dl>
             </>
           )}
