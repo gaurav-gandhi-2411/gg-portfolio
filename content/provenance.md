@@ -859,6 +859,45 @@ Not implemented this session (out of scope per GG's "report only" instruction): 
 individual repo's manifest, or building the 4 missing manifests from scratch. GG to decide backfill
 order.
 
+## Wave 20 (2026-08-06) — Style Maitri homepage card drift, root cause + fix
+
+Wave 19's revert (above) fixed `content/case-studies/style-maitri.ts`'s case-study body back to
+the git-committed 93.8%/n=211 and 52,494/8-store figures. It did **not** fix two other places that
+independently carried the same stale, gitignored-sourced numbers, because neither ever appeared in
+a rebase conflict — git conflict detection only flags lines two branches both touched, and nothing
+in Wave 18/19's diff touched these:
+
+- `content/products.ts`'s Style Maitri entry: `tagline` claimed "42 store catalogues"; `figure`
+  hardcoded `{ pct: 94.4, valueText: "94.4% (n=378)" }` — the homepage/projects-grid card value,
+  entirely independent of the case-study body's own text.
+- `content/metrics.json`'s `style-maitri:intent-accuracy` and `style-maitri:catalogue-size`
+  entries: both still cited `reports/model_eval_20260731T060759Z.md` and the gitignored
+  `catalogue.parquet` read — the exact same inadmissible-evidence class Wave 19 already rejected
+  for the case-study body, just never applied here.
+
+Net effect, live in production for the length of one deploy cycle: the case-study page
+(`/work/style-maitri`) showed the correct, reverted numbers while the homepage/projects-grid card
+for the same project showed the old, unverifiable ones — a same-project internal contradiction,
+not a stale-vs-current split between two different sources.
+
+**Fixed**, both files, cited to the same committed sources already established in Wave 19:
+
+| Field | Old value | New value | Source |
+|---|---|---|---|
+| `style-maitri:intent-accuracy` | 94.4% (n=378) | 93.8% (n=211) | `reports/final_scorecard_2026-07-12.txt:109` (commit `57e7e6078a04d7fafb33219d597afd3548870a35`): `intent all-exact    93.8%  (min 88.0%, n=211) PASS` |
+| `style-maitri:catalogue-size` | ~112K items / 42 stores | 52,494 items / 8 stores | `reports/soldout_filter_fix_2026-07-12.txt:28` (commit `59962265b85f5a159e60c2a18db32d1b3650385c`): `Catalogue size: 61,883 -> 52,494 items ... across all 8 stores` |
+| `products.ts` tagline | "42 store catalogues" | "8 store catalogues" | same as catalogue-size above |
+| `products.ts` figure | `{ pct: 94.4, valueText: "94.4% (n=378)" }` | `{ pct: 93.8, valueText: "93.8% (n=211)" }` | same as intent-accuracy above |
+
+**Process gap this exposes:** a control that only fires on a git conflict is structurally blind to
+a same-project internal contradiction across files that no single commit touched together — the
+failure mode (this incident, plus the case-study-body reversion itself, plus dealhunter's stray
+coverage-value carryover caught the same way during Wave 19) has now recurred three times, always
+outside marked conflicts. `scripts/check-card-consistency.mjs` (added this wave) closes this class
+directly: it compares `products.ts`/`metrics.json` claims against each project's own case-study
+body, entirely within this repo (no network fetch, no dependence on a rebase ever happening), and
+fails closed on any per-project internal disagreement — see that script's own header comment.
+
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
