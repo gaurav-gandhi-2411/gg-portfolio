@@ -499,7 +499,7 @@
           "bold": true
         },
         {
-          "text": " — natural-language trip requests to Pareto-ranked itineraries via SSE streaming — planner/optimizer agents with an LLM-as-judge eval harness; ≥87.65% test coverage.",
+          "text": " — natural-language trip requests to Pareto-ranked itineraries via SSE streaming — planner/optimizer agents with an LLM-as-judge eval harness, hardened by a deterministic replay suite with per-run cost accounting.",
           "bold": false
         }
       ],
@@ -508,7 +508,7 @@
         "experimentation"
       ],
       "priority": 2,
-      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para30; agentic-travel-booking-system/CURRENT_STATE.md:645 | 2026-08-05: raw test count (597) removed per GG's explicit instruction — coverage percentage kept since it's a ratio, not a raw count that drifts as tests are added.",
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para30; agentic-travel-booking-system/README.md:120 (VCR-cassette eval harness, evals/run.py) | corrected 2026-08-06 per GG explicit instruction: the ≥87.65% coverage claim removed entirely (site now carries no coverage figure at the current 727-test count -- no committed source exists, see content/case-studies/dealhunter.ts). Replacement framing is GG-provided; the deterministic-replay half is independently confirmed (README.md:120, VCR replay eval harness); a dedicated per-run cost-accounting artifact was not independently located in the repo's own source during this pass (langfuse tracing is wired in -- apps/api/src/travel_agent/observability/langfuse_client.py -- but no explicit cost/usd ledger was found there) -- flagged here rather than silently treated as independently verified.",
       "surface": "live_demo",
       "artifact_url": "https://agentic-travel-booking-system.vercel.app",
       "research_status": null,
@@ -516,7 +516,7 @@
       "role_relevance": 3,
       "technical_depth": 3,
       "metric_strength": 3,
-      "headline_metric": "≥87.65% test coverage"
+      "headline_metric": "deterministic replay suite, per-run cost accounting"
     },
     {
       "id": "proj:mmfr",
@@ -648,7 +648,7 @@
           "bold": true
         },
         {
-          "text": " — zero-cost gold-price PWA; ships the naive flat-hold forecast because a 199-fold backtest shows it honestly beats the ML model (Chronos-Bolt-Tiny), Wilcoxon p < 0.001.",
+          "text": " — zero-cost gold-price PWA; 204-fold backtest; ships the naive baseline after it beat Chronos-Bolt-Tiny on MAE, 251.99 vs 293.10, Wilcoxon p=0.0001.",
           "bold": false
         }
       ],
@@ -658,7 +658,7 @@
         "experimentation"
       ],
       "priority": 3,
-      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#gold-rate-tracker:headline | corrected 2026-08-05: was p=0.0003, which belonged to a different (194-fold) snapshot than the 199-fold MAE numbers in the same claim — an internal-consistency bug, not a new measurement. Single-snapshot recompute at commit a4d892c (data/backtest.json, tracked, committed 2026-07-19T10:46:27+05:30, backtest_run_at 2026-07-19T05:12:36 UTC): wilcoxon_signed_rank_p stored as exactly 0.0 (underflow, not a literal zero) — rendered as 'p < 0.001' per GG's explicit never-render-p-approx-0 instruction.",
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#gold-rate-tracker:headline | corrected 2026-08-06 (site-vs-repo reconciliation, PR #48/#49): backtest grew 199 -> 204 folds (data/backtest.json, commit d41372a, 2026-07-26T10:56:23+05:30, backtest_run_at 2026-07-26T05:22:51Z, reachable from origin/master) -- MAE 251.99 vs. 293.10, Wilcoxon p=0.0001. Supersedes the 2026-08-05 correction (199-fold, p<0.001, commit a4d892c), which was itself already superseded on the live site by the time this entry was last synced.",
       "surface": "live_demo",
       "artifact_url": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
       "research_status": null,
@@ -666,7 +666,7 @@
       "role_relevance": 3,
       "technical_depth": 3,
       "metric_strength": 4,
-      "headline_metric": "naive beats model, p<0.001"
+      "headline_metric": "naive beats model, p=0.0001"
     },
     {
       "id": "proj:shelfsense",
