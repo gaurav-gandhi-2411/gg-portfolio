@@ -56,9 +56,24 @@ export function MetricProvenance({
           "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100"
         )}
       >
-        <p className="text-muted-foreground font-mono text-[11px] tracking-eyebrow uppercase">Source</p>
+        <p className="text-muted-foreground font-mono text-[11px] tracking-eyebrow uppercase">
+          {info.tier === "structured" ? "Verified source" : "Cited in provenance.md"}
+        </p>
         <p className="text-foreground mt-1.5 leading-relaxed">{info.sourceText}</p>
-        {info.citations.length > 0 && (
+        {/*
+          Confidence distinction (GG, 2026-08-06): a "structured" ref comes
+          straight from content/metrics.json (machine-refreshed via a
+          reviewed PR, carries a real commit_sha) — its citations are exact,
+          so they render as clean, clickable file links below. A "prose"
+          ref only ever had the sourceText above, parsed out of
+          provenance.md's free-text Source cell by this component's own
+          regex-based parser — that parser's guess at which file/line it
+          refers to is NOT rendered as a citation, because a wrong citation
+          next to a real number is worse than no citation. The only link
+          offered for that tier goes to provenance.md itself, never to a
+          file this parser picked out of its prose.
+        */}
+        {info.tier === "structured" && info.citations.length > 0 && (
           <ul className="mt-2.5 flex flex-col gap-1">
             {info.citations.map((c) => (
               <li key={`${c.file}:${c.line ?? ""}`} className="font-mono text-[11px]">
@@ -82,8 +97,18 @@ export function MetricProvenance({
             ))}
           </ul>
         )}
+        {info.tier === "prose" && info.provenanceDocUrl && (
+          <a
+            href={info.provenanceDocUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent focus-visible:outline-ring mt-2.5 inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            View in content/provenance.md ↗
+          </a>
+        )}
         <p className="text-muted-foreground/80 mt-2.5 text-[11px]">
-          {info.citations.some((c) => c.commitSha) && (
+          {info.tier === "structured" && info.citations.some((c) => c.commitSha) && (
             <>commit {info.citations.find((c) => c.commitSha)?.commitSha?.slice(0, 7)} · </>
           )}
           {info.measuredAt ? `measured ${info.measuredAt}` : `verified against source ${info.verifiedAt}`}

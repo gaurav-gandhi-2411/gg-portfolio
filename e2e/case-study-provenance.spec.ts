@@ -40,7 +40,7 @@ test.describe("Case-study metric provenance", () => {
     await expect(panel).toHaveCSS("opacity", "0");
   });
 
-  test("tap reveals a prose-derived source (provenance.md-only metric, no metrics.json entry)", async ({
+  test("a prose-parsed metric (provenance.md-only, no metrics.json entry) shows the row text verbatim, not a synthesized citation link", async ({
     page,
   }) => {
     await page.goto("/work/triageiq");
@@ -52,10 +52,23 @@ test.describe("Case-study metric provenance", () => {
 
     const panel = page.getByRole("group", { name: /Source for Resolution-time interval coverage/ });
     await expect(panel).toHaveCSS("opacity", "1");
+    await expect(panel).toContainText("Cited in provenance.md");
+    // the raw provenance.md Source cell text, unprocessed — proves this
+    // isn't a parser-derived citation
     await expect(panel).toContainText("0010-conformal-quantile-regression.md");
+    // GG's 2026-08-06 call: a prose-tier metric never renders this
+    // component's own regex-extracted file citation as a link (a wrong
+    // citation next to a real number is worse than no citation) — the
+    // only link is to the site's own provenance.md, never a parsed path.
+    const links = panel.getByRole("link");
+    await expect(links).toHaveCount(1);
+    await expect(links.first()).toHaveAttribute(
+      "href",
+      "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md"
+    );
   });
 
-  test("a repo-qualified citation path (`triage-iq/docs/...`) is stripped to a real GitHub blob link", async ({
+  test("a repo-qualified citation path (`triage-iq/docs/...`) appears verbatim in the raw text but is never turned into a synthesized link", async ({
     page,
   }) => {
     await page.goto("/work/triageiq");
@@ -67,10 +80,29 @@ test.describe("Case-study metric provenance", () => {
 
     const panel = page.getByRole("group", { name: /Source for LLM fabrication rate/ });
     await expect(panel).toHaveCSS("opacity", "1");
-    const link = panel.getByRole("link").first();
-    await expect(link).toHaveAttribute(
+    await expect(panel).toContainText("docs/architecture/adr/0018-gold-set-train-contamination.md");
+    const links = panel.getByRole("link");
+    await expect(links).toHaveCount(1);
+    await expect(links.first()).toHaveAttribute(
       "href",
-      "https://github.com/gaurav-gandhi-2411/triage-iq/blob/HEAD/docs/architecture/adr/0018-gold-set-train-contamination.md"
+      "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md"
     );
+  });
+
+  test("a metrics.json-backed metric still renders its clean citation link (structured tier is unaffected by the prose fallback's fail-closed handling)", async ({
+    page,
+  }) => {
+    await page.goto("/work/triageiq");
+
+    const trigger = page.getByRole("button", {
+      name: /show source for Component classifier accuracy/,
+    });
+    await trigger.click();
+
+    const panel = page.getByRole("group", { name: /Source for Component classifier accuracy/ });
+    await expect(panel).toHaveCSS("opacity", "1");
+    await expect(panel).toContainText("Verified source");
+    const link = panel.getByRole("link").first();
+    await expect(link).toHaveAttribute("href", /github\.com\/gaurav-gandhi-2411\/triage-iq\/blob\//);
   });
 });
