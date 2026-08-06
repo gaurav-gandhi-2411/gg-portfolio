@@ -5,9 +5,16 @@ import type { CaseStudy } from "../types";
 // docs/architecture/adr/0010-conformal-quantile-regression.md,
 // docs/architecture/adr/0018-gold-set-train-contamination.md,
 // docs/architecture/adr/0028-per-model-eval-audit.md) — see provenance.md's TriageIQ section.
-// Numbers refreshed wave 19 (2026-07-31) against README.md's current eval table:
-// classifier retrained (ADR-0036, multi-label supervision fix, 2026-07-24);
-// retrieval Recall@5 corrected twice (ADR-0033, then a harness-bug fix in ADR-0035).
+// Numbers refreshed wave 19 (2026-07-31), re-verified 2026-08-05 (site-vs-repo
+// reconciliation, see provenance.md's wave-18/19 sections) against README.md's
+// current eval table: classifier retrained (ADR-0036, multi-label supervision
+// fix, 2026-07-24; was pre-ADR-0036 82.5%/90.4%); CQR coverage (76.2%/74.6% vs.
+// 80% target) surfaced for the first time; retrieval Recall@5 corrected twice —
+// first by ADR-0032/0033's clean-pool rebuild (the original gold pairs were
+// ~80% noise, dominated by a title_sim channel at ~20% precision on vscode),
+// then by ADR-0035's harness-bug fix (eval queried title-only against a
+// title+body production index) — vscode is no longer "retired". LLM synthesis
+// corrected 3-shot -> 4-shot (ADR-0037, 2026-07-30).
 export const triageiq: CaseStudy = {
   slug: "triageiq",
   verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
@@ -46,7 +53,7 @@ export const triageiq: CaseStudy = {
       },
       {
         label: "Stage 4 — LLM synthesis",
-        detail: "Groq llama-3.1-8b-instant, 3-shot, JSON-schema retry + fallback, ~3s",
+        detail: "Groq llama-3.1-8b-instant, 4-shot, JSON-schema retry + fallback, ~3s",
       },
       {
         label: "Grounding verifier",
@@ -63,7 +70,7 @@ export const triageiq: CaseStudy = {
   decisions: [
     {
       title: "TF-IDF + logistic regression over a transformer, for the classifier",
-      body: "A three-way bake-off tested TF-IDF against DistilBERT and an LLM. DistilBERT beat TF-IDF on vscode by only 1.2 percentage points of macro-F1 — nowhere near the 11-point margin needed to justify 20x the latency — and actually lost on kubernetes by 5.1 points at 35x the latency. At the ~1,500–2,300 training examples per repo this system has, TF-IDF's simpler inductive bias (its built-in assumptions about how text maps to labels) generalizes better than a transformer does with that little data.",
+      body: "A three-way bake-off tested TF-IDF against DistilBERT and an LLM, before the later multi-label supervision fix (ADR-0036) that raised the shipped model's own headline accuracy. DistilBERT beat TF-IDF on vscode by only 1.2 percentage points of macro-F1 — nowhere near the 11-point margin needed to justify 20x the latency — and actually lost on kubernetes by 5.1 points at 35x the latency. At the ~1,500–2,300 training examples per repo this system has, TF-IDF's simpler inductive bias (its built-in assumptions about how text maps to labels) generalizes better than a transformer does with that little data.",
       sourceRef: "triageiq:classifier-bakeoff",
     },
     {
@@ -91,13 +98,20 @@ export const triageiq: CaseStudy = {
     {
       label: "Component classifier accuracy (top-3 / top-1), p50 4.9ms",
       value: "89.8% / 76.5% (vscode) · 87.1% / 60.5% (k8s)",
+      detail: "multi-label supervision fix, ADR-0036 — the shipped model as of 2026-07-24",
       sourceRef: "triageiq:classifier-top3",
     },
     {
+      label: "Resolution-time interval coverage after Conformal Quantile Regression",
+      value: "76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target",
+      detail: "post-calibration, and what's actually loaded in the live-serving artifact — see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
+      sourceRef: "triageiq:cqr",
+    },
+    {
       label: "Similar-issue retrieval, Recall@5",
-      value: "18.0% (kubernetes) · 50.5% (vscode)",
+      value: "18.0% (kubernetes) / 50.5% (vscode)",
       detail:
-        "both corrected upward after a harness audit found the eval was querying title-only against a title+body production index; three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on top of the corrected baseline",
+        "vscode's original number was retired after ADR-0032 found the gold pairs were ~80% noise (dominated by a title_sim channel measured at only ~20% precision); the ADR-0032/0033 clean-pool rebuild produced a new baseline, which a later harness audit (ADR-0035) found was itself querying title-only against a title+body production index — correcting both repos upward a second time to the numbers above. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on the corrected baseline; reranking made it worse at 190–330x the latency",
       sourceRef: "triageiq:retrieval",
     },
     {

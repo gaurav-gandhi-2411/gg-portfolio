@@ -1,0 +1,9 @@
+{
+  "_readme": "Source: .assets/resume-sources/canonical-resume.pdf CERTIFICATIONS line (verbatim per content/provenance.md's career-facts rule). All 4 listed with no in-progress qualifier in that source, so all are status: 'held'. No independent completion-ID/Credly verification exists in this repo for any of them — carried forward as-is from the canonical PDF. 'kind' added (amendment 2, 2026-08-01): 'certification' = a formal, proctored, industry-recognized exam (Google Cloud's); 'course' = a MOOC/specialization with a completion certificate, not a proctored exam (the 3 DeepLearning.AI specializations); 'self_paced' = independent, non-course-based learning/build with no certificate to name — none currently exist in this file. The self_paced render path (short description, never certificate language) is implemented in scripts/lib/resume-layout.mjs and covered by a synthetic case in resume-lint.smoketest.mjs, but is UNEXERCISED by real data until GG adds one.",
+  "certifications": [
+    { "name": "NLP Specialization", "issuer": "DeepLearning.AI", "status": "held", "expected": null, "kind": "course", "description": null },
+    { "name": "Deep Learning Specialization", "issuer": "DeepLearning.AI", "status": "held", "expected": null, "kind": "course", "description": null },
+    { "name": "LLMOps Specialization", "issuer": "DeepLearning.AI (Andrew Ng)", "status": "held", "expected": null, "kind": "course", "description": null },
+    { "name": "Professional Data Engineer", "issuer": "Google Cloud", "status": "held", "expected": null, "kind": "certification", "description": null }
+  ]
+}

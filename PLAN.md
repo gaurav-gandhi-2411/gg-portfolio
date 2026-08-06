@@ -4,6 +4,78 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Wave 18 — site-vs-repo + resume-vs-site reconciliation (2026-08-05, content-only, not yet deployed)
+
+GG's brief, two items, item B priority: (A) cap resume-generator full entries at
+`max_full_entries` (see the resume-variant-generator amendment 5 log below); (B) sync the
+portfolio site to verified repo truth across all 13 projects, then a resume-vs-site diff, then
+deploy only once both are clean.
+
+- [x] **Site-vs-repo diff, all 13 projects**: 8 parallel research agents independently verified
+      every numeric/factual claim in every case study against its repo. 10 of 13 projects needed
+      fixes (TriageIQ, AgentGauge, Style Maitri, Warmer, MMFR, Reclaim, Gold Rate Tracker,
+      DealHunter, tracegauge, AetherArt); ShelfSense, ReviewIQ, Expense Tracker were clean. Full
+      per-project table with file:line citations: `content/provenance.md`'s new Wave 18 section.
+      Biggest findings: TriageIQ's retrieval Recall@5 was stale by *two* uncalled ADR corrections
+      (vscode's number isn't "retired" anymore — it recovered to 50.5%); Style Maitri's catalogue
+      more than doubled (52,494→112,425 items, 8→42 stores) with a same-day eval report the site
+      never picked up; Gold Rate Tracker's backtest results row silently mixed numbers from two
+      different bot-refreshed snapshots (an internal-consistency bug, not a new measurement).
+      GG's own two premises were checked, not assumed: TriageIQ's 87.1%/89.8% and the CQR
+      coverage numbers were both confirmed correct as stated; tracegauge was checked against the
+      same "mis-derived like AgentGauge" hypothesis and found **not** to match it — already
+      correctly `surface: "pypi"` (this was a finding from the resume-generator's amendment 4,
+      not new here, but re-confirmed).
+- [x] **Resume-vs-site diff (do-not-auto-resolve gate)**: every number in
+      `content/resume-data.json`'s 13 project bullets checked against the now-corrected site.
+      **4 mismatches found, NOT auto-resolved per GG's explicit instruction — reported below,
+      deploy held until GG says how to resolve them:**
+
+  | Project | Resume value | Site value (post-fix) |
+  |---|---|---|
+  | Style Maitri | "~52K items from 8 store catalogues" | "112,425 items across 42 stores" |
+  | Style Maitri | "93.8% (n=211)" | "94.4% (n=378)" |
+  | Gold Rate Tracker | "Wilcoxon p=0.0003" | "p≈0" |
+  | tracegauge | "601/601 tests passing" | "643/643 passing" |
+
+  All 4 are cases where the resume was extracted from the site/repo *before* this wave's
+  corrections landed — the resume is simply older, not independently wrong. The obvious
+  resolution is updating the resume to match the now-verified site/repo values, but that wasn't
+  done automatically per the explicit gate; needs GG's confirmation before touching
+  `content/resume-data.json` (a file the resume-variant-generator amendments above depend on).
+- [ ] **Deploy — still blocked, for a different and more serious reason than the original 4
+      mismatches.** GG discovered this branch (`feat/uiux-live-pass`) was stale relative to
+      `main` — PR #32 had already merged nearly-identical fixes independently, and an open
+      automation PR (#44) was about to revert them. Full resolution: `content/provenance.md`'s
+      new Wave 19 section (2026-08-05). Summary:
+      - PR #44 **closed, not merged**.
+      - Style Maitri accuracy/catalogue-size **reverted** to the git-verified numbers
+        (93.8%/n=211, 52,494/8 stores) — PR #32's higher numbers (94.4%/n=378, 112,425/42) trace
+        only to gitignored, never-committed local reports with no git commit date; per GG's
+        explicit rule, no dated artifact = doesn't ship, even lowering a number.
+      - DealHunter test count **corrected to 727** (live `pytest --collect-only`, independently
+        reproduced, matches PR #32).
+      - `scripts/refresh-metrics.mjs` **fixed at the root cause**: fail-closed on a stale
+        manifest (21-day gate) + a regression guard rejecting any manifest-proposed value whose
+        `measured_at` isn't strictly newer than what's already recorded — the second guard would
+        have mechanically blocked PR #44's regression.
+      - Manifest staleness audited across all repos with a `.portfolio/metrics.json` (report
+        only, full table in provenance.md) — 4 repos have no manifest at all (structural gap),
+        several more have manifests over 21 days old (some with real drift, some false-positive
+        holds on values that are still correct).
+      - **3 background shells confirmed still running** (live `eval_gate.py` in
+        agentic-shopping-assistant, a live Nuitka build in reclaim, GCP IAM investigation shells
+        in triage-iq) — per GG's explicit instruction, **no git operation** (rebase, commit,
+        push) runs until GG confirms these have exited. Everything above is local file edits
+        only, nothing committed.
+      - All 4 resume variants rebuilt against the corrected data (local build, no git needed):
+        8 rendered entries each (TriageIQ, Style Maitri, AgentGauge, MMFR, Warmer, AetherArt,
+        Gold Rate Tracker, DealHunter), 5 collapsed, 2/2 pages, independently re-verified with
+        `pypdf`.
+- [x] **Verification**: `tsc --noEmit` clean, `eslint` clean on every touched file,
+      `content/metrics.json`/`content/resume-data.json` valid JSON, resume-generator smoke tests
+      passing, resume-vs-site diff re-confirmed empty after the reversion.
+
 ## UI/UX pass — desktop density, "feels alive," chatbot streaming (2026-07-30, draft PR pending GG's merge + design-reviewer sign-off)
 
 Branch `feat/uiux-live-pass`, off `main` post the chatbot hotfix. Full report:
@@ -990,3 +1062,412 @@ queued until one unblocks or GG redirects.
   components (`components/icons/brand-icons.tsx`).
 - shadcn "base-nova" style here uses `@base-ui/react`, not Radix — polymorphism is via a
   `render` prop (`<Button render={<a href=... />}>`), not `asChild`.
+
+## JD-tailored resume variant generator (2026-08-01, in progress — blocked on LibreOffice)
+
+Full spec: `spec-resume-variants.md`. Brief assumed a `resume.js` (docx-js build script)
+already existed as the master content source — it didn't (confirmed by search across
+`gg-portfolio` and `ml-projects`); the real chain was manual python-docx → Word COM export
+per `reports/resume-rework-2026-07-17.md`. Built fresh per GG's direction (AskUserQuestion,
+2026-08-01): `content/resume-data.json` (39 entries: header/summary/13 experience/1
+research/13 projects/6 skills/2 education, extracted from
+`.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx` + cross-referenced against
+`content/provenance.md`/`content/metrics.json`), `content/certifications.json`,
+`variants/{google-applied-scientist,meta-research-scientist,amazon-applied-scientist,
+salesforce-senior-ds}.json`, `scripts/build_resume.mjs` + `scripts/lib/{resume-select,
+resume-layout,resume-lint}.mjs`. New npm dep: `docx` v9.7.1 (pulls in `adm-zip` transitively,
+which npm audit flags high-severity for zip-bomb-style crafted-file handling — not a live
+risk here since we only ever *write* docx files with it, never parse untrusted ones, but
+flagged for the record).
+
+**Mid-build amendment (surface gating, section renames, summary/cert/research lint gates)**
+folded in before implementation — see `spec-resume-variants.md`'s hard-gates section for the
+full list. `resume-lint.mjs` has a real smoke test (`resume-lint.smoketest.mjs`, no framework —
+repo has no unit-test runner, only Playwright e2e) proving every gate actually fires, not
+just that it stays quiet on clean data; caught one real bug during that pass (the
+project/product-count regex only matched a bare number immediately before the noun — missed
+the actual original-summary phrasing "nine live AI products" with words in between — fixed to
+allow up to 2 intervening words + spelled-out numbers).
+
+**4 project entries added beyond what's in the current docx** (ShelfSense, Reclaim, AgentGauge
+as a project card, Expense Tracker) so the variant selector has the full 13-project pool
+rather than only the 9 the static resume already features — sourced entirely to already-
+verified metrics.json/case-study content, flagged explicitly rather than silently expanding
+scope.
+
+**Known judgment calls, not yet confirmed with GG:**
+- Certifications: all 4 marked `status: "held"` (canonical-resume.pdf lists them with no
+  in-progress qualifier) — no independent completion-ID verification exists for any of them.
+- Reclaim's `surface`: mechanically `"live_demo"` per the rule (products.ts has a `liveUrl`),
+  but that URL is actually a GitHub Releases download page, not a hosted interactive demo —
+  the 5-value enum has no "downloadable app" bucket. Judgment call, documented in
+  `content/resume-data.json`'s entry, not silently smoothed over.
+- TriageIQ's top-3 accuracy bullet uses **87.1%/89.8%**, not the 82.5%/90.4% still live in
+  `content/metrics.json`/`content/case-studies/triageiq.ts` on the portfolio site — the
+  triage-iq repo's own README (ADR-0036, 2026-07-24) has since corrected past that; this
+  session's resume-metrics verification pass (same day) found the site itself is stale. The
+  portfolio site's own metrics.json needs the same correction — not done here, out of scope
+  for this task, flagged for a separate pass.
+- Google/Meta JD keyword lists are sourced from WebSearch's indexed-content aggregate
+  (real quoted snippets, cited sources) because both careers sites are JS-rendered SPAs that
+  WebFetch can't extract past the nav shell — direct-fetch worked for Amazon; Salesforce
+  403'd direct fetch, same WebSearch-aggregate fallback. Noted per-variant in each
+  `variants/*.json`'s `_source` field.
+
+**Blocked:** `soffice` (LibreOffice) needed for the spec's hard page-count requirement
+(render → count real pages → fail if over). Both `winget` (present as an appx package but not
+actually invokable on this machine) and `choco install libreoffice-fresh -y` (needs
+elevation; this shell isn't admin) failed non-interactively. GG chose to run the elevated
+install themselves (`choco install libreoffice-fresh -y` in an admin PowerShell) — not yet
+confirmed done as of this checkpoint. Everything else is built and independently verified
+without it: selection/scoring dry-run across all 4 variants (sensible, role-appropriate
+orderings — e.g. Meta's boost weights TriageIQ/Style Maitri's ranking+retrieval work and the
+research paper to the top; Amazon/Salesforce weight Reclaim/Expense Tracker/ShelfSense-style
+mlops+forecasting work higher), the repo_only hard gate (ShelfSense, AgentGauge-as-project
+correctly force-collapse), the lint smoke test, and a standalone docx render (valid 12.7KB
+file, correct rendered-text extraction). Next step the moment `soffice` is on PATH: run
+`node scripts/build_resume.mjs --variant <name>` for each of the 4 variant names — no code
+changes needed, just execution.
+
+### Amendment 2 (2026-08-01) — intrinsic quality scoring, cert kinds, More-on-GitHub cap
+
+Replaced project ordering: was tag-overlap-vs-`boost_tags`, now a weighted combination of 4
+new 1-5 scores (`demo_quality`, `role_relevance`, `technical_depth`, `metric_strength`) added
+to every project record, default weights `{.30, .30, .25, .15}`, overridable per variant via
+an optional `score_weights` field (none of the 4 shipped variants override it — no principled
+reason to yet). Research entries (only 1 exists) keep the original tag-overlap scoring —
+amendment 2 scoped itself to "project record," not research. Full detail:
+`spec-resume-variants.md`.
+
+**Required verification (item 3) — result: does NOT reproduce the target sequence, reported
+rather than silently fixed, per the explicit instruction not to adjust weights to force a
+match.** Computed programmatically
+(`weighted_score = demo×.30 + role×.30 + depth×.25 + metric×.15`) from the exact seeded
+scores:
+
+| Project | Scores (demo/role/depth/metric) | Weighted score |
+|---|---|---|
+| TriageIQ | 4/5/5/5 | 4.70 |
+| Style Maitri | 5/4/4/4 | 4.30 |
+| Multimodal Fashion Recommender | 4/5/4/4 | 4.30 |
+| AgentGauge | 2/5/5/5 | 4.10 |
+| Hinglish+Warmer | 5/3/4/4 | 4.00 |
+| AetherArt | 5/3/4/3 | 3.85 |
+| DealHunter | 4/3/3/3 | 3.30 |
+| Samidha Reviews | 2/3/3/4 | 2.85 |
+
+Computed order: TriageIQ, Style Maitri, **MMFR**, **AgentGauge**, **Hinglish+Warmer**,
+**AetherArt**, DealHunter, Samidha Reviews.
+Target order: TriageIQ, Style Maitri, **AgentGauge**, **MMFR**, **AetherArt**,
+**Hinglish+Warmer**, DealHunter, Samidha Reviews.
+
+Two genuine mismatches, not tie-break artifacts (verified — Style Maitri/MMFR's 4.30 tie
+*does* correctly resolve to Style Maitri first via stable-sort-on-original-order, matching the
+target at position 2; the two flagged pairs below are real score inversions):
+- **Position 3 vs. 4:** MMFR (4.30) genuinely outscores AgentGauge (4.10) under these weights
+  — AgentGauge's `demo_quality: 2` (no live surface, repo-only-adjacent) is weighted at 0.30,
+  the largest single weight, and drags its total below MMFR's despite AgentGauge's role/depth/
+  metric all being ≥ MMFR's. Gap: 0.20.
+- **Position 5 vs. 6:** Hinglish+Warmer (4.00) genuinely outscores AetherArt (3.85) — the two
+  are identical on demo/role/depth; the only difference is `metric_strength` (Warmer=4 vs.
+  AetherArt=3), weighted at 0.15. Gap: 0.15 = 0.15×(4−3), exactly.
+
+Not resolved unilaterally — flagged for GG to pick one: (a) accept the computed order (the
+scores are self-consistent, the target sequence was likely eyeballed rather than computed),
+(b) adjust AgentGauge's `demo_quality` and/or AetherArt's `metric_strength` upward if GG
+believes those specific axis scores were too harsh, or (c) accept that this is what
+weighting `demo_quality` at 0.30 does to a repo-only-adjacent project like AgentGauge and
+revisit the weight itself. Implemented and shipped with the seeded scores exactly as given —
+`content/resume-data.json` is not silently patched to force a match.
+
+**Other changes, all implemented and dry-run verified (no code changes pending):**
+- Scores for the 5 non-seeded projects (ShelfSense, Reclaim, Gold Rate Tracker, tracegauge,
+  Expense Tracker) assigned by the same rubric, flagged as my own judgment call, not seeded by
+  GG — see each entry's context in `content/resume-data.json`.
+- `content/certifications.json`: added `kind` (`certification`/`course`/`self_paced`) +
+  `description`; all 4 existing certs classified `course` (the 3 DeepLearning.AI
+  specializations) or `certification` (Google Cloud, the only proctored exam). No `self_paced`
+  entries exist yet — that render path is implemented and covered by a synthetic smoke-test
+  case, but unexercised by real data.
+- Section rename: "CERTIFICATIONS" → "Certifications & Continuing Education".
+- "More on GitHub" line: capped at 200 chars, metric for at most one project (the
+  highest-weighted-score collapsed entry), hard-gated. **Caught a real bug while dry-run
+  testing this**: `buildCollapsedLine`'s "exactly one metric" check counts `(` characters, but
+  4 of 13 `headline_metric` strings (style-maitri, triageiq, aetherart, agentgauge) originally
+  embedded their own parens (e.g. AgentGauge's "−13.3 to −28.9pp (3 model families)"), which
+  broke the invariant even though the selection logic correctly picked only one carrier. Fixed
+  at the content level (removed all embedded parens from `headline_metric` values) and added a
+  dedicated root-cause lint (`lintHeadlineMetricNoParens`) plus smoke-test coverage, rather
+  than just patching the symptom.
+- `resume-lint.smoketest.mjs` extended with real assertions for all 4 new/changed gates —
+  re-ran clean after the fix.
+
+**Still blocked on the same `soffice` install as amendment 1** — nothing in amendment 2 needed
+it, so no additional blocker introduced.
+
+### Amendment 3 (2026-08-05) — two-stage positional ranker
+
+GG's brief: the single linear weight vector produces two order inversions against the intended
+sequence because rank-position value is non-linear (`demo_quality` drives click-through for the
+first two entries only; below rank 2, substance dominates) — one linear vector can't express
+that. Replaced with a two-stage model: stage 1 fills ranks 1-2 with demo-dominant weights
+(`.45/.25/.20/.10`), stage 2 ranks everything else with substance-dominant weights
+(`.10/.35/.35/.20`), deterministic tie-break (`demo_quality` desc → `metric_strength` desc → id
+asc). Full detail: `spec-resume-variants.md`'s "Selection algorithm" section.
+
+**Bug found and fixed during implementation, not in the brief:** the tie-break's initial
+`score !== score` equality check is exact-float, and two mathematically-equal scores (Reclaim vs.
+Expense Tracker, both 2.55 by hand) land on opposite sides of IEEE-754 rounding
+(`2.5499999999999998` vs. `2.5500000000000003`) — the tie-break silently never fired and order
+fell out of float noise instead of the spec'd rule, exactly the "no random/insertion-order
+fallback" determinism the brief required. Fixed with a `1e-9` epsilon compare
+(`compareScored` in `scripts/lib/resume-select.mjs`). Caught by hand-verifying the dry-run output
+against the hand-computed table below, not by a pre-existing test — the new regression test
+(below) now covers this specific case (`proj:higher-demo`/`proj:lower-demo` fixture in
+`resume-select.smoketest.mjs`).
+
+**Required verification (item 3) — result: matches the intended sequence for every gate-eligible
+project; does NOT and cannot include AgentGauge as a full entry, and that mismatch is structural,
+not a weighting artifact.** Computed programmatically from the exact seeded scores, restricted to
+the same 8 projects amendment 2's table used (the other 5 non-seeded projects are additional
+judgment-call scores, not part of this comparison):
+
+Stage 1 (demo-dominant, all 8 candidates — AgentGauge included here since the surface gate, not
+stage 1, is what excludes it):
+
+| Project | Stage-1 score |
+|---|---|
+| TriageIQ | 4.55 |
+| Style Maitri | 4.45 |
+| Multimodal Fashion Recommender | 4.25 |
+| Hinglish+Warmer | 4.20 |
+| AetherArt | 4.10 |
+| AgentGauge | 3.65 (excluded pre-scoring by the repo_only gate — shown for completeness only) |
+| DealHunter | 3.45 |
+| Samidha Reviews | 2.65 |
+
+Stage-1 winners (ranks 1-2, cutoff=2): **TriageIQ, Style Maitri** — matches target positions 1-2.
+
+Stage 2 (substance-dominant, remaining 6 eligible candidates — AgentGauge is not in this pool,
+it was already gated out before stage 1 ran):
+
+| Project | Stage-2 score |
+|---|---|
+| Multimodal Fashion Recommender | 4.35 |
+| Hinglish+Warmer | 3.75 |
+| AetherArt | 3.55 |
+| DealHunter | 3.10 (tie-break winner over Samidha Reviews via demo_quality 4 > 2) |
+| Samidha Reviews | 3.10 |
+
+Combined final order (7 full entries — AgentGauge is not in this list, it force-collapses):
+**TriageIQ, Style Maitri, MMFR, Hinglish+Warmer, AetherArt, DealHunter, Samidha Reviews.**
+
+This is the target sequence with AgentGauge removed, in exactly the target's relative order for
+the other 7 — the two-stage model's math is correct. AgentGauge is absent as a full entry
+because it is `surface: "repo_only"` in `content/resume-data.json` (no `liveUrl` in
+`content/products.ts`, confirmed by direct read) — the spec's own hard gate (amendment 1, unchanged)
+excludes `repo_only` projects from the ranked pool *before either stage scores anything*, same as
+it correctly excludes ShelfSense. Amendment 2's own table appears to have hand-computed a
+weighted score for AgentGauge anyway despite it already being `repo_only` at that time — an
+inconsistency in that table, not evidence the gate ever didn't apply. **Not resolved
+unilaterally, per the explicit instruction not to tune weights to force a match — flagged for GG:
+(a) accept AgentGauge collapsed into "More on GitHub" (it has no live surface, consistent with
+every other repo_only project's treatment), or (b) if AgentGauge should render as a full entry,
+that needs a real live surface or a deliberate one-off carve-out of the repo_only gate — not a
+ranker change, since the ranker was never what was excluding it.**
+
+**Other changes, all implemented and verified:**
+- `scripts/lib/resume-select.mjs`: `resolveWeights` now returns `{ stage1, stage2, stage1Cutoff }`;
+  new `twoStageRank()`; `buildCollapsedLine` takes the same shape and scores collapsed entries
+  (repo_only + page-fit drops) with stage-2 weights for a single consistent ordering, since
+  collapsed entries are by construction never stage-1 material.
+- `scripts/build_resume.mjs`: `printRankingTable` now prints both stage tables plus the combined
+  final order (item 2's stdout requirement) instead of one linear table.
+- `variants/*.json` schema: `score_weights` retired, replaced by optional `stage1_weights`/
+  `stage2_weights`/`stage1_cutoff`. None of the 4 shipped variants use any of these — no
+  principled reason to yet, same as amendment 2.
+- New `scripts/lib/resume-select.smoketest.mjs` (item 4's regression test): unit coverage of the
+  two-stage model, the tie-break rule (including the float-epsilon fix, as its own dedicated
+  case), and a regression assertion of the exact full project sequence + forced-collapse set
+  against the real, current `content/resume-data.json` — a future score or `surface` edit that
+  reorders the resume fails this immediately instead of drifting silently.
+
+**LibreOffice unblock (items 5-7):** `winget` is not on PATH or invokable via bare `winget` in
+either this Bash or PowerShell session (`command not found` / `not recognized`, reproducing
+amendment 1's finding) — but its App Execution Alias *is* directly invokable at
+`%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe` (`v1.29.280`, confirmed). Ran
+`winget install --id TheDocumentFoundation.LibreOffice --accept-package-agreements
+--accept-source-agreements` via that full path — installer downloaded and verified
+(`LibreOffice_26.2.5_Win_x86-64.msi`, hash-verified) but **failed with exit 1603** ("Install
+server not responding" per the winget diagnostic log at
+`%LOCALAPPDATA%\Packages\Microsoft.DesktopAppInstaller_...\LocalState\DiagOutputDir\`) —
+consistent with amendment 1's non-elevated-shell finding, not retried per the brief's explicit
+instruction to report the exact error and stop rather than skip the gate.
+
+**Fallback (item 6) — Word COM via docx2pdf: works.** Microsoft Word confirmed present
+(`C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE`). `docx2pdf` needed installing
+into the actual interpreter `execFileSync("python", ...)` resolves to, not whichever `pip` was
+first on PATH — `pip install docx2pdf` silently landed in an unrelated `C:\Python314` install
+while `python` itself resolves to `C:\Users\gaura\anaconda3\python.exe` (this machine's default
+conda `base` env, per my standing environment defaults); re-ran as `python -m pip install
+docx2pdf` to install into the interpreter that's actually invoked, verified via
+`python -c "import docx2pdf"`.
+
+**Backend detection (item 6) wired into `scripts/build_resume.mjs`:** `detectPdfBackend()` tries
+soffice first (3 known paths, unchanged from amendment 1), falls back to Word COM only if both
+`WINWORD.EXE` and the `docx2pdf` Python package are independently confirmed present — returns
+`null`, never a guess, if neither backend is real. `findSoffice()`/`findWordCom()` no longer
+throw; `main()` fails closed with an explicit "page-count gate unavailable" message and non-zero
+exit if `detectPdfBackend()` returns `null` (item 7's fail-closed requirement). Also fixed a
+found-in-passing fail-open bug while wiring this in: `renderAndCountPages` now deletes any
+stale `.pdf` from a prior run *before* invoking either backend — if a conversion ever silently
+no-ops, the page-count check must not pass by counting old output (rule 98a).
+
+### Amendment 3 close-out — all 4 variants built (2026-08-05)
+
+All 4 variants built via the Word COM backend (soffice unavailable, see above) and independently
+re-verified with a standalone `pypdf` read (not just trusting the build script's own count):
+
+| Variant | Pages | Projects (full/collapsed) | Keywords | "More on GitHub" |
+|---|---|---|---|---|
+| google-applied-scientist | 2/2 | 11 full, 2 collapsed | 6/14 (43%) | AgentGauge (−13.3 to −28.9pp across 3 model families), ShelfSense |
+| meta-research-scientist | 2/2 | 11 full, 2 collapsed | 3/13 (23%) | AgentGauge (−13.3 to −28.9pp across 3 model families), ShelfSense |
+| amazon-applied-scientist | 2/2 | 11 full, 2 collapsed | 4/13 (31%) | AgentGauge (−13.3 to −28.9pp across 3 model families), ShelfSense |
+| salesforce-senior-ds | 2/2 | 11 full, 2 collapsed | 2/11 (18%) | AgentGauge (−13.3 to −28.9pp across 3 model families), ShelfSense |
+
+Every variant's project order and force-collapse set is identical (no variant overrides
+`stage1_weights`/`stage2_weights`/`stage1_cutoff`/`drop_ids` — ordering is intrinsic per-project,
+not JD-tailored, unchanged since amendment 2). AgentGauge correctly carries the collapsed line's
+one allowed metric (highest stage-2 score of the two collapsed entries) — consistent with the
+amendment 3 finding above: it's excluded as a full entry by the repo_only gate, not absent
+entirely.
+
+**New finding, not previously flagged: keyword coverage is well below the spec's ≥60% success
+metric on every variant (18-43%, average 29%).** This is a pre-existing content-authoring gap
+(the resume's actual bullet text doesn't use enough of each JD's vocabulary), not a ranker or
+build-pipeline defect — out of this amendment's scope per its explicit "do not propose further
+ranker sophistication" instruction, and not a ranking problem at all (coverage is a full-text
+substring match, unaffected by project order). Flagged for GG as a separate, future content pass:
+per-keyword breakdowns are in `reports/resume-coverage-<variant>.md`.
+
+**Outstanding for GG, not resolved unilaterally this session:**
+1. The AgentGauge/repo_only structural finding above — pick (a) leave collapsed or (b) give it a
+   real live surface / a deliberate gate carve-out.
+2. Keyword coverage below the 60% target on all 4 variants — needs a content pass, not a ranker
+   change.
+3. LibreOffice still not installed (Word COM covers the gate for now, but soffice was the spec's
+   originally-specced tool) — install manually in an elevated shell if soffice is ever needed
+   specifically (e.g. a non-Windows CI runner later).
+
+### Amendment 4 (2026-08-05) — AgentGauge PyPI verification + surface-derivation audit
+
+GG's brief: two blocking verifications before any content edit — (1) is `agentgauge-harness`
+actually published to PyPI, (2) audit every project's `surface` value for the same
+liveUrl-only-capture gap that caused AgentGauge to misclassify, explicitly flagging tracegauge as
+a likely second case. Verify-first, no edits until both were answered.
+
+**Finding 1 — VERIFIED-PUBLISHED, from 3 independent sources:**
+- `curl https://pypi.org/pypi/agentgauge-harness/json` → **HTTP 200**, `version: 0.5.2`, wheel
+  uploaded `2026-07-30T17:51:50.441005Z`, sdist `2026-07-30T17:51:51.724399Z`.
+- `agentgauge` repo: git tag `v0.5.2` exists; `.github/workflows/release.yml` (triggered on
+  `push: tags: v*`) ran **green** for tag `v0.5.2` at `2026-07-30T17:51:24Z` (31s) —
+  `gh run list --workflow=release.yml` confirms, timing consistent with the PyPI upload 26s
+  later. Uses PyPI Trusted Publishing (OIDC `id-token: write`, `pypa/gh-action-pypi-publish`) —
+  no `PYPI_API_TOKEN` secret exists by design, not a gap.
+- Canonical project page `https://pypi.org/project/agentgauge-harness/` also independently
+  returns HTTP 200.
+
+**Finding 2 — surface audit, all 13 projects.** Only **1 real misclassification** (AgentGauge).
+**tracegauge was NOT mis-derived** — the brief's hypothesis that it shared AgentGauge's bug does
+not hold; reported as a finding rather than assumed:
+
+| Project | Surface (before) | Evidence | Correct surface |
+|---|---|---|---|
+| TriageIQ, Warmer, Style Maitri, DealHunter, AetherArt, Samidha Reviews, Gold Rate Tracker, Expense Tracker | live_demo | `liveUrl` on a known free subdomain (vercel.app/run.app/github.io) | live_demo ✓ (unchanged) |
+| Multimodal Fashion Recommender | hf_model | `liveUrl` host `huggingface.co` | hf_model ✓ (unchanged) |
+| Reclaim | live_demo | `liveUrl` is a GitHub Releases download page, not an interactive demo (pre-existing documented judgment call) | live_demo ✓ (unchanged, judgment call stands) |
+| tracegauge | pypi | `products.ts` already has a `pypi` field; independently re-verified `pypi.org/pypi/tracegauge/json` → HTTP 200, v0.10.0 | pypi ✓ (unchanged — **the brief's premise was wrong**) |
+| ShelfSense | repo_only | no `liveUrl`/`pypi` in `products.ts`; independently checked `pypi.org/pypi/shelfsense/json` and `.../shelfsense-m5/json` → both 404 | repo_only ✓ (unchanged) |
+| **AgentGauge** | **repo_only** | `products.ts` had no `pypi` field despite real publication (finding 1) | **pypi — corrected** |
+
+Also checked while auditing: `reviewiq`'s `liveUrl` is still the Cloud Run URL, not
+`samidhareviews.xyz` — curled directly, `000` (no response), confirming the custom domain isn't
+live yet and `domain` surface still correctly stays unused sitewide, per spec.
+
+**Root cause, precisely stated:** there is no code that derives `surface` — it's a value hand-set
+once when a `resume-data.json` entry is authored, per the spec's rule. The rule itself already
+handles `pypi` correctly (proven by tracegauge). AgentGauge's `products.ts` entry was simply
+missing its `pypi` field even after the package published — a **stale source record**, not a
+**broken derivation rule**. Full detail promoted into `spec-resume-variants.md`'s surface-rule
+section so a future session doesn't rediscover this from scratch.
+
+**Fix (only AgentGauge changed, per the verified finding):**
+- `content/products.ts`: added the missing `pypi` field to AgentGauge's entry (same shape as
+  tracegauge's). Side effect, named explicitly: `liveProductCount()` counts `liveUrl || pypi`, so
+  the **live portfolio site's hero "live product count" stat goes 11 → 12** — a real, correct
+  consequence of fixing the data, not a resume-generator-only change. Not deployed/verified live
+  this session (out of this task's scope — this session touched `content/*` only, no deploy).
+- `content/resume-data.json`: `proj:agentgauge.surface` → `"pypi"`; `verified_source` appended
+  (not overwritten) with the PyPI verification evidence. **No score field touched** —
+  `demo_quality`/`role_relevance`/`technical_depth`/`metric_strength` all unchanged, per the
+  standing "don't adjust scores" rule from amendment 3.
+- **New `artifact_url` field** added to all 13 project entries (schema documented in
+  `spec-resume-variants.md`) — the verified link backing each `surface` claim: `liveUrl` for
+  live_demo/hf_model, the canonical `pypi.org/project/<name>/` page for pypi (independently
+  curled 200 for both tracegauge and agentgauge-harness), `null` for ShelfSense (repo_only,
+  exempt).
+- **New hard gate, item 3 (`lintArtifactUrl` in `resume-lint.mjs`)**: any project with
+  `surface != "repo_only"` and no well-formed `http(s)` `artifact_url` fails the build. Wired
+  into `build_resume.mjs`'s static-lint block (runs before any render, same as
+  `lintHeadlineMetricNoParens`). Smoke-test coverage added to `resume-lint.smoketest.mjs` (4 new
+  assertions: repo_only exempt, valid URL passes, missing URL caught, malformed URL caught).
+- **Regression test updated**: `resume-select.smoketest.mjs`'s `EXPECTED_SEQUENCE` now includes
+  AgentGauge (it wins stage 2 outright, score 4.70 — highest of any project in either stage,
+  driven by its 5/5/5 role/depth/metric with only demo_quality=2 dragging it down, which stage 2's
+  substance-dominant weights barely penalize); `forcedCollapse` regression narrowed to
+  `["proj:shelfsense"]` only. New assertion that `lintArtifactUrl` returns clean on the real,
+  current data.
+
+**Verification — new full sequence, all 4 variants rebuilt and independently re-checked with a
+standalone `pypdf` read:**
+
+TriageIQ, Style Maitri, **AgentGauge**, MMFR, Warmer, AetherArt, Gold Rate Tracker, DealHunter,
+Samidha Reviews, tracegauge, Expense Tracker, Reclaim (12 full entries; ShelfSense alone
+collapses to "More on GitHub").
+
+**This exactly reproduces amendment 3's original target sequence for the 8 seeded projects**
+(TriageIQ, Style Maitri, AgentGauge, MMFR, Warmer, AetherArt, DealHunter, Samidha Reviews, with
+the 4 non-seeded projects correctly interleaved by score) — confirming the amendment 3 mismatch
+was **entirely** the repo_only misclassification and not, even partially, a weighting artifact.
+The two-stage model itself needed no further changes.
+
+| Variant | Pages | Projects (full/collapsed) |
+|---|---|---|
+| google-applied-scientist | 2/2 | 12 full, 1 collapsed |
+| meta-research-scientist | 2/2 | 12 full, 1 collapsed |
+| amazon-applied-scientist | 2/2 | 12 full, 1 collapsed |
+| salesforce-senior-ds | 2/2 | 12 full, 1 collapsed |
+
+**Not done, deliberately out of scope:** deploying the `products.ts` change to the live site
+(hero stat), and building a code-level `surface` auto-derivation from `products.ts`/live PyPI
+checks (considered, explicitly deferred — noted in `spec-resume-variants.md` so it isn't silently
+lost).
+
+### Amendment 5 (2026-08-05) — max_full_entries cap
+
+Item A of GG's 2-item request (item B, the site sync, is the priority — see the separate
+`gg-portfolio` site-reconciliation log below). Added `max_full_entries` (default 8,
+per-variant override) to `build_resume.mjs`: the two-stage ranker's full sequence is unchanged;
+only the top N of that sequence render as full entries, everything below collapses into "More on
+GitHub" alongside `repo_only`. The 2-page gate still applies on top — if the capped set still
+overflows, the existing page-fit loop trims further. Every collapse now carries an explicit,
+distinct reason (`repo_only` gate / cap / page-fit overflow), printed to stdout and written into
+`reports/resume-coverage-<variant>.md`'s new "Full entries" / "Collapsed" sections — nothing
+silent.
+
+All 4 variants rebuilt (identical result — none override `max_full_entries`, ordering unaffected
+by the JD-specific fields as before): **8 full entries** (TriageIQ, Style Maitri, AgentGauge,
+MMFR, Warmer, AetherArt, Gold Rate Tracker, DealHunter), **5 collapsed**
+(ShelfSense/repo_only + Samidha Reviews/tracegauge/Expense Tracker/Reclaim/cap), **2/2 pages**
+on every variant (independently re-verified with `pypdf`). "More on GitHub" line: 115/200 chars,
+one metric (ShelfSense's), both hard gates hold with 5 collapsed entries.

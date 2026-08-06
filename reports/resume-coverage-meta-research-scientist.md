@@ -1,0 +1,40 @@
+# Keyword coverage — meta-research-scientist
+
+Target role: Research Scientist, AI/ML
+Pages: 2/2 · Projects included: 8 · Collapsed to "More on GitHub": 5 · Research included: 1
+"More on GitHub" line (115/200 chars): More on GitHub: ShelfSense (WRMSSE 0.5693 vs. 0.8956 naive), Samidha Reviews, tracegauge, Expense Tracker, Reclaim.
+
+## Full entries (8, max_full_entries=8)
+- proj:triageiq
+- proj:style-maitri
+- proj:agentgauge
+- proj:mmfr
+- proj:warmer
+- proj:aetherart
+- proj:gold-rate-tracker
+- proj:dealhunter
+
+## Collapsed into "More on GitHub" (5)
+- proj:shelfsense: surface=repo_only, never a full entry
+- proj:reviewiq: max_full_entries cap (8): ranked below the top 8 in the two-stage order
+- proj:tracegauge: max_full_entries cap (8): ranked below the top 8 in the two-stage order
+- proj:expense-tracker: max_full_entries cap (8): ranked below the top 8 in the two-stage order
+- proj:reclaim: max_full_entries cap (8): ranked below the top 8 in the two-stage order
+
+**3/13 JD keywords present**
+
+| Keyword | Present |
+|---|---|
+| large language models | ❌ missing |
+| LLM | ✅ |
+| reinforcement learning | ❌ missing |
+| ranking | ❌ missing |
+| recommendation systems | ❌ missing |
+| model architecture | ❌ missing |
+| training recipe | ❌ missing |
+| evaluation | ✅ |
+| benchmarks | ❌ missing |
+| retrieval | ✅ |
+| publications | ❌ missing |
+| open-source | ❌ missing |
+| content understanding | ❌ missing |

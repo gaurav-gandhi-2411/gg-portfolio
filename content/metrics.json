@@ -6,7 +6,7 @@
     "warmer:hinglish-fix": {
       "label": "Hinglish embedding eval (Spearman correlation)",
       "value": "-0.003 → 0.813",
-      "repo": "gaurav-gandhi-2411/mindmeld-payloads",
+      "repo": "gaurav-gandhi-2411/mindmeld",
       "source_file": "mindmeld (private): generator/evals/reports/baseline_report.md",
       "source_line": 24,
       "commit_sha": "16f35d168e33893bdd62fdee1a18bde6331b88bf",
@@ -14,39 +14,63 @@
     },
     "style-maitri:intent-accuracy": {
       "label": "Intent-parsing accuracy",
-      "value": "94.4% (n=378)",
+      "value": "93.8% (n=211)",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "reports/model_eval_20260731T060759Z.md (gitignored, regenerated — cited by repo HEAD + fetch date)",
-      "source_line": 7,
-      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
-      "measured_at": "2026-07-31"
+      "source_file": "reports/final_scorecard_2026-07-12.txt",
+      "source_line": 109,
+      "commit_sha": "57e7e6078a04d7fafb33219d597afd3548870a35",
+      "measured_at": "2026-07-12",
+      "note": "Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
     },
     "style-maitri:catalogue-size": {
       "label": "Cross-store catalogue",
-      "value": "~112K items across 42 stores",
+      "value": "52,494 items across 8 stores",
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
-      "source_file": "data/processed/unified/catalogue.parquet (gitignored, regenerated — verified live via pandas, cited by repo HEAD + fetch date)",
-      "source_line": null,
-      "commit_sha": "01232145114ad15f061f09894f5832273713e196",
-      "measured_at": "2026-07-31"
+      "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
+      "source_line": 28,
+      "commit_sha": "59962265b85f5a159e60c2a18db32d1b3650385c",
+      "measured_at": "2026-07-12",
+      "note": "Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
     },
     "triageiq:classifier-top3": {
-      "label": "Component classifier top-3 accuracy",
-      "value": "87.1% (k8s) / 89.8% (vscode)",
+      "label": "Component classifier top-3 / top-1 accuracy",
+      "value": "87.1% / 60.5% (k8s) / 89.8% / 76.5% (vscode)",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 79,
-      "commit_sha": "24304906617f0ed3f91a182b091a5582b6ac5999",
-      "measured_at": "2026-07-31"
+      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "measured_at": "2026-08-05",
+      "note": "Corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only (site-vs-repo reconciliation, wave 18). ADR-0036 (2026-07-24) shipped a multi-label supervision fix; the new value is the current shipped model per README.md:79-82 and the full paired-bootstrap in docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md:58-67."
+    },
+    "triageiq:cqr-coverage": {
+      "label": "Resolution-time interval coverage after Conformal Quantile Regression, vs. 80% nominal target",
+      "value": "76.2% (k8s) / 74.6% (vscode)",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 94,
+      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "measured_at": "2026-08-05",
+      "note": "New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+    },
+    "triageiq:retrieval-recall5": {
+      "label": "Similar-issue retrieval, Recall@5",
+      "value": "18.0% (k8s) / 50.5% (vscode)",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 86,
+      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "measured_at": "2026-08-05",
+      "note": "Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
     },
     "dealhunter:test-coverage": {
       "label": "Test suite",
-      "value": "727 tests, ≥87.65% coverage",
+      "value": "727 tests collected",
       "repo": "gaurav-gandhi-2411/agentic-travel-booking-system",
       "source_file": "pytest --collect-only (CURRENT_STATE.md:645's 597 is a frozen 2026-06-09 snapshot; coverage % not re-measured this pass, carried forward)",
       "source_line": null,
       "commit_sha": "6b4f30509d69d6baa12ac60d8f15c831ac8d72f3",
-      "measured_at": "2026-07-31"
+      "measured_at": "2026-08-05",
+      "note": "Corrected from 597 (CURRENT_STATE.md:645, a frozen 2026-06-09 snapshot that was never updated as tests were added). 727 confirmed by an independent live pytest --collect-only run this session, matching PR #32's figure exactly. Coverage % not re-measured at the new count and no longer asserted in the value field — the last committed coverage figure (87.65%) still pins to the 597-test count, and no committed artifact exists for the current 727-test count as of 2026-08-05 (checked: no coverage.xml/.coveragerc committed, CI uploads coverage.xml only as an ephemeral, uncommitted GitHub Actions artifact)."
     },
     "shelfsense:wrmsse": {
       "label": "WRMSSE vs. naive baseline",
@@ -82,7 +106,8 @@
       "source_file": "data/backtest.json",
       "source_line": 8,
       "commit_sha": "a4d892cae3837048108c02d411adf1b13e964d73",
-      "measured_at": "2026-07-19"
+      "measured_at": "2026-07-19",
+      "note": "data/backtest.json is bot-refreshed continuously and has moved on since this pin (now 204 folds as of 2026-07-26). The qualitative 'naive wins' claim holds at every snapshot checked. Wave-18 reconciliation fixed an internal-consistency bug in the case study: the Wilcoxon p and direction-accuracy figures shown alongside this pinned commit's MAE numbers had drifted in from a different (194-fold) snapshot — both are now pinned to this same commit_sha (0.0 as stored, rendered as 'p < 0.001' per GG's never-render-p-approx-0 instruction; direction accuracy 50.75%). Commit a4d892c itself is real and tracked (chore: update backtest results [skip ci] (#247), committed 2026-07-19T10:46:27+05:30; backtest_run_at 2026-07-19T05:12:36 UTC)."
     },
     "aetherart:vram": {
       "label": "Full SDXL + LoRA pipeline, 8GB consumer-GPU budget",
@@ -126,8 +151,9 @@
       "repo": "gaurav-gandhi-2411/token-efficiency-scorer",
       "source_file": "CHANGELOG.md (CURRENT_STATE.md:82's 601 is a 0.9.0-scoped feature subtotal, not the whole-suite count)",
       "source_line": 92,
-      "commit_sha": "6da6a64faeb3901ce5beb201b7b971a6d8debcbb",
-      "measured_at": "2026-07-31"
+      "commit_sha": "cd4087e43d575dc0afa5dfef3a8f90da2790d82a",
+      "measured_at": "2026-08-05",
+      "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor."
     }
   },
   "informational": {

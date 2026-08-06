@@ -1,0 +1,12 @@
+{
+  "_source": "WebSearch aggregate over careers.salesforce.com JR329578 (Senior/Lead Data Scientist) — 2026-08-01. Direct WebFetch of the listing (and its www.salesforce.com redirect target) returned HTTP 403, so keywords are drawn from WebSearch's indexed-content summary, which quotes real snippets (e.g. 'owning the full lifecycle of model development from ideation and data exploration, algorithm design, validation, and testing').",
+  "target_role": "Senior/Lead Data Scientist",
+  "jd_keywords": [
+    "data pipeline", "production models", "model development",
+    "predictive models", "cross-functional", "mentoring", "roadmap",
+    "feasibility studies", "data quality", "stakeholders", "full lifecycle"
+  ],
+  "max_pages": 2,
+  "boost_tags": ["leadership", "mlops", "forecasting", "experimentation"],
+  "drop_ids": []
+}
