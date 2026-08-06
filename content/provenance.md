@@ -6,6 +6,16 @@ verifiable citation were omitted, not softened (rule 65b). Built by reading the 
 **2026-07-12**, not from memory and not by trusting the June-12 project inventory without a
 spot-check — several numbers had already drifted by a month; corrections are logged below.
 
+**Pinned refs (issue #45):** a Source cell's backtick-quoted path may carry a trailing
+`@<sha>` (e.g. `` `data/backtest.json@d41372a` ``), checked by
+`scripts/check-metric-freshness.mjs`. Use it ONLY for a file a source repo's own automation
+rewrites on a schedule (a bot-refreshed data file, not a human-committed README/report) —
+fetching such a file at `HEAD` checks "does the bot's current output still say this," a
+moving target that reflags as drift every time the bot runs, instead of "did the site
+correctly report what its cited source said." A human-committed file stays unpinned and
+fetched at `HEAD` on purpose, so a real future edit still gets caught. See the Gold Rate
+Tracker section below for the one citation this currently applies to.
+
 **A file's git-commit date is not evidence its claims were re-verified (wave 19 rule).** Every
 `CaseStudy` carries a `verifiedAt` field (`content/types.ts`) separate from git mtime, bumped
 ONLY when a human or an explicit audit pass has gone back to the cited source repo(s) and
@@ -140,6 +150,7 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 | ID | Claim | Source |
 |---|---|---|
 | `triageiq:classifier-top3` | Component classifier top-3/top-1 accuracy: k8s 87.1%/60.5%, vscode 89.8%/76.5% | **Wave 19 correction (2026-07-31):** retrained via a one-vs-rest multi-label supervision fix, landed 2026-07-24 — `triage-iq/README.md:78-82`, `docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`. Prior value (82.5%/90.4% top-3) is superseded, was current at the case study's 2026-07-26 writing but the fix had already shipped by then — see the wave-19 provenance-failure note below. |
+| `triageiq:cqr-coverage` | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
 on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9.1% (vscode)**
@@ -227,7 +238,7 @@ used the HF Space URL as the card's live link, not an aspirational Cloud Run URL
 
 | ID | Claim | Source |
 |---|---|---|
-| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) by ~15% MAE on a 194-fold backtest, Wilcoxon p=0.0003 | `gold-rate-tracker/data/backtest.json` (live, bot-refreshed, latest run 2026-07-12T05:18:23Z): `mae_5d_avg_naive: 258.28` vs `mae_5d_avg_chronos: 297.19`, `wilcoxon_signed_rank_p: 0.0003` |
+| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE 251.99 vs. 293.10 (naive wins by ~16%), Wilcoxon p=0.0001, direction accuracy 51.96%, 204-fold backtest | `gold-rate-tracker/data/backtest.json@d41372a` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`) and had already moved to 209 folds/different numbers by the time issue #45 was filed, causing a false POSSIBLE_DRIFT against the pinned claim's actual numbers. Commit `d41372a` (2026-07-26T05:26:23Z, `chore: update backtest results [skip ci] (#436)`): `mae_5d_avg_naive: 251.99` vs `mae_5d_avg_chronos: 293.1`, `wilcoxon_signed_rank_p: 0.0001`, `dir_acc_5d_chronos: 0.5196` |
 
 This project's own design principle is to ship the honest baseline over a model that loses to
 it (direction signal is still flagged "DARK" at both horizons in
