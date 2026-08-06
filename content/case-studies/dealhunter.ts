@@ -73,8 +73,8 @@ export const dealhunter: CaseStudy = {
       sourceRef: "dealhunter:llm-judge",
     },
     {
-      title: "A fallback chain across five LLM providers, built after outages, not in anticipation of them",
-      body: "The multi-provider routing (Anthropic, Groq, OpenRouter, NVIDIA NIM, Ollama) exists because Groq's free-tier daily quota was repeatedly exhausted in production, not as a theoretical resilience exercise. The fallback chain was added after the outages, which is the more honest order.",
+      title: "A two-hop production fallback chain (Groq → OpenRouter), built after outages, not in anticipation of them",
+      body: "The live-traffic fallback chain is two hops: Groq's llama-3.3-70b-versatile, falling back to OpenRouter's free Gemma tier if Groq's quota is exhausted. Five provider adapters exist in the codebase in total — Anthropic and NVIDIA NIM for eval and opt-in demo use, Ollama for local dev — but only the Groq→OpenRouter pair carries production requests; NIM was tried as a third production profile and abandoned. The fallback chain itself was added after Groq's free-tier daily quota was repeatedly exhausted in production, not as a theoretical resilience exercise — the more honest order.",
       sourceRef: "dealhunter:multi-provider",
     },
   ],

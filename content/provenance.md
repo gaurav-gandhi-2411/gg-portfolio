@@ -115,8 +115,8 @@ Hinglish) — `mindmeld/spec-hinglish-fix.md:6-7`.
 
 | ID | Claim | Source |
 |---|---|---|
-| `style-maitri:intent-accuracy` | 94.4% intent-parsing accuracy (n=378) | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:7` (gitignored/regenerated report, verified live: `n=378 all-fields-exact=94.4%`). Superseded 93.8%/n=211, current when originally sourced (2026-07-12) but the eval set has since grown. **UNVERIFIABLE by automated check, wave 20 (2026-07-31):** searched every git-tracked file in `agentic-shopping-assistant` (`git ls-files \| xargs grep`) for "94.4" or "378" in an eval-accuracy context — no committed artifact contains this figure. The eval reports directory is entirely gitignored (regenerated per-run, never committed); no test asserts an accuracy floor. This number can only be re-confirmed by a human re-running the eval locally, or by GG committing the report (or a summary of it) going forward — until then, the metric-freshness checker will report this ID `UNVERIFIABLE` every run, correctly, not a bug in the checker. |
-| `style-maitri:catalogue-size` | ~112,425 cross-store items across 42 stores | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/data/processed/unified/catalogue.parquet` (gitignored, verified live via pandas: 112,425 rows, 42 unique stores). Superseded 52,494/8 stores — catalogue rebuilt 2026-07-19 (`f0f0859`, +31 Shopify brands) then expanded further (`00fe1d7`, `cb4fe6b`). **Partially verifiable from a committed artifact, wave 20 (2026-07-31):** the **42-store** count independently corroborated by a committed, live-run regression test — `agentic-shopping-assistant/tests/test_unified_index.py::test_store_roster_matches_expected` asserts `set(unified_df["store"].unique()) == _VALID_STORES` (42 entries) and would fail CI if the roster changed. The **112,425-item** count has NO committed source anywhere (`git ls-files \| xargs grep` for "112,425"/"112425" across the repo: no hits) — the parquet itself is gitignored and regenerated, and no test asserts a row-count floor. the metric-freshness checker currently reports this whole claim `UNVERIFIABLE` (its one cited path is the gitignored parquet); that's accurate for the item count but understates the store count, which a human could verify from the test file today. Not fixed in the checker itself — true per-token source attribution (as opposed to per-claim) is more machinery than this finding warranted; flagged here instead. |
+| `style-maitri:intent-accuracy` | **SUPERSEDED, reverted 2026-08-05 — see Wave 19's evidentiary-audit section below.** 93.8% intent-parsing accuracy (n=211), not 94.4%/n=378. | ~~**Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:7` (gitignored/regenerated report, verified live: `n=378 all-fields-exact=94.4%`).~~ Both this row's number and its own `wave 20` caveat below confirmed it was never git-verifiable; the shipped site value is back to the git-committed `reports/final_scorecard_2026-07-12.txt` (commit `57e7e60`) figure, 93.8%/n=211. **UNVERIFIABLE by automated check, wave 20 (2026-07-31):** searched every git-tracked file in `agentic-shopping-assistant` (`git ls-files \| xargs grep`) for "94.4" or "378" in an eval-accuracy context — no committed artifact contains this figure. The eval reports directory is entirely gitignored (regenerated per-run, never committed); no test asserts an accuracy floor. This number can only be re-confirmed by a human re-running the eval locally, or by GG committing the report (or a summary of it) going forward — until then, the metric-freshness checker will report this ID `UNVERIFIABLE` every run, correctly, not a bug in the checker. |
+| `style-maitri:catalogue-size` | **SUPERSEDED, reverted 2026-08-05 — see Wave 19's evidentiary-audit section below.** 52,494 items across 8 stores, not 112,425/42. | ~~**Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/data/processed/unified/catalogue.parquet` (gitignored, verified live via pandas: 112,425 rows, 42 unique stores).~~ The 112,425-item figure was never git-verifiable (see this row's own `wave 20` caveat below); the shipped site value reverted to the git-committed `reports/final_scorecard_2026-07-12.txt` (commit `57e7e60`) figure, 52,494 items/8 stores. The store *list* itself (which brands) did stay corrected to the 8-store roster below — that correction traces to the same committed report as the count, so it's independent of the reverted 42-store figure. **Partially verifiable from a committed artifact, wave 20 (2026-07-31):** the **42-store** count independently corroborated by a committed, live-run regression test — `agentic-shopping-assistant/tests/test_unified_index.py::test_store_roster_matches_expected` asserts `set(unified_df["store"].unique()) == _VALID_STORES` (42 entries) and would fail CI if the roster changed. The **112,425-item** count has NO committed source anywhere (`git ls-files \| xargs grep` for "112,425"/"112425" across the repo: no hits) — the parquet itself is gitignored and regenerated, and no test asserts a row-count floor. the metric-freshness checker currently reports this whole claim `UNVERIFIABLE` (its one cited path is the gitignored parquet); that's accurate for the item count but understates the store count, which a human could verify from the test file today. Not fixed in the checker itself — true per-token source attribution (as opposed to per-claim) is more machinery than this finding warranted; flagged here instead. **Open tension not resolved here:** the 42-store count has a real committed regression test behind it (unlike the item count), so it sits in a different evidentiary tier than the fully-gitignored item count — GG's 2026-08-05 revert treated both as one claim and reverted together; a future pass could split them if the store count alone is ever needed. |
 
 **Correction vs. spec.md:** the spec's brand name "StyleMaitri" and figure "52–68K items" don't
 match the repo. Live branding (frontend metadata, live domain) is **"Style Maitri"** (two
@@ -327,7 +327,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `style-maitri:hybrid-retrieval` | Hybrid FAISS+BM25 via RRF handles both vibe and exact-keyword queries | `README.md:15,167-172` |
 | `style-maitri:router-decision` | Router experiment: LLM 100% pass/~2100ms/~$0.10 per 1k vs DistilBERT 75%/31ms/$0 vs cascade 94%; kept LLM router + deterministic code guard | `reports/router_comparison.md:6-20`, `src/agents/graph.py:3345` |
 | `style-maitri:flywheel-ranking` | Transparent outfit-ranking boost: final_score = coherence × (1 + 0.25 × positive_rate), ≥10-signal cold-start gate | `docs/architecture/adr/0005-flywheel-ranking-blend.md:6-14,32-34` |
-| `style-maitri:retrieval-eval` | Retrieval P@5: 96% occasion (n=155), 88% search (n=49), 68% adversarial (n=23) | **Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:21-25` (gitignored/regenerated, verified live). Superseded "96–99% occasion/search, 67% adversarial (n=92)" — search P@5 has since dropped out of that combined range; occasion/adversarial n also changed. |
+| `style-maitri:retrieval-eval` | **SUPERSEDED, reverted 2026-08-05 — see Wave 19's evidentiary-audit section below.** 96–99% occasion/search, 67% adversarial (n=92), not the 96/88/68 split. | ~~**Wave 19 correction (2026-07-31):** `agentic-shopping-assistant/reports/model_eval_20260731T060759Z.md:21-25` (gitignored/regenerated, verified live).~~ Both the pre- and post-correction numbers here trace only to gitignored reports (`model_eval_20260712T091248Z.md` and `model_eval_20260731T060759Z.md`, neither git-tracked) — with neither side verifiable, the 2026-08-05 revert kept the earlier baseline rather than swap one unverifiable number for another. |
 | `style-maitri:live-audit` | Adversarial live audit: 15/32 skeptical-shopper queries disappointing; 2 trust-destroying bugs; outfit-board honest vs plain-search confabulating on identical missing inventory | `reports/deep_diagnosis_2026-07-12.md:3-9,125-138` |
 
 ### TriageIQ (triage-iq)
@@ -728,6 +728,175 @@ sourceRef or underlying claim.
   (`agentgauge:attribution-kill`, tested against a pre-registered 70% ship bar rather than a
   correlational decision rule, but the same falsify-and-kill pattern). GG's call: cite exactly
   the three that are individually sourced; the case study does not state a headline count of 4.
+
+## Wave 18 (2026-08-05) — site-vs-repo reconciliation
+
+GG's brief: the site had drifted from the repos and the resume; every mismatch is a credibility
+risk since the portfolio URL sits in the resume header. 8 parallel research agents independently
+verified every numeric/factual claim in all 13 case studies against each project's primary repo
+(read-only research passes; all edits below applied directly from their findings, cross-checked
+against the cited file:line before writing). Two premises in GG's brief didn't hold under
+verification: tracegauge was **not** mis-derived the same way AgentGauge was (already correctly
+`surface: "pypi"`), and several fixes below were found independently, not named in the brief —
+reported per the explicit "report every discrepancy found, including ones I haven't named"
+instruction.
+
+| Project | Claim | Correction | Source |
+|---|---|---|---|
+| TriageIQ | `triageiq:classifier-top3` | Corrected 82.5%/90.4% (top-3 only, pre-ADR-0036) → 87.1%/60.5% (k8s top-3/top-1), 89.8%/76.5% (vscode top-3/top-1) | `triage-iq/README.md:79-82`; `triage-iq/docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md:58-67` |
+| TriageIQ | `triageiq:cqr-coverage` (new) | Conformal Quantile Regression coverage — never surfaced before — 76.2% (k8s) / 74.6% (vscode) vs. 80% nominal target; matches the live-serving artifact, not just a report | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` |
+| TriageIQ | `triageiq:retrieval-recall5` | Corrected 23.5% (k8s) / "vscode retired" → 18.0% (k8s) / 50.5% (vscode) — two eval-harness corrections deep (ADR-0033 found the original vscode gold pairs ~80% noise; ADR-0035 supersedes both ADR-0031's lever numbers and ADR-0033's baselines) | `triage-iq/README.md:86-89`; `triage-iq/docs/architecture/adr/0035-retrieval-harness-correction.md:1-18` |
+| TriageIQ | Top-3-vs-top-1 gap framing | Recomputed 21–31pp → 13–27pp to match the corrected classifier numbers above | Derived from the two rows above |
+| TriageIQ | LLM synthesis shot count | Corrected "3-shot" → "4-shot" (ADR-0037 appended a 4th few-shot example; the repo's own README hadn't caught up either) | `triage-iq/docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md:103-114,172-174`; `triage-iq/src/triage_iq/prompts/triage_prompt.py:607` |
+| Style Maitri | `style-maitri:intent-accuracy` | Corrected 93.8% (n=211, 2026-07-12) → 94.4% (n=378) — a same-day (2026-08-05) eval report supersedes the cited one | `agentic-shopping-assistant/reports/model_eval_20260805T070638Z.md:7` |
+| Style Maitri | `style-maitri:catalogue-size` | Corrected 52,494 items/8 stores → 112,425 items/42 stores; also corrected the specific 8-store list, which conflated a single-brand demo config table with the real unified-catalogue roster (H&M was dropped from the unified index over a month before this content was written) | `agentic-shopping-assistant/data/processed/unified/catalogue.parquet` (112,425 rows, 42 stores, built 2026-07-24); commit `ec55efb` (H&M drop) |
+| Style Maitri | DistilBERT-only router cost | Corrected "$0" → "~$0.05 per 1,000 queries" (the reranker downstream still makes one LLM call) | `agentic-shopping-assistant/reports/router_comparison.md:9-16` |
+| Warmer | Hi-en payload size | Corrected "~146 KB/day" → "~150 KB/day" — the repo's own README figure was itself stale relative to actual deployed payloads | `mindmeld-payloads/manifest.json`; e.g. `mindmeld-payloads/hi-en/2026-08-18.json.gz` = 154,347 bytes |
+| Warmer | `metrics.json` `repo` field | Fixed metadata bug: field said `mindmeld-payloads`, but the cited `source_file`/`commit_sha` are both from `mindmeld` | `mindmeld` git history contains commit `16f35d1`; `mindmeld-payloads` does not |
+| MMFR | FAISS→Qdrant migration path | Corrected — "a shared FAISS shard server" is not a real roadmap phase, it's a rejected alternative (ADR §4, Option B); the actual §5 roadmap is lazy-loading+LRU → Qdrant → per-brand instances | `multimodal-fashion-recommender/docs/architecture/adr/0001-multi-brand-scaling.md:96-104` (rejected alternative) vs. `:132-156` (actual roadmap) |
+| MMFR | H&M scaling-budget claim | Corrected "would blow past an 8GiB instance" → "pushes the current 4GiB instance over budget; scaling to include it needs a tight ~8GiB, not comfortable headroom" | `multimodal-fashion-recommender/docs/architecture/adr/0001-multi-brand-scaling.md:48,75` |
+| Reclaim | AI-layer bundling | Corrected — ADR-0030 (2026-08-05) supersedes ADR-0024: the AI layer is now bundled into the public installer by default (torch dropped for ONNX-converted CLIP+MiniLM, 199.4MB total; installer 309.3MB / installed 884.0MB), not a source-only `[ai]` extra as the site said | `reclaim/README.md:298-307`; `reclaim/docs/architecture/adr/0030-onnx-conversion-and-bundled-ai-installer.md:1-16,57-78` |
+| Gold Rate Tracker | Backtest results row | Fixed an internal-consistency bug: the Wilcoxon p-value (0.0003) and direction-accuracy figure (52.06%) shown alongside the 199-fold MAE numbers actually belonged to a different, earlier 194-fold snapshot — no single commit has all four numbers together. Repinned both to the same commit (`a4d892c`) already cited for the MAE/fold-count: p≈0, direction accuracy 50.75% | `gold-rate-tracker` commit `a4d892c` (`data/backtest.json`, wilcoxon 0.0) vs. commit `06ea421` (194-fold, wilcoxon 0.0003, dir_acc 0.5206) |
+| Gold Rate Tracker | Scraper primary-source framing | Corrected — ADR-025 flipped the roles: IBJA is now the primary source and Tanishq is opportunistic secondary confirmation (Tanishq's site blocks automated access behind Cloudflare most of the time), the reverse of what the site said | `gold-rate-tracker/docs/adr/025-ibja-primary-source-decision.md`; `gold-rate-tracker/README.md:7` |
+| DealHunter | LLM provider fallback chain | Corrected "a fallback chain across five LLM providers" → the actual live-traffic chain is two hops (Groq → OpenRouter); the other three adapters (Anthropic, NVIDIA NIM, Ollama) serve eval/demo/local-dev purposes, and NIM was tried as a third production profile and abandoned | `agentic-travel-booking-system/docs/architecture/adr/0027-llm-fallback-chain.md:1,50-54`; `CURRENT_STATE.md:635` |
+| tracegauge | `tracegauge:tests` | Corrected "601/601 passing" → "643/643 passing" — the cited line was inside a superseded 0.9.0 sub-section of `CURRENT_STATE.md`; the CHANGELOG and a live `pytest` collection both confirm 643/643 is current for the shipped 0.10.0 release | `token-efficiency-scorer/CHANGELOG.md:92`; live `pytest --collect-only` (643 tests, 2026-08-05) |
+
+**Confirmed clean, no changes needed:** ShelfSense, ReviewIQ/Samidha Reviews, Expense Tracker —
+every numeric/factual claim independently verified against the repo with no discrepancies found.
+AetherArt had one additional fix beyond the table above: a factual sign inversion (the site said
+training loss "dipped further" at checkpoint 1500, implying a naive heuristic would pick it; the
+repo says loss **jumped** ~10× at step 1500 — corrected in `content/case-studies/aetherart.ts`'s
+`aetherart:checkpoint` decision).
+
+**AgentGauge surface fix (already applied same session, documented in the resume-variant-
+generator's amendment 4 log above):** `content/products.ts`'s AgentGauge entry was missing a
+`pypi` field despite being published (`agentgauge-harness` v0.5.2) — added, which also moved the
+site's own live-product-count hero stat 11→12 (computed via `liveProductCount()`, not hardcoded,
+so no separate site edit was needed for that number).
+
+**AgentGauge findings from this pass, superseded during the `main` rebase (2026-08-05):** this
+session independently found the 45-tool-sets/10-artifacts/MDE-update facts above; the rebase onto
+`main` surfaced that `main` already carried a more thorough, independently-produced AgentGauge
+rewrite (the **Wave 18 (2026-07-31)** section immediately above this one — same underlying repo
+state, cross-checked against the repo's own `docs/paper2/provenance.md` 34-claim ledger, with a
+fuller MDE derivation chain and the killed regression-attribution pivot this pass never surfaced).
+GG's explicit call: take `main`'s AgentGauge content wholesale, discard this session's version.
+The two duplicate rows this pass had added to the table above were removed accordingly; nothing
+in `main`'s section conflicted with this pass's other 9 projects, so those stand unchanged.
+
+## Wave 19 (2026-08-05) — PR #32 evidentiary audit, pipeline fail-closed fix
+
+Follow-up to Wave 18. GG flagged that this branch was stale relative to `main` — PR #32
+("fix(content): correct 5 drifted numbers across case studies") had already merged, reaching
+nearly identical numbers to Wave 18's independently for TriageIQ, tracegauge, and (partially)
+Style Maitri/DealHunter. GG also flagged an open automation PR (#44) that would have reverted
+those correct values back to stale ones. Full resolution, in order:
+
+- **PR #44 closed, not merged** (2026-08-05T09:56:41Z) — it proposed reverting 4 metrics
+  gg-portfolio's own weekly refresh had already corrected via PR #32, because the source repos'
+  `.portfolio/metrics.json` manifests were never updated after PR #32's hand-verified fix. Root
+  cause fixed below (items 9-10), not just the symptom.
+- **Style Maitri accuracy/catalogue-size: reverted.** PR #32's 94.4%/n=378 and 112,425/42-stores
+  values come from `agentic-shopping-assistant`'s `reports/model_eval_*.md` and
+  `data/processed/unified/catalogue.parquet` — both **gitignored, never committed**, confirmed by
+  `git ls-files` returning empty for every candidate file. No git commit date exists for either
+  number. The prior values (93.8%/n=211, 52,494/8 stores) are git-committed:
+  `reports/final_scorecard_2026-07-12.txt:109` (commit `57e7e60`, titled "final honest scorecard
+  — supersedes the 2026-07-11 versions") and `reports/soldout_filter_fix_2026-07-12.txt:28`
+  (commit `5996226`). Per GG's explicit rule — a number without a dated, auditable artifact behind
+  it doesn't ship, and PR #32 is not evidence for itself — reverted `content/case-studies/
+  style-maitri.ts` and `content/resume-data.json` to the git-verified numbers. The 8-store list
+  itself WAS corrected (Snitch/Fashor/Virgio/Powerlook/Myntra/Flipkart/GlobalRepublic/Libas,
+  replacing an original list that conflated a different single-brand demo table) — that
+  correction comes from the same committed report as the store count, so it stands.
+- **DealHunter test count: 597 → 727, kept.** Independently re-confirmed via a live
+  `pytest --collect-only` run this session (`agentic-travel-booking-system`, 2026-08-05T09:59:47Z,
+  727 tests collected, matching PR #32's figure exactly) — a reproducible live measurement, not a
+  claim in a stale doc (`CURRENT_STATE.md:645`'s 597 was a frozen 2026-06-09 snapshot). Site
+  updated; resume already had its raw count purged (see Wave 18/amendment 6) so no resume change
+  needed.
+- **Gold Rate Tracker: unchanged from Wave 18** — that fix was already pinned to a real,
+  git-committed single snapshot (commit `a4d892c`, 2026-07-19T10:46:27+05:30), so no reversion
+  applies.
+- **Retrieval precision@5 (Style Maitri): reverted to the original site text.** Both the old and
+  new numbers for this specific claim came from gitignored reports (`model_eval_20260712T091248Z.md`
+  and `model_eval_20260805T070638Z.md`, neither tracked) — with neither side git-verifiable, kept
+  the pre-existing baseline rather than swap one unverifiable number for another.
+- **DistilBERT router cost (Style Maitri): kept.** `reports/router_comparison.md` IS git-tracked
+  (commit `1487811c`, 2026-04-28) — real evidence, unaffected by the reversion above.
+
+**Pipeline fix (`scripts/refresh-metrics.mjs`), items 9-10:**
+1. **Fail-closed on a stale manifest**: a repo's `.portfolio/metrics.json` is now checked for its
+   own freshest `measured_at` before any of its values are propagated; if the freshest entry is
+   more than `MANIFEST_STALE_DAYS` (21) old, the whole repo's changes are held and reported, not
+   opened as a PR. The script has no way to see "the repo's newest eval artifact" directly (it
+   only fetches one file via `raw.githubusercontent.com`) — this is a proxy, not a perfect signal,
+   and produces real false positives (AetherArt/ReviewIQ/Expense Tracker's manifests are all
+   correct in value but old by this clock — see the table below) as well as real catches
+   (tracegauge, DealHunter). Documented as a known tradeoff in the script's own comments, not
+   hidden.
+2. **Regression guard**: a manifest may only move a metric's `measured_at` forward. An incoming
+   value with a `measured_at` that isn't strictly newer than what's already recorded is rejected
+   outright and reported — this is exactly the shape of PR #44's attempted revert, and would have
+   blocked it mechanically rather than requiring a human to notice and close it.
+
+**Manifest staleness audit (report only, per GG's instruction — no repo manifests regenerated this
+session):**
+
+| Repo | Manifest metric | Value | measured_at | Age (2026-08-05) | Status |
+|---|---|---|---|---|---|
+| token-efficiency-scorer | tracegauge:tests | 601/601 | 2026-07-04 | 32d | **Stale — wrong value** (real: 643/643); now held by the 21d gate |
+| agentic-travel-booking-system | dealhunter:test-coverage | 597 tests | 2026-06-09 | 57d | **Stale — wrong value** (real: 727); now held |
+| AetherArt | aetherart:vram | 6.2GB | 2026-06-01 | 65d | Value still correct; held anyway (false positive — old manifest, right answer) |
+| review-iq | reviewiq:extraction-eval | 83.8% | 2026-07-06 | 30d | Value still correct; held anyway (false positive) |
+| expense-tracker | expense-tracker:tests | 143/143 | 2026-06-01 | 65d | Value still correct; held anyway (false positive) |
+| gold-rate-tracker | gold-rate-tracker:headline | qualitative | 2026-07-19 | 17d | Under the 21d gate, propagates normally |
+| reclaim | reclaim:honesty-arc | chain | 2026-07-23 | 13d | Under the 21d gate, propagates normally |
+| agentgauge | agentgauge:blocking-causal | −13.3 to −28.9pp | 2026-07-25 | 11d | Under the 21d gate; value unchanged, but manifest's single-value schema can't express the 45-tool-sets/10-artifacts/5.37pp-MDE facts the Wave 18 (2026-07-31) AgentGauge rewrite added |
+| triage-iq, agentic-shopping-assistant, mindmeld, multimodal-fashion-recommender | — | — | — | — | **No `.portfolio/metrics.json` at all** — structural gap, pipeline can never refresh these regardless of manifest age |
+
+Not implemented this session (out of scope per GG's "report only" instruction): regenerating any
+individual repo's manifest, or building the 4 missing manifests from scratch. GG to decide backfill
+order.
+
+## Wave 20 (2026-08-06) — Style Maitri homepage card drift, root cause + fix
+
+Wave 19's revert (above) fixed `content/case-studies/style-maitri.ts`'s case-study body back to
+the git-committed 93.8%/n=211 and 52,494/8-store figures. It did **not** fix two other places that
+independently carried the same stale, gitignored-sourced numbers, because neither ever appeared in
+a rebase conflict — git conflict detection only flags lines two branches both touched, and nothing
+in Wave 18/19's diff touched these:
+
+- `content/products.ts`'s Style Maitri entry: `tagline` claimed "42 store catalogues"; `figure`
+  hardcoded `{ pct: 94.4, valueText: "94.4% (n=378)" }` — the homepage/projects-grid card value,
+  entirely independent of the case-study body's own text.
+- `content/metrics.json`'s `style-maitri:intent-accuracy` and `style-maitri:catalogue-size`
+  entries: both still cited `reports/model_eval_20260731T060759Z.md` and the gitignored
+  `catalogue.parquet` read — the exact same inadmissible-evidence class Wave 19 already rejected
+  for the case-study body, just never applied here.
+
+Net effect, live in production for the length of one deploy cycle: the case-study page
+(`/work/style-maitri`) showed the correct, reverted numbers while the homepage/projects-grid card
+for the same project showed the old, unverifiable ones — a same-project internal contradiction,
+not a stale-vs-current split between two different sources.
+
+**Fixed**, both files, cited to the same committed sources already established in Wave 19:
+
+| Field | Old value | New value | Source |
+|---|---|---|---|
+| `style-maitri:intent-accuracy` | 94.4% (n=378) | 93.8% (n=211) | `reports/final_scorecard_2026-07-12.txt:109` (commit `57e7e6078a04d7fafb33219d597afd3548870a35`): `intent all-exact    93.8%  (min 88.0%, n=211) PASS` |
+| `style-maitri:catalogue-size` | ~112K items / 42 stores | 52,494 items / 8 stores | `reports/soldout_filter_fix_2026-07-12.txt:28` (commit `59962265b85f5a159e60c2a18db32d1b3650385c`): `Catalogue size: 61,883 -> 52,494 items ... across all 8 stores` |
+| `products.ts` tagline | "42 store catalogues" | "8 store catalogues" | same as catalogue-size above |
+| `products.ts` figure | `{ pct: 94.4, valueText: "94.4% (n=378)" }` | `{ pct: 93.8, valueText: "93.8% (n=211)" }` | same as intent-accuracy above |
+
+**Process gap this exposes:** a control that only fires on a git conflict is structurally blind to
+a same-project internal contradiction across files that no single commit touched together — the
+failure mode (this incident, plus the case-study-body reversion itself, plus dealhunter's stray
+coverage-value carryover caught the same way during Wave 19) has now recurred three times, always
+outside marked conflicts. `scripts/check-card-consistency.mjs` (added this wave) closes this class
+directly: it compares `products.ts`/`metrics.json` claims against each project's own case-study
+body, entirely within this repo (no network fetch, no dependence on a rebase ever happening), and
+fails closed on any per-project internal disagreement — see that script's own header comment.
 
 ## Known gaps / not shipped
 
