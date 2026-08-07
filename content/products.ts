@@ -164,7 +164,9 @@ export const products: Product[] = [
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-travel-booking-system",
     categories: ["llm-agents"],
     techChips: ["Multi-agent", "Pareto ranking", "SSE"],
-    metric: refreshableMetric("dealhunter:test-coverage"),
+    // No metric badge: the only quantifiable claim this card ever carried
+    // (a test count) has no admissible committed source as of 2026-08-08 —
+    // see content/case-studies/dealhunter.ts's "Test suite" row.
   },
   {
     slug: "tracegauge",

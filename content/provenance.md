@@ -179,7 +179,7 @@ pass before use in card copy.
 
 | ID | Claim | Source |
 |---|---|---|
-| `dealhunter:test-coverage` | 727 tests collected (live `pytest --collect-only`, re-confirmed 2026-07-31 — identical to the 2026-07-12 count, no test-affecting commits landed between) | **Wave 19 correction (2026-07-31):** this row already recorded the 727 figure as of 2026-07-12 (below), but the shipped case-study `.ts` file was never updated to match — caught by this pass. `agentic-travel-booking-system/CURRENT_STATE.md:645` still pins the superseded 597 (579 passed, 3 skipped, 15 Docker-blocked pre-existing) as a frozen 2026-06-09 snapshot; `:135` (87.65% coverage figure, not re-measured at the new count). The repo's own `.portfolio/metrics.json` (added 2026-07-25, meant to auto-refresh this exact number) still hard-codes 597 too — see PR4. |
+| `dealhunter:ci-gates` | Deterministic replay suite, per-run cost accounting — no specific test count asserted, since no committed artifact exists for one as of 2026-08-08 (checked: cited sources, 4 root docs, 5 docs/ files, CONTRIBUTING.md, WORKFLOW.md, GitHub commit/PR search — see wave-21 note below). Retires `dealhunter:test-coverage` (below and in this file's wave-18/19/20 history): its last live-measured count (727) was never committed anywhere, and the site had been citing it via a since-fixed false-positive substring match | `agentic-travel-booking-system/README.md:115-120` (lint/typecheck/test commands + "Eval harness (planner golden set, VCR replay)") |
 
 **Correction, two rounds:** spec/inventory's original "demo-haiku: 24/24 completion, coherence
 4.625" describes an LLM profile removed from the live product on 2026-06-19 (commit `464e004`,
@@ -919,6 +919,34 @@ fails closed on any per-project internal disagreement — see that script's own 
   wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
   what's already in the resume; nothing beyond the resume's own Indium/Uber bullets is used).
+
+## Wave 21 (2026-08-08) — DealHunter test count retired, same rule as Style Maitri's 94.4%
+
+`dealhunter:test-coverage`'s "727 tests collected" was never actually admissible: it's a live
+`pytest --collect-only` count, and no committed artifact anywhere in the repo states it (checked:
+both files it cited, 4 root docs, 5 `docs/` files, `CONTRIBUTING.md`, `WORKFLOW.md`, GitHub
+commit/PR search). It had been passing the metric-freshness check via a false-positive substring
+match (`"727"` inside an unrelated `"727160"` URL marker in `CURRENT_STATE.md`) — see the
+2026-08-07 checker-hardening entry that caught and fixed this.
+
+Same principle already applied to Style Maitri's case-study body (Wave 19's revert: a number
+without a dated, auditable artifact behind it doesn't ship) — retired the number from the
+case-study page, the homepage/projects-grid card (`content/products.ts`, which now carries no
+`metric` field for DealHunter — nothing quantifiable to show), and `content/metrics.json`.
+Replaced with the qualitative claim already used on the resume (`content/resume-data.json`,
+`proj:dealhunter`): "a deterministic replay suite with per-run cost accounting" — this text
+predates this wave and was already correct; the site was the one out of sync.
+
+**Resume-drift-guard cleanup:** `content/resume-metrics.json`'s `dealhunter:test-coverage` entry
+claimed the resume states "597 tests, ≥87.65% coverage" — stale relative to the resume's own
+actual current text (qualitative, no numbers, confirmed directly in `resume-data.json`), most
+likely left over from before the resume copy was last revised. Removed; a purely qualitative
+resume claim has no store-comparable value to guard, per this manifest's own stated exemption for
+claims with no store id.
+
+New sourceRef `dealhunter:ci-gates` cites `README.md:115-120` (the actual lint/typecheck/test
+commands and the VCR-replay eval harness) — real, current, checkable, and asserts no specific
+count.
 
 ## Wave 15 pipeline proposals — 2026-07-31 (LLM-consensus, pending human review)
 
