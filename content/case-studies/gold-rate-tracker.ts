@@ -95,7 +95,7 @@ export const goldRateTracker: CaseStudy = {
     {
       label: "Direction-signal promotion gate",
       value: "DARK at both horizons tested",
-      detail: "h=1: logistic model 49.5% vs. 53.8% base rate (p=0.42, n=93); h=2: 60.9% vs. 62.0% base rate (p=1.0, n=92)",
+      detail: "h=1: logistic model 48.5% vs. 50.8% base rate (p=0.63, n=130); h=2: 60.9% vs. 57.8% base rate (p=0.45, n=128)",
       sourceRef: "gold:direction-baseline",
     },
     {

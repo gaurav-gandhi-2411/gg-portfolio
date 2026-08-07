@@ -168,3 +168,33 @@ test("axe: zero violations on /ask after a turn completes (answer + follow-ups v
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
+
+/**
+ * components/metric-provenance.tsx's source-reveal disclosure (see
+ * e2e/case-study-provenance.spec.ts for its functional coverage) opens a
+ * `role="group"` panel with a link inside — scanned open, not just closed,
+ * since a disclosure's expanded state is exactly where a missing accessible
+ * name or a focus-order bug would surface.
+ */
+test("axe: zero violations with a metric's source-provenance panel open (structured tier)", async ({
+  page,
+}) => {
+  await gotoSettled(page, "/work/triageiq");
+  await page
+    .getByRole("button", { name: /show source for Component classifier accuracy/ })
+    .click();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/** Prose tier renders different markup (verbatim row text + a single
+ * provenance.md link, no per-citation list) — scanned separately since a
+ * structured-tier pass doesn't exercise it. */
+test("axe: zero violations with a metric's source-provenance panel open (prose tier)", async ({ page }) => {
+  await gotoSettled(page, "/work/triageiq");
+  await page
+    .getByRole("button", { name: /show source for Resolution-time interval coverage/ })
+    .click();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
