@@ -147,6 +147,17 @@ function parseNumber(raw) {
   return Number(raw.replace(/,/g, ""));
 }
 
+// A "~"-marked span — a lone approximate value ("~94%") or a dash-joined
+// range ("~1,500-2,300") — makes every number inside it a deliberately
+// rounded estimate, not a value expected to match a source exactly. Numbers
+// in an unmarked range ("18.0% (kubernetes) / 50.5% (vscode)") are NOT
+// covered by this — only a literal "~" earns the wider tolerance below.
+const APPROXIMATE_SPAN_PATTERN = /~\s*\d[\d,]*(?:\.\d+)?(?:\s*[-–—]\s*\d[\d,]*(?:\.\d+)?)?/g;
+
+function findApproximateRanges(text) {
+  return [...text.matchAll(APPROXIMATE_SPAN_PATTERN)].map((m) => [m.index, m.index + m[0].length]);
+}
+
 // Extract numeric tokens worth checking for presence, as actual numbers —
 // not strings compared by substring. Two real false-positive/negative
 // classes this fixes (found 2026-08-07, auditing the 6 PARTIAL claims the
@@ -157,18 +168,30 @@ function parseNumber(raw) {
 // displayed vs. "293.1" in the source — byte-different strings, identical
 // value). Comparing as numbers makes both a non-issue by construction
 // instead of needing an ever-growing list of string alternates.
+//
+// Each token also carries its own rounding precision: `decimalPlaces` (the
+// digits after "." in how it's displayed — 0 for a bare integer) and
+// `approximate` (true if it falls inside a "~"-marked span above). Both
+// feed tokenFoundIn's rounding tolerance, not exact-equality — a page is
+// allowed to round a source's more precise number for readability without
+// that reading as drift every week.
 function extractTokens(value) {
   if (!value) return [];
-  const matches = value.match(NUMBER_PATTERN) ?? [];
+  const approximateRanges = findApproximateRanges(value);
+  const matches = [...value.matchAll(NUMBER_PATTERN)];
   const seen = new Set();
   const tokens = [];
-  for (const raw of matches) {
+  for (const m of matches) {
+    const raw = m[0];
     const digitsOnly = raw.replace(/[,.]/g, "");
     if (digitsOnly.length < MIN_TOKEN_LEN) continue;
     const n = parseNumber(raw);
     if (seen.has(n)) continue; // dedupe by value, not by the string that produced it
     seen.add(n);
-    tokens.push({ display: raw, value: n });
+    const dot = raw.indexOf(".");
+    const decimalPlaces = dot === -1 ? 0 : raw.length - dot - 1;
+    const approximate = approximateRanges.some(([start, end]) => m.index >= start && m.index < end);
+    tokens.push({ display: raw, value: n, decimalPlaces, approximate });
   }
   return tokens;
 }
@@ -185,17 +208,66 @@ function numbersEqual(a, b) {
   return Math.abs(a - b) < NUMBER_EPSILON;
 }
 
+// Rounds `n` to `decimalPlaces` digits after the decimal point. Used for
+// both directions: a plain decimal token's own displayed precision (0.239
+// at 3dp), and — for a "~"-marked integer — a precision derived from its
+// trailing zeros instead (see roundToMagnitude below).
+function roundTo(n, decimalPlaces) {
+  const factor = 10 ** decimalPlaces;
+  return Math.round(n * factor) / factor;
+}
+
+// For a "~"-marked integer like "1,500", the trailing zeros ARE the stated
+// precision — "~1,500" means "to the nearest hundred", not "exactly
+// 1500.000...". Rounds `n` to that same magnitude: trailingZeros(1500) = 2
+// -> round to the nearest 100. An integer with no trailing zeros (e.g.
+// "~94") rounds to the nearest 1, i.e. ordinary integer rounding.
+function trailingZeroMagnitude(displayValue) {
+  const s = String(displayValue);
+  const match = s.match(/0+$/);
+  return match ? match[0].length : 0;
+}
+function roundToMagnitude(n, magnitude) {
+  const step = 10 ** magnitude;
+  return Math.round(n / step) * step;
+}
+
 // A token counts as found if its value, or its percent<->fraction
-// alternate, numerically equals any number extracted from the source
-// text. The fraction alternate is its own real false-positive class
-// (caught on this check's first run): reclaim's case study displays
-// "7.64%" / "100.00%" while its source states the identical measurement
-// as "0.0764" / "1.0000" — same number, different convention, not drift.
+// alternate, numerically equals — or, per the rules below, numerically
+// ROUNDS to — any number extracted from the source text.
+//
+// The fraction alternate is its own real false-positive class (caught on
+// this check's first run): reclaim's case study displays "7.64%" /
+// "100.00%" while its source states the identical measurement as "0.0764"
+// / "1.0000" — same number, different convention, not drift.
+//
+// Rounding tolerance (added 2026-08-08, auditing 3 of the 6 PARTIAL claims
+// the numeric-comparison fix surfaced): a page is allowed to display FEWER
+// digits than its source without that reading as drift every week — a
+// checker that flags a correct, intentionally-rounded claim gets ignored.
+// Two distinct cases:
+//   1. Plain decimal precision — "0.239" (3dp) matches a source's 0.2391
+//      because 0.2391 rounds to 0.239 at 3 decimal places. Applies
+//      unconditionally to any token with decimal places; no "~" needed,
+//      since displaying fewer decimals than the source is an ordinary,
+//      unmarked convention (aetherart:lora-quality).
+//   2. "~"-marked magnitude — "~1,500" only matches a source's 1,488
+//      because it's explicitly marked approximate AND its trailing zeros
+//      state the rounding magnitude (nearest 100); an unmarked "1,500"
+//      would NOT get this tolerance, since an uncorrected exact claim
+//      should still flag (triageiq:classifier-bakeoff).
 function tokenFoundIn(token, sourceNumbers) {
   const fraction = token.value >= 0 && token.value <= 100 ? token.value / 100 : null;
-  return sourceNumbers.some(
-    (n) => numbersEqual(n, token.value) || (fraction !== null && numbersEqual(n, fraction))
-  );
+  const candidates = [token.value, fraction].filter((v) => v !== null);
+  return sourceNumbers.some((n) => {
+    if (candidates.some((c) => numbersEqual(n, c))) return true;
+    if (token.decimalPlaces > 0 && numbersEqual(roundTo(n, token.decimalPlaces), token.value)) return true;
+    if (token.approximate && token.decimalPlaces === 0) {
+      const magnitude = trailingZeroMagnitude(token.value);
+      if (numbersEqual(roundToMagnitude(n, magnitude), token.value)) return true;
+    }
+    return false;
+  });
 }
 
 // Same discovery convention as scripts/chatbot/build-index.mjs: parse
@@ -254,8 +326,40 @@ function parseProvenance() {
 // updating the site) still get caught. Pin only sources the claim's own
 // note documents as automated; see `content/provenance.md`'s
 // `gold-rate-tracker:headline` row for the convention.
+const CITATION_PATH_PATTERN = /`([\w./-]+\.[a-zA-Z0-9]+)(:[\d,-]+)?(@[0-9a-f]{7,40})?`/g;
+
+// Real over-extraction bug (found 2026-08-08): the old version scanned the
+// ENTIRE Source cell for backtick-quoted paths, so a filename mentioned
+// only in explanatory prose — "`data/backtest.json` is bot-refreshed
+// continuously (`weekly-backtest.yml`)" — was treated as an additional
+// citation. It isn't one: `weekly-backtest.yml` isn't even the real path
+// (the actual file is `.github/workflows/weekly-backtest.yml`), so that
+// "citation" 404s on every fetch — silently, since the union-across-paths
+// match logic just treats a failed fetch on one path as a non-contributor
+// rather than an error, and the drift check on the REAL cited path(s)
+// still worked, so this went unnoticed.
+//
+// Two prior attempts at a fix didn't hold up: cutting at the first
+// comma-continuation broke rows whose real citation list has per-source
+// parentheticals ("`path` (note) @ `sha`, `path` (note) @ `sha`" —
+// agentgauge:mde-curve); cutting at the first em-dash broke rows where a
+// "Wave N correction:" PREAMBLE ends in an em-dash BEFORE the citation
+// list even starts (triageiq:classifier-top3) — this file uses "—" both
+// ways, so dash position alone doesn't reliably mark the boundary.
+//
+// The signal that actually holds: `weekly-backtest.yml` is a backtick
+// mention wrapped alone in its own parentheses — "(`weekly-backtest.yml`)"
+// — a casual aside, not a list item. A real citation is never individually
+// parenthesized like that; it's either bare or a list-comma-separated
+// sibling of other citations. Excluding only matches with "(" immediately
+// before and ")" immediately after fixes the one confirmed-broken case
+// without touching any of the row shapes above.
 function extractPathsFromSource(source, repoSlug) {
-  const matches = [...source.matchAll(/`([\w./-]+\.[a-zA-Z0-9]+)(:[\d,-]+)?(@[0-9a-f]{7,40})?`/g)];
+  const matches = [...source.matchAll(CITATION_PATH_PATTERN)].filter((m) => {
+    const before = source[m.index - 1];
+    const after = source[m.index + m[0].length];
+    return !(before === "(" && after === ")");
+  });
   return matches.map((m) => {
     let path = m[1];
     if (repoSlug && path.startsWith(`${repoSlug}/`)) path = path.slice(repoSlug.length + 1);
@@ -304,7 +408,19 @@ function collectCaseStudyClaims(study) {
     claims.push({ sourceRef: d.sourceRef, text: d.body, kind: "decision" });
   }
   if (study.story) {
-    claims.push({ sourceRef: study.story.sourceRef, text: study.story.body.join(" "), kind: "story" });
+    // A body paragraph can override the story's default sourceRef with its
+    // own (see content/types.ts's doc comment) — a mid-story topic shift
+    // that's really evidenced by a different, existing claim's citation.
+    // Overridden paragraphs are excluded from the main "story" claim's
+    // joined text (checking them against the story's default source would
+    // be exactly the wrong-citation bug this mechanism exists to fix) and
+    // instead become their own claim, each against its own sourceRef.
+    const plainParagraphs = study.story.body.filter((p) => typeof p === "string");
+    const overrideParagraphs = study.story.body.filter((p) => typeof p !== "string");
+    claims.push({ sourceRef: study.story.sourceRef, text: plainParagraphs.join(" "), kind: "story" });
+    for (const seg of overrideParagraphs) {
+      claims.push({ sourceRef: seg.sourceRef, text: seg.text, kind: "story-segment" });
+    }
     // A story's optional leadIn restates a fact really evidenced by a
     // different claim's own source (see content/types.ts's doc comment) —
     // checked as its own claim against its own sourceRef, not folded into

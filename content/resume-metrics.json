@@ -19,10 +19,6 @@
       "resume_says": "component classifier top-3 accuracy 82.5% (k8s) / 90.4% (vscode); fabrication rate 1.9–9.1% published",
       "store_value_at_sync": "82.5% (k8s) / 90.4% (vscode)"
     },
-    "dealhunter:test-coverage": {
-      "resume_says": "597 tests, ≥87.65% coverage",
-      "store_value_at_sync": "597 tests, ≥87.65% coverage"
-    },
     "mmfr:recall10": {
       "resume_says": "Recall@10 3.06× over a popularity baseline (0.0328 vs 0.0107)",
       "store_value_at_sync": "3.06× (0.0328 vs. 0.0107)"

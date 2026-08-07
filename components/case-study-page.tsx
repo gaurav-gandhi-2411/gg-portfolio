@@ -260,14 +260,17 @@ export function CaseStudyPage({
                   {study.story.leadIn.text}
                 </p>
               )}
-              {study.story.body.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 32)}
-                  className="text-muted-foreground mt-4 text-base leading-relaxed"
-                >
-                  {paragraph}
-                </p>
-              ))}
+              {study.story.body.map((paragraph) => {
+                const text = typeof paragraph === "string" ? paragraph : paragraph.text;
+                return (
+                  <p
+                    key={text.slice(0, 32)}
+                    className="text-muted-foreground mt-4 text-base leading-relaxed"
+                  >
+                    {text}
+                  </p>
+                );
+              })}
             </>
           )}
 

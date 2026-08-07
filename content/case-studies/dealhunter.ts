@@ -81,9 +81,9 @@ export const dealhunter: CaseStudy = {
   results: [
     {
       label: "Test suite",
-      value: "727 tests collected",
-      detail: "coverage % not re-measured at this count (last confirmed ≥87.65% at 597 tests, 2026-06-09); pass/skip/blocked breakdown not re-run this pass",
-      sourceRef: "dealhunter:test-coverage",
+      value: "Deterministic replay suite, per-run cost accounting",
+      detail: "no committed, current whole-repo test count exists to cite — the live count has moved with no matching committed artifact at the new figure, so this page states what's actually verifiable instead of a number",
+      sourceRef: "dealhunter:ci-gates",
     },
     {
       label: "Planner baseline — correct archetype selection",

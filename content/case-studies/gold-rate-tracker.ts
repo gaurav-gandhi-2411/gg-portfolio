@@ -61,7 +61,14 @@ export const goldRateTracker: CaseStudy = {
     {
       title: "Ship the naive flat-hold as the headline, not the ML model",
       body: "The original 165-fold walk-forward backtest (2026-05-19, a test that repeatedly trains on the past and checks the very next prediction, sliding forward through time) showed Chronos-Bolt-Tiny performing 10.4% worse than the naive flat-hold on mean absolute error, with the difference statistically significant (p=0.0089) — the decision that shipped naive as the headline. Every larger backtest run since (see Results below) has confirmed the same conclusion, not reversed it.",
-      sourceRef: "gold-rate-tracker:headline",
+      // Deliberately its own sourceRef, not gold-rate-tracker:headline: this
+      // decision describes the ORIGINAL 165-fold backtest (ADR-012,
+      // 2026-05-19), not the current pinned snapshot the headline results
+      // row cites. Wave 19 already traced p=0.0089 to ADR-012 (see
+      // provenance.md) but never gave it its own citable row — sharing the
+      // headline's sourceRef meant the freshness checker looked for a
+      // 2026-05-19 p-value inside a 2026-07-26 snapshot and never found it.
+      sourceRef: "gold-rate-tracker:original-decision",
     },
     {
       title: "Corrected the direction-signal baseline from a coin flip to the true base rate",

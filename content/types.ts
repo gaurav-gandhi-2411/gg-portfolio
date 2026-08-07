@@ -162,7 +162,20 @@ export interface CaseStudy {
   /** The hardest documented engineering/debugging story. */
   story?: {
     title: string;
-    body: string[];
+    /**
+     * A plain string uses the story's own `sourceRef` below. A paragraph
+     * that makes a claim really evidenced by a DIFFERENT, existing citation
+     * (a topic shift mid-story, not just restated context) carries its own
+     * `{ text, sourceRef }` instead — reuse the real sourceRef for that
+     * claim elsewhere on the page rather than inventing a new one. Found
+     * 2026-08-07 via agentgauge:v23-scoring-artifact (a second, distinct
+     * finding two paragraphs in, actually evidenced by
+     * agentgauge:attribution-kill's own citation) and mmfr:collapse-fix (a
+     * third paragraph's scaling-budget figure actually evidenced by
+     * mmfr:faiss-adr's own citation) — both stories shared one sourceRef
+     * across topics its own citation never covered.
+     */
+    body: (string | { text: string; sourceRef: string })[];
     sourceRef: string;
     /**
      * An optional opening sentence sourced separately from the rest of the

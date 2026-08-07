@@ -62,16 +62,6 @@
       "measured_at": "2026-08-05",
       "note": "Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
     },
-    "dealhunter:test-coverage": {
-      "label": "Test suite",
-      "value": "727 tests collected",
-      "repo": "gaurav-gandhi-2411/agentic-travel-booking-system",
-      "source_file": "pytest --collect-only (CURRENT_STATE.md:645's 597 is a frozen 2026-06-09 snapshot; coverage % not re-measured this pass, carried forward)",
-      "source_line": null,
-      "commit_sha": "6b4f30509d69d6baa12ac60d8f15c831ac8d72f3",
-      "measured_at": "2026-08-05",
-      "note": "Corrected from 597 (CURRENT_STATE.md:645, a frozen 2026-06-09 snapshot that was never updated as tests were added). 727 confirmed by an independent live pytest --collect-only run this session, matching PR #32's figure exactly. Coverage % not re-measured at the new count and no longer asserted in the value field — the last committed coverage figure (87.65%) still pins to the 597-test count, and no committed artifact exists for the current 727-test count as of 2026-08-05 (checked: no coverage.xml/.coveragerc committed, CI uploads coverage.xml only as an ephemeral, uncommitted GitHub Actions artifact)."
-    },
     "shelfsense:wrmsse": {
       "label": "WRMSSE vs. naive baseline",
       "value": "36% reduction (0.8956 → 0.5693)",

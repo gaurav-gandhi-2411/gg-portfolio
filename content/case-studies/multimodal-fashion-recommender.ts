@@ -115,7 +115,15 @@ export const mmfr: CaseStudy = {
     body: [
       "Training with the paper-standard contrastive-learning recipe — temperature 0.07, learning rate 1e-3, no warmup — produced a suspiciously clean-looking loss curve and a completely useless model: every item and user embedding had converged to the same point in the 256-dimensional space. Cosine similarity between any two items was effectively 1.0. Nothing had been learned; the loss function had just found the cheapest way to look small.",
       "The fix came from empirical iteration rather than a known formula: raising the temperature to 0.1, dropping the learning rate to 3e-4, and — the change that mattered most — adding a 500-step warmup before the learning rate reached its full value. Warmup gives the towers a chance to spread out into distinct regions of the space before the optimizer starts taking large steps, which is exactly what a cold, aggressive learning rate short-circuits.",
-      "Once the model worked, a second question came up: how many brands can one shared FAISS process actually hold? An architecture decision record ran the numbers rather than guessing: three real brand catalogues fit comfortably in roughly 250–400MB, but H&M's own 2-million-row transaction history alone would push the current 4GiB Cloud Run instance over budget — scaling to include it is estimated to need 8GiB, and even that is a tight fit, not comfortable headroom. Rather than ship a serving path that would eventually fall over, H&M is deliberately excluded from live serving behind a BRANDS_ENABLED flag, with a 4-phase migration path — lazy-loading with an LRU cache, then a real vector database like Qdrant, then per-brand service instances — written down for when the catalogue count grows past what one process can hold.",
+      {
+        text: "Once the model worked, a second question came up: how many brands can one shared FAISS process actually hold? An architecture decision record ran the numbers rather than guessing: three real brand catalogues fit comfortably in roughly 250–400MB, but H&M's own 2-million-row transaction history alone would push the current 4GiB Cloud Run instance over budget — scaling to include it is estimated to need 8GiB, and even that is a tight fit, not comfortable headroom. Rather than ship a serving path that would eventually fall over, H&M is deliberately excluded from live serving behind a BRANDS_ENABLED flag, with a 4-phase migration path — lazy-loading with an LRU cache, then a real vector database like Qdrant, then per-brand service instances — written down for when the catalogue count grows past what one process can hold.",
+        // This paragraph is a topic shift (FAISS scaling budget, not the
+        // collapse-fix training bug) — mmfr:faiss-adr is what actually
+        // cites the scaling ADR carrying the 250-400MB figure; the story's
+        // default sourceRef (mmfr:collapse-fix) points at README.md, which
+        // never mentions it.
+        sourceRef: "mmfr:faiss-adr",
+      },
     ],
     sourceRef: "mmfr:collapse-fix",
   },
