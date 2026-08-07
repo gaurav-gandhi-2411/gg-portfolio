@@ -404,7 +404,7 @@ unchanged where they already covered a claim. Paths are relative to
 
 | ID | Claim | Source |
 |---|---|---|
-| `gold:direction-baseline` | Direction baseline corrected 50% → true base rate 69.7–75.5% ("always predict up" in a bull regime); model loses on every window; signal kept DARK | `docs/adr/019-direction-signal-below-base-rate.md:16-35,62-72`, `docs/DIRECTION_SIGNAL_STATUS.md:15-20` |
+| `gold:direction-baseline` | Direction baseline corrected 50% → true base rate 69.7–75.5% ("always predict up" in a bull regime); model loses on every window; signal kept DARK | `docs/adr/019-direction-signal-below-base-rate.md:16-35,62-72`, `docs/DIRECTION_SIGNAL_STATUS.md:15-20@fa9dfb6` — pinned per this file's "Pinned refs" note above: `DIRECTION_SIGNAL_STATUS.md` is bot-refreshed weekly (`eval-direction.yml`) and had already moved past the results-row's previously-cited n=93/92 figures (a stale 8-week-old snapshot, per a data-accumulation bug that repair commit `fa9dfb6` fixed) by the time this was checked. Commit `fa9dfb6` (2026-08-05, "docs: correct DIRECTION_SIGNAL_STATUS.md revisit dates, record the capture-timing bug (#623)"): h=1 N=130, base rate 50.8%, logistic OOS accuracy 48.5% (p=0.63); h=2 N=128, base rate 57.8%, logistic OOS accuracy 60.9% (p=0.45) — both still DARK, no gate change |
 | `gold:promotion-gate` | Pre-registered promotion gate: ≥250-fold backtest, MAE beat, Wilcoxon p<0.05 | `docs/adr/012-naive-headline-chronos-companion.md:50-58` |
 | `gold:power-analysis` | Monte Carlo power analysis: at n=93 only ~21pp edge detectable at 80% power; revisit dates computed | `docs/DIRECTION_SIGNAL_STATUS.md:52-63,82-96` |
 | `gold:zero-cost` | ₹0/month infra (GitHub Actions + Pages + ntfy.sh free tiers) | `README.md:11` |
