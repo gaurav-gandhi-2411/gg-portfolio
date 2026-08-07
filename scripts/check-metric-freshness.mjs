@@ -137,33 +137,65 @@ function extractPath(sourceFile) {
   return first;
 }
 
-// Extract numeric tokens worth checking for verbatim presence. Percent
-// signs are stripped (a source file might render "94.4%" as "94.4 percent"
-// or inside different punctuation) but the digits themselves are the
-// actual evidence.
-//
-// Each token also carries its fraction-form alternate (94.4 -> 0.944):
-// a real false-positive class this caught on first run — reclaim's case
-// study displays "7.64%" / "100.00%" while its source (docs/CASE_STUDY.md)
-// states the identical measurement as "0.0764" / "1.0000". Same number,
-// different convention, not drift. A token matches if EITHER form is
-// present in the source text.
+// Matches a comma-grouped number ("2,300") before falling back to a plain
+// one — alternation order matters in JS regex (first alternative that
+// matches wins, not the longest), so the comma-pattern must come first or
+// "2,300" would match as bare "2" then "300" as two unrelated tokens.
+const NUMBER_PATTERN = /\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g;
+
+function parseNumber(raw) {
+  return Number(raw.replace(/,/g, ""));
+}
+
+// Extract numeric tokens worth checking for presence, as actual numbers —
+// not strings compared by substring. Two real false-positive/negative
+// classes this fixes (found 2026-08-07, auditing the 6 PARTIAL claims the
+// any-vs-all fix surfaced): a thousands separator used to split a token in
+// two ("2,300" -> spurious "2" + "300", since the old digits-only regex
+// never treated a comma as part of the number), and a trailing-zero
+// formatting difference used to read as two different numbers ("293.10"
+// displayed vs. "293.1" in the source — byte-different strings, identical
+// value). Comparing as numbers makes both a non-issue by construction
+// instead of needing an ever-growing list of string alternates.
 function extractTokens(value) {
   if (!value) return [];
-  const matches = value.match(/\d+(?:\.\d+)?/g) ?? [];
-  const unique = [...new Set(matches)].filter((t) => t.replace(".", "").length >= MIN_TOKEN_LEN);
-  return unique.map((t) => {
-    const n = Number(t);
-    const alternates = [t];
-    if (n >= 0 && n <= 100) {
-      // Percent -> fraction, e.g. "94.4" -> "0.944"; trim to avoid
-      // spurious trailing zeros that would never appear in prose ("0.944"
-      // not "0.9440000000000001").
-      const asFraction = (n / 100).toFixed(6).replace(/0+$/, "").replace(/\.$/, ".0");
-      if (asFraction !== t) alternates.push(asFraction);
-    }
-    return { display: t, alternates };
-  });
+  const matches = value.match(NUMBER_PATTERN) ?? [];
+  const seen = new Set();
+  const tokens = [];
+  for (const raw of matches) {
+    const digitsOnly = raw.replace(/[,.]/g, "");
+    if (digitsOnly.length < MIN_TOKEN_LEN) continue;
+    const n = parseNumber(raw);
+    if (seen.has(n)) continue; // dedupe by value, not by the string that produced it
+    seen.add(n);
+    tokens.push({ display: raw, value: n });
+  }
+  return tokens;
+}
+
+// Same extraction, applied to a source file's full text — not deduped or
+// length-filtered, since a short number in the source is still valid
+// evidence for a token that itself passed extractTokens' length filter.
+function extractSourceNumbers(text) {
+  return (text.match(NUMBER_PATTERN) ?? []).map(parseNumber);
+}
+
+const NUMBER_EPSILON = 1e-9;
+function numbersEqual(a, b) {
+  return Math.abs(a - b) < NUMBER_EPSILON;
+}
+
+// A token counts as found if its value, or its percent<->fraction
+// alternate, numerically equals any number extracted from the source
+// text. The fraction alternate is its own real false-positive class
+// (caught on this check's first run): reclaim's case study displays
+// "7.64%" / "100.00%" while its source states the identical measurement
+// as "0.0764" / "1.0000" — same number, different convention, not drift.
+function tokenFoundIn(token, sourceNumbers) {
+  const fraction = token.value >= 0 && token.value <= 100 ? token.value / 100 : null;
+  return sourceNumbers.some(
+    (n) => numbersEqual(n, token.value) || (fraction !== null && numbersEqual(n, fraction))
+  );
 }
 
 // Same discovery convention as scripts/chatbot/build-index.mjs: parse
@@ -368,8 +400,9 @@ async function checkCaseStudyClaims(provenance) {
           fetchErrors.push(`${path}: ${err.message}`);
           continue;
         }
+        const sourceNumbers = extractSourceNumbers(sourceText);
         for (const t of tokens) {
-          if (t.alternates.some((a) => sourceText.includes(a))) foundIn.add(t.display);
+          if (tokenFoundIn(t, sourceNumbers)) foundIn.add(t.display);
         }
       }
       if (fetchErrors.length === paths.length) {
@@ -476,7 +509,8 @@ for (const [id, m] of entries) {
   // that; PARTIAL is a distinct third state (not folded into DRIFT) so a
   // claim that's mostly right but has one stale figure reads differently
   // from one that's entirely wrong.
-  const found = tokens.filter((t) => t.alternates.some((a) => text.includes(a)));
+  const sourceNumbers = extractSourceNumbers(text);
+  const found = tokens.filter((t) => tokenFoundIn(t, sourceNumbers));
   if (found.length === tokens.length) {
     results.push({ id, status: "CURRENT", detail: `${found.length}/${tokens.length} token(s) confirmed present` });
   } else if (found.length === 0) {
