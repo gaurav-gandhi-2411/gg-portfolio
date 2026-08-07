@@ -29,3 +29,16 @@ repos:
         language: system
         files: \.(ts|tsx)$
         pass_filenames: false
+
+      # content/chatbot/index.json has broken main twice (2026-08-05,
+      # 2026-08-07) from a content edit landing without a matching index
+      # regen — both times via a path CI's own equivalent check never
+      # reaches until after the commit exists. Catches it before the commit
+      # is even made. See scripts/chatbot/check-index-fresh.mjs's header for
+      # the full incident history and tolerance rationale.
+      - id: chatbot-index-fresh
+        name: chatbot index is up to date
+        entry: node scripts/chatbot/check-index-fresh.mjs
+        language: system
+        files: ^content/(case-studies/.*\.ts|provenance\.md)$
+        pass_filenames: false

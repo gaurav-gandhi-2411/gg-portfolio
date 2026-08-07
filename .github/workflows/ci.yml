@@ -34,89 +34,19 @@ jobs:
       # Wave 16 — the chatbot corpus index (content/chatbot/index.json) is a
       # build artifact of content/*.ts + content/provenance.md, not hand-
       # edited content itself. This catches someone editing a case study
-      # without re-running the indexer. `generatedAt` is real wall-clock
-      # time and always differs between the committed file and a fresh
-      # regen, so the comparison ignores that one field rather than doing a
-      # literal `git diff --exit-code` (which would fail every run on
-      # timestamp alone and give zero real signal).
+      # without re-running the indexer.
       #
-      # Wave 19 — `embedding` is compared by cosine similarity, not exact
-      # equality, and every other field stays exact. Found via a real CI
-      # failure (PR #32): two consecutive GitHub Actions runs of the
-      # unmodified indexer, on the identical commit, produced byte-
-      # different float32 embedding values for identical text — WASM ONNX
-      # execution's matmul/pooling reduction order isn't guaranteed
-      # run-to-run, even single-threaded (lib/chatbot/embed.mjs forces
-      # numThreads=1 for the same reason, which helps but doesn't fully
-      # eliminate this). Exact-equality on a derived float vector was never
-      # the right check for "did someone forget to re-run the indexer" —
-      # that question is answered by the TEXT matching, which this still
-      # checks exactly.
-      #
-      # The 0.99 floor is not a guess: a live run of this exact check
-      # against main (2026-07-31) measured the real noise
-      # band directly — every chunk landed between 0.9972 and 1.0 across
-      # two genuine CI runs of identical text. 0.99 keeps over an order of
-      # magnitude of margin below that observed floor while still being far
-      # too tight for an actual regression to sneak through: two genuinely
-      # different sentences embed on the order of 0.3-0.7 similarity with
-      # this model, not 0.99+.
+      # Extracted into scripts/chatbot/check-index-fresh.mjs (2026-08-07)
+      # so the same comparison logic also runs as a pre-commit hook
+      # (.pre-commit-config.yaml) — this CI step was never the gap (it
+      # already ran on every PR); main broke twice anyway via paths this
+      # step doesn't reach (a branch-protection bypass, and a content-only
+      # edit committed without re-running the indexer first). The script's
+      # own header has the full generatedAt-field and cosine-similarity-
+      # tolerance rationale (Wave 19, PR #32's float32 noise-floor
+      # measurement).
       - name: Verify chatbot index is up to date
-        run: |
-          cp content/chatbot/index.json /tmp/chatbot-index-committed.json
-          node scripts/chatbot/build-index.mjs
-          node -e "
-            const fs = require('fs');
-            const committed = JSON.parse(fs.readFileSync('/tmp/chatbot-index-committed.json', 'utf8'));
-            const fresh = JSON.parse(fs.readFileSync('content/chatbot/index.json', 'utf8'));
-            delete committed.generatedAt;
-            delete fresh.generatedAt;
-
-            function cosineSim(a, b) {
-              let dot = 0, normA = 0, normB = 0;
-              for (let i = 0; i < a.length; i++) {
-                dot += a[i] * b[i];
-                normA += a[i] * a[i];
-                normB += b[i] * b[i];
-              }
-              if (normA === 0 || normB === 0) return 0;
-              return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-            }
-
-            const SIMILARITY_FLOOR = 0.99;
-            const problems = [];
-
-            if (committed.chunkCount !== fresh.chunkCount || committed.model !== fresh.model) {
-              problems.push('chunkCount/model mismatch: ' + JSON.stringify({ committed: { chunkCount: committed.chunkCount, model: committed.model }, fresh: { chunkCount: fresh.chunkCount, model: fresh.model } }));
-            }
-
-            const freshById = new Map(fresh.chunks.map((c) => [c.id, c]));
-            for (const c of committed.chunks) {
-              const f = freshById.get(c.id);
-              if (!f) { problems.push('chunk ' + c.id + ' missing from fresh regeneration'); continue; }
-              const { embedding: cEmb, ...cRest } = c;
-              const { embedding: fEmb, ...fRest } = f;
-              if (JSON.stringify(cRest) !== JSON.stringify(fRest)) {
-                problems.push('chunk ' + c.id + ' non-embedding fields differ');
-                continue;
-              }
-              const sim = cosineSim(cEmb, fEmb);
-              if (sim < SIMILARITY_FLOOR) {
-                problems.push('chunk ' + c.id + ' embedding similarity ' + sim.toFixed(6) + ' below floor ' + SIMILARITY_FLOOR);
-              }
-            }
-            if (fresh.chunks.length !== committed.chunks.length) {
-              problems.push('chunk count changed: committed ' + committed.chunks.length + ' vs fresh ' + fresh.chunks.length);
-            }
-
-            if (problems.length > 0) {
-              console.error('content/chatbot/index.json is stale relative to content/*.ts + content/provenance.md.');
-              console.error('Run: node scripts/chatbot/build-index.mjs, then commit the result.');
-              problems.forEach((p) => console.error('  - ' + p));
-              process.exit(1);
-            }
-            console.log('content/chatbot/index.json is up to date (' + committed.chunks.length + ' chunks, embeddings within tolerance).');
-          "
+        run: node scripts/chatbot/check-index-fresh.mjs
 
       - name: Lint
         run: npm run lint
