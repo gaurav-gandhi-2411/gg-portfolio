@@ -368,12 +368,21 @@ async function checkCaseStudyClaims(provenance) {
         claimResults.push({ ...base, status: "UNVERIFIABLE", detail: `all ${paths.length} cited path(s) failed to fetch: ${fetchErrors.join("; ")}` });
         continue;
       }
+      // Any-match was a real bug (found 2026-08-06, gold:direction-baseline):
+      // a claim with several cited numbers reported CURRENT as soon as ONE
+      // happened to still match, even when the rest had drifted. Requiring
+      // ALL tokens catches that; PARTIAL is a distinct third state so a
+      // claim that's mostly right but has one stale figure reads
+      // differently from one that's entirely wrong.
       const shownPaths = paths.map(pathLabel).join(", ");
-      if (foundIn.size === 0) {
+      if (foundIn.size === tokens.length) {
+        claimResults.push({ ...base, status: "CURRENT", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${shownPaths}}` });
+      } else if (foundIn.size === 0) {
         const shown = tokens.map((t) => t.display).join(", ");
         claimResults.push({ ...base, status: "POSSIBLE_DRIFT", detail: `none of [${shown}] (or their %/fraction equivalent) found in ${repo}/{${shownPaths}} (text: "${text.slice(0, 100)}")` });
       } else {
-        claimResults.push({ ...base, status: "CURRENT", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${shownPaths}}` });
+        const missing = tokens.filter((t) => !foundIn.has(t.display)).map((t) => t.display).join(", ");
+        claimResults.push({ ...base, status: "PARTIAL", detail: `${foundIn.size}/${tokens.length} token(s) confirmed present across ${repo}/{${shownPaths}}, but missing: [${missing}] — some cited numbers may have drifted even though others still match (text: "${text.slice(0, 100)}")` });
       }
     }
   }
@@ -450,8 +459,19 @@ for (const [id, m] of entries) {
     continue;
   }
 
+  // Any-match was a real bug (found 2026-08-06, gold:direction-baseline):
+  // a claim with several cited numbers reported CURRENT as soon as ONE
+  // happened to still match, even when the rest had drifted — a stale
+  // n=93/92 base-rate row passed for weeks because its 60.9% figure
+  // coincidentally survived a later data-accumulation fix that moved
+  // every OTHER number in the same claim. Requiring ALL tokens catches
+  // that; PARTIAL is a distinct third state (not folded into DRIFT) so a
+  // claim that's mostly right but has one stale figure reads differently
+  // from one that's entirely wrong.
   const found = tokens.filter((t) => t.alternates.some((a) => text.includes(a)));
-  if (found.length === 0) {
+  if (found.length === tokens.length) {
+    results.push({ id, status: "CURRENT", detail: `${found.length}/${tokens.length} token(s) confirmed present` });
+  } else if (found.length === 0) {
     const shown = tokens.map((t) => t.display).join(", ");
     results.push({
       id,
@@ -459,12 +479,18 @@ for (const [id, m] of entries) {
       detail: `none of [${shown}] (or their %/fraction equivalent) found in current ${m.repo}/${path} (value: "${m.value}")`,
     });
   } else {
-    results.push({ id, status: "CURRENT", detail: `${found.length}/${tokens.length} token(s) confirmed present` });
+    const missing = tokens.filter((t) => !found.includes(t)).map((t) => t.display).join(", ");
+    results.push({
+      id,
+      status: "PARTIAL",
+      detail: `${found.length}/${tokens.length} token(s) confirmed present in current ${m.repo}/${path}, but missing: [${missing}] — some cited numbers may have drifted even though others still match (value: "${m.value}")`,
+    });
   }
 }
 
 const byStatus = (s) => results.filter((r) => r.status === s);
 const drift = byStatus("POSSIBLE_DRIFT");
+const partial = byStatus("PARTIAL");
 const unverifiable = byStatus("UNVERIFIABLE");
 const structurallyUnverifiable = byStatus("STRUCTURALLY_UNVERIFIABLE");
 const current = byStatus("CURRENT");
@@ -479,6 +505,7 @@ const claimResults = await checkCaseStudyClaims(provenance);
 const claimsByStatus = (s) => claimResults.filter((r) => r.status === s);
 const claimsCurrent = claimsByStatus("CURRENT");
 const claimsDrift = claimsByStatus("POSSIBLE_DRIFT");
+const claimsPartial = claimsByStatus("PARTIAL");
 const claimsUnverifiable = claimsByStatus("UNVERIFIABLE");
 const claimsStructurallyUnverifiable = claimsByStatus("STRUCTURALLY_UNVERIFIABLE");
 const claimsNotNumeric = claimsByStatus("NOT_NUMERIC");
@@ -493,7 +520,7 @@ const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
 // a numeric value"). Skipped/no-mapping/no-row are claims that COULD be
 // numeric-checked in principle but this run's data/config didn't resolve
 // far enough to try — reported separately, not folded into either bucket.
-const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsUnverifiable.length;
+const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsPartial.length + claimsUnverifiable.length;
 const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
 
 const today = new Date().toISOString().slice(0, 10);
@@ -513,6 +540,19 @@ if (drift.length > 0) {
   lines.push(`### Possible drift — ${drift.length} metric(s) (needs a human look)`);
   lines.push("");
   for (const r of drift) lines.push(`- \`${r.id}\`: ${r.detail}`);
+  lines.push("");
+}
+
+if (partial.length > 0) {
+  lines.push(`### Partial drift — ${partial.length} metric(s) (some cited numbers matched, others didn't)`);
+  lines.push("");
+  lines.push(
+    "Distinct from possible drift above: at least one cited number is still present, but not " +
+      "all of them are — a claim can coincidentally keep one correct-looking digit while the " +
+      "rest of it has moved on. Needs a human look at exactly which figure(s) are stale."
+  );
+  lines.push("");
+  for (const r of partial) lines.push(`- \`${r.id}\`: ${r.detail}`);
   lines.push("");
 }
 
@@ -539,8 +579,9 @@ if (structurallyUnverifiable.length > 0) {
 }
 
 lines.push(
-  `### Summary: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ` +
-    `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped (no fetchable path or no numeric tokens)`
+  `### Summary: ${current.length} current, ${drift.length} possible drift, ${partial.length} partial drift, ` +
+    `${unverifiable.length} unverifiable, ${structurallyUnverifiable.length} structurally unverifiable, ` +
+    `${skipped.length} skipped (no fetchable path or no numeric tokens)`
 );
 lines.push("");
 lines.push(
@@ -560,7 +601,7 @@ lines.push(
 lines.push("");
 lines.push(
   `**Checked (fetch attempted): ${claimsChecked} of ${claimsNumericTotal} numeric claims** ` +
-    `(${claimsCurrent.length} current, ${claimsDrift.length} possible drift, ${claimsUnverifiable.length} unverifiable). ` +
+    `(${claimsCurrent.length} current, ${claimsDrift.length} possible drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable). ` +
     `${claimResults.length - claimsNumericTotal} more claims are prose with no numeric anchor (not this check's scope).`
 );
 lines.push("");
@@ -568,6 +609,18 @@ if (claimsDrift.length > 0) {
   lines.push(`### Possible drift — ${claimsDrift.length} claim(s)`);
   lines.push("");
   for (const r of claimsDrift) lines.push(`- \`${r.slug}\` (${r.kind}, \`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+if (claimsPartial.length > 0) {
+  lines.push(`### Partial drift — ${claimsPartial.length} claim(s) (some cited numbers matched, others didn't)`);
+  lines.push("");
+  lines.push(
+    "Distinct from possible drift above: at least one cited number is still present, but not " +
+      "all of them are — a claim can coincidentally keep one correct-looking digit while the " +
+      "rest of it has moved on. Needs a human look at exactly which figure(s) are stale."
+  );
+  lines.push("");
+  for (const r of claimsPartial) lines.push(`- \`${r.slug}\` (${r.kind}, \`${r.sourceRef}\`): ${r.detail}`);
   lines.push("");
 }
 if (claimsUnverifiable.length > 0) {
@@ -665,9 +718,9 @@ writeFileSync(SUMMARY_PATH, summary);
 // expected "found some drift" outcome, which is the opposite of what a
 // weekly report job should do).
 console.log(
-  `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${unverifiable.length} unverifiable, ` +
+  `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${partial.length} partial drift, ${unverifiable.length} unverifiable, ` +
     `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
-    `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
+    `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
 );
