@@ -273,6 +273,14 @@ function collectCaseStudyClaims(study) {
   }
   if (study.story) {
     claims.push({ sourceRef: study.story.sourceRef, text: study.story.body.join(" "), kind: "story" });
+    // A story's optional leadIn restates a fact really evidenced by a
+    // different claim's own source (see content/types.ts's doc comment) —
+    // checked as its own claim against its own sourceRef, not folded into
+    // the main story text above, which would check it against the wrong
+    // citation.
+    if (study.story.leadIn) {
+      claims.push({ sourceRef: study.story.leadIn.sourceRef, text: study.story.leadIn.text, kind: "story-leadIn" });
+    }
   }
   if (study.diagram) {
     const pointsText = study.diagram.points.map((p) => `${p.label} ${p.value}`).join(" ");

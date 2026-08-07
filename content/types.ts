@@ -160,7 +160,24 @@ export interface CaseStudy {
   /** Sourced metrics, including the honest/unflattering ones. */
   results?: { label: string; value: string; detail?: string; sourceRef: string }[];
   /** The hardest documented engineering/debugging story. */
-  story?: { title: string; body: string[]; sourceRef: string };
+  story?: {
+    title: string;
+    body: string[];
+    sourceRef: string;
+    /**
+     * An optional opening sentence sourced separately from the rest of the
+     * story — for when the story's lead-in restates a fact that's really
+     * evidenced by a different claim's own citation (e.g. an intent-accuracy
+     * figure quoted as context before the story pivots to its own separate
+     * finding). Keeps that restated number checkable against its own real
+     * source instead of silently riding on the main story's sourceRef, which
+     * would otherwise never mention it (found via style-maitri:live-audit,
+     * 2026-08-07: the story's "93.8% intent accuracy" context line shared a
+     * sourceRef with the adversarial-audit report, which was never about
+     * intent accuracy and so never verified it).
+     */
+    leadIn?: { text: string; sourceRef: string };
+  };
   /**
    * Wave 17 — an embedded step-curve chart for a metric that improves
    * across discrete, named method changes. Values must mirror the

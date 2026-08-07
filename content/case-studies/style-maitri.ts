@@ -123,8 +123,12 @@ export const styleMaitri: CaseStudy = {
   ],
   story: {
     title: "6 agents went shopping as skeptics on the live site — and found what a 93.8%-accuracy eval set never could",
+    leadIn: {
+      text: "The offline evals looked healthy: 93.8% intent accuracy, 96–99% retrieval precision on normal queries.",
+      sourceRef: "style-maitri:intent-accuracy",
+    },
     body: [
-      "The offline evals looked healthy: 93.8% intent accuracy, 96–99% retrieval precision on normal queries. But those numbers only measure what the eval set happens to ask. To find out what a real, skeptical shopper would experience, 6 independent agents were sent to drive the actual live production site as wedding shoppers would — 32 messy, realistic queries, judged honestly rather than graded against a rubric written in advance.",
+      "But those numbers only measure what the eval set happens to ask. To find out what a real, skeptical shopper would experience, 6 independent agents were sent to drive the actual live production site as wedding shoppers would — 32 messy, realistic queries, judged honestly rather than graded against a rubric written in advance.",
       "15 of the 32 responses were judged disappointing, and two were worse than disappointing: a body-shape styling feature fabricated a confident claim about someone's body from a photo that had no person in it at all, and a bridal search ranked children's clothing above adult items in the results.",
       "The most interesting finding was a consistency bug, not an accuracy bug. When the outfit-board tool can't find matching footwear, its code path correctly tells the shopper \"we don't have footwear that matches.\" But the plain-search path handling the exact same missing-inventory situation invents a plausible-sounding recommendation instead — \"pairs well with delicate ankle-strap sandals\" — when zero footwear items exist anywhere in the result. Two code paths, same underlying case, one honest and one confabulating. No offline metric was ever going to surface that, because the eval set doesn't know to compare one tool's honesty against another's. Only driving the live product like a real, skeptical user found it.",
     ],

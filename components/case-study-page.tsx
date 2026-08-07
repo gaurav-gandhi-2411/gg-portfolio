@@ -255,6 +255,11 @@ export function CaseStudyPage({
           {study.story && (
             <>
               <SectionHeading index={next()} title={study.story.title} />
+              {study.story.leadIn && (
+                <p className="text-muted-foreground mt-4 text-base leading-relaxed">
+                  {study.story.leadIn.text}
+                </p>
+              )}
               {study.story.body.map((paragraph) => (
                 <p
                   key={paragraph.slice(0, 32)}
