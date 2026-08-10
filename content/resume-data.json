@@ -779,9 +779,9 @@
         "mlops"
       ],
       "priority": 4,
-      "verified_source": "NOT in current docx — added for variant pool coverage. content/metrics.json#expense-tracker:tests; expense-tracker/CURRENT_STATE.md:228-231 | 2026-08-05: raw test count (143/143) removed per GG's explicit instruction — no coverage-percentage substitute exists for this repo, so replaced with a non-volatile qualitative signal (ruff/mypy clean, per CURRENT_STATE.md:230-231) rather than any count.",
-      "surface": "live_demo",
-      "artifact_url": "https://expense-tracker-tawny-eight-98.vercel.app",
+      "verified_source": "NOT in current docx — added for variant pool coverage. content/metrics.json#expense-tracker:tests; expense-tracker/CURRENT_STATE.md:228-231 | 2026-08-05: raw test count (143/143) removed per GG's explicit instruction — no coverage-percentage substitute exists for this repo, so replaced with a non-volatile qualitative signal (ruff/mypy clean, per CURRENT_STATE.md:230-231) rather than any count. | 2026-08-10: surface corrected live_demo -> repo_only, artifact_url cleared. This entry never picked up wave 19's content/products.ts fix (2026-07-31, see that file's own comment): the frontend demo 404s (DEPLOYMENT_NOT_FOUND, re-confirmed 2026-08-10), and products.ts already dropped liveUrl for the same reason. lintArtifactUrl only regex-checks URL shape, not liveness, so the dead link was unguarded until this pass caught it via the content-correctness sweep.",
+      "surface": "repo_only",
+      "artifact_url": null,
       "research_status": null,
       "demo_quality": 4,
       "role_relevance": 3,
