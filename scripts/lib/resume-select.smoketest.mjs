@@ -126,6 +126,14 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
   // (it was already published to PyPI as agentgauge-harness; products.ts's
   // pypi field was just never added) — it now enters the ranked pool and
   // wins stage 2 outright (4.70, the highest stage-2 score of any project).
+  //
+  // 2026-08-10 content-correctness sweep: expense-tracker's surface corrected
+  // live_demo -> repo_only (the opposite direction from AgentGauge's fix
+  // above). Its artifact_url 404s (DEPLOYMENT_NOT_FOUND) — content/products.ts
+  // already dropped this same liveUrl in wave 19 (2026-07-31) for the
+  // identical reason, but resume-data.json's entry never picked up that fix.
+  // It now joins ShelfSense in the repo_only forced-collapse set below
+  // instead of the ranked sequence.
   const EXPECTED_SEQUENCE = [
     "proj:triageiq",
     "proj:style-maitri",
@@ -137,7 +145,6 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
     "proj:dealhunter",
     "proj:reviewiq",
     "proj:tracegauge",
-    "proj:expense-tracker",
     "proj:reclaim",
   ];
   assert.deepStrictEqual(
@@ -149,7 +156,7 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
   );
   assert.deepStrictEqual(
     base.forcedCollapse.map((e) => e.id).sort(),
-    ["proj:shelfsense"],
+    ["proj:expense-tracker", "proj:shelfsense"],
     "the repo_only forced-collapse set has changed — this is gated on surface, not score, so it should only " +
       "move if a project's liveUrl/pypi status changed in content/products.ts",
   );
