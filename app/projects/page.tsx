@@ -43,7 +43,7 @@ export default function ProjectsPage() {
       <p className="mt-12 text-center">
         <TransitionLink
           href="/"
-          className="text-accent focus-visible:outline-ring text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Back to home
         </TransitionLink>
