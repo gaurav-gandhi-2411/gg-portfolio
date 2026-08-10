@@ -985,3 +985,16 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:README.md-109`
+
+## Wave 15 pipeline proposals — 2026-08-10 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — This fact proves a skill by demonstrating a measured result with a specific accuracy improvement, is verifiable as it is literally present in the source text, is current with no age-related concerns, and is not redundant as it provides new information not reflected in the current case-study copy.; verifier: The draft accurately reflects all numerical values, technical terms, and the neutral tone of the source table without adding unsupported claims or tonal shifts.)
+  Source: `README.md:100`
+  Draft: "Improved the accuracy of a resolution predictor by 3.27 percentage points, from 29.97% to 33.24%, using a bucket classifier in a Kubernetes environment."
+  Suggested provenance ID: `triage-iq:resolution-predictor-accuracy`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 5/5 — This fact proves a skill by demonstrating a measured result and an architectural decision with a stated trade-off, is verifiable from the provided source text, and is not redundant with the current case-study copy.; verifier: All numerical values and claims in the draft are directly supported by the source text, with no tone drift or unsupported inferences.)
+  Source: `README.md:109`
+  Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
+  Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
