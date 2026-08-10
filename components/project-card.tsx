@@ -89,12 +89,20 @@ export function ProjectCard({
           <div className="mt-auto flex flex-wrap gap-x-5 gap-y-2 pt-5 text-sm">
             <TransitionLink
               href={`/work/${product.slug}`}
-              className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               Case study →
             </TransitionLink>
-            {product.liveUrl && <InlineLink href={product.liveUrl}>Live ↗</InlineLink>}
-            {product.repoUrl && <InlineLink href={product.repoUrl}>Source ↗</InlineLink>}
+            {product.liveUrl && (
+              <InlineLink href={product.liveUrl} className="-my-3 inline-flex min-h-11 items-center">
+                Live ↗
+              </InlineLink>
+            )}
+            {product.repoUrl && (
+              <InlineLink href={product.repoUrl} className="-my-3 inline-flex min-h-11 items-center">
+                Source ↗
+              </InlineLink>
+            )}
           </div>
         </div>
 
