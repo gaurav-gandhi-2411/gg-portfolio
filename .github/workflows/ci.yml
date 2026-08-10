@@ -61,6 +61,16 @@ jobs:
       - name: Card/metrics/case-study consistency
         run: node scripts/check-card-consistency.mjs
 
+      # 2026-08-10 — public/resume.pdf is a hand-built docx export, the one
+      # artifact on the site outside every other gate; it went stale
+      # unnoticed for weeks (see scripts/check-resume-pdf-consistency.mjs's
+      # header for the incident). Runs on every PR, not path-filtered: the
+      # failure mode is a human updating content/resume-data.json's numbers
+      # without also regenerating and re-exporting the PDF, which this PR's
+      # own diff won't necessarily touch either file to reveal.
+      - name: Resume PDF vs. resume-data.json consistency
+        run: node scripts/check-resume-pdf-consistency.mjs
+
       - name: Build
         run: npm run build
 
