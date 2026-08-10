@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31",
+  "updated_at": "2026-08-10",
   "_readme": "Machine-refreshable metric store (wave 13). Keys are provenance IDs (content/provenance.md). Values are refreshed weekly by .github/workflows/metrics-refresh.yml from each source repo's .portfolio/metrics.json — via a reviewed PR, never a direct commit. Hand-edit only to correct an error; the narrative provenance record stays in content/provenance.md.",
   "metrics": {
     "warmer:hinglish-fix": {
@@ -149,9 +149,9 @@
   "informational": {
     "hf:downloads-alltime": {
       "label": "Hugging Face cumulative model downloads",
-      "value": 739,
+      "value": 1033,
       "source": "https://huggingface.co/api/models?author=gauravgandhi2411&expand[]=downloadsAllTime",
-      "measured_at": "2026-07-25",
+      "measured_at": "2026-08-10",
       "note": "Not displayed on the site — below the agreed low-thousands bar for a headline stat (wave 13). Tracked here so the weekly refresh PR surfaces growth."
     }
   }
