@@ -168,6 +168,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: "24"
+          cache: "npm"
 
       - name: Run the content curation pipeline
         env:
@@ -184,12 +185,23 @@ jobs:
             exit 0
           fi
 
+          # 2026-08-10: the pre-commit hook that normally keeps
+          # content/chatbot/index.json in sync with provenance.md only runs
+          # on a human's local commit — this job commits with GITHUB_TOKEN,
+          # so a proposal PR always shipped with a stale index and failed
+          # ci.yml's "Verify chatbot index is up to date" step (PR #59).
+          # npm ci is new to this job specifically for build-index.mjs — the
+          # other scripts here are dependency-free by design (see
+          # lib/chatbot/embed.mjs's header), this is the one exception.
+          npm ci
+          node scripts/chatbot/build-index.mjs
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           BRANCH="chore/content-pipeline"
           git checkout -B "$BRANCH"
-          git add content/provenance.md
+          git add content/provenance.md content/chatbot/index.json
           git commit -m "chore(content): weekly curated content proposals (LLM-consensus)"
           git push --force origin "$BRANCH:refs/heads/$BRANCH"
 
