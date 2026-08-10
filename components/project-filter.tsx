@@ -115,7 +115,7 @@ export function ProjectFilter({
       : `See all ${totalMatching} in ${CATEGORIES.find((c) => c.id === active)?.label ?? ""} →`;
 
   const pillBase =
-    "focus-visible:outline-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
+    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
   // Wave 14 fix: a solid fill, not a 15%-tint border — GG reported clicking
   // a pill and "nothing happens." The mechanism was firing correctly (the
   // bug hunt is in reports/wave14-…); the actual defect was that success
