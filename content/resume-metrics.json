@@ -1,7 +1,7 @@
 {
   "_readme": "Resume↔site drift guard (wave 13 follow-up). Each claim maps a metric the resume PDF states to its content/metrics.json id, recording the STORE value at the moment the resume was last synced. The weekly metrics-refresh workflow flags any claim whose store value has moved since sync (the resume shouldn't silently rot while the site self-heals), and flags a public/resume.pdf hash change without a manifest update (a resume swap that skipped this file). Regenerate this file whenever the resume is rebuilt: update resume_says/store_value_at_sync per claim, resume_pdf_sha256, and synced_at. Claims derived from site code (e.g. the 'Nine live AI products' count = liveProductCount) are not tracked here — they have no store id.",
-  "resume_pdf_sha256": "9cd89100e83318fca7a226a27ea6419d19d778caa1b6296d42f2770bc58a4925",
-  "synced_at": "2026-07-25",
+  "resume_pdf_sha256": "a7f91a991b40d8b6a1326aa84021b2166167abe08e726cf0c5dd9c5e160fde18",
+  "synced_at": "2026-08-10",
   "claims": {
     "warmer:hinglish-fix": {
       "resume_says": "Spearman −0.003 → 0.813, held-out 0.435 → 0.704 (LoRA fine-tune published as hinglish-relatedness-sbert)",
@@ -16,8 +16,8 @@
       "store_value_at_sync": "~52K items across 8 stores"
     },
     "triageiq:classifier-top3": {
-      "resume_says": "component classifier top-3 accuracy 82.5% (k8s) / 90.4% (vscode); fabrication rate 1.9–9.1% published",
-      "store_value_at_sync": "82.5% (k8s) / 90.4% (vscode)"
+      "resume_says": "component classifier top-3 accuracy 87.1% (k8s) / 89.8% (vscode); CQR conformal coverage 76.2% / 74.6% vs. an 80% target",
+      "store_value_at_sync": "87.1% / 60.5% (k8s) / 89.8% / 76.5% (vscode)"
     },
     "mmfr:recall10": {
       "resume_says": "Recall@10 3.06× over a popularity baseline (0.0328 vs 0.0107)",
