@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-08-03",
+  "updated_at": "2026-08-10",
   "products": {
     "triageiq": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "TriageIQ",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -11,13 +11,13 @@
       "demoUrl": null
     },
     "warmer": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "liveUrl": "https://playwarmer.vercel.app/",
       "httpStatus": 200,
       "demoUrl": null
     },
     "multimodal-fashion-recommender": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "Multimodal Fashion Recommender",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -27,7 +27,7 @@
       "demoUrl": null
     },
     "style-maitri": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "Agentic Shopping Assistant",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -36,7 +36,7 @@
       "demoUrl": null
     },
     "shelfsense": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "ShelfSense-M5",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -44,16 +44,16 @@
       "demoUrl": null
     },
     "aetherart": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "AetherArt",
       "repoVisibility": "public",
       "repoArchived": false,
       "liveUrl": "https://aetherart-demo-473907703523.us-central1.run.app/",
-      "httpStatus": "timeout",
+      "httpStatus": 200,
       "demoUrl": null
     },
     "agentgauge": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "AgentGauge",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -62,7 +62,7 @@
       "pypiPresence": 200
     },
     "reclaim": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "Reclaim",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -71,7 +71,7 @@
       "demoUrl": null
     },
     "reviewiq": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "review-iq",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -81,7 +81,7 @@
       "demoStatus": 200
     },
     "gold-rate-tracker": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "Gold Rate Tracker",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -90,7 +90,7 @@
       "demoUrl": null
     },
     "dealhunter": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "DealHunter — Agentic Flight Search",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -99,7 +99,7 @@
       "demoUrl": null
     },
     "tracegauge": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "tracegauge",
       "repoVisibility": "public",
       "repoArchived": false,
@@ -108,7 +108,7 @@
       "pypiPresence": 200
     },
     "expense-tracker": {
-      "checkedAt": "2026-08-03",
+      "checkedAt": "2026-08-10",
       "name": "expense-tracker",
       "repoVisibility": "public",
       "repoArchived": false,

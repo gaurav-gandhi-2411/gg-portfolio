@@ -125,6 +125,40 @@
   html {
     @apply font-sans;
   }
+  /*
+   * Mobile viewport-expansion guard (2026-08-10 mobile audit). Various
+   * absolutely/fixed-positioned elements with no explicit width cap
+   * (.hero-halo, MetricProvenance's closed panels — opacity-0 but still in
+   * normal flow, not display:none — and whatever else sits in their
+   * feedback loop once the layout viewport starts growing) had no ancestor
+   * clipping overflow, so on narrow viewports the browser was expanding the
+   * layout viewport itself to fit them — verified live (hiding
+   * MetricProvenance panels snapped the measured mobile viewport back to
+   * exactly 375px) and confirmed self-reinforcing (a `body`-only clip
+   * suppresses the *visible* overflow but not `document.documentElement
+   * .scrollWidth`/`window.innerWidth`, since overflow only propagates from
+   * body to the viewport when `html` itself doesn't set an explicit
+   * overflow — https://www.w3.org/TR/css-overflow-3/#overflow-propagation
+   * — so the guard has to live on `html`).
+   *
+   * `html` clipping conflicts with Chromium's View Transitions API: the
+   * ::view-transition pseudo-tree renders relative to the root element, so
+   * overflow-x:clip/hidden on `html` clipped that overlay too and every
+   * TransitionLink navigation (components/transition-link.tsx) hung with
+   * the URL never changing (caught by e2e/nav.spec.ts and
+   * route-transitions.spec.ts). Chromium sets `:active-view-transition` on
+   * the document element for the transition's duration
+   * (https://drafts.csswg.org/css-view-transitions-1/#pseudo-active) —
+   * lifting the clip only for that window keeps both fixed: verified by
+   * re-running the full e2e suite (mobile-viewport.spec.ts +
+   * nav/route-transitions/category-pages) green together.
+   */
+  html {
+    overflow-x: clip;
+  }
+  html:active-view-transition {
+    overflow-x: visible;
+  }
 }
 
 /*
@@ -147,9 +181,13 @@
   left: 50%;
   translate: -50% 0;
   z-index: -1;
-  width: 42rem;
+  /* min(), not max-width:100vw + width:42rem: 100vw is self-reinforcing on
+   * mobile once anything else nudges the layout viewport wider (2026-08-10
+   * mobile audit) — 100% resolves against the header's own box (the
+   * nearest positioned ancestor), which normal block layout bounds to the
+   * device width independent of this element's own size. */
+  width: min(42rem, 100%);
   height: 42rem;
-  max-width: 100vw;
   border-radius: 50%;
   /* Design-review (wave 11): at 0.17 the drift read as inert on a normal
    * 3-5s hero dwell — raised to 0.26 with stronger alpha stops so the

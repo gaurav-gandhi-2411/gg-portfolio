@@ -90,7 +90,7 @@ export function CaseStudyPage({
           <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
             <TransitionLink
               href="/projects"
-              className="focus-visible:outline-ring transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← All projects
             </TransitionLink>
@@ -328,7 +328,7 @@ export function CaseStudyPage({
             </p>
             <TransitionLink
               href="/projects"
-              className="text-accent focus-visible:outline-ring text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← Back to all projects
             </TransitionLink>

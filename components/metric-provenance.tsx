@@ -40,7 +40,7 @@ export function MetricProvenance({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="decoration-muted-foreground/60 hover:decoration-accent focus-visible:outline-ring rounded-sm underline decoration-dotted underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="decoration-muted-foreground/60 hover:decoration-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 min-w-11 items-center rounded-sm underline decoration-dotted underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {children}
         <span className="sr-only"> — show source for {label}</span>
