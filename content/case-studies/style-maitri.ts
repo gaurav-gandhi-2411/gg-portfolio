@@ -138,7 +138,7 @@ export const styleMaitri: CaseStudy = {
     "If your product's offline evals look healthy but you're not sure what a real, adversarial user would find, this is the audit pattern worth copying: agents role-playing skeptical real users on your actual live site, judged honestly rather than against a rubric you wrote yourself in advance.",
   ],
   links: [
-    { label: "Try Style Maitri", href: "https://stylemaitri.vercel.app" },
+    { label: "Try Style Maitri", href: "https://gaurav-gandhi.vercel.app/warmup/style-maitri" },
     {
       label: "Source on GitHub",
       href: "https://github.com/gaurav-gandhi-2411/agentic-shopping-assistant",

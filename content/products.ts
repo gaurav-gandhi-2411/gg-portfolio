@@ -69,7 +69,10 @@ export const products: Product[] = [
     name: "Style Maitri",
     tagline:
       "AI stylist for Indian weddings and occasions — searches 8 store catalogues at once, with guardrails that keep it from inventing prices or sizes.",
-    liveUrl: "https://stylemaitri.vercel.app",
+    // Backend (asa-stylist-api) runs min-instances=0 with no keep-warm traffic
+    // and a measured cold start of 60s+ (see content/warmup.ts) — routed
+    // through the warming bridge instead of straight to the frontend.
+    liveUrl: "https://gaurav-gandhi.vercel.app/warmup/style-maitri",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-shopping-assistant",
     categories: ["llm-agents", "retrieval", "vision"],
     techChips: ["LangGraph", "FAISS + BM25", "CLIP", "Groq"],
@@ -93,7 +96,11 @@ export const products: Product[] = [
     name: "AetherArt",
     tagline:
       "Ukiyo-e-style AI art — a custom rank-8 SDXL LoRA I trained, composed with Hyper-SD and ControlNet, served on Cloud Run.",
-    liveUrl: "https://aetherart-demo-473907703523.us-central1.run.app/",
+    // GPU-backed (L4), min-instances=0 — a bare min-instances=1 would run
+    // ~$759/mo (see content/warmup.ts). Routed through the warming bridge
+    // instead of the raw Cloud Run URL; also drops the GCP project number
+    // that URL leaks.
+    liveUrl: "https://gaurav-gandhi.vercel.app/warmup/aetherart",
     repoUrl: "https://github.com/gaurav-gandhi-2411/AetherArt",
     categories: ["vision"],
     techChips: ["SDXL LoRA", "ControlNet", "Cloud Run"],
@@ -160,7 +167,10 @@ export const products: Product[] = [
     name: "DealHunter",
     tagline:
       "Multi-agent flight search — describe a trip in plain language and get two genuinely different best itineraries, not a wall of results.",
-    liveUrl: "https://agentic-travel-booking-system.vercel.app",
+    // Backend (agentic-travel-booking-api-prod) runs min-instances=0 with no
+    // keep-warm traffic; measured cold start 19.4s (content/warmup.ts).
+    // Routed through the warming bridge instead of straight to the frontend.
+    liveUrl: "https://gaurav-gandhi.vercel.app/warmup/dealhunter",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-travel-booking-system",
     categories: ["llm-agents"],
     techChips: ["Multi-agent", "Pareto ranking", "SSE"],
