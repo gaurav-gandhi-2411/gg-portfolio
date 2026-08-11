@@ -30,8 +30,13 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
   aetherart: {
     slug: "aetherart",
     name: "AetherArt",
-    healthUrl: "https://aetherart-demo-473907703523.us-central1.run.app/",
-    destinationUrl: "https://aetherart-demo-473907703523.us-central1.run.app/",
+    // Custom domain mapped 2026-08-11 (Cloud Run Domain Mappings API, CNAME
+    // aetherart -> ghs.googlehosted.com. in samidhareviews.xyz's Namecheap
+    // DNS), verified with a valid Google Trust Services cert
+    // (ssl_verify_result=0) before flipping off the raw Cloud Run URL, which
+    // leaked the GCP project number.
+    healthUrl: "https://aetherart.samidhareviews.xyz/",
+    destinationUrl: "https://aetherart.samidhareviews.xyz/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/AetherArt",
     expectedWakeSeconds: 23,
     gpuBacked: true,
