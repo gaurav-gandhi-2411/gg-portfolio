@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: homeTitle,
     description:
-      "Production GenAI systems at Uber scale, plus independent AI products and research.",
+      "Production GenAI systems in Uber's AI org, plus independent AI products and research.",
     url: siteUrl,
     siteName: "Gaurav Gandhi",
     type: "website",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: homeTitle,
     description:
-      "Production GenAI systems at Uber scale, plus independent AI products and research.",
+      "Production GenAI systems in Uber's AI org, plus independent AI products and research.",
   },
 };
 
