@@ -34,13 +34,22 @@ const jetbrainsMono = JetBrains_Mono({
 
 const siteUrl = "https://gaurav-gandhi.vercel.app";
 
+// Wave 20 — SEO/social metadata audit. Title shortened from the tagline-style
+// "Senior Applied AI Scientist" to the literal role pairing search and hiring
+// systems match on ("Data Scientist" + "Applied AI"), and kept under the
+// ~60-char <title>/og:title budget. description trimmed under the ~155-char
+// meta-description/og:description budget (was 156 — one over) by dropping the
+// "(Indium/Uber AI)" parenthetical, not by cutting the sentence short.
+const homeTitle = "Gaurav Gandhi — Senior Data Scientist, Applied AI";
+const homeDescription =
+  "Senior Data Scientist building production GenAI systems at Uber scale and shipping independent AI products and research under his own name.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Gaurav Gandhi — Senior Applied AI Scientist",
-  description:
-    "Senior Data Scientist building production GenAI systems at Uber scale (Indium/Uber AI) and shipping independent AI products and research under his own name.",
+  title: homeTitle,
+  description: homeDescription,
   openGraph: {
-    title: "Gaurav Gandhi — Senior Applied AI Scientist",
+    title: homeTitle,
     description:
       "Production GenAI systems at Uber scale, plus independent AI products and research.",
     url: siteUrl,
@@ -49,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gaurav Gandhi — Senior Applied AI Scientist",
+    title: homeTitle,
     description:
       "Production GenAI systems at Uber scale, plus independent AI products and research.",
   },
