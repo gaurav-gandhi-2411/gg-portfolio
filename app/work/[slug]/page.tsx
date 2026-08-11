@@ -13,6 +13,49 @@ export function generateStaticParams() {
   return Object.keys(caseStudies).map((slug) => ({ slug }));
 }
 
+// Wave 20 — SEO/social metadata audit. Two bugs found across all 13 case
+// studies, not just the ones spot-checked: (1) every `dek` here is a single
+// on-page sentence (186-302 chars) used verbatim as the meta description,
+// blowing the ~155-char budget on every case study but tracegauge; (2)
+// generateMetadata only ever set `title`/`description` — with no explicit
+// `openGraph`/`twitter` block, Next's metadata merging does NOT derive those
+// from title/description per route, it carries the ROOT layout's openGraph/
+// twitter object over unchanged. So sharing any /work/[slug] link on
+// LinkedIn/X/Slack previewed as the generic homepage identity, never the
+// project. wordTrunc/truncateAtBoundary fix both mechanically (no new copy
+// invented — same sourced sentence, cut at a clause or word boundary) so
+// every case study is covered, not just the two audited here.
+function wordTrunc(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const truncated = text.slice(0, maxLen - 1);
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safe = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+  return `${safe.replace(/[,;:\s]+$/, "")}…`;
+}
+
+function truncateAtBoundary(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  const clauses = text.split(" — ");
+  let result = clauses[0];
+  if (result.length > maxLen) return wordTrunc(result, maxLen);
+  for (const clause of clauses.slice(1)) {
+    const candidate = `${result} — ${clause}`;
+    if (candidate.length <= maxLen) {
+      result = candidate;
+      continue;
+    }
+    const remaining = maxLen - result.length - 3;
+    if (remaining > 20) {
+      result = `${result} — ${wordTrunc(clause, remaining)}`;
+    }
+    break;
+  }
+  return result;
+}
+
+const META_DESCRIPTION_MAX = 155;
+const TITLE_MAX = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -21,9 +64,17 @@ export async function generateMetadata({
   const { slug } = await params;
   const study = caseStudies[slug];
   if (!study) return {};
+  const title = wordTrunc(`${study.title} — case study — Gaurav Gandhi`, TITLE_MAX);
+  const description = truncateAtBoundary(study.dek, META_DESCRIPTION_MAX);
   return {
-    title: `${study.title} — case study — Gaurav Gandhi`,
-    description: study.dek,
+    title,
+    description,
+    // Next's metadata merging replaces the whole openGraph/twitter object
+    // per segment rather than merging individual fields — omitting
+    // siteName/type/card here would silently drop them (they'd fall back to
+    // nothing, not to the root layout's values) rather than inherit them.
+    openGraph: { title, description, siteName: "Gaurav Gandhi", type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
