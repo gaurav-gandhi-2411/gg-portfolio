@@ -42,7 +42,7 @@ const siteUrl = "https://gaurav-gandhi.vercel.app";
 // "(Indium/Uber AI)" parenthetical, not by cutting the sentence short.
 const homeTitle = "Gaurav Gandhi — Senior Data Scientist, Applied AI";
 const homeDescription =
-  "Senior Data Scientist building production GenAI systems at Uber scale and shipping independent AI products and research under his own name.";
+  "Senior Data Scientist building production GenAI systems in Uber's AI org and shipping independent AI products and research under his own name.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
