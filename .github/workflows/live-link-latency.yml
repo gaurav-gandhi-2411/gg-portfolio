@@ -1,0 +1,33 @@
+name: Live Link Latency
+
+# Checks time-to-first-byte for every liveUrl in content/products.ts against
+# the real production domain — not a PR preview, since the thing being
+# guarded against (a raw Cloud Run/backend link that cold-starts) is a
+# production-traffic problem, not something a preview deploy would surface
+# differently. See scripts/check-live-link-latency.mjs's header for why this
+# exists: link-check.yml's lychee job only ever checks status codes, and
+# retries past a cold start rather than measuring it — this is what would
+# have caught Style Maitri's 60s+ cold backend before it shipped as a "Live"
+# link.
+
+on:
+  schedule:
+    # Daily, 07:00 UTC — latency regressions (a keep-warm mechanism quietly
+    # dying, a liveUrl reverted to a raw backend URL) are worth catching
+    # sooner than link-check.yml's weekly link-rot sweep.
+    - cron: "0 7 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: live-link-latency
+  cancel-in-progress: true
+
+jobs:
+  latency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check live-link latency
+        run: node scripts/check-live-link-latency.mjs

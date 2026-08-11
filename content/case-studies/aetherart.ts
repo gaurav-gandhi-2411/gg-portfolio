@@ -139,7 +139,7 @@ export const aetherart: CaseStudy = {
     "The same discipline applied to a second style adapter turned up a further lesson: evaluating an adapter at only one operating point (the library default) produced a true but incomplete verdict — and evaluating the evaluation itself, repeatedly, is what caught five separate silent ways the measurements could have been wrong without ever throwing an error.",
   ],
   links: [
-    { label: "Try AetherArt", href: "https://aetherart-demo-473907703523.us-central1.run.app/" },
+    { label: "Try AetherArt", href: "https://gaurav-gandhi.vercel.app/warmup/aetherart" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/AetherArt" },
     { label: "Methodology writeup", href: "https://github.com/gaurav-gandhi-2411/AetherArt/blob/main/docs/paper/measurement_defects.md" },
     { label: "Ukiyo-e LoRA (SDXL)", href: "https://huggingface.co/gauravgandhi2411/aetherart-ukiyo-sdxl" },

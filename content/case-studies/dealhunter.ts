@@ -116,7 +116,7 @@ export const dealhunter: CaseStudy = {
     "If you're running an agentic pipeline on free-tier or multi-provider LLM infrastructure, this is the failure mode worth guarding against: two independent bugs can silently compound, and a fallback operator is not the same as validating that a value is actually meaningful — a canary/soak deploy and a staleness check catch what a single build-passing check won't.",
   ],
   links: [
-    { label: "Try DealHunter", href: "https://agentic-travel-booking-system.vercel.app" },
+    { label: "Try DealHunter", href: "https://gaurav-gandhi.vercel.app/warmup/dealhunter" },
     {
       label: "Source on GitHub",
       href: "https://github.com/gaurav-gandhi-2411/agentic-travel-booking-system",
