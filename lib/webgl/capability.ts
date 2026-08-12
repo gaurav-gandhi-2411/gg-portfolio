@@ -18,6 +18,33 @@ interface CapabilityNavigator extends Navigator {
   deviceMemory?: number;
 }
 
+interface CapabilityWindow extends Window {
+  __ggForceWebGLCapability?: boolean;
+}
+
+/**
+ * Test-only seam that overrides the low-end HEURISTIC — and nothing else.
+ *
+ * Why it has to exist: GitHub Actions runners report 4 or fewer logical
+ * cores, so isLowEndDevice() classifies them as low-end and correctly
+ * declines WebGL. That is the gate working, not a bug — but it means CI can
+ * never reach the WebGL layer, which would leave it covered only by local
+ * runs. That is precisely the blind spot the e2e suite's non-reduced-motion
+ * axe scan exists to close, so silently accepting it would defeat the point.
+ *
+ * Scope is deliberately narrow. It bypasses ONLY the device heuristic, never
+ * prefers-reduced-motion — so the static-fallback tests stay honest and still
+ * assert that a reduced-motion visitor gets no context. It is set through
+ * page.addInitScript() from the test suite, which requires executing script
+ * in the page before load; no visitor can trip it, and it changes nothing
+ * about what real devices receive.
+ */
+function lowEndCheckOverridden(): boolean {
+  return (
+    typeof window !== "undefined" && (window as CapabilityWindow).__ggForceWebGLCapability === true
+  );
+}
+
 /** Approximate device-memory floor, in GB, below which we stay static. */
 const MIN_DEVICE_MEMORY_GB = 4;
 /** Logical-core floor; <= this many cores stays static. */
@@ -39,6 +66,7 @@ export function prefersReducedMotion(): boolean {
  */
 export function isLowEndDevice(): boolean {
   if (typeof navigator === "undefined") return true;
+  if (lowEndCheckOverridden()) return false;
   const nav = navigator as CapabilityNavigator;
 
   if (typeof nav.deviceMemory === "number" && nav.deviceMemory < MIN_DEVICE_MEMORY_GB) {

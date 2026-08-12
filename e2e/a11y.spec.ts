@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { caseStudySlugs } from "./fixtures/case-study-slugs";
 import { categoryIds } from "./fixtures/category-ids";
+import { forceWebGLCapability } from "./fixtures/force-webgl";
 
 const ROUTES = [
   "/",
@@ -214,6 +215,7 @@ test("axe: zero violations with a metric's source-provenance panel open (prose t
  */
 test("axe: zero violations on the Warmer WebGL embedding viewer", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  await forceWebGLCapability(page);
   await page.goto("/work/warmer");
 
   // Scroll the SSR'd section, not the GL testid — the latter does not exist

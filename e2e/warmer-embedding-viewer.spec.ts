@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { forceWebGLCapability } from "./fixtures/force-webgl";
 
 /**
  * Behaviour of the /work/warmer embedding viewer's two layers.
@@ -13,6 +14,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Warmer embedding viewer — WebGL layer", () => {
   test("mounts the GL canvas and swaps out the static pair", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
     await page.goto("/work/warmer");
     // Scroll the SECTION, which is present in the server-rendered HTML. The
     // GL testid does not exist until that section intersects, so waiting on
@@ -26,6 +28,7 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
 
   test("the toggle switches models and reports the change to assistive tech", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
     await page.goto("/work/warmer");
     // Scroll the SECTION, which is present in the server-rendered HTML. The
     // GL testid does not exist until that section intersects, so waiting on
@@ -49,6 +52,7 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
 
   test("both toggle controls are reachable and operable by keyboard", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
     await page.goto("/work/warmer");
     // Scroll the SECTION, which is present in the server-rendered HTML. The
     // GL testid does not exist until that section intersects, so waiting on
@@ -73,6 +77,55 @@ test.describe("Warmer embedding viewer — static fallback", () => {
     await expect(page.getByText("— base model (paraphrase-multilingual")).toBeVisible();
     await expect(page.getByText("the same terms now cluster by meaning")).toBeVisible();
     // No GL context is created at all for these visitors — not created-then-idled.
+    await expect(page.getByTestId("warmer-embedding-gl")).toHaveCount(0);
+  });
+});
+
+test.describe("Warmer embedding viewer — low-end device gate", () => {
+  /**
+   * Exercises the heuristic itself rather than trusting it. The dev machine
+   * this was written on reports 16 cores, so without spoofing the signal the
+   * low-end branch is never taken locally — and CI reports <= 4 cores, so
+   * there it is ALWAYS taken. Neither environment tests both directions on
+   * its own.
+   */
+  test("a device reporting 2 cores gets the static pair and no GL context", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 2 });
+    });
+    await page.goto("/work/warmer");
+    await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
+
+    await expect(page.getByText("— base model (paraphrase-multilingual")).toBeVisible();
+    await expect(page.getByTestId("warmer-embedding-gl")).toHaveCount(0);
+  });
+
+  /**
+   * This is exactly the CI scenario — a runner reporting <= 4 cores with the
+   * seam enabled — so it is what proves the WebGL tests above actually run
+   * there rather than silently timing out, which is how they first failed.
+   */
+  test("the seam lets a 2-core device reach the GL layer (the CI case)", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 2 });
+    });
+    await page.goto("/work/warmer");
+    await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
+    await expect(page.getByTestId("warmer-embedding-gl").locator("canvas")).toBeVisible();
+  });
+
+  test("the test seam overrides the core count but never reduced motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await forceWebGLCapability(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 2 });
+    });
+    await page.goto("/work/warmer");
+    // Reduced motion still wins — otherwise the fallback tests above would be
+    // testing nothing.
     await expect(page.getByTestId("warmer-embedding-gl")).toHaveCount(0);
   });
 });
