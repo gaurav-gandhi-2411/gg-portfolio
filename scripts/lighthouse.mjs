@@ -26,12 +26,26 @@
 // mean + sample stddev (n-1) across the run set.
 //
 // LIMITS (stated, not hidden):
-//   - This machine's own Lighthouse noise floor is a ~10-point band on the
-//     performance category score run-to-run (why n>=6, not n=1) — a
-//     shared CI runner would likely be noisier still, which is exactly why
-//     this never became a CI-blocking gate (see .github/workflows/ci.yml's
-//     own comment on the bundle-size gate for the deterministic-vs-noisy
-//     split this repo draws).
+//   - The ~10-point noise band this repo's kickoff instructions cited as
+//     the reason for n>=6 turns out to have been CROSS-SESSION,
+//     pre-pinning noise — different `npx lighthouse`/Chrome versions and
+//     machine states across old, unpinned measurement sessions, not
+//     necessarily true run-to-run variance under identical pinned
+//     conditions. This script's own first real n=6 baseline (2026-08-12,
+//     reports/lighthouse-*-{home,work-warmer}-2026-08-12.summary.json)
+//     measured a sample stddev of 2.00 (home) and 2.07 (work/warmer) on
+//     the performance category score — a much tighter band than 10 points.
+//     Kept at n=6 here anyway: one pinned session on one machine isn't
+//     enough evidence to safely shrink n for every future session/machine
+//     combination, and the cost of an extra few runs is small relative to
+//     the cost of a false-negative regression signal. Revisit n downward
+//     only after several more pinned sessions confirm this tighter band
+//     holds — don't silently adopt a smaller n from a single data point.
+//   - A shared CI runner would likely be noisier than this machine
+//     regardless of the above, which is exactly why this never became a
+//     CI-blocking gate (see .github/workflows/ci.yml's own comment on the
+//     bundle-size gate for the deterministic-vs-noisy split this repo
+//     draws).
 //   - Simulated throttling (Lighthouse's default), not real network/CPU
 //     conditions — a relative regression signal on THIS machine, not a
 //     promise of the field-observed number on a visitor's real device.
