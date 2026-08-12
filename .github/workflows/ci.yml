@@ -105,29 +105,30 @@ jobs:
       # eager-shell file set from `.next/build-manifest.json` and
       # cross-checks it against what the live page actually serves. Needs
       # its own `npm run start` (the `e2e` job is the only job with a
-      # running server at all — `build` above starts none); started and
-      # killed here, before Playwright's own webServer tries to bind the
-      # same port for the E2E suite below.
-      - name: Start production server for bundle-size gate
+      # running server at all — `build` above starts none).
+      #
+      # Start/check/stop deliberately share ONE step, not three: GitHub
+      # Actions spawns a NEW shell process per `run:` step, so a background
+      # job's PID captured via `$!` in one step is not reliably killable
+      # from a later step — confirmed live in PR #82's first CI run, where
+      # a separate "stop" step's `kill -- "-$PID"` reported "No such
+      # process" even though the actual server was still bound to :3000 a
+      # moment later and broke Playwright's own webServer with "address
+      # already in use". Job control (the PID `$!` returns, and what `kill
+      # -- -$PID` can reach) only holds reliably within a single shell
+      # process, so the whole sequence — including the kill, before
+      # Playwright's own webServer tries to bind the same port below —
+      # runs inside this one step.
+      - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
         run: |
           npm run start &
-          echo $! > /tmp/bundle-gate-server.pid
+          SERVER_PID=$!
           for i in $(seq 1 30); do
             curl -sf http://localhost:3000/ > /dev/null && break
             sleep 2
           done
-
-      - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
-        run: node scripts/check-bundle-size.mjs
-
-      # Kills the whole process GROUP (negative PID), not just the `npm`
-      # PID captured by `$!` — `npm run start` execs `next start` as a
-      # child, and killing only the parent would leave the actual server
-      # (and port 3000) alive for the next step, breaking Playwright's own
-      # webServer startup right after this.
-      - name: Stop production server (bundle-size gate only)
-        if: always()
-        run: kill -- "-$(cat /tmp/bundle-gate-server.pid)" || true
+          node scripts/check-bundle-size.mjs
+          kill -- "-$SERVER_PID" || true
 
       # Wave 14: no interactive feature ships as "verified" without this
       # job actually driving it in a browser — the gap that let wave 13's
