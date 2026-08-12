@@ -78,13 +78,21 @@ const BASE_URL = process.env.BASE_URL_OVERRIDE ?? "http://localhost:3000";
 const ROUTE = process.env.ROUTE_OVERRIDE ?? "/";
 const BUILD_MANIFEST_PATH = process.env.BUILD_MANIFEST_PATH_OVERRIDE ?? join(ROOT, ".next", "build-manifest.json");
 
-// reports/wave3-budget-reratification-2026-07-13.md is the source of truth
-// for both numbers. 215 KiB = 220,160 bytes exactly. Overridable only for
-// deliberately testing the FAIL path itself (same X_OVERRIDE convention as
-// scripts/check-metric-freshness.mjs) — never to wave through a real
-// over-budget PR; production CI never sets this.
+// Ceiling: reports/wave3-budget-reratification-2026-07-13.md. 215 KiB =
+// 220,160 bytes exactly. Overridable only for deliberately testing the FAIL
+// path itself (same X_OVERRIDE convention as scripts/check-metric-freshness
+// .mjs) — never to wave through a real over-budget PR; production CI never
+// sets this.
 const CEILING_BYTES = Number(process.env.CEILING_BYTES_OVERRIDE ?? 220_160);
-const BASELINE_BYTES = 207_862;
+// Baseline: reports/bundle-budget-reratification-2026-08-12.md. This
+// script's own first real measurement came in 15,302 bytes under the prior
+// (207,862-byte, wave3) baseline — adjudicated item-by-item before this
+// gate merged (not silently adopted): the polyfill chunk matched
+// byte-for-byte, and the shrink traced to a Next.js 16.2.10->16.3.0 /
+// React 19.2.4->19.2.8 / shadcn 4.13.0->4.16.2 dependency bump (PR #64,
+// merged the day before this baseline). Informational only — the ceiling
+// above is the actual gate.
+const BASELINE_BYTES = 192_560;
 
 // A plausibility floor for the polyfill chunk's OWN measured weight —
 // historically 39,627 bytes gzip (reports/wave2-perf-budgets-2026-07-12.md's
