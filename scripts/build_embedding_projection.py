@@ -80,11 +80,20 @@ def main() -> None:
     terms = load_terms(args.mindmeld_repo)
     print(f"{len(terms)} unique terms")
 
-    # B1 (ambient homepage hero) only needs the fine-tuned model's projection.
-    # B2 (the /work/warmer base-vs-finetuned toggle) is a separate, later PR
-    # -- it will add the base model's projection to this same file when that
-    # work starts, not before.
+    # B1 (ambient homepage hero) only needed the fine-tuned model's
+    # projection. B2 (the /work/warmer base-vs-finetuned toggle) adds the
+    # BASE model too -- the actual pre-fix model
+    # (mindmeld/spec-hinglish-fix.md:7: "paraphrase-multilingual-MiniLM-L12-v2
+    # was trained on Hindi in Devanagari script, not Latin-script romanized
+    # Hindi"), not a stand-in. Clusters are computed from the fine-tuned
+    # model's embeddings only, and reused for both projections' point colors
+    # -- the *positions* moving from scattered (base) to clustered
+    # (fine-tuned) is the whole demonstration; recoloring per-model on top of
+    # that would just be visual noise.
     coords_ft, emb_ft = project("gauravgandhi2411/hinglish-relatedness-sbert", terms)
+    coords_base, _emb_base = project(
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", terms
+    )
 
     km = KMeans(n_clusters=N_CLUSTERS, random_state=SEED, n_init=10).fit(emb_ft)
     clusters = km.labels_.tolist()
@@ -94,19 +103,22 @@ def main() -> None:
             "term": term,
             "cluster": int(clusters[i]),
             "finetuned": [round(float(v), 4) for v in coords_ft[i]],
+            "base": [round(float(v), 4) for v in coords_base[i]],
         }
         for i, term in enumerate(terms)
     ]
 
     payload = {
-        "version": 1,
+        "version": 2,
         "model": "gauravgandhi2411/hinglish-relatedness-sbert",
-        "projection": "t-SNE (sklearn), n_components=3, perplexity=30, random_state=42",
+        "base_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "projection": "t-SNE (sklearn), n_components=3, perplexity=30, random_state=42 -- run independently per model",
         "n_terms": len(terms),
         "n_clusters": N_CLUSTERS,
         "source": (
             "mindmeld/" + FIXTURE_RELPATH + " (dim1_records + dim2_records secret/word "
-            "vocabulary) -- real production eval terms, not placeholder data"
+            "vocabulary) -- real production eval terms, not placeholder data. Base model "
+            "per mindmeld/spec-hinglish-fix.md:7 (the actual pre-fix model, not a stand-in)."
         ),
         "generated_at": "2026-08-12",
         "points": points,

@@ -4,8 +4,10 @@ import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
+import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
+import { getEmbeddingProjection } from "@/lib/embedding-projection";
 import { getWarmerPuzzleNumber } from "@/lib/live-data";
 import { relatedProducts } from "@/lib/related-products";
 
@@ -94,27 +96,44 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
   let demo: React.ReactNode;
   if (slug === "warmer") {
     const puzzle = await getWarmerPuzzleNumber();
+    const projection = getEmbeddingProjection();
     demo = (
-      <section
-        aria-label="Try Warmer's matching engine"
-        className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
-      >
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
-          Try the engine
-          {puzzle ? (
-            <span className="font-mono normal-case tracking-normal">
-              {" "}
-              — puzzle #{puzzle.number} today
-            </span>
-          ) : null}
-        </p>
-        <p className="max-w-measure text-base leading-relaxed text-foreground">
-          I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are —
-          this is the exact matching engine described above, shown as an actual
-          embedding-space plot.
-        </p>
-        <HeatToyShell />
-      </section>
+      <>
+        <section
+          aria-label="The fix, made visible"
+          className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+            The fix, made visible
+          </p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            Real embeddings for the {projection.n_terms} actual terms from the eval above,
+            projected via t-SNE — the Hinglish semantic clusters that −0.003 → 0.813 represents,
+            base model vs. fine-tune, side by side.
+          </p>
+          <EmbeddingViewerStatic points={projection.points} />
+        </section>
+        <section
+          aria-label="Try Warmer's matching engine"
+          className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+            Try the engine
+            {puzzle ? (
+              <span className="font-mono normal-case tracking-normal">
+                {" "}
+                — puzzle #{puzzle.number} today
+              </span>
+            ) : null}
+          </p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are —
+            this is the exact matching engine described above, shown as an actual
+            embedding-space plot.
+          </p>
+          <HeatToyShell />
+        </section>
+      </>
     );
   } else if (slug === "triageiq") {
     demo = (

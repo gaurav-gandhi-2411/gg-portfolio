@@ -6,11 +6,15 @@ export interface EmbeddingPoint {
   term: string;
   cluster: number;
   finetuned: [number, number, number];
+  /** Same term's position under the pre-fix base model (v2+ only — see version). */
+  base?: [number, number, number];
 }
 
 export interface EmbeddingProjection {
   version: number;
   model: string;
+  /** Pre-fix model — paraphrase-multilingual-MiniLM-L12-v2, per mindmeld/spec-hinglish-fix.md:7. v2+ only. */
+  base_model?: string;
   projection: string;
   n_terms: number;
   n_clusters: number;
