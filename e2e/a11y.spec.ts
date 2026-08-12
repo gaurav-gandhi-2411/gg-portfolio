@@ -221,6 +221,7 @@ test("axe: zero violations with a metric's source-provenance panel open (prose t
  */
 test("axe: zero violations on the homepage with the hero's WebGL layer active", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  await forceWebGLCapability(page);
   await page.goto("/");
   await expect(page.locator("header canvas")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();

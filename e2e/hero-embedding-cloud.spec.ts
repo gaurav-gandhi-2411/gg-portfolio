@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { forceWebGLCapability } from "./fixtures/force-webgl";
 
 /**
  * Gating for the hero's ambient background layer. As with the Warmer viewer,
@@ -9,12 +10,14 @@ import { expect, test } from "@playwright/test";
 test.describe("hero embedding cloud — WebGL layer", () => {
   test("swaps the static scatter for a canvas on a capable device", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
     await page.goto("/");
     await expect(page.locator("header canvas")).toBeVisible();
   });
 
   test("never covers the headline — the h1 stays fully opaque and on top", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
     await page.goto("/");
     await expect(page.locator("header canvas")).toBeVisible();
 
@@ -36,6 +39,32 @@ test.describe("hero embedding cloud — static fallback", () => {
     await page.goto("/");
     await expect(page.locator("header svg[role='presentation']")).toBeVisible();
     await expect(page.locator("header canvas")).toHaveCount(0);
+  });
+});
+
+test.describe("hero embedding cloud — low-end device gate", () => {
+  /** Same reasoning as the Warmer viewer's gate tests: this dev machine
+   * reports 16 cores and CI reports <= 4, so neither exercises both branches
+   * on its own. */
+  test("a device reporting 2 cores keeps the static scatter", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 2 });
+    });
+    await page.goto("/");
+    await expect(page.locator("header svg[role='presentation']")).toBeVisible();
+    await expect(page.locator("header canvas")).toHaveCount(0);
+  });
+
+  /** The CI case — proves the WebGL tests above actually run there. */
+  test("the seam lets a 2-core device reach the GL layer", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await forceWebGLCapability(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 2 });
+    });
+    await page.goto("/");
+    await expect(page.locator("header canvas")).toBeVisible();
   });
 });
 
