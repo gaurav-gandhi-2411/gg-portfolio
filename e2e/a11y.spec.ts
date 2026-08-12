@@ -198,3 +198,31 @@ test("axe: zero violations with a metric's source-provenance panel open (prose t
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
+
+/**
+ * Every scan above goes through gotoSettled(), which emulates
+ * `prefers-reduced-motion: reduce`. That is correct for those scans, but it
+ * means none of them can ever reach the Warmer WebGL viewer: reduced motion
+ * is one of the conditions under which lib/webgl/capability.ts declines to
+ * mount the GL layer at all, so those runs only ever see the static SVG
+ * fallback — including the /work/warmer entry in ROUTES above.
+ *
+ * So this scan deliberately does NOT use gotoSettled. It is the only place
+ * the interactive layer's controls (the Base model / Fine-tuned toggle and
+ * its live region) are actually audited; without it the suite would report
+ * green over a surface it never visited.
+ */
+test("axe: zero violations on the Warmer WebGL embedding viewer", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/work/warmer");
+
+  // Scroll the SSR'd section, not the GL testid — the latter does not exist
+  // until the section intersects.
+  await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
+  // The GL layer is dynamically imported once the section intersects — wait
+  // on the canvas itself rather than a fixed timeout.
+  await expect(page.getByTestId("warmer-embedding-gl").locator("canvas")).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
