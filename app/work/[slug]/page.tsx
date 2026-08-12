@@ -4,6 +4,7 @@ import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
+import { EmbeddingViewerFrame } from "@/components/warmer/embedding-viewer-frame";
 import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
@@ -108,10 +109,13 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           </p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
             Real embeddings for the {projection.n_terms} actual terms from the eval above,
-            projected via t-SNE — the Hinglish semantic clusters that −0.003 → 0.813 represents,
-            base model vs. fine-tune, side by side.
+            projected via t-SNE — the Hinglish semantic clusters that −0.003 → 0.813 represents.
+            Switch between the base model and the fine-tune to watch the same terms pull into
+            clusters; hover or tap any point to see its term.
           </p>
-          <EmbeddingViewerStatic points={projection.points} />
+          <EmbeddingViewerFrame>
+            <EmbeddingViewerStatic points={projection.points} />
+          </EmbeddingViewerFrame>
         </section>
         <section
           aria-label="Try Warmer's matching engine"

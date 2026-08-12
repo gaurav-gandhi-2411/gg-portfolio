@@ -1,14 +1,9 @@
+import { WARMER_CLUSTER_OPACITY as CLUSTER_OPACITY } from "@/lib/embedding-cluster-opacity";
 import type { EmbeddingPoint } from "@/lib/embedding-projection";
 
 interface EmbeddingViewerStaticProps {
   points: EmbeddingPoint[];
 }
-
-// Same one-accent-discipline + faint-scatter treatment as the homepage
-// hero's static fallback (components/hero/embedding-cloud-static.tsx) —
-// see that file's own comment for why these specific radius/opacity/blur
-// values (a first version was screenshot-verified too strong on mobile).
-const CLUSTER_OPACITY = [0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82];
 
 function Scatter({ points, coordKey }: { points: EmbeddingPoint[]; coordKey: "base" | "finetuned" }) {
   return (
