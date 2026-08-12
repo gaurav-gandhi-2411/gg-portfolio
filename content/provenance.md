@@ -103,7 +103,7 @@ Experience" section.
 
 | ID | Claim | Source |
 |---|---|---|
-| `warmer:hinglish-fix` | Hinglish Spearman correlation -0.003 → 0.639 | `mindmeld/PLAN.md:265-273` (before/after table), root cause + fix in `mindmeld/spec-hinglish-fix.md:4,6-7`, reproduced in `mindmeld/generator/evals/reports/baseline_report.md:19-26` |
+| `warmer:hinglish-fix` | Hinglish Spearman correlation -0.003 → 0.813 | Both endpoints pinned in `content/metrics.json` against the same file/line at two commits: pre-fix `mindmeld/generator/evals/reports/baseline_report.md:24` @ `675994d` (2026-07-10, first commit of this eval harness — no earlier history exists), post-fix same file/line @ `16f35d1` (2026-07-18, after the script-mismatch fix and a later LoRA fine-tune). Root cause narrative in `mindmeld/spec-hinglish-fix.md:4,6-7`. Corrected 2026-08-12: this row previously cited an intermediate 0.639 (the value right after the script-mismatch fix alone, before the LoRA fine-tune pushed it to 0.813 — see case-studies/warmer.ts's result detail) via a stale `PLAN.md:265-273` reference that no longer resolves at HEAD; 0.813 is the number displayed everywhere on the site (metrics.json, products.ts, the case study, resume content, the gh-profile banner) and is what this row now matches. |
 
 Live URL `https://playwarmer.vercel.app/` — `mindmeld/README.md:78-79`. Repo confirmed via
 `git remote -v` → `github.com/gaurav-gandhi-2411/mindmeld`. Product renamed from "Mindmeld" to
