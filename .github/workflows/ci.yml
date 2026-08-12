@@ -109,26 +109,33 @@ jobs:
       #
       # Start/check/stop deliberately share ONE step, not three: GitHub
       # Actions spawns a NEW shell process per `run:` step, so a background
-      # job's PID captured via `$!` in one step is not reliably killable
-      # from a later step — confirmed live in PR #82's first CI run, where
-      # a separate "stop" step's `kill -- "-$PID"` reported "No such
-      # process" even though the actual server was still bound to :3000 a
-      # moment later and broke Playwright's own webServer with "address
-      # already in use". Job control (the PID `$!` returns, and what `kill
-      # -- -$PID` can reach) only holds reliably within a single shell
-      # process, so the whole sequence — including the kill, before
-      # Playwright's own webServer tries to bind the same port below —
-      # runs inside this one step.
+      # job's PID captured via `$!` in one step is not killable from a
+      # later step's shell at all.
+      #
+      # That alone wasn't the whole story, though (PR #82's second CI run,
+      # after merging start/check/stop into one step): even WITHIN that one
+      # step's single shell, `kill -- "-$SERVER_PID"` still reported "No
+      # such process" for the PID `$!` captured immediately after
+      # `npm run start &`, while the actual `next start` server was
+      # unquestionably still alive and answering real requests (this
+      # gate's own curl calls succeeded against it) seconds later. On this
+      # runner's npm, the process `$!` names is not the process that ends
+      # up serving the port — `npm run start` forks away from the PID it
+      # reports before the real server settles in under a different one,
+      # so PID-based tracking is unreliable here for a second, independent
+      # reason beyond the step boundary. `pkill -f` (matching the actual
+      # server's command line rather than trusting any captured PID)
+      # sidesteps both failure modes at once. Runs before Playwright's own
+      # webServer tries to bind the same port below.
       - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
         run: |
           npm run start &
-          SERVER_PID=$!
           for i in $(seq 1 30); do
             curl -sf http://localhost:3000/ > /dev/null && break
             sleep 2
           done
           node scripts/check-bundle-size.mjs
-          kill -- "-$SERVER_PID" || true
+          pkill -f "next start" || true
 
       # Wave 14: no interactive feature ships as "verified" without this
       # job actually driving it in a browser — the gap that let wave 13's
