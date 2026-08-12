@@ -96,47 +96,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      # 2026-08-12 — deterministic, CI-blocking eager-JS bundle gate. The
-      # 2026-07-12 wave-2 incident: a hand-enumerated chunk list forgot one
-      # script tag (the core-js polyfill Next.js/Turbopack always bakes in,
-      # ~39.6 KiB gzip) and silently reported a wrong, under-budget total
-      # for a full day (reports/wave3-budget-reratification-2026-07-13.md).
-      # scripts/check-bundle-size.mjs never hand-enumerates — it reads the
-      # eager-shell file set from `.next/build-manifest.json` and
-      # cross-checks it against what the live page actually serves. Needs
-      # its own `npm run start` (the `e2e` job is the only job with a
-      # running server at all — `build` above starts none).
-      #
-      # Start/check/stop deliberately share ONE step, not three: GitHub
-      # Actions spawns a NEW shell process per `run:` step, so a background
-      # job's PID captured via `$!` in one step is not killable from a
-      # later step's shell at all.
-      #
-      # That alone wasn't the whole story, though (PR #82's second CI run,
-      # after merging start/check/stop into one step): even WITHIN that one
-      # step's single shell, `kill -- "-$SERVER_PID"` still reported "No
-      # such process" for the PID `$!` captured immediately after
-      # `npm run start &`, while the actual `next start` server was
-      # unquestionably still alive and answering real requests (this
-      # gate's own curl calls succeeded against it) seconds later. On this
-      # runner's npm, the process `$!` names is not the process that ends
-      # up serving the port — `npm run start` forks away from the PID it
-      # reports before the real server settles in under a different one,
-      # so PID-based tracking is unreliable here for a second, independent
-      # reason beyond the step boundary. `pkill -f` (matching the actual
-      # server's command line rather than trusting any captured PID)
-      # sidesteps both failure modes at once. Runs before Playwright's own
-      # webServer tries to bind the same port below.
-      - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
-        run: |
-          npm run start &
-          for i in $(seq 1 30); do
-            curl -sf http://localhost:3000/ > /dev/null && break
-            sleep 2
-          done
-          node scripts/check-bundle-size.mjs
-          pkill -f "next start" || true
-
       # Wave 14: no interactive feature ships as "verified" without this
       # job actually driving it in a browser — the gap that let wave 13's
       # category filters ship broken-feeling (reports/wave14-verification-
@@ -152,4 +111,37 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+
+      # 2026-08-12 — deterministic, CI-blocking eager-JS bundle gate. The
+      # 2026-07-12 wave-2 incident: a hand-enumerated chunk list forgot one
+      # script tag (the core-js polyfill Next.js/Turbopack always bakes in,
+      # ~39.6 KiB gzip) and silently reported a wrong, under-budget total
+      # for a full day (reports/wave3-budget-reratification-2026-07-13.md).
+      # scripts/check-bundle-size.mjs never hand-enumerates — it reads the
+      # eager-shell file set from `.next/build-manifest.json` and
+      # cross-checks it against what the live page actually serves.
+      #
+      # Placement (last step needing port 3000, not before the E2E suite)
+      # is deliberate, after two failed attempts at cleaning up an earlier
+      # start: neither killing by the PID `$!` captured across a step
+      # boundary, nor killing by that same PID within one shared step, nor
+      # `pkill -f "next start"` reliably freed :3000 before Playwright's
+      # own webServer needed it next — three different real failures
+      # chasing "did the cleanup actually work," never confirmable from
+      # this job's own logs (PR #82's CI history has the details). Moving
+      # this gate to run its OWN throwaway `npm run start` AFTER the E2E
+      # suite (which owns correct start/stop of its own server via
+      # playwright.config.ts's `webServer`) means nothing in this job ever
+      # needs port 3000 again afterward — the entire class of "is the
+      # cleanup step's kill actually reliable" bug is structurally
+      # unreachable, not just harder to hit. No stop step needed: the
+      # runner VM is destroyed at the end of the job regardless.
+      - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
+        run: |
+          npm run start &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ > /dev/null && break
+            sleep 2
+          done
+          node scripts/check-bundle-size.mjs
           retention-days: 14
