@@ -30,7 +30,7 @@ function Scatter({ points, coordKey }: { points: EmbeddingPoint[]; coordKey: "ba
               cx={x}
               cy={y}
               r={radius}
-              fill="#818cf8"
+              fill="var(--indigo)"
               opacity={CLUSTER_OPACITY[p.cluster % CLUSTER_OPACITY.length]}
             />
           );
