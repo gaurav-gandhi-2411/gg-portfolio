@@ -111,6 +111,7 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 14
 
       # 2026-08-12 — deterministic, CI-blocking eager-JS bundle gate. The
       # 2026-07-12 wave-2 incident: a hand-enumerated chunk list forgot one
@@ -144,4 +145,3 @@ jobs:
             sleep 2
           done
           node scripts/check-bundle-size.mjs
-          retention-days: 14
