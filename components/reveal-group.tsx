@@ -76,10 +76,26 @@ export function RevealGroup({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const Comp = Tag as React.ElementType;
+  // Two literal branches, not a single polymorphic <Tag> render: `ref` is
+  // typed HTMLElement (this component only ever calls generic Element/
+  // HTMLElement methods on it, never anything div- or dl-specific), and
+  // @types/react 19.2.18 now resolves a union-tag's ref prop as an
+  // INTERSECTION of each branch's own element type — no single ref type
+  // (including a union) satisfies "assignable to both HTMLDivElement AND
+  // HTMLDListElement refs at once". Each branch below casts only to its
+  // own matching type, which is sound (this is genuinely a div ref when
+  // Tag is "div"), unlike the previous `as React.ElementType` erasure this
+  // replaces, which discarded ref-safety across the board.
+  if (Tag === "dl") {
+    return (
+      <dl ref={ref as React.RefObject<HTMLDListElement | null>} className={className}>
+        {children}
+      </dl>
+    );
+  }
   return (
-    <Comp ref={ref} className={className}>
+    <div ref={ref as React.RefObject<HTMLDivElement | null>} className={className}>
       {children}
-    </Comp>
+    </div>
   );
 }

@@ -5,10 +5,12 @@ import {
   LinkedInIcon,
   MailIcon,
 } from "@/components/icons";
+import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
 import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
 import { liveProductCount, products } from "@/content/products";
 import type { Stat } from "@/content/types";
+import { getEmbeddingProjection } from "@/lib/embedding-projection";
 import { getCurrentlyBuilding } from "@/lib/live-data";
 
 /**
@@ -39,12 +41,29 @@ function daysSince(iso: string): number {
  * the resume-sourced Uber corpus scale, the one number of GG's that
  * honestly supports scale language (resume:indium-ds-docunderstanding).
  *
+ * Background is the real embedding-space hero (components/hero/embedding-cloud-static.tsx)
+ * -- replaces the wave-11 gradient .hero-halo outright rather than running
+ * alongside it: two independently-animated ambient background layers read
+ * as busier than either alone, and the brief for this one was explicit
+ * that noticing the animation before the text is a failure.
+ *
+ * Static SVG only for now, not the animated WebGL version the brief asked
+ * for: a real r3f/three.js build was done and benchmarked at 233.6KB gzip
+ * for the Canvas/BufferGeometry/PointsMaterial chunk alone (irreducible --
+ * that's @react-three/fiber's own baseline WebGL-renderer cost, not
+ * anything this code added; removing this file's one direct `three` import
+ * changed the number by under 20 bytes). Past the brief's own +150KB gzip
+ * cap and its own explicit instruction for exactly this outcome ("ship the
+ * static projection instead ... do not ship it anyway"). The working,
+ * typechecked prototype is not committed — ask GG before resuming it.
+ *
  * Still deliberately NOT animated: every text node renders at full
  * opacity from first paint (wave-9 axe-race lesson); the entrance feeling
  * is the boot loader's curtain reveal.
  */
 export async function Hero() {
   const currentlyBuilding = await getCurrentlyBuilding();
+  const { points } = getEmbeddingProjection();
 
   const heroStats: Stat[] = [
     {
@@ -66,7 +85,9 @@ export async function Hero() {
 
   return (
     <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28 md:pb-20">
-      <div aria-hidden="true" className="hero-halo" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <EmbeddingCloudStatic points={points} />
+      </div>
 
       <p className="text-sm">
         <a

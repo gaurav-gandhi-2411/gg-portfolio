@@ -36,7 +36,14 @@ test.describe("Mobile viewport containment (375px)", () => {
     expect(clientWidth).toBe(375);
   }
 
-  test("home has no horizontal overflow, including the hero halo", async ({ page }) => {
+  test("home has no horizontal overflow, including the embedding-cloud hero background", async ({
+    page,
+  }) => {
+    // .hero-halo (the fixed-width circle this regression was originally
+    // about) is gone — replaced by components/hero/embedding-cloud.tsx,
+    // an inset-0 layer that can't reproduce the same self-reinforcing
+    // width bug by construction. Kept as a live regression guard anyway
+    // rather than assumed safe from the CSS alone.
     await page.goto("/");
     await assertNoHorizontalOverflow(page);
   });
