@@ -96,6 +96,39 @@ jobs:
       - name: Build
         run: npm run build
 
+      # 2026-08-12 — deterministic, CI-blocking eager-JS bundle gate. The
+      # 2026-07-12 wave-2 incident: a hand-enumerated chunk list forgot one
+      # script tag (the core-js polyfill Next.js/Turbopack always bakes in,
+      # ~39.6 KiB gzip) and silently reported a wrong, under-budget total
+      # for a full day (reports/wave3-budget-reratification-2026-07-13.md).
+      # scripts/check-bundle-size.mjs never hand-enumerates — it reads the
+      # eager-shell file set from `.next/build-manifest.json` and
+      # cross-checks it against what the live page actually serves. Needs
+      # its own `npm run start` (the `e2e` job is the only job with a
+      # running server at all — `build` above starts none); started and
+      # killed here, before Playwright's own webServer tries to bind the
+      # same port for the E2E suite below.
+      - name: Start production server for bundle-size gate
+        run: |
+          npm run start &
+          echo $! > /tmp/bundle-gate-server.pid
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ > /dev/null && break
+            sleep 2
+          done
+
+      - name: Bundle size gate (eager JS, gzip) — see scripts/check-bundle-size.mjs's header
+        run: node scripts/check-bundle-size.mjs
+
+      # Kills the whole process GROUP (negative PID), not just the `npm`
+      # PID captured by `$!` — `npm run start` execs `next start` as a
+      # child, and killing only the parent would leave the actual server
+      # (and port 3000) alive for the next step, breaking Playwright's own
+      # webServer startup right after this.
+      - name: Stop production server (bundle-size gate only)
+        if: always()
+        run: kill -- "-$(cat /tmp/bundle-gate-server.pid)" || true
+
       # Wave 14: no interactive feature ships as "verified" without this
       # job actually driving it in a browser — the gap that let wave 13's
       # category filters ship broken-feeling (reports/wave14-verification-
