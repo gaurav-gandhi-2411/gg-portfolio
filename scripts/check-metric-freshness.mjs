@@ -64,6 +64,16 @@
 // separately detected — staleness of verification is its own signal, not
 // a proxy for numeric drift and not implied by its absence.
 //
+// Wave 21 — a fourth artifact class: the gh-profile README banner
+// (gaurav-gandhi-2411/gaurav-gandhi-2411, a different repo from this one)
+// bakes three headline metrics as literal SVG text so they can animate via
+// SMIL (see that repo's assets/build-banner.js). Nothing previously re-read
+// those numbers against anything — a metrics.json update would silently
+// leave the banner showing a stale figure forever. checkSvgMetrics() closes
+// that gap the same way the rest of this file works: text-presence, not a
+// re-measurement, checked against metrics.json's current value (not the
+// upstream repo again — see that function's own comment for why).
+//
 // Zero dependencies; Node 20+ (global fetch + dynamic import).
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -75,6 +85,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // the real content/metrics.json (same override convention as
 // refresh-metrics.mjs's METRICS_REF).
 const METRICS_PATH = process.env.METRICS_PATH_OVERRIDE ?? join(ROOT, "content", "metrics.json");
+// Overridable for testing checkSvgMetrics() against a branch before it
+// merges to the gh-profile repo's default branch — same override
+// convention as METRICS_PATH_OVERRIDE above. Production always uses HEAD
+// (the default branch), never a specific ref, since the point of this
+// check is "does the live banner match" — pinning it to a branch would
+// silently stop checking the thing that's actually deployed.
+const SVG_REF_OVERRIDE = process.env.SVG_REF_OVERRIDE ?? "HEAD";
 const CASE_STUDIES_INDEX_PATH = join(ROOT, "content", "case-studies", "index.ts");
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
 const PROVENANCE_PATH = process.env.PROVENANCE_PATH_OVERRIDE ?? join(ROOT, "content", "provenance.md");
@@ -104,6 +121,151 @@ const CASE_STUDY_REPO = {
   tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer",
   "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
 };
+
+// Wave 21 — a fourth artifact class, added after the animated gh-profile
+// banner shipped: a headline metric baked as literal text inside a
+// COMMITTED SVG in a DIFFERENT repo (gaurav-gandhi-2411/gaurav-gandhi-2411,
+// not this one). Unlike content/metrics.json (refreshed weekly) or a
+// case-study claim (checked above via checkCaseStudyClaims), nothing
+// re-reads this SVG's numbers against anything, ever — if metrics.json's
+// value changes, the banner silently keeps displaying the old one forever.
+//
+// Scope is deliberately narrow: this checks the SVG against
+// content/metrics.json's CURRENT value, not against the upstream source
+// repo a second time — metrics.json is already the gated source of truth
+// (that's what the per-metric loop above exists for), so re-fetching e.g.
+// triage-iq's README here would just duplicate that check against a
+// different artifact for no new signal. If metrics.json itself is stale,
+// the per-metric loop above already reports that.
+//
+// Hand-maintained, same convention as CASE_STUDY_REPO above: a new SVG or a
+// new metric baked into an existing one needs its own line here, or it's
+// silently uncovered rather than erroring loudly. `displayToken` is the
+// exact number the SVG is expected to show — not the full metrics.json
+// `value` string, which is usually longer ("3.06× (0.0328 vs. 0.0107)")
+// than what a space-constrained decorative asset actually displays ("3.06×"
+// only). Comparing the full value string would produce a permanent false
+// PARTIAL for every entry here, for a reason that has nothing to do with
+// real drift — the abbreviation is intentional, not incomplete.
+const SVG_METRIC_SOURCES = [
+  {
+    repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
+    path: "assets/banner-light.svg",
+    metrics: [
+      { key: "mmfr:recall10", displayToken: "3.06" },
+      { key: "triageiq:classifier-top3", displayToken: "87.1" },
+      { key: "warmer:hinglish-fix", displayToken: "0.813" },
+    ],
+  },
+  {
+    repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
+    path: "assets/banner-dark.svg",
+    metrics: [
+      { key: "mmfr:recall10", displayToken: "3.06" },
+      { key: "triageiq:classifier-top3", displayToken: "87.1" },
+      { key: "warmer:hinglish-fix", displayToken: "0.813" },
+    ],
+  },
+];
+
+// Scoped strictly to <text class="mval">...</text> content — NEVER a raw
+// file scan. These SVGs embed woff2 font subsets as base64 inside
+// @font-face src urls (10-13KB of digit-laden noise each, per font weight);
+// a naive whole-file number scan would treat font-blob bytes as candidate
+// metric tokens, and would also pick up decorative/ordinal text ("1200",
+// "400" from viewBox, "16s"/"2.5s" from animation timing, "01" from a
+// section eyebrow elsewhere in this asset family) as false signal. `mval`
+// is the class these generated banners apply ONLY to verifiable
+// metric-value text nodes (see gh-profile's scripts/build-banner.js) —
+// restricting to it is what makes a text-presence check here safe at all.
+const MVAL_TEXT_RE = /<text[^>]*\bclass="mval"[^>]*>([^<]*)<\/text>/g;
+function extractMvalTexts(svgText) {
+  return [...svgText.matchAll(MVAL_TEXT_RE)].map((m) => m[1]);
+}
+
+// Same two-state-plus-fetch-failure shape as the per-metric loop above, but
+// with an extra state PARTIAL logic there doesn't need: MAPPING_STALE. That
+// fires when the hand-maintained `displayToken` no longer appears in
+// metrics.json's CURRENT value — i.e. metrics.json changed since this
+// mapping was written, so the comparison itself is no longer meaningful
+// (checking the live SVG against an already-wrong expectation would either
+// false-positive CURRENT by coincidence or false-positive POSSIBLE_DRIFT
+// for the wrong reason). Checked before ever fetching the SVG, so a stale
+// mapping doesn't cost a network round-trip and doesn't get misreported as
+// the SVG's own fault.
+async function checkSvgMetrics(store) {
+  const results = []; // { path, key, status, detail }
+  const svgCache = new Map(); // path -> { ok: true, text } | { ok: false, error }
+
+  for (const source of SVG_METRIC_SOURCES) {
+    for (const m of source.metrics) {
+      const base = { path: source.path, key: m.key };
+      const entry = store.metrics?.[m.key];
+      if (!entry) {
+        results.push({
+          ...base,
+          status: "NO_METRICS_ENTRY",
+          detail: `content/metrics.json has no "${m.key}" entry (renamed or removed?)`,
+        });
+        continue;
+      }
+
+      const displayTokens = extractTokens(m.displayToken);
+      if (displayTokens.length !== 1) {
+        results.push({
+          ...base,
+          status: "BAD_MAPPING",
+          detail: `SVG_METRIC_SOURCES displayToken "${m.displayToken}" must contain exactly one numeric token — fix the mapping in this script`,
+        });
+        continue;
+      }
+      const displayToken = displayTokens[0];
+
+      const sourceNumbers = extractSourceNumbers(entry.value ?? "");
+      if (!tokenFoundIn(displayToken, sourceNumbers)) {
+        results.push({
+          ...base,
+          status: "MAPPING_STALE",
+          detail: `mapped display value "${m.displayToken}" no longer appears in metrics.json "${m.key}".value ("${entry.value}") — metrics.json changed since this mapping was written; the SVG (and/or this script's SVG_METRIC_SOURCES entry) needs a human look`,
+        });
+        continue;
+      }
+
+      if (!svgCache.has(source.path)) {
+        const url = `https://raw.githubusercontent.com/${source.repo}/${SVG_REF_OVERRIDE}/${source.path}`;
+        try {
+          svgCache.set(source.path, { ok: true, text: await fetchText(url) });
+        } catch (err) {
+          svgCache.set(source.path, { ok: false, error: err.message });
+        }
+      }
+      const cached = svgCache.get(source.path);
+      if (!cached.ok) {
+        results.push({ ...base, status: "UNVERIFIABLE", detail: `fetch failed for ${source.repo}/${source.path}: ${cached.error}` });
+        continue;
+      }
+
+      const mvalTexts = extractMvalTexts(cached.text);
+      const mvalNumbers = mvalTexts.flatMap((t) => extractSourceNumbers(t));
+      if (tokenFoundIn(displayToken, mvalNumbers)) {
+        results.push({
+          ...base,
+          status: "CURRENT",
+          detail: `"${m.displayToken}" confirmed present in ${source.path}'s <text class="mval"> content`,
+        });
+      } else {
+        results.push({
+          ...base,
+          status: "POSSIBLE_DRIFT",
+          detail:
+            `"${m.displayToken}" (still current per metrics.json "${m.key}") not found in ${source.path}'s ` +
+            `<text class="mval"> content (found: [${mvalTexts.join(", ")}]) — the SVG may be out of sync and needs regenerating`,
+        });
+      }
+    }
+  }
+  return results;
+}
 // Numeric tokens shorter than this (after stripping a trailing '%') are
 // skipped as match candidates — a bare "5" or "0" appears in almost any
 // file by chance, which would make "at least one token found" a
@@ -681,6 +843,15 @@ const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
 const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsPartial.length + claimsUnverifiable.length;
 const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
 
+const svgResults = await checkSvgMetrics(store);
+const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
+const svgCurrent = svgByStatus("CURRENT");
+const svgDrift = svgByStatus("POSSIBLE_DRIFT");
+const svgMappingStale = svgByStatus("MAPPING_STALE");
+const svgUnverifiable = svgByStatus("UNVERIFIABLE");
+const svgNoEntry = svgByStatus("NO_METRICS_ENTRY");
+const svgBadMapping = svgByStatus("BAD_MAPPING");
+
 const today = new Date().toISOString().slice(0, 10);
 const lines = [];
 lines.push(`## Weekly metric freshness check — ${today}`);
@@ -833,6 +1004,57 @@ if (claimsUncheckedForOtherReasons > 0) {
   lines.push("");
 }
 
+lines.push(`## SVG-embedded metric coverage (gh-profile banner)`);
+lines.push("");
+lines.push(
+  "A fourth artifact class: headline numbers baked as literal text inside a committed SVG in " +
+    "gaurav-gandhi-2411/gaurav-gandhi-2411 (not this repo). Checked against content/metrics.json's " +
+    "CURRENT value only — metrics.json is already the gated source of truth (see the per-metric " +
+    "section above), so this does not re-fetch the upstream repo a second time."
+);
+lines.push("");
+lines.push(
+  `**${svgResults.length} SVG/metric pairs tracked** (${SVG_METRIC_SOURCES.length} SVG file(s)): ` +
+    `${svgCurrent.length} current, ${svgDrift.length} possible drift, ${svgMappingStale.length} mapping stale, ` +
+    `${svgUnverifiable.length} unverifiable, ${svgNoEntry.length} no metrics.json entry, ${svgBadMapping.length} bad mapping.`
+);
+lines.push("");
+if (svgDrift.length > 0) {
+  lines.push(`### Possible drift — ${svgDrift.length} SVG/metric pair(s) (needs a human look)`);
+  lines.push("");
+  lines.push("The SVG's baked text no longer matches metrics.json's current value — regenerate the SVG.");
+  lines.push("");
+  for (const r of svgDrift) lines.push(`- \`${r.path}\` / \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (svgMappingStale.length > 0) {
+  lines.push(`### Mapping stale — ${svgMappingStale.length} SVG/metric pair(s)`);
+  lines.push("");
+  lines.push(
+    "metrics.json's value changed since SVG_METRIC_SOURCES' displayToken was written, so the " +
+      "comparison itself is no longer meaningful — this is reported before the SVG is even fetched, " +
+      "distinct from possible drift above (which means the mapping is still valid but the SVG isn't)."
+  );
+  lines.push("");
+  for (const r of svgMappingStale) lines.push(`- \`${r.path}\` / \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (svgUnverifiable.length > 0) {
+  lines.push(`### Unverifiable this run — ${svgUnverifiable.length} SVG/metric pair(s)`);
+  lines.push("");
+  lines.push("Fetch failed; NOT treated as fresh. Re-check manually or next scheduled run.");
+  lines.push("");
+  for (const r of svgUnverifiable) lines.push(`- \`${r.path}\` / \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (svgNoEntry.length > 0 || svgBadMapping.length > 0) {
+  lines.push(`### Broken mapping — ${svgNoEntry.length + svgBadMapping.length} SVG/metric pair(s) (fix SVG_METRIC_SOURCES)`);
+  lines.push("");
+  for (const r of [...svgNoEntry, ...svgBadMapping]) lines.push(`- \`${r.path}\` / \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+lines.push("");
+
 lines.push(`## Case-study verification staleness (>${VERIFIED_STALE_DAYS} days)`);
 lines.push("");
 lines.push(
@@ -880,5 +1102,6 @@ console.log(
     `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
     `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
+    `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
 );
