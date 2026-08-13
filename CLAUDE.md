@@ -61,6 +61,17 @@ that would not have been guessed at.
 When adding a label, prefer `exact: true` in new locators; the substring default
 makes collisions a matter of luck about future copy.
 
+**Rebuild the chatbot index too.** The same edits feed
+`content/chatbot/index.json` — adding case-study rows for the metric splits took
+it from 509 to 518 chunks and failed CI's "Verify chatbot index is up to date"
+step, on the same branch, after everything else was green. Run
+`node scripts/chatbot/build-index.mjs` and commit the result. A stale index is
+not cosmetic: it has broken `main` twice.
+
+The reflex after a content edit is therefore three things, none of which
+typecheck or build will tell you about: **e2e suite, chatbot index, metric
+checks.**
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
