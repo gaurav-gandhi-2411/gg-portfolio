@@ -128,11 +128,23 @@ export const triageiq: CaseStudy = {
       sourceRef: "triageiq:cqr-coverage-vscode",
     },
     {
-      label: "Similar-issue retrieval, Recall@5",
-      value: "18.0% (kubernetes) / 50.5% (vscode)",
+      // Split per eval repo on 2026-08-13. This row previously showed both
+      // numbers behind sourceRef "triageiq:retrieval" — a provenance-only ID
+      // with no metrics.json entry — which left the two metric entries backing
+      // these figures cited by nothing at all, and so silently uncovered by
+      // check-card-consistency's Check A.
+      label: "Similar-issue retrieval, Recall@5 (kubernetes, related task)",
+      value: "18.0%",
       detail:
-        "vscode's original number was retired after ADR-0032 found the gold pairs were ~80% noise (dominated by a title_sim channel measured at only ~20% precision); the ADR-0032/0033 clean-pool rebuild produced a new baseline, which a later harness audit (ADR-0035) found was itself querying title-only against a title+body production index — correcting both repos upward a second time to the numbers above. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on the corrected baseline; reranking made it worse at 190–330x the latency",
-      sourceRef: "triageiq:retrieval",
+        "the ADR-0032/0033 clean-pool rebuild produced a new baseline, which a later harness audit (ADR-0035) found was itself querying title-only against a title+body production index — correcting it upward a second time. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on the corrected baseline; reranking made it worse at 190–330x the latency",
+      sourceRef: "triageiq:retrieval-recall5-k8s",
+    },
+    {
+      label: "Similar-issue retrieval, Recall@5 (vscode, duplicate task)",
+      value: "50.5%",
+      detail:
+        "vscode's original number was retired after ADR-0032 found the gold pairs were ~80% noise (dominated by a title_sim channel measured at only ~20% precision); this is the corrected figure from the same ADR-0035 harness fix",
+      sourceRef: "triageiq:retrieval-recall5-vscode",
     },
     {
       label: "Resolution-time predictor MAE vs. naive baseline",
