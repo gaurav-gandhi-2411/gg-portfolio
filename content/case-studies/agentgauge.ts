@@ -131,10 +131,33 @@ export const agentgauge: CaseStudy = {
       sourceRef: "agentgauge:judge-baseline",
     },
     {
-      label: "Does a BLOCKING description defect actually cause task failure?",
-      value: "Yes: −13.3 to −28.9pp",
-      detail: "CI excludes zero in all 3 model families — the only 1 of 6 lint rules with a measured causal effect",
-      sourceRef: "agentgauge:blocking-causal",
+      // Split into one row per model family on 2026-08-13. The single row it
+      // replaces showed "−13.3 to −28.9pp" against one sourceRef, but that
+      // range spans three separate table rows in the source, so no reader
+      // following the citation could reach the line behind any one number.
+      //
+      // The range is also easy to misread. Pairing it with "CI excludes zero"
+      // invited reading it as a confidence interval; it is the observed
+      // SPREAD of point estimates across three families. Each family has its
+      // own CI, and each of those excludes zero — a different, stronger
+      // claim, now stated separately from the spread.
+      label: "Does a BLOCKING description defect actually cause task failure? (qwen2.5:7b)",
+      value: "−13.3pp",
+      detail:
+        "the smallest of three per-family effects; the spread across families runs to −28.9pp, and each family's own CI excludes zero — the only 1 of 6 lint rules with a measured causal effect",
+      sourceRef: "agentgauge:blocking-causal-qwen2.5",
+    },
+    {
+      label: "Same defect, gemma2:9b",
+      value: "−25.2pp",
+      detail: "same audit, same rebuilt instance; CI excludes zero",
+      sourceRef: "agentgauge:blocking-causal-gemma2",
+    },
+    {
+      label: "Same defect, llama3.1:8b",
+      value: "−28.9pp",
+      detail: "the largest of the three per-family effects; CI excludes zero",
+      sourceRef: "agentgauge:blocking-causal-llama3.1",
     },
     {
       label: "Cassette-replay determinism",

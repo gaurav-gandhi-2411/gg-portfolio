@@ -5,23 +5,24 @@
   "metrics": {
     "warmer:hinglish-fix": {
       "label": "Hinglish embedding eval (Spearman correlation)",
-      "value": "-0.003 → 0.813",
-      "repo": "gaurav-gandhi-2411/mindmeld",
-      "source_file": "mindmeld (private): generator/evals/reports/baseline_report.md",
+      "value": "0.813",
+      "baseline_ref": "warmer:hinglish-baseline",
+      "repo": "gaurav-gandhi-2411/mindmeld-payloads",
+      "source_file": "evals/warmer/baseline_report.md",
       "source_line": 24,
-      "commit_sha": "16f35d168e33893bdd62fdee1a18bde6331b88bf",
+      "commit_sha": "1f4fc8719e8bb435d3f883b9069e442b28379ce7",
       "measured_at": "2026-07-18",
-      "note": "The -0.003 baseline half of this delta is separately pinned as warmer:hinglish-baseline, same file/line, pre-fix commit — see that entry."
+      "note": "Re-pointed 2026-08-13 from the private mindmeld repo to the public mindmeld-payloads, where the artifact was published byte-identically (payloads#3, merge commit 1f4fc87). A public claim backed by a private artifact is unverifiable by anyone but its author; this entry is now resolvable by the freshness checker with NO credential, and by any reader. Line numbers are unchanged because the copies were published without a prepended header for exactly that reason. Origin repo, path and commit are recorded in that repo's evals/README.md. Line 24 at this commit reads \"- Spearman correlation: 0.813\". Value narrowed from '-0.003 -> 0.813' to '0.813' on 2026-08-13. Line 24 of baseline_report.md holds ONE number per commit -- '0.813' at this commit (16f35d1), '-0.003' at the pre-fix commit that warmer:hinglish-baseline cites. Carrying both numbers in one value would have MISMATCHED the cited line the moment mindmeld-payloads#3 made the path fetchable; fixed before that rather than after. The '-0.003 -> 0.813' delta remains the story the page tells, composed from this entry and warmer:hinglish-baseline. The -0.003 baseline half of this delta is separately pinned as warmer:hinglish-baseline, same file/line, pre-fix commit — see that entry."
     },
     "warmer:hinglish-baseline": {
       "label": "Hinglish embedding eval (Spearman correlation), pre-fix baseline",
       "value": "-0.003",
-      "repo": "gaurav-gandhi-2411/mindmeld",
-      "source_file": "mindmeld (private): generator/evals/reports/baseline_report.md",
+      "repo": "gaurav-gandhi-2411/mindmeld-payloads",
+      "source_file": "evals/warmer/baseline_report_pre-fix.md",
       "source_line": 24,
-      "commit_sha": "675994dbcfa3eb80540414b379578983be406969",
+      "commit_sha": "1f4fc8719e8bb435d3f883b9069e442b28379ce7",
       "measured_at": "2026-07-10",
-      "note": "Pins the -0.003 half of warmer:hinglish-fix's -0.003 -> 0.813 headline delta. Same file and line as warmer:hinglish-fix (generator/evals/reports/baseline_report.md:24, 'hi-en' section, 'Spearman correlation:'), at the commit that first added the eval harness -- this is the earliest measurement of this metric, no earlier history exists for this file. Corroborated at full precision by the companion baseline_report.json at the same commit (spearman_correlation: -0.0034207306114626803). Added 2026-08-12 because this half of the delta had no independent commit/source pin -- it was only ever asserted inline in case-studies/warmer.ts, products.ts, resume content, and the gh-profile banner, never traced to a committed artifact."
+      "note": "Re-pointed 2026-08-13 from the private mindmeld repo to the public mindmeld-payloads, where the artifact was published byte-identically (payloads#3, merge commit 1f4fc87). A public claim backed by a private artifact is unverifiable by anyone but its author; this entry is now resolvable by the freshness checker with NO credential, and by any reader. Line numbers are unchanged because the copies were published without a prepended header for exactly that reason. Origin repo, path and commit are recorded in that repo's evals/README.md. Published as a SEPARATE file because this entry cites the PRE-fine-tune state of the same report; line 24 there reads \"- Spearman correlation: -0.003\". One snapshot could not have supported both this entry and warmer:hinglish-fix. Pins the -0.003 half of warmer:hinglish-fix's -0.003 -> 0.813 headline delta. Same file and line as warmer:hinglish-fix (generator/evals/reports/baseline_report.md:24, 'hi-en' section, 'Spearman correlation:'), at the commit that first added the eval harness -- this is the earliest measurement of this metric, no earlier history exists for this file. Corroborated at full precision by the companion baseline_report.json at the same commit (spearman_correlation: -0.0034207306114626803). Added 2026-08-12 because this half of the delta had no independent commit/source pin -- it was only ever asserted inline in case-studies/warmer.ts, products.ts, resume content, and the gh-profile banner, never traced to a committed artifact."
     },
     "style-maitri:intent-accuracy": {
       "label": "Intent-parsing accuracy",
@@ -29,9 +30,9 @@
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
       "source_file": "reports/final_scorecard_2026-07-12.txt",
       "source_line": 109,
-      "commit_sha": "57e7e6078a04d7fafb33219d597afd3548870a35",
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
       "measured_at": "2026-07-12",
-      "note": "Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
+      "note": "SHA re-pointed 2026-08-13 from 57e7e60 (pre-squash-merge branch commit, not an ancestor of master) to the merge commit that landed it. Line 109 verified unchanged: \"intent all-exact 93.8% (min 88.0%, n=211) PASS\". Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
     },
     "style-maitri:catalogue-size": {
       "label": "Cross-store catalogue",
@@ -39,48 +40,90 @@
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
       "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
       "source_line": 28,
-      "commit_sha": "59962265b85f5a159e60c2a18db32d1b3650385c",
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
       "measured_at": "2026-07-12",
-      "note": "Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
+      "note": "SHA re-pointed 2026-08-13 from 5996226 (pre-squash-merge branch commit, not an ancestor of master) to the merge commit that landed it. Line 28 verified to hold the headline figure: \"Catalogue size: 61,883 -> 52,494 items\"; the \"across all 8 stores\" qualifier wraps to line 29. Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
     },
-    "triageiq:classifier-top3": {
-      "label": "Component classifier top-3 / top-1 accuracy",
-      "value": "87.1% / 60.5% (k8s) / 89.8% / 76.5% (vscode)",
+    "triageiq:classifier-top3-k8s": {
+      "label": "Component classifier top-3 accuracy (kubernetes)",
+      "value": "87.1%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 81,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the kubernetes top-3 figure at README.md:81. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
+    },
+    "triageiq:classifier-top3-vscode": {
+      "label": "Component classifier top-3 accuracy (vscode)",
+      "value": "89.8%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 79,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "Corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only (site-vs-repo reconciliation, wave 18). ADR-0036 (2026-07-24) shipped a multi-label supervision fix; the new value is the current shipped model per README.md:79-82 and the full paired-bootstrap in docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md:58-67."
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the vscode top-3 figure at README.md:79. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
     },
-    "triageiq:cqr-coverage": {
-      "label": "Resolution-time interval coverage after Conformal Quantile Regression, vs. 80% nominal target",
-      "value": "76.2% (k8s) / 74.6% (vscode)",
+    "triageiq:cqr-coverage-k8s": {
+      "label": "Resolution-time CQR interval coverage (kubernetes)",
+      "value": "76.2%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 94,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes coverage at README.md:94 (80% nominal target). Also re-pointed off 1ad094f, a pre-squash-merge branch commit. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
     },
-    "triageiq:retrieval-recall5": {
-      "label": "Similar-issue retrieval, Recall@5",
-      "value": "18.0% (k8s) / 50.5% (vscode)",
+    "triageiq:cqr-coverage-vscode": {
+      "label": "Resolution-time CQR interval coverage (vscode)",
+      "value": "74.6%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 98,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode coverage at README.md:98 (80% nominal target). Also re-pointed off 1ad094f. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+    },
+    "triageiq:retrieval-recall5-k8s": {
+      "label": "Similar-issue retrieval Recall@5, related task (kubernetes)",
+      "value": "18.0%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 86,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes Recall@5 at README.md:86. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+    },
+    "triageiq:retrieval-recall5-vscode": {
+      "label": "Similar-issue retrieval Recall@5, duplicate task (vscode)",
+      "value": "50.5%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 88,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode Recall@5 at README.md:88. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
     },
     "shelfsense:wrmsse": {
-      "label": "WRMSSE vs. naive baseline",
-      "value": "36% reduction (0.8956 → 0.5693)",
+      "label": "WRMSSE, best private leaderboard",
+      "value": "0.5693",
+      "baseline_ref": "shelfsense:wrmsse-baseline",
       "repo": "gaurav-gandhi-2411/shelfsense-m5",
       "source_file": "reports/leaderboard.md",
       "source_line": 233,
       "commit_sha": "2cf85c6deac76665352a9217d7386a282d73888b",
-      "measured_at": "2026-05-07"
+      "measured_at": "2026-05-07",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The 36% reduction is DERIVED from this and shelfsense:wrmsse-baseline (0.8956 -> 0.5693); it is not a figure printed on any line, so it is stated here rather than cited as if it were. "
+    },
+    "shelfsense:wrmsse-baseline": {
+      "label": "WRMSSE, Seasonal Naive 28 reference baseline",
+      "value": "0.8956",
+      "repo": "gaurav-gandhi-2411/shelfsense-m5",
+      "source_file": "reports/leaderboard.md",
+      "source_line": 221,
+      "commit_sha": "2cf85c6deac76665352a9217d7386a282d73888b",
+      "measured_at": "2026-05-07",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The naive-seasonal reference this is measured against, at leaderboard.md:221. Same shape as warmer:hinglish-fix / warmer:hinglish-baseline. "
     },
     "reviewiq:extraction-eval": {
       "label": "Extraction accuracy (en/hi/hi-en)",
@@ -93,12 +136,24 @@
     },
     "mmfr:recall10": {
       "label": "Recall@10 lift vs. popularity baseline",
-      "value": "3.06× (0.0328 vs. 0.0107)",
+      "value": "3.06× (0.0328)",
+      "baseline_ref": "mmfr:recall10-baseline",
       "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
       "source_file": "README.md",
       "source_line": 124,
       "commit_sha": "7b5d84b0cc2eb497b98e84c63bb6436858e9e48d",
-      "measured_at": "2026-07-12"
+      "measured_at": "2026-07-12",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. Both the lift and the absolute Recall@10 sit on README.md:124, so they stay together. The 0.0107 popularity baseline is on line 121 and is now mmfr:recall10-baseline. "
+    },
+    "mmfr:recall10-baseline": {
+      "label": "Recall@10, popularity baseline",
+      "value": "0.0107",
+      "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
+      "source_file": "README.md",
+      "source_line": 121,
+      "commit_sha": "7b5d84b0cc2eb497b98e84c63bb6436858e9e48d",
+      "measured_at": "2026-07-12",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The popularity baseline the 3.06x lift is measured against, at README.md:121. "
     },
     "gold-rate-tracker:headline": {
       "label": "Naive baseline vs. ML model (199-fold backtest)",
@@ -119,14 +174,35 @@
       "commit_sha": "dbde03d7b93f707531f4021113e662ac3994965c",
       "measured_at": "2026-06-01"
     },
-    "agentgauge:blocking-causal": {
-      "label": "Measured causal effect of one BLOCKING description defect on agent task success",
-      "value": "−13.3 to −28.9pp across 3 model families",
+    "agentgauge:blocking-causal-gemma2": {
+      "label": "BLOCKING description defect, task-success effect (gemma2:9b)",
+      "value": "-25.2pp",
       "repo": "gaurav-gandhi-2411/agentgauge",
       "source_file": "reports/v2_4_task1_blast_radius_audit.md",
-      "source_line": null,
+      "source_line": 95,
       "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
-      "measured_at": "2026-07-25"
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the gemma2:9b point estimate at line 95. "
+    },
+    "agentgauge:blocking-causal-llama3.1": {
+      "label": "BLOCKING description defect, task-success effect (llama3.1:8b)",
+      "value": "-28.9pp",
+      "repo": "gaurav-gandhi-2411/agentgauge",
+      "source_file": "reports/v2_4_task1_blast_radius_audit.md",
+      "source_line": 96,
+      "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the llama3.1:8b point estimate at line 96. "
+    },
+    "agentgauge:blocking-causal-qwen2.5": {
+      "label": "BLOCKING description defect, task-success effect (qwen2.5:7b)",
+      "value": "-13.3pp",
+      "repo": "gaurav-gandhi-2411/agentgauge",
+      "source_file": "reports/v2_4_task1_blast_radius_audit.md",
+      "source_line": 97,
+      "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the qwen2.5:7b point estimate at line 97. "
     },
     "reclaim:honesty-arc": {
       "label": "Exact-duplicate reclaimable estimate, corrected as real safety bugs were found",
@@ -159,12 +235,12 @@
     "warmer:embedding-separation": {
       "label": "Embedding cluster separation (mean silhouette, raw embeddings)",
       "value": "0.0370 base vs 0.0247 fine-tuned (each on its own k=7 partition)",
-      "repo": "gaurav-gandhi-2411/mindmeld",
-      "source_file": "mindmeld (private): generator/evals/finetune/data/embedding_separation_report.md",
+      "repo": "gaurav-gandhi-2411/mindmeld-payloads",
+      "source_file": "evals/warmer/embedding_separation_report.md",
       "source_line": 17,
-      "commit_sha": "6cd2c801f4d59f8b31dad5d8114ad4063719ed4e",
+      "commit_sha": "1f4fc8719e8bb435d3f883b9069e442b28379ce7",
       "measured_at": "2026-08-13",
-      "note": "SHA corrected 2026-08-13: this entry first cited 66cabd9, the pre-merge branch commit, which is NOT an ancestor of mindmeld main -- the PR was squash-merged as 6cd2c80, so the original SHA is unreachable from mainline history and the citation would rot the moment the branch is deleted. Verified line 17 at 6cd2c80 reads \"| euclidean | 0.0370 | 0.0247 | 0.67x |\". Measured 2026-08-13 because the '~9x separation' figure attached to the /work/warmer embedding viewer had NO committed artifact anywhere -- it was asserted, never sourced. The measurement reproduces that headline exactly (line 10: euclidean silhouette 0.0026 base vs 0.0247 fine-tuned, 9.32x) but only when BOTH models are scored against KMeans labels fitted on the fine-tuned embeddings, which favours the fine-tune close to by construction. The control on line 17 -- each model scored on its own partition -- reverses it: the base model is HIGHER (euclidean 0.0370 vs 0.0247; cosine 0.0606 vs 0.0421). So the 9x measures disagreement between two embedding spaces, not clustering quality, and this entry pins the control rather than the headline. All values are near zero: both spaces are weakly clustered at k=7. Metric choice alone moves the headline from 9.3x to 24.3x, so both are reported. This does NOT affect warmer:hinglish-fix (-0.003 -> 0.813 Spearman), which measures the task the model was trained for; it only rules out the weaker claim that the improvement is visible as cluster separation."
+      "note": "Re-pointed 2026-08-13 from the private mindmeld repo to the public mindmeld-payloads, where the artifact was published byte-identically (payloads#3, merge commit 1f4fc87). A public claim backed by a private artifact is unverifiable by anyone but its author; this entry is now resolvable by the freshness checker with NO credential, and by any reader. Line numbers are unchanged because the copies were published without a prepended header for exactly that reason. Origin repo, path and commit are recorded in that repo's evals/README.md. Line 17 at this commit reads \"| euclidean | 0.0370 | 0.0247 | 0.67x |\" -- the control table. SHA corrected 2026-08-13: this entry first cited 66cabd9, the pre-merge branch commit, which is NOT an ancestor of mindmeld main -- the PR was squash-merged as 6cd2c80, so the original SHA is unreachable from mainline history and the citation would rot the moment the branch is deleted. Verified line 17 at 6cd2c80 reads \"| euclidean | 0.0370 | 0.0247 | 0.67x |\". Measured 2026-08-13 because the '~9x separation' figure attached to the /work/warmer embedding viewer had NO committed artifact anywhere -- it was asserted, never sourced. The measurement reproduces that headline exactly (line 10: euclidean silhouette 0.0026 base vs 0.0247 fine-tuned, 9.32x) but only when BOTH models are scored against KMeans labels fitted on the fine-tuned embeddings, which favours the fine-tune close to by construction. The control on line 17 -- each model scored on its own partition -- reverses it: the base model is HIGHER (euclidean 0.0370 vs 0.0247; cosine 0.0606 vs 0.0421). So the 9x measures disagreement between two embedding spaces, not clustering quality, and this entry pins the control rather than the headline. All values are near zero: both spaces are weakly clustered at k=7. Metric choice alone moves the headline from 9.3x to 24.3x, so both are reported. This does NOT affect warmer:hinglish-fix (-0.003 -> 0.813 Spearman), which measures the task the model was trained for; it only rules out the weaker claim that the improvement is visible as cluster separation."
     }
   },
   "informational": {
