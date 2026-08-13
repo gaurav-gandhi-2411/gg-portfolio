@@ -30,6 +30,7 @@ import {
   buildUserPrompt,
   refusalAnswer,
   serverErrorAnswer,
+  unavailableAnswer,
   type ChatAnswer,
 } from "@/lib/chatbot/answer";
 
@@ -226,6 +227,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
         stack: error?.stack,
       })
     );
+    // The embedding dependency being absent is not a fault — it is a known,
+    // survivable degraded mode (@huggingface/transformers is optional because
+    // its transitive native binary is fetched at install time). 503 rather
+    // than 500 so the client can close the composer instead of inviting a
+    // retry that cannot succeed.
+    //
+    // Matched by NAME, not instanceof: this route is TypeScript importing a
+    // .mjs module, and bundling can leave two copies of the class identity in
+    // play, which would make instanceof silently false and send a degraded
+    // state out as a 500.
+    if (error?.name === "EmbeddingUnavailableError") {
+      return NextResponse.json(unavailableAnswer(), { status: 503 });
+    }
     return NextResponse.json(serverErrorAnswer(), { status: 500 });
   }
 }

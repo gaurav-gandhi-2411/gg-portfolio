@@ -29,6 +29,19 @@ export interface ChatAnswer {
   answer: string;
   citations: ChatCitation[];
   refused: boolean;
+  /**
+   * True only when the feature itself cannot run — the local embedding
+   * dependency is absent (see lib/chatbot/embed.mjs's
+   * EmbeddingUnavailableError). Served with HTTP 503.
+   *
+   * Deliberately its own flag rather than a variant of `refused` or a 500:
+   * a refusal says "I won't answer that question", a 500 says "something
+   * broke, try again", and both invite the reader to try a different question
+   * or retry. Neither is true here — nothing they type will work until the
+   * dependency is back, so the UI closes the composer instead of accepting
+   * input it cannot serve.
+   */
+  unavailable?: boolean;
 }
 
 /** The canonical honest-refusal response shape — used whenever the
@@ -45,6 +58,25 @@ export function refusalAnswer(): ChatAnswer {
  * "we broke" instead of blaming the user's connection for both. */
 export function serverErrorAnswer(): ChatAnswer {
   return { answer: SERVER_ERROR_MESSAGE, citations: [], refused: true };
+}
+
+/**
+ * Returned (with HTTP 503) when @huggingface/transformers is absent, so no
+ * question can be embedded and therefore none can be answered.
+ *
+ * The copy points at what IS available rather than apologising, because the
+ * honest situation is that everything the assistant knows is already on the
+ * page — it only ever cites this site's own content.
+ */
+export function unavailableAnswer(): ChatAnswer {
+  return {
+    answer:
+      "Ask is temporarily unavailable — the local search model didn't load. " +
+      "Everything it can tell you is on this page and in the case studies.",
+    citations: [],
+    refused: true,
+    unavailable: true,
+  };
 }
 
 export function buildSystemPrompt(): string {

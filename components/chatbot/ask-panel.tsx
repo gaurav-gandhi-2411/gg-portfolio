@@ -49,7 +49,17 @@ interface ConversationTurn {
   refused: boolean;
 }
 
-type Status = "idle" | "loading" | "error";
+/**
+ * "unavailable" is deliberately NOT a kind of "error".
+ *
+ * An error invites a retry — the copy says "try again shortly" and the composer
+ * stays open. When the local embedding dependency is absent (HTTP 503,
+ * `unavailable: true`), retrying cannot succeed and no question the reader types
+ * will ever be answered. A chatbot that keeps accepting input it cannot serve is
+ * worse than one that visibly declines it, so this state closes the composer and
+ * hides the suggested questions rather than dangling prompts that go nowhere.
+ */
+type Status = "idle" | "loading" | "error" | "unavailable";
 
 // Matches the route's own `maxDuration = 30` (app/api/chat/route.ts) — the
 // client gives up at the same point the server would already have, so a
@@ -172,7 +182,10 @@ export function AskPanel() {
 
   async function ask(rawQuestion: string): Promise<void> {
     const trimmed = rawQuestion.trim();
-    if (!trimmed || status === "loading") return;
+    // "unavailable" is terminal for this mount: the composer is disabled, but
+    // guard the handler too so a stray Enter or a programmatic submit cannot
+    // fire a request that is guaranteed to 503.
+    if (!trimmed || status === "loading" || status === "unavailable") return;
 
     setStatus("loading");
 
@@ -192,6 +205,14 @@ export function AskPanel() {
       // this path — see serverErrorAnswer() — but the status is what marks
       // it as a fault rather than a normal in-band answer/refusal/rate-limit
       // turn). Distinct from every other failure mode: this one is ours.
+      // 503 = the feature cannot run at all (embedding dependency absent), not
+      // a fault. Checked BEFORE the >=500 branch, which would otherwise class
+      // it as a retryable server error and keep the composer open.
+      if (res.status === 503) {
+        setStatus("unavailable");
+        return;
+      }
+
       if (res.status >= 500) {
         setErrorKind("server");
         setStatus("error");
@@ -297,7 +318,23 @@ export function AskPanel() {
         </p>
       ) : null}
 
-      {!isEmpty && status !== "loading" && remainingQuestions.length > 0 ? (
+      {/* Not text-destructive: this is not an error the reader caused or can
+          act on, and styling it as one implies something is broken for them
+          specifically. Muted, factual, and it points at what IS available. */}
+      {status === "unavailable" ? (
+        <p role="status" data-testid="ask-unavailable" className="text-muted-foreground text-sm">
+          Ask is temporarily unavailable — the local search model didn&apos;t load. Everything it
+          can tell you is on this page and in the case studies.
+        </p>
+      ) : null}
+
+      {/* Chips are HIDDEN, not disabled, when unavailable — offering questions
+          that cannot be answered is the "looks like it works, returns nothing"
+          failure this state exists to avoid. */}
+      {!isEmpty &&
+      status !== "loading" &&
+      status !== "unavailable" &&
+      remainingQuestions.length > 0 ? (
         <div className="message-in flex flex-col gap-2">
           <p className="text-muted-foreground text-xs">Or ask about:</p>
           <ChipRow questions={remainingQuestions} onPick={handlePickSuggestion} compact />
@@ -313,13 +350,20 @@ export function AskPanel() {
           ref={inputRef}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask about a project, the architecture, or what I'm looking for…"
+          disabled={status === "unavailable"}
+          placeholder={
+            status === "unavailable"
+              ? "Ask is unavailable right now"
+              : "Ask about a project, the architecture, or what I'm looking for…"
+          }
           autoComplete="off"
           className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
         />
         <button
           type="submit"
-          disabled={status === "loading" || question.trim().length === 0}
+          disabled={
+            status === "loading" || status === "unavailable" || question.trim().length === 0
+          }
           className="bg-accent text-accent-foreground focus-visible:outline-ring shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ask
