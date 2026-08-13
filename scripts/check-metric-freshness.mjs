@@ -277,6 +277,123 @@ async function checkSvgMetrics(store) {
 // be real evidence.
 const MIN_TOKEN_LEN = 3;
 
+// ---------------------------------------------------------------------------
+// Layer 5: is each cited commit_sha actually reachable from its source repo's
+// default branch?
+//
+// WHY THIS EXISTS: every other layer checks whether a metric's VALUE is still
+// right. None of them checks whether the CITATION still resolves. Those fail
+// differently — a stale value is wrong today and detectable today, while an
+// unreachable SHA is correct today and silently dies later, taking the
+// provenance with it.
+//
+// The failure is systematic, not incidental, and it comes from squash-merging.
+// You measure on a branch, record that branch commit in metrics.json, then the
+// PR squash-merges: GitHub creates a NEW commit with the combined diff and the
+// branch commit you cited is never an ancestor of the default branch. It stays
+// resolvable for a while — GitHub keeps orphaned commits addressable — and then
+// stops, whenever the branch is deleted and the object is pruned. So the
+// citation looks fine right up until it doesn't, and nothing was watching.
+//
+// Found 2026-08-13 via warmer:embedding-separation, which cited the pre-merge
+// branch commit. Auditing the rest found four more, all the same shape.
+//
+// UNREACHABLE is reported separately from UNVERIFIABLE on purpose. They are
+// opposite situations: UNREACHABLE means we successfully checked and the answer
+// is bad (act on it), UNVERIFIABLE means we could not check (no credential,
+// rate limit, network) and know nothing. Collapsing them would let a real
+// UNREACHABLE hide inside the pile of private-repo entries this script can
+// never reach.
+const GITHUB_API = "https://api.github.com";
+// Optional. Unauthenticated works for public repos at 60 req/hr, which covers
+// this table; a token raises that ceiling AND is the only way private repos
+// get checked at all (see the report's own note on what that would take).
+const GH_TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null;
+
+async function githubApi(path) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const headers = { Accept: "application/vnd.github+json" };
+    if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
+    const res = await fetch(`${GITHUB_API}${path}`, { signal: controller.signal, headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function checkShaReachability(store) {
+  const results = [];
+  const defaultBranchCache = new Map(); // repo -> branch | null
+
+  for (const [key, entry] of Object.entries(store.metrics ?? {})) {
+    if (!entry?.repo || !entry?.commit_sha) continue;
+    const base = { key, repo: entry.repo, sha: entry.commit_sha };
+
+    let defaultBranch = defaultBranchCache.get(entry.repo);
+    if (defaultBranch === undefined) {
+      try {
+        defaultBranch = (await githubApi(`/repos/${entry.repo}`)).default_branch;
+      } catch (err) {
+        defaultBranch = null;
+        defaultBranchCache.set(entry.repo, null);
+        results.push({
+          ...base,
+          status: "UNVERIFIABLE",
+          detail:
+            `cannot read ${entry.repo} (${err.message}) — private repo or rate limit. ` +
+            `Set GITHUB_TOKEN (read-only, contents:read) to cover it.`,
+        });
+        continue;
+      }
+      defaultBranchCache.set(entry.repo, defaultBranch);
+    }
+    if (defaultBranch === null) {
+      results.push({
+        ...base,
+        status: "UNVERIFIABLE",
+        detail: `${entry.repo} unreadable without a credential — set GITHUB_TOKEN to cover it.`,
+      });
+      continue;
+    }
+
+    try {
+      // compare/base...head: "identical" or "behind" both mean head IS an
+      // ancestor of base. "ahead"/"diverged" mean it is not — the squash-merge
+      // signature.
+      const cmp = await githubApi(
+        `/repos/${entry.repo}/compare/${defaultBranch}...${entry.commit_sha}`
+      );
+      if (cmp.status === "identical" || cmp.status === "behind") {
+        results.push({
+          ...base,
+          status: "REACHABLE",
+          detail: `${entry.commit_sha.slice(0, 7)} is an ancestor of ${defaultBranch} (${cmp.status})`,
+        });
+      } else {
+        results.push({
+          ...base,
+          status: "UNREACHABLE",
+          detail:
+            `${entry.commit_sha.slice(0, 7)} is NOT an ancestor of ${entry.repo}'s ${defaultBranch} ` +
+            `(compare status: ${cmp.status}) — almost certainly a pre-squash-merge branch commit. ` +
+            `It resolves today and will stop resolving when that branch is pruned. ` +
+            `Re-point this entry at the merge commit that actually landed.`,
+        });
+      }
+    } catch (err) {
+      results.push({
+        ...base,
+        status: "UNVERIFIABLE",
+        detail: `compare failed for ${entry.repo} (${err.message})`,
+      });
+    }
+  }
+  return results;
+}
+
 async function fetchText(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -849,6 +966,9 @@ const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
 
 const svgResults = await checkSvgMetrics(store);
 const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
+
+const shaResults = await checkShaReachability(store);
+const shaByStatus = (s) => shaResults.filter((r) => r.status === s);
 const svgCurrent = svgByStatus("CURRENT");
 const svgDrift = svgByStatus("POSSIBLE_DRIFT");
 const svgMappingStale = svgByStatus("MAPPING_STALE");
@@ -1086,6 +1206,52 @@ if (staleVerification.length === 0 && missingVerification.length === 0) {
   lines.push(`All ${verifiedRows.length} case studies verified within the last ${VERIFIED_STALE_DAYS} days.`);
   lines.push("");
 }
+// --- Layer 5: commit-SHA reachability -------------------------------------
+const shaReachable = shaByStatus("REACHABLE");
+const shaUnreachable = shaByStatus("UNREACHABLE");
+const shaUnverifiable = shaByStatus("UNVERIFIABLE");
+
+lines.push("## Commit-SHA reachability");
+lines.push("");
+lines.push(
+  "Every other layer asks whether a metric's VALUE is still right. This one asks " +
+    "whether its CITATION still resolves — specifically, whether each `commit_sha` is " +
+    "an ancestor of its source repo's default branch. A squash-merged PR produces a " +
+    "NEW commit, so the branch commit you measured on is never an ancestor of `main`; " +
+    "it stays addressable until the branch is pruned, then the provenance dies quietly."
+);
+lines.push("");
+lines.push(
+  `**${shaResults.length} cited SHA(s) checked**: ${shaReachable.length} reachable, ` +
+    `${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable.`
+);
+lines.push("");
+
+if (shaUnreachable.length > 0) {
+  lines.push(`### UNREACHABLE — ${shaUnreachable.length} entr(ies), re-point at the merge commit`);
+  lines.push("");
+  for (const r of shaUnreachable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (shaUnverifiable.length > 0) {
+  lines.push(`### Unverifiable — ${shaUnverifiable.length} entr(ies)`);
+  lines.push("");
+  lines.push(
+    "Distinct from UNREACHABLE above: these were not checked at all, so they are " +
+      "neither confirmed nor flagged. To cover them, either (a) give CI a **read-only " +
+      "token** with `contents:read` on the private source repos and expose it as " +
+      "`GITHUB_TOKEN` to this step, or (b) move the cited artifact into a public repo. " +
+      "Until one of those happens, treat these as unverified, not as passing."
+  );
+  lines.push("");
+  for (const r of shaUnverifiable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (shaUnreachable.length === 0 && shaUnverifiable.length === 0) {
+  lines.push(`All ${shaResults.length} cited SHAs are reachable from their default branch.`);
+  lines.push("");
+}
+
 lines.push(
   "_Generated by scripts/check-metric-freshness.mjs._"
 );
@@ -1107,5 +1273,6 @@ console.log(
     `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
-    `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
+    `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +
+    `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited.`
 );
