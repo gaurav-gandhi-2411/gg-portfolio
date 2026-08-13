@@ -23,7 +23,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { embed, EMBEDDING_MODEL_ID } from "../../lib/chatbot/embed.mjs";
+import {
+  embed,
+  EMBEDDING_MODEL_ID,
+  EmbeddingUnavailableError,
+} from "../../lib/chatbot/embed.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
@@ -366,4 +370,30 @@ async function main() {
   console.log(`Wrote ${withEmbeddings.length} chunks to ${OUTPUT_PATH}`);
 }
 
-await main();
+// Fail LOUDLY and write NOTHING when the embedding dependency is absent.
+//
+// @huggingface/transformers is an optionalDependency (2026-08-13), so "not
+// installed" is now a reachable state rather than an impossible one. The
+// dangerous version of this script is the helpful one: catch the error, warn,
+// leave the existing index in place, exit 0. That ships a STALE index while
+// reporting success — and a stale index has broken main twice.
+//
+// So: EmbeddingUnavailableError is caught only to explain itself, then exits
+// non-zero. Everything else propagates untouched — a model-load failure or an
+// inference bug is a real fault and must not be dressed up as a missing
+// dependency.
+try {
+  await main();
+} catch (err) {
+  if (err instanceof EmbeddingUnavailableError) {
+    console.error(
+      "\nbuild-index: @huggingface/transformers is not installed. The index cannot be " +
+        "rebuilt.\n" +
+        "If this ran in CI, install optional dependencies (npm ci without " +
+        "--omit=optional).\n" +
+        "Refusing to write — a silently skipped rebuild ships a stale index.\n"
+    );
+    process.exit(1);
+  }
+  throw err;
+}
