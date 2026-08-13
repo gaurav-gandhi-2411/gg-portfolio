@@ -147,24 +147,28 @@ const CASE_STUDY_REPO = {
 // only). Comparing the full value string would produce a permanent false
 // PARTIAL for every entry here, for a reason that has nothing to do with
 // real drift — the abbreviation is intentional, not incomplete.
+// Reduced from three metrics per banner to one on 2026-08-13, when the banner
+// was rebuilt around a single framed metric instead of three bare numbers
+// floating on a rising line. `mmfr:recall10` (3.06) and
+// `triageiq:classifier-top3` (87.1) are no longer displayed in this asset AT
+// ALL — that is the new design, not drift — so continuing to track them here
+// would report a permanent false POSITIVE for two metrics the file cannot
+// contain. Both are still covered by the per-metric section above, which is
+// where their real verification lives; this layer only ever covered the
+// additional risk of a number baked into a decorative asset going stale.
+//
+// If a future banner displays more metrics again, add them back here — an
+// unlisted baked-in number is silently uncovered rather than erroring.
 const SVG_METRIC_SOURCES = [
   {
     repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
     path: "assets/banner-light.svg",
-    metrics: [
-      { key: "mmfr:recall10", displayToken: "3.06" },
-      { key: "triageiq:classifier-top3", displayToken: "87.1" },
-      { key: "warmer:hinglish-fix", displayToken: "0.813" },
-    ],
+    metrics: [{ key: "warmer:hinglish-fix", displayToken: "0.813" }],
   },
   {
     repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
     path: "assets/banner-dark.svg",
-    metrics: [
-      { key: "mmfr:recall10", displayToken: "3.06" },
-      { key: "triageiq:classifier-top3", displayToken: "87.1" },
-      { key: "warmer:hinglish-fix", displayToken: "0.813" },
-    ],
+    metrics: [{ key: "warmer:hinglish-fix", displayToken: "0.813" }],
   },
 ];
 
