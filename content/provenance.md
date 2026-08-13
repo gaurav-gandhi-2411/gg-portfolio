@@ -546,7 +546,7 @@ the named report files:
 |---|---|---|
 | `agentgauge:predictive-validity` | v1's 8-axis LLM-judged score does not predict task success (survives neither multiple-comparison correction nor length control) | `reports/predictive_validity_study.md`; README v2.2 note |
 | `agentgauge:icc-mde` | ICC 0.793 across trial repeats → reallocate to 1 trial/task × 100 tasks/arm; MDE 8.5pp at 80% power, ship target (10pp) met | `reports/v2_1_estimator_rebuild.md`, `reports/v2_2_optimal_allocation.md` |
-| `agentgauge:blocking-causal` | one BLOCKING defect (type/enum contradiction) causes −13.3 to −28.9pp task success, CI excludes zero in 3 model families | `reports/v2_4_task1_blast_radius_audit.md` @ `78fff2f` (re-verified on a rebuilt instance) |
+| `agentgauge:blocking-causal-gemma2` / `-llama3.1` / `-qwen2.5` (split 2026-08-13) | one BLOCKING defect (type/enum contradiction) causes a task-success drop of −25.2pp (gemma2:9b, line 95), −28.9pp (llama3.1:8b, line 96) and −13.3pp (qwen2.5:7b, line 97). Each family has its own CI and each excludes zero. The "−13.3 to −28.9pp" figure shown on the page is the observed SPREAD across those three point estimates — **not a confidence interval** — and is derived, so it is not cited as a value. | `reports/v2_4_task1_blast_radius_audit.md` @ `78fff2f` (re-verified on a rebuilt instance) |
 | `agentgauge:false-alarm` | false-alarm <5% in every cluster-count stratum; 21.6% abstention under the null | `reports/v2_2_few_clusters_correction.md`, `reports/v2_1_estimator_rebuild.md` |
 | `agentgauge:judge-baseline` | single-prompt LLM-judge baseline: 97.1% false-alarm rate | `reports/v2_1_cross_model_validation.md` §Task 2e |
 | `agentgauge:retiering` | severity tiers re-set by measured causal impact; `required_references_missing_property` demoted BLOCKING→INFO on a measured null | `reports/v2_3_task2_retiering.md` |
@@ -864,7 +864,7 @@ session):**
 | expense-tracker | expense-tracker:tests | 143/143 | 2026-06-01 | 65d | Value still correct; held anyway (false positive) |
 | gold-rate-tracker | gold-rate-tracker:headline | qualitative | 2026-07-19 | 17d | Under the 21d gate, propagates normally |
 | reclaim | reclaim:honesty-arc | chain | 2026-07-23 | 13d | Under the 21d gate, propagates normally |
-| agentgauge | agentgauge:blocking-causal | −13.3 to −28.9pp | 2026-07-25 | 11d | Under the 21d gate; value unchanged, but manifest's single-value schema can't express the 45-tool-sets/10-artifacts/5.37pp-MDE facts the Wave 18 (2026-07-31) AgentGauge rewrite added |
+| agentgauge | agentgauge:blocking-causal-gemma2 / -llama3.1 / -qwen2.5 (split 2026-08-13) | −25.2 / −28.9 / −13.3pp (spread −13.3 to −28.9pp, not a CI) | 2026-07-25 | 11d | Under the 21d gate; value unchanged, but manifest's single-value schema can't express the 45-tool-sets/10-artifacts/5.37pp-MDE facts the Wave 18 (2026-07-31) AgentGauge rewrite added |
 | triage-iq, agentic-shopping-assistant, mindmeld, multimodal-fashion-recommender | — | — | — | — | **No `.portfolio/metrics.json` at all** — structural gap, pipeline can never refresh these regardless of manifest age |
 
 Not implemented this session (out of scope per GG's "report only" instruction): regenerating any

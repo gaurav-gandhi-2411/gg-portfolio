@@ -241,10 +241,18 @@ for (const p of products) {
   // checks pull in opposite directions: one demands both numbers in one
   // value, the other demands one number per value.
   //
-  // Scoped narrowly on purpose — only the exact `-baseline` sibling of THIS
-  // card's own metric is consulted, never an arbitrary other entry, so a
-  // figure still cannot quote a number that no sibling metric backs.
-  const baselineEntry = metrics[`${p.metricId}-baseline`];
+  // The link is DECLARED by the primary entry's `baseline_ref`, not inferred
+  // from key naming. The first version of this guessed `<id>-baseline`, which
+  // silently failed for warmer:hinglish-fix — whose baseline is
+  // `warmer:hinglish-baseline`, not `warmer:hinglish-fix-baseline`. Deriving a
+  // relationship from a naming convention only works until a key doesn't
+  // follow it, and then it fails as a confusing false positive rather than as
+  // a missing link.
+  //
+  // Scoped narrowly on purpose: only the ONE entry this metric names, never an
+  // arbitrary other, so a figure still cannot quote a number no declared
+  // sibling backs.
+  const baselineEntry = metricEntry.baseline_ref ? metrics[metricEntry.baseline_ref] : undefined;
   const searchSpace = baselineEntry
     ? `${metricEntry.value} ${baselineEntry.value}`
     : metricEntry.value;

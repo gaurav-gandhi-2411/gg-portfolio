@@ -439,7 +439,26 @@ async function checkCitedLines(store) {
 
     const tokens = extractTokens(entry.value ?? "");
     if (tokens.length === 0) {
-      results.push({ ...base, status: "NO_LINE", detail: `value has no numeric token to locate: ${entry.value}` });
+      // QUALITATIVE is reported apart from NO_LINE so a future reader does not
+      // mistake it for an unfixed defect. gold-rate-tracker:headline's value is
+      // "Naive wins — ships the honest baseline, not the model": there is no
+      // number in it, so there is nothing a line could anchor, and no amount of
+      // work would ever move it into LINE_MATCH. That is a permanent, correct
+      // end state, unlike a NO_LINE entry which is simply not yet anchored.
+      //
+      // Note the two reasons a value yields no token are different: genuinely
+      // having no digits (this case, correct forever), versus having digits
+      // below MIN_TOKEN_LEN — see aetherart:vram, "6.2GB peak VRAM", where the
+      // 3-digit floor that prevents coincidental whole-file matches also
+      // suppresses a perfectly valid short citation. That one IS a gap.
+      const hasAnyDigit = /\d/.test(String(entry.value ?? ""));
+      results.push({
+        ...base,
+        status: hasAnyDigit ? "TOKEN_TOO_SHORT" : "QUALITATIVE",
+        detail: hasAnyDigit
+          ? `value's number(s) fall below the ${MIN_TOKEN_LEN}-digit floor that guards against coincidental matches: ${entry.value}`
+          : `value is qualitative — no number to anchor, and none expected: ${entry.value}`,
+      });
       continue;
     }
 
@@ -1358,6 +1377,8 @@ const lineMatch = lineByStatus("LINE_MATCH");
 const lineMismatch = lineByStatus("LINE_MISMATCH");
 const lineUnverifiable = lineByStatus("UNVERIFIABLE");
 const lineNone = lineByStatus("NO_LINE");
+const lineQualitative = lineByStatus("QUALITATIVE");
+const lineTooShort = lineByStatus("TOKEN_TOO_SHORT");
 
 lines.push("## Cited-line content");
 lines.push("");
@@ -1374,9 +1395,37 @@ lines.push("");
 lines.push(
   `**${lineResults.length} entr(ies) with a cited SHA**: ${lineMatch.length} line-match, ` +
     `${lineMismatch.length} LINE MISMATCH, ${lineUnverifiable.length} unverifiable, ` +
-    `${lineNone.length} no line cited.`
+    `${lineNone.length} no line cited, ${lineQualitative.length} qualitative (no anchor possible), ` +
+    `${lineTooShort.length} below the token floor.`
 );
 lines.push("");
+
+if (lineQualitative.length > 0) {
+  lines.push(`### Qualitative — ${lineQualitative.length} entr(ies), CORRECT AS-IS`);
+  lines.push("");
+  lines.push(
+    "Not a defect and not a backlog item. These values contain no number, so there is " +
+      "nothing a line could anchor and no work that would ever move them into " +
+      "line-match. Listed separately so nobody re-opens them as unfinished."
+  );
+  lines.push("");
+  for (const r of lineQualitative) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineTooShort.length > 0) {
+  lines.push(`### Below the token floor — ${lineTooShort.length} entr(ies), a real gap`);
+  lines.push("");
+  lines.push(
+    `These DO have a number, but one shorter than the ${MIN_TOKEN_LEN}-digit minimum this ` +
+      "check uses to avoid matching a coincidental figure elsewhere in a long file. The " +
+      "citation may be perfectly correct; this check simply cannot confirm it. Unlike the " +
+      "qualitative entries above, this one is a limitation of the checker, not a property " +
+      "of the metric."
+  );
+  lines.push("");
+  for (const r of lineTooShort) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
 
 if (lineMismatch.length > 0) {
   lines.push(`### LINE MISMATCH — ${lineMismatch.length} entr(ies)`);
@@ -1396,7 +1445,12 @@ if (lineUnverifiable.length > 0) {
   lines.push("");
 }
 if (lineMismatch.length === 0 && lineUnverifiable.length === 0) {
-  lines.push(`All ${lineMatch.length} cited lines contain their entry's value.`);
+  lines.push(
+    `All ${lineMatch.length} anchorable cited lines contain their entry's value.` +
+      (lineQualitative.length > 0 || lineTooShort.length > 0
+        ? " (Qualitative and below-floor entries are listed above and are not failures.)"
+        : "")
+  );
   lines.push("");
 }
 
@@ -1423,5 +1477,5 @@ console.log(
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +
     `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited. ` +
-    `cited-line: ${lineMatch.length} match, ${lineMismatch.length} MISMATCH, ${lineUnverifiable.length} unverifiable, ${lineNone.length} no line, of ${lineResults.length}.`
+    `cited-line: ${lineMatch.length} match, ${lineMismatch.length} MISMATCH, ${lineUnverifiable.length} unverifiable, ${lineNone.length} no line, ${lineQualitative.length} qualitative, ${lineTooShort.length} below-floor, of ${lineResults.length}.`
 );

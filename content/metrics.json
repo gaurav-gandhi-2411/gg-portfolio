@@ -5,13 +5,14 @@
   "metrics": {
     "warmer:hinglish-fix": {
       "label": "Hinglish embedding eval (Spearman correlation)",
-      "value": "-0.003 → 0.813",
+      "value": "0.813",
+      "baseline_ref": "warmer:hinglish-baseline",
       "repo": "gaurav-gandhi-2411/mindmeld",
       "source_file": "mindmeld (private): generator/evals/reports/baseline_report.md",
       "source_line": 24,
       "commit_sha": "16f35d168e33893bdd62fdee1a18bde6331b88bf",
       "measured_at": "2026-07-18",
-      "note": "The -0.003 baseline half of this delta is separately pinned as warmer:hinglish-baseline, same file/line, pre-fix commit — see that entry."
+      "note": "Value narrowed from '-0.003 -> 0.813' to '0.813' on 2026-08-13. Line 24 of baseline_report.md holds ONE number per commit -- '0.813' at this commit (16f35d1), '-0.003' at the pre-fix commit that warmer:hinglish-baseline cites. Carrying both numbers in one value would have MISMATCHED the cited line the moment mindmeld-payloads#3 made the path fetchable; fixed before that rather than after. The '-0.003 -> 0.813' delta remains the story the page tells, composed from this entry and warmer:hinglish-baseline. The -0.003 baseline half of this delta is separately pinned as warmer:hinglish-baseline, same file/line, pre-fix commit — see that entry."
     },
     "warmer:hinglish-baseline": {
       "label": "Hinglish embedding eval (Spearman correlation), pre-fix baseline",
@@ -106,6 +107,7 @@
     "shelfsense:wrmsse": {
       "label": "WRMSSE, best private leaderboard",
       "value": "0.5693",
+      "baseline_ref": "shelfsense:wrmsse-baseline",
       "repo": "gaurav-gandhi-2411/shelfsense-m5",
       "source_file": "reports/leaderboard.md",
       "source_line": 233,
@@ -135,6 +137,7 @@
     "mmfr:recall10": {
       "label": "Recall@10 lift vs. popularity baseline",
       "value": "3.06× (0.0328)",
+      "baseline_ref": "mmfr:recall10-baseline",
       "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
       "source_file": "README.md",
       "source_line": 124,
@@ -171,14 +174,35 @@
       "commit_sha": "dbde03d7b93f707531f4021113e662ac3994965c",
       "measured_at": "2026-06-01"
     },
-    "agentgauge:blocking-causal": {
-      "label": "Measured causal effect of one BLOCKING description defect on agent task success",
-      "value": "−13.3 to −28.9pp across 3 model families",
+    "agentgauge:blocking-causal-gemma2": {
+      "label": "BLOCKING description defect, task-success effect (gemma2:9b)",
+      "value": "-25.2pp",
       "repo": "gaurav-gandhi-2411/agentgauge",
       "source_file": "reports/v2_4_task1_blast_radius_audit.md",
-      "source_line": null,
+      "source_line": 95,
       "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
-      "measured_at": "2026-07-25"
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the gemma2:9b point estimate at line 95. "
+    },
+    "agentgauge:blocking-causal-llama3.1": {
+      "label": "BLOCKING description defect, task-success effect (llama3.1:8b)",
+      "value": "-28.9pp",
+      "repo": "gaurav-gandhi-2411/agentgauge",
+      "source_file": "reports/v2_4_task1_blast_radius_audit.md",
+      "source_line": 96,
+      "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the llama3.1:8b point estimate at line 96. "
+    },
+    "agentgauge:blocking-causal-qwen2.5": {
+      "label": "BLOCKING description defect, task-success effect (qwen2.5:7b)",
+      "value": "-13.3pp",
+      "repo": "gaurav-gandhi-2411/agentgauge",
+      "source_file": "reports/v2_4_task1_blast_radius_audit.md",
+      "source_line": 97,
+      "commit_sha": "78fff2ff6cdba3219a48fbc685a4f217ee488d6c",
+      "measured_at": "2026-07-25",
+      "note": "Split 2026-08-13 into one entry per model family. The former single entry's value was a RANGE spanning three table rows (lines 95-97), so no single line could anchor it. The range itself is the observed SPREAD of point estimates across three model families -- it is not a confidence interval, and is not cited as a value anywhere because it appears on no line of the source. Each family's own CI is in the source rows and each excludes zero. This entry pins the qwen2.5:7b point estimate at line 97. "
     },
     "reclaim:honesty-arc": {
       "label": "Exact-duplicate reclaimable estimate, corrected as real safety bugs were found",

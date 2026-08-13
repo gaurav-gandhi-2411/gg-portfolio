@@ -121,7 +121,12 @@ export const products: Product[] = [
     // repo's own predictive-validity study falsified the v1 8-axis score
     // and the project rebuilt around a statistical harness. Caught by this
     // wave's metrics-manifest verification pass (see provenance.md).
-    metric: refreshableMetric("agentgauge:blocking-causal"),
+    // The qwen2.5 figure — the SMALLEST of the three per-family effects, not
+    // the headline −28.9pp. The card shows one number, and the conservative
+    // one is the right default: the claim is "this defect measurably causes
+    // failure", and the weakest effect that still excludes zero is the
+    // strongest form of that claim.
+    metric: refreshableMetric("agentgauge:blocking-causal-qwen2.5"),
     // Wave 17: live on PyPI as of v0.5.2 — confirmed via `pip index versions
     // agentgauge-harness` (2026-07-31), see provenance.md.
     pypi: {
