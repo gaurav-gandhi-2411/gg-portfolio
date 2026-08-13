@@ -155,6 +155,16 @@
       "commit_sha": "cd4087e43d575dc0afa5dfef3a8f90da2790d82a",
       "measured_at": "2026-08-05",
       "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor."
+    },
+    "warmer:embedding-separation": {
+      "label": "Embedding cluster separation (mean silhouette, raw embeddings)",
+      "value": "0.0370 base vs 0.0247 fine-tuned (each on its own k=7 partition)",
+      "repo": "gaurav-gandhi-2411/mindmeld",
+      "source_file": "mindmeld (private): generator/evals/finetune/data/embedding_separation_report.md",
+      "source_line": 17,
+      "commit_sha": "66cabd9a9c9f5a260fde9d7b48ef873039ae2a5b",
+      "measured_at": "2026-08-13",
+      "note": "Measured 2026-08-13 because the '~9x separation' figure attached to the /work/warmer embedding viewer had NO committed artifact anywhere -- it was asserted, never sourced. The measurement reproduces that headline exactly (line 10: euclidean silhouette 0.0026 base vs 0.0247 fine-tuned, 9.32x) but only when BOTH models are scored against KMeans labels fitted on the fine-tuned embeddings, which favours the fine-tune close to by construction. The control on line 17 -- each model scored on its own partition -- reverses it: the base model is HIGHER (euclidean 0.0370 vs 0.0247; cosine 0.0606 vs 0.0421). So the 9x measures disagreement between two embedding spaces, not clustering quality, and this entry pins the control rather than the headline. All values are near zero: both spaces are weakly clustered at k=7. Metric choice alone moves the headline from 9.3x to 24.3x, so both are reported. This does NOT affect warmer:hinglish-fix (-0.003 -> 0.813 Spearman), which measures the task the model was trained for; it only rules out the weaker claim that the improvement is visible as cluster separation."
     }
   },
   "informational": {

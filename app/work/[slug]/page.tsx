@@ -4,6 +4,7 @@ import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
+import { EmbeddingViewerFrame } from "@/components/warmer/embedding-viewer-frame";
 import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
@@ -108,10 +109,29 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           </p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
             Real embeddings for the {projection.n_terms} actual terms from the eval above,
-            projected via t-SNE — the Hinglish semantic clusters that −0.003 → 0.813 represents,
-            base model vs. fine-tune, side by side.
+            projected via t-SNE. Switch between the base model and the fine-tune to see the
+            same terms rearrange; hover or tap any point to see its term.
           </p>
-          <EmbeddingViewerStatic points={projection.points} />
+          {/*
+            This paragraph exists because the measurement contradicted the
+            story the picture tells. Shipping the viewer without it would
+            have let a t-SNE layout stand in as evidence for a claim the
+            silhouette control does not support.
+          */}
+          <p className="max-w-measure text-sm leading-relaxed text-muted-foreground">
+            <span className="font-medium text-foreground">What this does and does not show.</span>{" "}
+            The fine-tune&apos;s result is the eval metric above — that measures the task it was
+            trained for. Cluster separation is a weaker claim, and it does not survive checking:
+            mean silhouette on the raw embeddings is 9.3× better for the fine-tune only when both
+            models are scored on the fine-tune&apos;s own clusters. Give each model its own
+            clusters and the base model scores higher (0.037 vs 0.025). Both numbers sit near
+            zero. So the tighter base-model cloud you see here is largely t-SNE&apos;s layout, not
+            a property of the embedding space — fine-tuning reorganised that space rather than
+            sharpening it.
+          </p>
+          <EmbeddingViewerFrame>
+            <EmbeddingViewerStatic points={projection.points} />
+          </EmbeddingViewerFrame>
         </section>
         <section
           aria-label="Try Warmer's matching engine"
