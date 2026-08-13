@@ -7,14 +7,15 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **ten times in two
-days**, in ten different disguises, by ten unrelated routes. None of them was a
-bug in the usual sense. Almost every one of them was green — one that was red had
-already been explained away in advance, one was a `2>/dev/null` typed for
-tidiness, and the last was a check that ran perfectly against an address the
-product had moved out of.
+This is written down because the same failure was found **eleven times in three
+days**, in eleven different disguises, by eleven unrelated routes. None of them
+was a bug in the usual sense. Almost every one of them was green — one that was
+red had already been explained away in advance, one was a `2>/dev/null` typed for
+tidiness, one was a check that ran perfectly against an address the product had
+moved out of, and the last was a monitoring stack installed after an outage that
+could not have detected that outage.
 
-## The ten
+## The eleven
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -269,6 +270,50 @@ finally reported honestly did the latter — it branched on whether the output
 matched a known error signature and printed `UNVERIFIED` instead of a count —
 and that branch, not the removal of `2>/dev/null`, is what made it correct.
 
+**11. Traffic-derived alerting cannot see a service that never starts.** TriageIQ
+runs scale-to-zero. Its Cloud Monitoring setup — `scripts/setup_monitoring.sh` —
+creates an email notification channel, a log-based metric for Groq token usage, a
+dashboard, and three alert policies: 5xx rate above 5% over 10 minutes, p95
+latency above 5s over 10 minutes, and daily tokens above 70K.
+
+Every one of those is computed **from requests the service served**. A
+scale-to-zero instance that cannot cold-start — because billing was disabled —
+serves nothing. Zero requests produce zero log lines, which produce zero metric
+points, which produce zero alerts. The error-rate condition is not evaluated and
+found acceptable; it is evaluated against **no data at all**, and absence of data
+is not a breach. Total failure and a quiet night have the same signature.
+
+This monitoring was installed *after* the 2026-08-05 billing outage, which went
+undetected for up to 12 days. It looked comprehensive — a dashboard, three
+policies, a custom metric, a notification channel — and it was structurally blind
+to the exact failure that motivated it. Not misconfigured. **Correctly
+configured, measuring the wrong plane**: it watches the quality of traffic that
+exists, and the failure mode is that no traffic can exist.
+
+The trap is what "fixing" it would have felt like. `health-monitor.yml`'s header
+records that the GCP uptime check "described as primary as of 2026-08-10" lived
+in the decommissioned project and that `setup_monitoring.sh` "is updated to point
+at the new project but has not been re-run". The obvious remedy is to re-run it.
+**That script creates no uptime check** — grep it — so re-running would have
+restored the dashboard and the three blind policies, produced a satisfying wall
+of green, and closed nothing. A remediation that feels complete and changes
+nothing is worse than a known gap, because the gap stops being tracked.
+
+The distinction worth keeping: **a passive check consumes signals the system
+happens to emit; an active check generates its own.** Only the second can
+distinguish "healthy and idle" from "cannot start", because only the second still
+produces a data point when the system produces none. Every alert that reads a
+metric derived from real traffic inherits this blindness, no matter how many
+policies are stacked on it. The remedy is an uptime check or synthetic monitor —
+something that manufactures a request on a schedule — not more conditions over
+the same starved metric.
+
+A smaller sibling in the same setup, same shape: a Cloud Monitoring email channel
+stays **pending until the emailed confirmation link is clicked**, and an
+unconfirmed channel accepts alerts and delivers nothing. The policies list looks
+identical either way. Creating a notification path and verifying a notification
+path are separate acts, and only one of them was ever performed here.
+
 ## What follows from it
 
 - **Name the surface.** For every check, state which paths, which entries, which
@@ -302,6 +347,14 @@ and that branch, not the removal of `2>/dev/null`, is what made it correct.
   print an explicit `UNVERIFIED`, or the failure still reads as a zero.
 - **A timeout is not a result.** On a scale-to-zero service the probe budget
   must exceed a cold start before absence of a response means anything.
+- **For liveness, probe actively — never infer it from traffic metrics.** An
+  alert computed from served requests goes silent exactly when the service stops
+  serving (instance 11). Ask of any monitor: *if this system emitted nothing at
+  all, would this still produce a data point?* If not, it measures quality, not
+  existence, and something must manufacture the request instead.
+- **Creating a notification path is not verifying one.** An unconfirmed
+  Cloud Monitoring channel accepts alerts and delivers nothing, and the policy
+  list looks the same either way. Send a test through every channel end to end.
 - **Test the check against a known-bad input,** not only a passing one. A check
   verified only on data that passes has never demonstrated it can fail. The
   determinism check in `gaurav-gandhi-2411` was run with its
