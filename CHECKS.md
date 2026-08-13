@@ -7,12 +7,13 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **eight times in two
-days**, in eight different disguises, by eight unrelated routes. None of them was
-a bug in the usual sense. Almost every one of them was green — and the one that
-was red had already been explained away in advance.
+This is written down because the same failure was found **nine times in two
+days**, in nine different disguises, by nine unrelated routes. None of them was
+a bug in the usual sense. Almost every one of them was green — one that was red
+had already been explained away in advance, and the last one was a `2>/dev/null`
+typed for tidiness.
 
-## The eight
+## The nine
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -78,9 +79,33 @@ had already written down two reasons to ignore it.
 `link-check.yml` failed on `https://review-iq-ajjrytb3na-el.a.run.app/docs`. The
 first reading was rate limiting. It was not. **`review-iq-prod` has no billing
 account linked**, so Cloud Run refuses to start a container and Google's frontend
-returns 503 in ~0.09s. A T2 product's entire backend was down, on both the raw
-`.run.app` URL and its own custom domain `api.samidhareviews.xyz`, and the link
-checker was the only thing in the estate that said so.
+returns 503 in ~0.09s.
+
+**What that 503 meant took a second correction, and the distinction matters.**
+The first diagnosis here read "a T2 product's backend is down". It is not.
+review-iq had been *migrated* to `reviewiq-prod-260813`, where it serves genuine
+Swagger today; the old project was decommissioned on purpose, and its billing was
+removed deliberately rather than lost. The defect is a **stale citation** — the
+portfolio pointing at an address the product has moved out of.
+
+That is a different defect from a dead service, with a different fix, and
+collapsing the two costs real money: the response to "backend down" is to relink
+billing, which for review-iq would have resurrected a decommissioned duplicate
+and billed for it. The response to "stale citation" is to edit a URL. Both were
+found in the same sweep, and both are live in this estate right now:
+
+| product | state | fix |
+|---|---|---|
+| review-iq | migrated; old project decommissioned | **stale citation** — repoint the URL |
+| AetherArt | no replacement project exists; `aetherart-demo` returns 500 | **down** — needs billing |
+| TriageIQ | `triageiq-prod-260812` created but not deployed to; `triageiq-api` returns 503 | **down** — finish the migration |
+
+The general point: *a check reporting a URL is unreachable has told you about the
+URL, not about the product.* Which of those two it means is a separate question
+that the check cannot answer and a reader will answer by assumption if nobody
+answers it deliberately. Diagnosing the billing correctly and then inferring an
+outage from it was exactly that assumption — the mechanism was right and the
+conclusion drawn from it was not checked against whether a replacement existed.
 
 Two artefacts had prepared the dismissal in advance:
 
@@ -130,10 +155,54 @@ healthy: `gcloud run services describe` reports `Ready: True`,
 `RoutesReady: True`, and 100% of traffic on `review-iq-00038-nt2`, the latest
 ready revision. All of that is control-plane configuration, which billing does
 not touch — the service is perfectly configured and cannot run. Confirming the
-outage required either a request to the URL, or
+failure required either a request to the URL, or
 `gcloud billing projects describe`, which no check ran. This is instance 6's
 lesson in a different costume: state that looks like health, measured on the
 wrong plane.
+
+Note that even those signals could not have told the two defects apart. A
+decommissioned project and a broken one report identically — `Ready: True` and
+an unpaid bill look the same either way. What distinguished them was finding
+`reviewiq-prod-260813` on the open billing account and getting real Swagger from
+it. **The evidence that a service moved lives outside the service**, so no check
+scoped to one project can produce it.
+
+**9. `2>/dev/null` made "nothing exists" and "I could not look" identical.**
+Sweeping five GCP projects for billable resources, every `gcloud sql instances
+list`, `gcloud compute instances list` and `gcloud container clusters list`
+returned empty. The obvious reading — no Cloud SQL, no VMs, no clusters, so
+relinking billing is cheap — was one sentence away from being reported as a
+cost estimate.
+
+Every one of those commands was **failing**. Re-running without `2>/dev/null`
+showed `PERMISSION_DENIED`, disabled APIs, and from Compute Engine the exact
+message *"This API method requires billing to be enabled."* The inventory needed
+to price a billing decision is itself gated on billing — a genuine catch-22, and
+invisible while stderr was discarded.
+
+This is the document's own thesis committed by its own author, in a shell
+one-liner, on the same day instance 8 was written. It did not even need a subtle
+bug: `2>/dev/null` is a deliberate instruction to make failure look like
+success, and it was typed to keep the output tidy.
+
+Two things generalise:
+
+- **Silencing a channel silences a status.** `2>/dev/null` and `|| true` and
+  `.catch(() => [])` all convert "could not check" into whatever the empty
+  result means — and the empty result almost always means "fine". An empty list
+  is the most dangerous possible default because it is indistinguishable from
+  the healthy case at a glance.
+- **The correct check reports three outcomes, not two.** The re-run
+  distinguished `none (API reachable, empty result)` from `UNVERIFIED (API
+  disabled/denied)` precisely because it stopped throwing the error away. That
+  is the same `UNVERIFIABLE`/`SKIPPED` discipline the rest of this file argues
+  for, applied to a shell loop rather than a checker script — the principle does
+  not care how small the tool is.
+
+What actually caught it was re-running the sweep to quote exact output, not
+suspicion. Had the numbers been quoted from the first run, "no Cloud SQL, no
+VMs" would have gone into a cost report as a verified zero, and the only
+evidence against it would have been a bill.
 
 ## What follows from it
 
@@ -148,6 +217,15 @@ wrong plane.
 - **Print every one of them.** A status computed and not shown is the same bug
   as a status never computed.
 - **Fail closed.** "Could not verify" is a deny, never a silent pass.
+- **Never discard an error channel to tidy output.** `2>/dev/null`, `|| true`
+  and `.catch(() => [])` convert "could not check" into an empty result, and an
+  empty result reads as healthy. If output needs tidying, classify the error and
+  print a status for it — instance 9 is this rule being broken in a one-line
+  shell loop, which is where it is easiest to break and hardest to notice.
+- **Ask what a failure is evidence *of*.** A check reports on the thing it
+  touched, not the thing you care about. An unreachable URL means the URL is
+  unreachable; whether the product is broken, moved, or retired is a separate
+  question, and instance 8 cost real money by answering it from the check alone.
 - **Test the check against a known-bad input,** not only a passing one. A check
   verified only on data that passes has never demonstrated it can fail. The
   determinism check in `gaurav-gandhi-2411` was run with its
