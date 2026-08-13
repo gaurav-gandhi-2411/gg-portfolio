@@ -40,6 +40,25 @@ from the shape of a key.**
 `claims.find(c => c.sourceRef === id)`, so when two rows cite the same ID only
 the first is ever compared. The second is uncovered, silently.
 
+**6. A local build measured as evidence about production.** The hero's WebGL
+layer was measured at **93.17** against a local `next start` build, reported as
+"no regression", and shipped. Deployed, the same page measured **88.17** — a
+4.83-point drop that blew the −3 gate, with Speed Index nearly tripling
+(1389ms → 3929ms).
+
+The measurement was real, repeated, n=6, and honest. It was also about the
+wrong machine. localhost has no CDN, no real TLS handshake, no cold start, and
+different CPU contention — so the run answered a question about a laptop and
+was presented as an answer about visitors. **Same class: the check ran, but
+against a narrower surface than the claim it supported.**
+
+Worse, nothing in the artifact said so. A local summary and a production
+summary were identical in every field, so the file could not be used to tell
+which target it described. `scripts/lighthouse.mjs` now records
+`origin: "local" | "deployed"` and its docblock states the rule outright:
+**performance gates are measured against the deployed target, never a local
+build.**
+
 Related, same family, found the same week: CI could not reach the WebGL layer
 because GitHub runners report ≤4 cores and the capability gate correctly
 declined; every axe scan forced `prefers-reduced-motion`, which is exactly a

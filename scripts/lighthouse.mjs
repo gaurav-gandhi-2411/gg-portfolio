@@ -1,6 +1,23 @@
 // Pinned, reproducible mobile Lighthouse runner (run locally:
 // node scripts/lighthouse.mjs [route...]).
 //
+// MEASURE THE DEPLOYED TARGET, NEVER A LOCAL BUILD, whenever the number is
+// going to be used as evidence about production. Pass
+// BASE_URL_OVERRIDE=https://<the deployed url>.
+//
+// This is not a style preference. On 2026-08-13 the homepage hero's WebGL
+// layer measured 93.17 against a local `next start` build and shipped on that
+// basis; the same page on Vercel measured 88.17, a 4.83-point regression that
+// blew the -3 gate, driven by Speed Index nearly tripling. localhost has no
+// CDN, no real TLS handshake, no cold start, and a different CPU contention
+// profile — a local run answers a question about your laptop, not about what
+// visitors get. The local number was not wrong; it was measured against a
+// narrower surface than the claim it was used to support.
+//
+// Every summary now records `origin: "local" | "deployed"` for exactly this
+// reason: the artifacts are otherwise identical in shape, so nothing in the
+// file said which target it described.
+//
 // WHY THIS EXISTS (root-cause context, not narrative for its own sake): two
 // WebGL prototypes (homepage hero point cloud, /work/warmer embedding
 // viewer) were built, measured, discarded, and never committed, on the
@@ -330,6 +347,14 @@ async function measureRoute(route, chromePath) {
   const summary = {
     route,
     url,
+    // Recorded so a local run can never later be mistaken for a production
+    // one. On 2026-08-13 a local production build measured 93.17 for the hero
+    // and was reported as evidence the change was safe; deployed, the same
+    // page measured 88.17 — a 4.83-point regression the local number could
+    // not have predicted, because Vercel's CDN, TLS and cold-start behaviour
+    // are not localhost's. The artifacts looked identical in every other
+    // field, so nothing in the file itself said which target it described.
+    origin: /^https?:\/\/localhost|^https?:\/\/127\./.test(url) ? "local" : "deployed",
     branch,
     date: today,
     n: RUNS,
