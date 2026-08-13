@@ -258,15 +258,18 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
           </button>
         </div>
         {/*
-          Deliberately describes the shape on screen rather than quoting a
-          separation score. The silhouette figures behind this design are not
-          published anywhere in this repo, and an unsourced number is exactly
-          what the rest of this site exists to not do.
+          Describes which projection is on screen and nothing more. An earlier
+          version said the base model "collapsed into one undifferentiated
+          ball" — true of this t-SNE layout, but it implied the base embedding
+          space lacks structure, which the silhouette control disproved (it has
+          slightly more at k=7). The caveat paragraph beside the viewer carries
+          that, so this line stays neutral rather than restating a claim the
+          measurement withdrew.
         */}
         <p aria-live="polite" className="text-muted-foreground text-xs">
           {showFinetuned
-            ? "Fine-tuned — the same terms spread into distinguishable regions."
-            : "Base model — the same terms collapsed into one undifferentiated ball."}
+            ? "Fine-tuned — the same terms, after fine-tuning."
+            : "Base model — the same terms, before fine-tuning."}
         </p>
       </div>
     </div>
