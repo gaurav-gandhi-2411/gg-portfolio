@@ -5,7 +5,6 @@ import {
   LinkedInIcon,
   MailIcon,
 } from "@/components/icons";
-import { EmbeddingCloud } from "@/components/hero/embedding-cloud";
 import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
 import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
@@ -93,9 +92,7 @@ export async function Hero() {
   return (
     <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28 md:pb-20">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <EmbeddingCloud>
-          <EmbeddingCloudStatic points={points} />
-        </EmbeddingCloud>
+        <EmbeddingCloudStatic points={points} />
       </div>
 
       <p className="text-sm">

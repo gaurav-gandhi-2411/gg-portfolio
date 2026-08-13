@@ -59,6 +59,55 @@ which target it described. `scripts/lighthouse.mjs` now records
 **performance gates are measured against the deployed target, never a local
 build.**
 
+**7. Asserting a mechanism before the evidence separated the causes.** After the
+hero's rotating WebGL layer cost 4.83 Lighthouse points, I wrote that *ambient
+motion during load costs Speed Index regardless of duration or frame rate*. That
+was wrong, and the next two measurements disproved it.
+
+Three variants, all measured on deployed Vercel builds against a 93.00 ±2.00
+baseline:
+
+| hero variant | Performance | Speed Index | TBT |
+|---|---|---|---|
+| rotating, 30fps, indefinite | 88.17 | 3929ms | 177.92ms |
+| 4.5s eased settle, then stops | 89.33 | 3102ms | 113.75ms |
+| one static frame, zero animation | 87.00 (n=8) | 3638ms | 98.63ms |
+| *(baseline: static SVG, no canvas)* | *93.00* | *1389ms* | *93.66ms* |
+
+**TBT tracked motion exactly** — 178 → 114 → 99 as the animation shrank to
+nothing, landing within 5ms of baseline. **Speed Index did not move**: all three
+sit at ~3100–3900ms against a 1389ms baseline, differing by less than their own
+run-to-run spread.
+
+That separation is what identified the real cause. The canvas costs SI because
+of **when the layer arrives** — a lazily-imported chunk, a GL context, a 419-
+point upload and a large composite over the hero, all after first paint — so the
+viewport completes late no matter what is drawn into it. Motion was a TBT
+problem; arrival was the SI problem. Removing the motion fixed the first
+completely and the second not at all.
+
+The general rule: **a mechanism is a hypothesis until a measurement
+distinguishes it from its rivals.** "Motion costs SI" and "the canvas costs SI"
+predicted identical results for the first two variants; only the static one
+separated them, and it separated them against my stated expectation. Had the
+static frame not been measured, the wrong explanation would have been recorded
+here as fact — in the document about controls that report more confidence than
+they have earned.
+
+The hero reverted to the server-rendered static SVG. `/work/warmer` keeps its
+canvas and measured **+3.17 over its own baseline**, because there the canvas is
+the content, sits below the fold, and is interactive — the same technology
+priced completely differently by where and when it loads.
+
+**Measurement hygiene, from the same afternoon.** The first static-frame run
+(n=6) produced 83.83 ±10.50, containing one sample with TBT 908ms against
+32–163ms for the other five — a cold start, not the page. Dropping it would have
+yielded a *better* headline. The sample was not dropped; the run was repeated at
+n=8, which gave 87.00 ±1.31 — a **worse** number and an honest one. Excluding an
+inconvenient sample to improve a mean is the failure this whole document is
+about, wearing a lab coat. The correct response to a contaminated run is a
+larger sample, never a smaller one.
+
 Related, same family, found the same week: CI could not reach the WebGL layer
 because GitHub runners report ≤4 cores and the capability gate correctly
 declined; every axe scan forced `prefers-reduced-motion`, which is exactly a

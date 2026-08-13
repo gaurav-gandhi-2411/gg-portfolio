@@ -219,11 +219,18 @@ test("axe: zero violations with a metric's source-provenance panel open (prose t
  * capability gate declines WebGL, so the "/" entry in ROUTES only ever audits
  * the static scatter. This scan is the only one that sees the canvas layer.
  */
-test("axe: zero violations on the homepage with the hero's WebGL layer active", async ({ page }) => {
+/**
+ * Retargeted when the hero's WebGL layer was removed for costing ~6 Lighthouse
+ * points (see e2e/hero-embedding-cloud.spec.ts for the measurements). There is
+ * no canvas and no capability gate on the homepage any more, so this scan no
+ * longer needs to force one — but it stays, without gotoSettled's reduced-motion
+ * emulation, because the homepage still has motion the default ROUTES scan
+ * never sees: the boot loader's reveal and the reveal-group entrance fades.
+ */
+test("axe: zero violations on the homepage with motion enabled", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await forceWebGLCapability(page);
   await page.goto("/");
-  await expect(page.locator("header canvas")).toBeVisible();
+  await expect(page.locator("header svg[role='presentation']")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
