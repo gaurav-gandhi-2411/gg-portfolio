@@ -394,6 +394,104 @@ async function checkShaReachability(store) {
   return results;
 }
 
+// ---------------------------------------------------------------------------
+// Layer 6: does the cited LINE, at the cited SHA, actually contain the value?
+//
+// WHY THIS EXISTS: `source_line` was never read by anything. Every other layer
+// fetches the whole source file and searches it for the value's numbers, so a
+// metric whose line number pointed at a completely different row still passed
+// every check — the number was somewhere in the file, and no check cared where.
+//
+// That is exactly how triageiq:classifier-top3 stayed wrong through multiple
+// audits. Its value led with the kubernetes 87.1% while its cited line held the
+// vscode row, and it survived because "87.1 appears in README.md" was true.
+// The field looked like provenance and functioned as decoration.
+//
+// The consequence is not cosmetic. `source_line` exists so a reader can follow
+// a number to the exact row that produced it. A wrong line sends them to a
+// different metric that looks plausible — the most expensive kind of wrong,
+// because it is silently confirmable.
+//
+// This is also the check that catches a whole-file value match that happens to
+// be a coincidence: a number appearing SOMEWHERE in a long report is weak
+// evidence; the same number on the line the entry names is strong evidence.
+//
+// Line numbers are 1-based and counted over raw newlines, including blank
+// lines. (Worth stating: `nl` skips blank lines by default, which is itself a
+// way to arrive at an off-by-N line number while looking careful.)
+async function checkCitedLines(store) {
+  const results = [];
+  const fileCache = new Map();
+
+  for (const [key, entry] of Object.entries(store.metrics ?? {})) {
+    if (!entry?.repo || !entry?.commit_sha) continue;
+    const base = { key, repo: entry.repo, sha: entry.commit_sha, line: entry.source_line };
+
+    if (entry.source_line === null || entry.source_line === undefined) {
+      results.push({ ...base, status: "NO_LINE", detail: "entry declares no source_line" });
+      continue;
+    }
+    const path = extractPath(entry.source_file);
+    if (!path || !/\.[a-z0-9]+$/i.test(path) || /\s/.test(path)) {
+      results.push({ ...base, status: "NO_LINE", detail: `source_file is not a fetchable path: ${entry.source_file}` });
+      continue;
+    }
+
+    const tokens = extractTokens(entry.value ?? "");
+    if (tokens.length === 0) {
+      results.push({ ...base, status: "NO_LINE", detail: `value has no numeric token to locate: ${entry.value}` });
+      continue;
+    }
+
+    // Pin to the cited SHA, not HEAD — the question is whether the citation was
+    // correct when made, not whether the file drifted since.
+    const url = `https://raw.githubusercontent.com/${entry.repo}/${entry.commit_sha}/${path}`;
+    let text = fileCache.get(url);
+    if (text === undefined) {
+      try {
+        text = await fetchText(url);
+      } catch (err) {
+        text = null;
+        results.push({ ...base, status: "UNVERIFIABLE", detail: `fetch failed for ${path} @ ${entry.commit_sha.slice(0, 7)}: ${err.message}` });
+        fileCache.set(url, null);
+        continue;
+      }
+      fileCache.set(url, text);
+    }
+    if (text === null) {
+      results.push({ ...base, status: "UNVERIFIABLE", detail: `${path} unreadable at ${entry.commit_sha.slice(0, 7)} (private repo or missing)` });
+      continue;
+    }
+
+    const lines = text.split(/\r?\n/);
+    if (entry.source_line > lines.length) {
+      results.push({
+        ...base,
+        status: "LINE_MISMATCH",
+        detail: `cited line ${entry.source_line} is past end of ${path} (${lines.length} lines) at ${entry.commit_sha.slice(0, 7)}`,
+      });
+      continue;
+    }
+    const lineText = lines[entry.source_line - 1] ?? "";
+    const lineNumbers = extractSourceNumbers(lineText);
+    const missing = tokens.filter((t) => !tokenFoundIn(t, lineNumbers));
+
+    if (missing.length === 0) {
+      results.push({ ...base, status: "LINE_MATCH", detail: `all ${tokens.length} token(s) present on ${path}:${entry.source_line}` });
+    } else {
+      results.push({
+        ...base,
+        status: "LINE_MISMATCH",
+        detail:
+          `${path}:${entry.source_line} at ${entry.commit_sha.slice(0, 7)} does not contain ` +
+          `${missing.map((t) => `"${t.display}"`).join(", ")} — that line reads: ` +
+          `"${lineText.trim().slice(0, 100)}"`,
+      });
+    }
+  }
+  return results;
+}
+
 async function fetchText(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -969,6 +1067,9 @@ const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
 
 const shaResults = await checkShaReachability(store);
 const shaByStatus = (s) => shaResults.filter((r) => r.status === s);
+
+const lineResults = await checkCitedLines(store);
+const lineByStatus = (s) => lineResults.filter((r) => r.status === s);
 const svgCurrent = svgByStatus("CURRENT");
 const svgDrift = svgByStatus("POSSIBLE_DRIFT");
 const svgMappingStale = svgByStatus("MAPPING_STALE");
@@ -1252,6 +1353,53 @@ if (shaUnreachable.length === 0 && shaUnverifiable.length === 0) {
   lines.push("");
 }
 
+// --- Layer 6: cited-line content -------------------------------------------
+const lineMatch = lineByStatus("LINE_MATCH");
+const lineMismatch = lineByStatus("LINE_MISMATCH");
+const lineUnverifiable = lineByStatus("UNVERIFIABLE");
+const lineNone = lineByStatus("NO_LINE");
+
+lines.push("## Cited-line content");
+lines.push("");
+lines.push(
+  "Does the line each entry names actually contain that entry's value, at the commit " +
+    "it cites? Until 2026-08-13 nothing asked. Every other layer searches the WHOLE " +
+    "source file, so an entry whose `source_line` pointed at an unrelated row still " +
+    "passed — the number was somewhere in the file and no check cared where. That is " +
+    "how `triageiq:classifier-top3` stayed wrong through multiple audits: its value led " +
+    "with the kubernetes 87.1% while its cited line held the vscode row, and " +
+    '"87.1 appears in README.md" was true the whole time.'
+);
+lines.push("");
+lines.push(
+  `**${lineResults.length} entr(ies) with a cited SHA**: ${lineMatch.length} line-match, ` +
+    `${lineMismatch.length} LINE MISMATCH, ${lineUnverifiable.length} unverifiable, ` +
+    `${lineNone.length} no line cited.`
+);
+lines.push("");
+
+if (lineMismatch.length > 0) {
+  lines.push(`### LINE MISMATCH — ${lineMismatch.length} entr(ies)`);
+  lines.push("");
+  lines.push(
+    "The value is not on the line the entry names. Either the line number is wrong, or " +
+      "the entry's value spans rows and needs splitting so each number has one line."
+  );
+  lines.push("");
+  for (const r of lineMismatch) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineUnverifiable.length > 0) {
+  lines.push(`### Unverifiable — ${lineUnverifiable.length} entr(ies)`);
+  lines.push("");
+  for (const r of lineUnverifiable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineMismatch.length === 0 && lineUnverifiable.length === 0) {
+  lines.push(`All ${lineMatch.length} cited lines contain their entry's value.`);
+  lines.push("");
+}
+
 lines.push(
   "_Generated by scripts/check-metric-freshness.mjs._"
 );
@@ -1274,5 +1422,6 @@ console.log(
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +
-    `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited.`
+    `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited. ` +
+    `cited-line: ${lineMatch.length} match, ${lineMismatch.length} MISMATCH, ${lineUnverifiable.length} unverifiable, ${lineNone.length} no line, of ${lineResults.length}.`
 );
