@@ -29,9 +29,9 @@
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
       "source_file": "reports/final_scorecard_2026-07-12.txt",
       "source_line": 109,
-      "commit_sha": "57e7e6078a04d7fafb33219d597afd3548870a35",
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
       "measured_at": "2026-07-12",
-      "note": "Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
+      "note": "SHA re-pointed 2026-08-13 from 57e7e60 (pre-squash-merge branch commit, not an ancestor of master) to the merge commit that landed it. Line 109 verified unchanged: \"intent all-exact 93.8% (min 88.0%, n=211) PASS\". Corrected 2026-08-06: the prior 94.4%/n=378 value traced to reports/model_eval_20260731T060759Z.md, which is gitignored and was never committed (confirmed via git ls-files — no such file exists in any commit). This entry, the products.ts card, and the case-study body had all diverged from the already-reverted, git-committed figure; only the case-study body had actually been fixed (see provenance.md's Wave 19 section) — this manifest entry and the homepage card were simply never updated at the same time. reports/final_scorecard_2026-07-12.txt:109 reads: 'intent all-exact    93.8%  (min 88.0%, n=211) PASS'."
     },
     "style-maitri:catalogue-size": {
       "label": "Cross-store catalogue",
@@ -39,19 +39,29 @@
       "repo": "gaurav-gandhi-2411/agentic-shopping-assistant",
       "source_file": "reports/soldout_filter_fix_2026-07-12.txt",
       "source_line": 28,
-      "commit_sha": "59962265b85f5a159e60c2a18db32d1b3650385c",
+      "commit_sha": "db4a6edf4e1d45ac6f075c44f17f6aad47db5c78",
       "measured_at": "2026-07-12",
-      "note": "Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
+      "note": "SHA re-pointed 2026-08-13 from 5996226 (pre-squash-merge branch commit, not an ancestor of master) to the merge commit that landed it. Line 28 verified to hold the headline figure: \"Catalogue size: 61,883 -> 52,494 items\"; the \"across all 8 stores\" qualifier wraps to line 29. Corrected 2026-08-06: the prior ~112K/42-store value traced to a gitignored, never-committed data/processed/unified/catalogue.parquet read. reports/soldout_filter_fix_2026-07-12.txt:28 reads: 'Catalogue size: 61,883 -> 52,494 items ... across all 8 stores' — the committed, git-verifiable figure."
     },
-    "triageiq:classifier-top3": {
-      "label": "Component classifier top-3 / top-1 accuracy",
-      "value": "87.1% / 60.5% (k8s) / 89.8% / 76.5% (vscode)",
+    "triageiq:classifier-top3-k8s": {
+      "label": "Component classifier top-3 accuracy (kubernetes)",
+      "value": "87.1%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 81,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the kubernetes top-3 figure at README.md:81. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
+    },
+    "triageiq:classifier-top3-vscode": {
+      "label": "Component classifier top-3 accuracy (vscode)",
+      "value": "89.8%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 79,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "Corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only (site-vs-repo reconciliation, wave 18). ADR-0036 (2026-07-24) shipped a multi-label supervision fix; the new value is the current shipped model per README.md:79-82 and the full paired-bootstrap in docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md:58-67."
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the vscode top-3 figure at README.md:79. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
     },
     "triageiq:cqr-coverage": {
       "label": "Resolution-time interval coverage after Conformal Quantile Regression, vs. 80% nominal target",

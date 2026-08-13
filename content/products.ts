@@ -32,7 +32,10 @@ export const products: Product[] = [
     repoUrl: "https://github.com/gaurav-gandhi-2411/triage-iq",
     categories: ["llm-agents", "retrieval", "forecasting"],
     techChips: ["TF-IDF", "BGE + FAISS", "LightGBM", "Groq"],
-    metric: refreshableMetric("triageiq:classifier-top3"),
+    // The kubernetes figure, not vscode's higher 89.8% — the card shows one
+    // number and this is the lower of the two, which is the right default for
+    // a site whose whole claim is that its numbers are the honest ones.
+    metric: refreshableMetric("triageiq:classifier-top3-k8s"),
     figure: {
       kind: "bars",
       rows: [

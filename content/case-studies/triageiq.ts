@@ -86,7 +86,10 @@ export const triageiq: CaseStudy = {
     {
       title: "Report top-3 accuracy as the headline classifier metric",
       body: "The product surfaces three candidate components to the maintainer, not one, so top-1 accuracy alone understates how useful the classifier actually is in the workflow it's built for. Reporting top-3 instead of top-1 is a 13–27 percentage-point difference — using the metric that matches what the product actually shows is more honest than picking whichever number looks best.",
-      sourceRef: "triageiq:classifier-top3",
+      // Points at the kubernetes figure deliberately: it is the lower of the
+      // two top-3 numbers, so it is the more conservative evidence for a
+      // decision that argues top-3 should be the headline metric.
+      sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
       title: "Leave the fabrication-rate gate informational, not blocking, for now",
@@ -95,11 +98,22 @@ export const triageiq: CaseStudy = {
     },
   ],
   results: [
+    // Split into one row per eval repo on 2026-08-13. This was a single row
+    // displaying four numbers behind one sourceRef, which meant no reader
+    // following that reference could land on the line backing the number they
+    // were actually looking at. sourceRef is a single string by design (see
+    // content/types.ts) — one displayed claim, one citation.
     {
-      label: "Component classifier accuracy (top-3 / top-1), p50 4.9ms",
-      value: "89.8% / 76.5% (vscode) · 87.1% / 60.5% (k8s)",
-      detail: "multi-label supervision fix, ADR-0036 — the shipped model as of 2026-07-24",
-      sourceRef: "triageiq:classifier-top3",
+      label: "Component classifier top-3 accuracy (vscode), p50 4.9ms",
+      value: "89.8%",
+      detail: "top-1 76.5% — multi-label supervision fix, ADR-0036, shipped model as of 2026-07-24",
+      sourceRef: "triageiq:classifier-top3-vscode",
+    },
+    {
+      label: "Component classifier top-3 accuracy (kubernetes)",
+      value: "87.1%",
+      detail: "top-1 60.5% — same shipped model, the harder of the two eval corpora",
+      sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
       label: "Resolution-time interval coverage after Conformal Quantile Regression",
