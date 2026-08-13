@@ -7,13 +7,14 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **nine times in two
-days**, in nine different disguises, by nine unrelated routes. None of them was
-a bug in the usual sense. Almost every one of them was green — one that was red
-had already been explained away in advance, and the last one was a `2>/dev/null`
-typed for tidiness.
+This is written down because the same failure was found **ten times in two
+days**, in ten different disguises, by ten unrelated routes. None of them was a
+bug in the usual sense. Almost every one of them was green — one that was red had
+already been explained away in advance, one was a `2>/dev/null` typed for
+tidiness, and the last was a check that ran perfectly against an address the
+product had moved out of.
 
-## The nine
+## The ten
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -204,6 +205,70 @@ suspicion. Had the numbers been quoted from the first run, "no Cloud SQL, no
 VMs" would have gone into a cost report as a verified zero, and the only
 evidence against it would have been a bill.
 
+**10. The check ran correctly, against the wrong target.** Twice in two days I
+probed a decommissioned address and reported the product as down.
+
+review-iq: `review-iq-ajjrytb3na-el.a.run.app` returned 503, and I reported a T2
+backend outage. The service had moved to `reviewiq-prod-260813` and was serving
+Swagger the whole time. TriageIQ, the next day, identically: `triageiq-api` in
+`expense-tracker-498014` returned 503, reported down — while production had long
+since moved to `triageiq-api-1014562031321`, which answers in 0.58s. In both
+cases the probe was accurate, the diagnosis of *why* it failed (no billing
+account) was accurate, and the conclusion was wrong, because the address came
+from a citation rather than from the deployment.
+
+**A stale citation and a dead service produce identical symptoms.** Nothing in a
+503 distinguishes "this product is broken" from "this product moved and your
+notes did not." The difference is not observable at the address being probed —
+it is only observable somewhere the probe never looks: the deploy config, the
+frontend's environment, the billing account's project list. Instance 8 already
+recorded that *the evidence that a service moved lives outside the service*.
+Doing it a second time, a day later, is the evidence that knowing this does not
+prevent it. **When a service reports unhealthy, verify you are testing the
+address the product currently uses — not the one your notes cite — before
+concluding anything about the product.** For this estate that means reading
+`.env.production` or the deploy workflow's target, not the case-study link.
+
+A third variant of the same error, same week, on a question about scope rather
+than health: I read `killswitch-sa` holding `roles/billing.admin` **on the
+billing account** and concluded the killswitch could disable billing
+account-wide, then warned that linking one project risked taking down five. The
+permission is account-level because `updateBillingInfo` requires it; the blast
+radius is set somewhere else entirely — `budget_filter.projects` names exactly
+one project, and the function's `GCP_PROJECT_ID` names the same one. **A
+capability's scope is not its configured scope.** Reading the grant and inferring
+the behaviour is the same shortcut as reading a citation and inferring the
+deployment: in both cases the artifact that actually decides was one file away
+and unread.
+
+**A footnote on timeouts, because it nearly caused a third false "down".** The
+first probe of TriageIQ's production API timed out at 60s and I read the timeout
+as death. It was a cold start — the service pulls model artifacts from GCS on
+boot, and answered in 0.58s once warm. `triage-iq`'s own `health-monitor.yml`
+carries this bug's fossil: **99 of 100 runs failed** with curl error 28 because
+`--max-time` was 20s against a cold start measured at 36s, and its header now
+says *"a monitor that constantly false-fires is worse than no monitor — it trains
+the owner to ignore its alerts."* That is instance 8's lesson, discovered
+independently in another repo, by the same author, about the same class of
+service. **A timeout is not a result.** It is the absence of one, and on a
+scale-to-zero service the budget has to exceed a cold start before absence means
+anything at all.
+
+**An addendum to instance 9, which its own fix did not cover.** Showing stderr
+was necessary and *not sufficient*. Re-running the sweep visibly,
+`gcloud compute instances list` printed a warning — *"This API method requires
+billing to be enabled"* — and then, on the last line, **`Listed 0 items.`** The
+final line of a fully-visible, unsuppressed output still reads as a clean zero.
+Anyone skimming for the answer sees the answer, and it is wrong.
+
+So the rule from instance 9 needs sharpening: **it is the exit status that
+distinguishes empty from failed, not the visibility of stderr.** A human reading
+output classifies by the part that looks like a result; only checking the exit
+code, or matching the error text explicitly, separates the two. The sweep that
+finally reported honestly did the latter — it branched on whether the output
+matched a known error signature and printed `UNVERIFIED` instead of a count —
+and that branch, not the removal of `2>/dev/null`, is what made it correct.
+
 ## What follows from it
 
 - **Name the surface.** For every check, state which paths, which entries, which
@@ -226,6 +291,17 @@ evidence against it would have been a bill.
   touched, not the thing you care about. An unreachable URL means the URL is
   unreachable; whether the product is broken, moved, or retired is a separate
   question, and instance 8 cost real money by answering it from the check alone.
+- **Confirm the target before trusting the verdict.** Probe the address the
+  deployment uses (`.env.production`, the deploy workflow), not the one a
+  citation names — instance 10 called two live products dead by testing
+  addresses they had moved out of. The same applies to scope: read the config
+  that sets the blast radius, never infer it from a permission grant.
+- **Classify the exit, don't read the output.** Unsuppressing stderr is not
+  enough: `gcloud compute instances list` prints its error and then
+  `Listed 0 items.` Branch on exit status or on a matched error signature and
+  print an explicit `UNVERIFIED`, or the failure still reads as a zero.
+- **A timeout is not a result.** On a scale-to-zero service the probe budget
+  must exceed a cold start before absence of a response means anything.
 - **Test the check against a known-bad input,** not only a passing one. A check
   verified only on data that passes has never demonstrated it can fail. The
   determinism check in `gaurav-gandhi-2411` was run with its
