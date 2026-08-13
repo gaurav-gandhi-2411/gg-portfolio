@@ -35,6 +35,32 @@ once more than one workstream is active — treat it as the base clone worktrees
 created from, and keep its own `HEAD` in a detached or otherwise unclaimed state so
 it never contends with a dedicated worktree for the same branch.
 
+# Run the e2e suite after touching content labels, metric IDs, or rendered copy
+
+`npm run typecheck`, `npm run build` and the metric checks all pass clean while
+the e2e suite is broken, because the tests locate elements by their **rendered
+accessible names**. Renaming a results-row label or a metric ID moves a locator
+target that nothing else in the toolchain looks at.
+
+This broke the same branch twice in one day, both times after the other checks
+were green:
+
+- renaming `triageiq:classifier-top3` to per-repo entries changed six labels and
+  broke three provenance tests and two axe tests, in a file there was no obvious
+  reason to suspect;
+- adding a results row labelled "Cluster separation, base vs fine-tuned …" broke
+  the Warmer toggle test, because Playwright's `getByRole({ name })` matches a
+  **substring** by default — the new row's provenance button also matched
+  `"Fine-tuned"`, a strict-mode violation that reads as "the toggle is broken."
+
+So: after any edit touching `content/**` labels, `metrics.json` IDs, or copy
+that renders, run `npx playwright test` before pushing — the whole suite, not
+the specs that look related. Both times the surprising failures were in files
+that would not have been guessed at.
+
+When adding a label, prefer `exact: true` in new locators; the substring default
+makes collisions a matter of luck about future copy.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

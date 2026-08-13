@@ -70,6 +70,41 @@ one exact sentence, so it broke when the sentence was corrected for accuracy.
   modules and reports `NO_SLUG_MAPPING` when it fails — but an inference whose
   failure has no reporting path is not.
 
+## The same asymmetry in the dependency tree
+
+Not a check, but the identical shape: something that matters to *one feature*
+holding veto power over *every* job, with nothing surfacing the mismatch until
+it failed.
+
+`onnxruntime-node` runs a `postinstall` that downloads a native binary from a
+CDN. It arrives transitively via `@huggingface/transformers`, which exists for
+exactly one feature — the `/ask` chatbot's local embedding pipeline. On
+2026-08-13 that CDN timed out and `npm ci` exited non-zero, so **`build` and
+`e2e` both died before compiling a line of application code**, on a PR that
+touched only markdown, JSON and content. One feature's dependency blocked every
+merge in the repo.
+
+**`sharp` has the same shape and has not bitten yet.** Its `install` script
+(`install/build.js`) fetches prebuilt libvips binaries when no local build
+matches. It is pulled in for Next.js image optimisation.
+
+The difference is what the fix looks like. `@huggingface/transformers` can move
+to `optionalDependencies`, because `/ask` degrading to "search is temporarily
+unavailable" is an acceptable, visible failure. **`sharp` cannot** — it is close
+to core, and a site whose images silently stop being optimised is a slow,
+invisible regression rather than a loud one, which is the wrong trade in exactly
+the direction this document argues against. For `sharp` the options are pinning
+a platform-matched prebuilt binary, vendoring it, or caching the extracted
+artifact in CI keyed on the lockfile — mitigations of the fetch, not removals of
+the dependency.
+
+Recorded here because the point is not the outage. It is that a dependency's
+blast radius should match its importance, and nothing in this repo measured that
+until the day it was measured for us.
+
+`protobufjs` and `unrs-resolver` also run install scripts, but both do local
+work only and make no network call. Nothing else in the tree runs one at all.
+
 ## The tell
 
 Ask of any check: **if the thing it guards broke right now, would this produce
