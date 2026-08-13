@@ -40,64 +40,82 @@ from the shape of a key.**
 `claims.find(c => c.sourceRef === id)`, so when two rows cite the same ID only
 the first is ever compared. The second is uncovered, silently.
 
-**6. A local build measured as evidence about production.** The hero's WebGL
-layer was measured at **93.17** against a local `next start` build, reported as
-"no regression", and shipped. Deployed, the same page measured **88.17** — a
-4.83-point drop that blew the −3 gate, with Speed Index nearly tripling
-(1389ms → 3929ms).
+**6. A local build measured as evidence about production — then the rule was
+written and immediately violated.** The hero's WebGL layer was measured at
+**93.17** against a local `next start` build, reported as "no regression", and
+shipped. Deployed, the same page measured **88.17**.
 
-The measurement was real, repeated, n=6, and honest. It was also about the
-wrong machine. localhost has no CDN, no real TLS handshake, no cold start, and
-different CPU contention — so the run answered a question about a laptop and
-was presented as an answer about visitors. **Same class: the check ran, but
-against a narrower surface than the claim it supported.**
+The measurement was real, repeated, n=6, and honest. It was also about the wrong
+machine. localhost has no CDN, no real TLS handshake, no cold start, and
+different CPU contention — so the run answered a question about a laptop and was
+presented as an answer about visitors.
 
-Worse, nothing in the artifact said so. A local summary and a production
-summary were identical in every field, so the file could not be used to tell
-which target it described. `scripts/lighthouse.mjs` now records
-`origin: "local" | "deployed"` and its docblock states the rule outright:
-**performance gates are measured against the deployed target, never a local
-build.**
+Nothing in the artifact said so, either: a local summary and a deployed summary
+were identical in every field. `scripts/lighthouse.mjs` now records
+`origin: "local" | "deployed"`, and its docblock states the rule outright.
+
+**And then the rule was broken again, in the same session, by the person who
+wrote it.** Every subsequent comparison — the 4.83-point "regression", the
+settle at 89.33, the static frame at 87.00 — was made against
+`lighthouse-feat-lighthouse-perf-baseline-home-2026-08-12.summary.json`, which
+was **itself measured against `http://localhost:3000`**. The baseline predated
+the `origin` field, carried no origin, and was never re-checked. Adding a field
+that records the problem does nothing if nothing reads it.
+
+Re-baselining on a deployed preview of `main` showed what the mismatch had been
+hiding: **83.75 ±3.62**, not 93.00. Every hero variant measured that session was
+an *improvement* on what was actually deployed. Three rounds of rework chased a
+regression that was mostly the comparison itself.
+
+The fix is structural, not documentary: `compareToBaseline()` in
+`scripts/lighthouse.mjs` now refuses to compare across origins, and treats a
+**missing** origin as a mismatch rather than assuming it matches — so the old
+localhost baselines cannot be used by accident. Verified against the exact
+comparison that caused this, which it now rejects.
 
 **7. Asserting a mechanism before the evidence separated the causes.** After the
 hero's rotating WebGL layer cost 4.83 Lighthouse points, I wrote that *ambient
 motion during load costs Speed Index regardless of duration or frame rate*. That
 was wrong, and the next two measurements disproved it.
 
-Three variants, all measured on deployed Vercel builds against a 93.00 ±2.00
-baseline:
+Four variants, all on deployed Vercel previews — the last row is the
+re-baselined reference, and the first three are what was measured while chasing
+the phantom regression:
 
 | hero variant | Performance | Speed Index | TBT |
 |---|---|---|---|
-| rotating, 30fps, indefinite | 88.17 | 3929ms | 177.92ms |
-| 4.5s eased settle, then stops | 89.33 | 3102ms | 113.75ms |
-| one static frame, zero animation | 87.00 (n=8) | 3638ms | 98.63ms |
-| *(baseline: static SVG, no canvas)* | *93.00* | *1389ms* | *93.66ms* |
+| rotating, 30fps (what `main` had) | 83.75 ±3.62 (n=8) | — | — |
+| 4.5s eased settle, then stops | 89.33 ±3.78 | 3102ms | 113.75ms |
+| one static frame, zero animation | 87.00 ±1.31 (n=8) | 3638ms | 98.63ms |
+| no canvas, server-rendered SVG | 88.00 ±1.07 (n=8) | 2737ms | 100.25ms |
 
-**TBT tracked motion exactly** — 178 → 114 → 99 as the animation shrank to
-nothing, landing within 5ms of baseline. **Speed Index did not move**: all three
-sit at ~3100–3900ms against a 1389ms baseline, differing by less than their own
-run-to-run spread.
+**Two things are true and were originally conflated.**
 
-That separation is what identified the real cause. The canvas costs SI because
-of **when the layer arrives** — a lazily-imported chunk, a GL context, a 419-
-point upload and a large composite over the hero, all after first paint — so the
-viewport completes late no matter what is drawn into it. Motion was a TBT
-problem; arrival was the SI problem. Removing the motion fixed the first
-completely and the second not at all.
+TBT genuinely tracks motion: 178 → 114 → 99ms as the animation shrank to
+nothing. That measurement was correct and survives.
 
-The general rule: **a mechanism is a hypothesis until a measurement
-distinguishes it from its rivals.** "Motion costs SI" and "the canvas costs SI"
-predicted identical results for the first two variants; only the static one
-separated them, and it separated them against my stated expectation. Had the
-static frame not been measured, the wrong explanation would have been recorded
-here as fact — in the document about controls that report more confidence than
-they have earned.
+**The "canvas costs ~6 points" claim did not.** It came from comparing a
+deployed run against a localhost baseline of 93.00 (see instance 6). Against a
+deployed baseline, removing the canvas entirely is worth about **1 point**
+(87.00 → 88.00), inside the combined spread. Three rounds of rework — settle,
+static frame, revert — rested on a number that was mostly a measurement
+artifact.
 
-The hero reverted to the server-rendered static SVG. `/work/warmer` keeps its
-canvas and measured **+3.17 over its own baseline**, because there the canvas is
-the content, sits below the fold, and is interactive — the same technology
-priced completely differently by where and when it loads.
+The Speed Index difference is real but smaller than claimed: ~900ms between the
+static canvas and no canvas, consistent with the layer's *arrival* cost — a
+lazily-imported chunk, a GL context, a 419-point upload, a large composite —
+rather than with its motion. That mechanism stands; the magnitude attached to it
+did not.
+
+The general rule, which is the part worth keeping: **a mechanism is a hypothesis
+until a measurement distinguishes it from its rivals — and the measurement is
+only evidence if its baseline describes the same target.** The first mechanism
+asserted here ("ambient motion costs SI") was disproved by the third variant.
+The second survived, but its *size* was wrong for a completely different reason,
+and only re-baselining exposed that.
+
+`/work/warmer` keeps its canvas: there it is the content, sits below the fold,
+and is interactive.
 
 **Measurement hygiene, from the same afternoon.** The first static-frame run
 (n=6) produced 83.83 ±10.50, containing one sample with TBT 908ms against

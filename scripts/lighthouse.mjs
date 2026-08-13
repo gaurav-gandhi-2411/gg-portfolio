@@ -95,7 +95,7 @@
 
 import { launch as launchChrome } from "chrome-launcher";
 import lighthouse from "lighthouse";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { hostname, platform, release, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -203,6 +203,83 @@ function gitBranch() {
   } catch {
     return "unknown-branch";
   }
+}
+
+/**
+ * Committed baselines, per route. Both were measured on a DEPLOYED Vercel
+ * preview of main, which is the only thing a PR branch's own preview can be
+ * fairly compared against.
+ *
+ * The previous baselines (lighthouse-feat-lighthouse-perf-baseline-*) were
+ * measured against http://localhost:3000 and are kept in reports/ as history —
+ * they are NOT comparable to anything deployed and are deliberately not
+ * referenced here.
+ */
+const BASELINES = {
+  "/": "lighthouse-main-preview-baseline-home-2026-08-13.summary.json",
+  "/work/warmer": "lighthouse-main-preview-baseline-work-warmer-2026-08-13.summary.json",
+};
+
+/** Points of Performance regression tolerated before a run is called a regression. */
+const PERF_REGRESSION_GATE = 3;
+
+/**
+ * Compares a fresh summary against its committed baseline, and REFUSES if the
+ * two describe different kinds of target.
+ *
+ * This exists because the `origin` field alone did nothing. It was added after
+ * a local build was measured and reported as evidence about production — and
+ * then, in the same session, every subsequent comparison was made against a
+ * baseline that was itself localhost-only, because the baseline predated the
+ * field and nobody re-checked it. A deployed-vs-local comparison is not a
+ * conservative estimate or a rough guide; it is a different question with a
+ * plausible-looking answer, and it drove three rounds of rework on a
+ * regression that was mostly an artifact.
+ *
+ * Fails closed: a missing origin on either side is a mismatch, not a pass.
+ */
+function compareToBaseline(summary) {
+  const file = BASELINES[summary.route];
+  if (!file) return { state: "NO_BASELINE", detail: `no baseline registered for ${summary.route}` };
+  const path = join(REPORTS_DIR, file);
+  if (!existsSync(path)) return { state: "NO_BASELINE", detail: `${file} not found` };
+
+  let baseline;
+  try {
+    baseline = JSON.parse(readFileSync(path, "utf8"));
+  } catch (err) {
+    return { state: "ORIGIN_MISMATCH", detail: `${file} is unreadable (${err.message}) — refusing to compare` };
+  }
+
+  const baseOrigin = baseline.origin;
+  const runOrigin = summary.origin;
+  if (!baseOrigin || !runOrigin) {
+    return {
+      state: "ORIGIN_MISMATCH",
+      detail:
+        `origin missing (baseline: ${baseOrigin ?? "absent"}, this run: ${runOrigin ?? "absent"}). ` +
+        `A summary without an origin predates the field and cannot be shown comparable — ` +
+        `re-measure the baseline against the same kind of target.`,
+    };
+  }
+  if (baseOrigin !== runOrigin) {
+    return {
+      state: "ORIGIN_MISMATCH",
+      detail:
+        `baseline ${file} is origin="${baseOrigin}" but this run is origin="${runOrigin}". ` +
+        `These are not comparable: localhost has no CDN, no real TLS, no cold start. ` +
+        `Re-measure one of them so both describe the same target.`,
+    };
+  }
+
+  return {
+    state: "OK",
+    origin: runOrigin,
+    baselineFile: file,
+    baseline: baseline.aggregate.performance.mean,
+    candidate: summary.aggregate.performance.mean,
+    delta: summary.aggregate.performance.mean - baseline.aggregate.performance.mean,
+  };
 }
 
 function routeSlug(route) {
@@ -426,6 +503,26 @@ async function main() {
   for (const o of outcomes) {
     const perf = o.summary.aggregate.performance;
     console.log(`  ${o.route}: performance ${perf.mean} +/- ${perf.stddev} (n=${o.summary.n})`);
+  }
+
+  // Baseline comparison, with the origin check that did not exist before.
+  for (const o of outcomes) {
+    const cmp = compareToBaseline(o.summary);
+    if (cmp.state === "NO_BASELINE") {
+      console.log(`\n  ${o.route}: no committed baseline (${cmp.detail}) — nothing to compare.`);
+      continue;
+    }
+    if (cmp.state === "ORIGIN_MISMATCH") {
+      console.error(`\nFAIL — ORIGIN_MISMATCH for ${o.route}:\n  ${cmp.detail}`);
+      failures.push({ route: o.route, state: "ORIGIN_MISMATCH", detail: cmp.detail });
+      continue;
+    }
+    const sign = cmp.delta >= 0 ? "+" : "";
+    console.log(
+      `\n  ${o.route} vs ${cmp.baselineFile} (both origin=${cmp.origin}):\n` +
+        `    performance ${cmp.baseline.toFixed(2)} -> ${cmp.candidate.toFixed(2)}  ${sign}${cmp.delta.toFixed(2)}` +
+        `  ${cmp.delta < -PERF_REGRESSION_GATE ? "REGRESSION beyond the " + PERF_REGRESSION_GATE + "-point gate" : "within gate"}`
+    );
   }
 
   if (failures.length > 0) {
