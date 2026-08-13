@@ -182,7 +182,7 @@ test("axe: zero violations with a metric's source-provenance panel open (structu
 }) => {
   await gotoSettled(page, "/work/triageiq");
   await page
-    .getByRole("button", { name: /show source for Component classifier accuracy/ })
+    .getByRole("button", { name: /show source for Component classifier top-3 accuracy \(vscode\)/ })
     .click();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
@@ -194,7 +194,7 @@ test("axe: zero violations with a metric's source-provenance panel open (structu
 test("axe: zero violations with a metric's source-provenance panel open (prose tier)", async ({ page }) => {
   await gotoSettled(page, "/work/triageiq");
   await page
-    .getByRole("button", { name: /show source for Resolution-time interval coverage/ })
+    .getByRole("button", { name: /show source for Resolution-time CQR interval coverage \(kubernetes\)/ })
     .click();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);

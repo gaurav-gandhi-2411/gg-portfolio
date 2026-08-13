@@ -36,8 +36,13 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
     await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
     await expect(page.getByTestId("warmer-embedding-gl").locator("canvas")).toBeVisible();
 
-    const base = page.getByRole("button", { name: "Base model" });
-    const finetuned = page.getByRole("button", { name: "Fine-tuned" });
+    // exact:true is load-bearing. getByRole's `name` matches a SUBSTRING by
+    // default, and the case study gained a results row labelled "Cluster
+    // separation, base vs fine-tuned …" whose provenance button therefore also
+    // matched "Fine-tuned" — two elements, strict-mode violation, and a
+    // failure that reads as "the toggle is broken" when the toggle is fine.
+    const base = page.getByRole("button", { name: "Base model", exact: true });
+    const finetuned = page.getByRole("button", { name: "Fine-tuned", exact: true });
 
     // Fine-tuned is the default — the case study's point is the fine-tune.
     await expect(finetuned).toHaveAttribute("aria-pressed", "true");
@@ -68,7 +73,9 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
     await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
     await expect(page.getByTestId("warmer-embedding-gl").locator("canvas")).toBeVisible();
 
-    const base = page.getByRole("button", { name: "Base model" });
+    // exact:true for the same reason as above — no collision today, but the
+    // default substring match makes that a matter of luck about future copy.
+    const base = page.getByRole("button", { name: "Base model", exact: true });
     await base.focus();
     await expect(base).toBeFocused();
     await page.keyboard.press("Enter");
