@@ -437,7 +437,7 @@ async function checkCitedLines(store) {
       continue;
     }
 
-    const tokens = extractTokens(entry.value ?? "");
+    const tokens = extractTokens(entry.value ?? "", LINE_SCOPED_MIN_TOKEN_LEN);
     if (tokens.length === 0) {
       // QUALITATIVE is reported apart from NO_LINE so a future reader does not
       // mistake it for an unfixed defect. gold-rate-tracker:headline's value is
@@ -456,7 +456,7 @@ async function checkCitedLines(store) {
         ...base,
         status: hasAnyDigit ? "TOKEN_TOO_SHORT" : "QUALITATIVE",
         detail: hasAnyDigit
-          ? `value's number(s) fall below the ${MIN_TOKEN_LEN}-digit floor that guards against coincidental matches: ${entry.value}`
+          ? `value's number(s) fall below the ${LINE_SCOPED_MIN_TOKEN_LEN}-digit line-scoped floor: ${entry.value}`
           : `value is qualitative — no number to anchor, and none expected: ${entry.value}`,
       });
       continue;
@@ -575,7 +575,28 @@ function findApproximateRanges(text) {
 // feed tokenFoundIn's rounding tolerance, not exact-equality — a page is
 // allowed to round a source's more precise number for readability without
 // that reading as drift every week.
-function extractTokens(value) {
+// The floor is per-caller because the risk it guards against scales with how
+// much text is being searched.
+//
+// A WHOLE-FILE scan compares a token against every number in a long report, so
+// a short value like 6.2 stands a real chance of coinciding with an unrelated
+// figure — hence MIN_TOKEN_LEN of 3. A LINE-SCOPED check compares against the
+// handful of numbers on ONE named line, where that risk nearly vanishes, so
+// the same floor there is pure loss: it suppressed aetherart:vram's perfectly
+// valid "6.2GB" citation for a danger that does not exist at that scope.
+//
+// Worth being precise about what the floor never did: it does not prevent
+// SUBSTRING collisions. NUMBER_PATTERN already matches maximal numeric runs
+// and comparison is numeric, so 116.2, 46.2 and 6.25 all correctly fail to
+// match a 6.2 token. The floor only ever addressed genuine coincidence.
+//
+// 2, not 1: at 1 a bare single digit becomes a required token, which breaks
+// style-maitri:catalogue-size — its value reads "52,494 items across 8 stores"
+// and the "8" lives on the following line. A single digit is also the most
+// likely thing to coincide even within one line.
+const LINE_SCOPED_MIN_TOKEN_LEN = 2;
+
+function extractTokens(value, minTokenLen = MIN_TOKEN_LEN) {
   if (!value) return [];
   const approximateRanges = findApproximateRanges(value);
   const matches = [...value.matchAll(NUMBER_PATTERN)];
@@ -584,7 +605,7 @@ function extractTokens(value) {
   for (const m of matches) {
     const raw = m[0];
     const digitsOnly = raw.replace(/[,.]/g, "");
-    if (digitsOnly.length < MIN_TOKEN_LEN) continue;
+    if (digitsOnly.length < minTokenLen) continue;
     const n = parseNumber(raw);
     if (seen.has(n)) continue; // dedupe by value, not by the string that produced it
     seen.add(n);
@@ -1416,7 +1437,7 @@ if (lineTooShort.length > 0) {
   lines.push(`### Below the token floor — ${lineTooShort.length} entr(ies), a real gap`);
   lines.push("");
   lines.push(
-    `These DO have a number, but one shorter than the ${MIN_TOKEN_LEN}-digit minimum this ` +
+    `These DO have a number, but one shorter than the ${LINE_SCOPED_MIN_TOKEN_LEN}-digit minimum this ` +
       "check uses to avoid matching a coincidental figure elsewhere in a long file. The " +
       "citation may be perfectly correct; this check simply cannot confirm it. Unlike the " +
       "qualitative entries above, this one is a limitation of the checker, not a property " +

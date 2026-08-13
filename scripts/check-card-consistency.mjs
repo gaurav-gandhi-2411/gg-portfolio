@@ -57,6 +57,23 @@ const METRIC_PREFIX_TO_SLUG = {
   mmfr: "multimodal-fashion-recommender",
 };
 
+// Convention first, map for exceptions: a metric prefix IS the case-study slug
+// unless listed above (only `mmfr` differs today).
+//
+// Audited 2026-08-13 against the `<id>-baseline` defect, where a relationship
+// inferred from key shape failed silently. This one is NOT that: the inferred
+// slug is immediately checked against the loaded case-study modules, and a
+// prefix that resolves to nothing surfaces as NO_SLUG_MAPPING rather than
+// passing quietly. Replacing the fallback with a declared-only lookup was
+// tried and reverted — it produced 22 false NO_SLUG_MAPPING findings, because
+// the convention carries every metric and the map holds only the one
+// exception.
+//
+// The one residual quiet failure: a prefix that coincidentally matches a
+// DIFFERENT real slug would compare against the wrong case study and report
+// clean. That needs two products whose slugs collide with another's metric
+// prefix, which is not the case today. Worth re-checking when adding a product
+// whose slug could be another's prefix.
 function resolveSlug(prefix) {
   return METRIC_PREFIX_TO_SLUG[prefix] ?? prefix;
 }
@@ -289,6 +306,15 @@ for (const p of products) {
 
 const drift = findings.filter((f) => f.status === "DRIFT");
 const other = findings.filter((f) => f.status !== "DRIFT" && f.status !== "SKIPPED");
+// SKIPPED was previously excluded from `other` too, so it printed NOWHERE. A
+// SKIPPED entry means Check A compared nothing for that metric — real
+// non-coverage, reported as silence, which is indistinguishable from a clean
+// pass. Four metrics were invisible this way, two of them introduced by the
+// 2026-08-13 citation splits and never noticed because the output looked
+// green. Listed separately from `other` because these are usually legitimate
+// (a metric that no case-study row happens to cite), but "usually legitimate"
+// is a judgement a reader should get to make.
+const uncovered = findings.filter((f) => f.status === "SKIPPED");
 
 console.log(`check-card-consistency: ${Object.keys(metrics).length} metrics, ${products.length} products, ${caseStudies.size} case studies checked.`);
 console.log(`  Check A (metrics.json vs. same-sourceRef case-study row): ${findings.filter((f) => f.check === "A" && f.status === "DRIFT").length} drift`);
@@ -298,6 +324,13 @@ console.log(`  Check C (products.ts tagline vs. its own case study):     ${findi
 if (other.length > 0) {
   console.log(`\nConfig/structure issues (${other.length}) — not drift, but worth a look:`);
   for (const f of other) console.log(`  [${f.check}] ${f.id}: ${f.status} — ${f.detail}`);
+}
+
+if (uncovered.length > 0) {
+  console.log(
+    `\nNot covered by Check A (${uncovered.length}) — no case-study row cites these, so nothing was compared:`
+  );
+  for (const f of uncovered) console.log(`  [${f.check}] ${f.id}: ${f.detail}`);
 }
 
 if (drift.length > 0) {
