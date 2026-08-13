@@ -46,8 +46,16 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
     await base.click();
     await expect(base).toHaveAttribute("aria-pressed", "true");
     await expect(finetuned).toHaveAttribute("aria-pressed", "false");
-    // The live region is the non-visual equivalent of the field changing shape.
-    await expect(page.getByText("undifferentiated ball")).toBeVisible();
+
+    // The live region is the non-visual equivalent of the field changing
+    // shape, so what matters is that it names the model now on screen.
+    // Matched loosely on purpose: an earlier version asserted one exact
+    // sentence and broke the moment that sentence was corrected for accuracy,
+    // which is a test coupled to copy rather than to behaviour.
+    const liveRegion = page.locator('[aria-live="polite"]');
+    await expect(liveRegion).toContainText(/Base model/);
+    await finetuned.click();
+    await expect(liveRegion).toContainText(/Fine-tuned/);
   });
 
   test("both toggle controls are reachable and operable by keyboard", async ({ page }) => {
