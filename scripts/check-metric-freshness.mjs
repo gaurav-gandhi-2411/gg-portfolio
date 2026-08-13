@@ -147,24 +147,28 @@ const CASE_STUDY_REPO = {
 // only). Comparing the full value string would produce a permanent false
 // PARTIAL for every entry here, for a reason that has nothing to do with
 // real drift — the abbreviation is intentional, not incomplete.
+// Reduced from three metrics per banner to one on 2026-08-13, when the banner
+// was rebuilt around a single framed metric instead of three bare numbers
+// floating on a rising line. `mmfr:recall10` (3.06) and
+// `triageiq:classifier-top3` (87.1) are no longer displayed in this asset AT
+// ALL — that is the new design, not drift — so continuing to track them here
+// would report a permanent false POSITIVE for two metrics the file cannot
+// contain. Both are still covered by the per-metric section above, which is
+// where their real verification lives; this layer only ever covered the
+// additional risk of a number baked into a decorative asset going stale.
+//
+// If a future banner displays more metrics again, add them back here — an
+// unlisted baked-in number is silently uncovered rather than erroring.
 const SVG_METRIC_SOURCES = [
   {
     repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
     path: "assets/banner-light.svg",
-    metrics: [
-      { key: "mmfr:recall10", displayToken: "3.06" },
-      { key: "triageiq:classifier-top3", displayToken: "87.1" },
-      { key: "warmer:hinglish-fix", displayToken: "0.813" },
-    ],
+    metrics: [{ key: "warmer:hinglish-fix", displayToken: "0.813" }],
   },
   {
     repo: "gaurav-gandhi-2411/gaurav-gandhi-2411",
     path: "assets/banner-dark.svg",
-    metrics: [
-      { key: "mmfr:recall10", displayToken: "3.06" },
-      { key: "triageiq:classifier-top3", displayToken: "87.1" },
-      { key: "warmer:hinglish-fix", displayToken: "0.813" },
-    ],
+    metrics: [{ key: "warmer:hinglish-fix", displayToken: "0.813" }],
   },
 ];
 
@@ -273,6 +277,240 @@ async function checkSvgMetrics(store) {
 // be real evidence.
 const MIN_TOKEN_LEN = 3;
 
+// ---------------------------------------------------------------------------
+// Layer 5: is each cited commit_sha actually reachable from its source repo's
+// default branch?
+//
+// WHY THIS EXISTS: every other layer checks whether a metric's VALUE is still
+// right. None of them checks whether the CITATION still resolves. Those fail
+// differently — a stale value is wrong today and detectable today, while an
+// unreachable SHA is correct today and silently dies later, taking the
+// provenance with it.
+//
+// The failure is systematic, not incidental, and it comes from squash-merging.
+// You measure on a branch, record that branch commit in metrics.json, then the
+// PR squash-merges: GitHub creates a NEW commit with the combined diff and the
+// branch commit you cited is never an ancestor of the default branch. It stays
+// resolvable for a while — GitHub keeps orphaned commits addressable — and then
+// stops, whenever the branch is deleted and the object is pruned. So the
+// citation looks fine right up until it doesn't, and nothing was watching.
+//
+// Found 2026-08-13 via warmer:embedding-separation, which cited the pre-merge
+// branch commit. Auditing the rest found four more, all the same shape.
+//
+// UNREACHABLE is reported separately from UNVERIFIABLE on purpose. They are
+// opposite situations: UNREACHABLE means we successfully checked and the answer
+// is bad (act on it), UNVERIFIABLE means we could not check (no credential,
+// rate limit, network) and know nothing. Collapsing them would let a real
+// UNREACHABLE hide inside the pile of private-repo entries this script can
+// never reach.
+const GITHUB_API = "https://api.github.com";
+// Optional. Unauthenticated works for public repos at 60 req/hr, which covers
+// this table; a token raises that ceiling AND is the only way private repos
+// get checked at all (see the report's own note on what that would take).
+const GH_TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null;
+
+async function githubApi(path) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const headers = { Accept: "application/vnd.github+json" };
+    if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
+    const res = await fetch(`${GITHUB_API}${path}`, { signal: controller.signal, headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function checkShaReachability(store) {
+  const results = [];
+  const defaultBranchCache = new Map(); // repo -> branch | null
+
+  for (const [key, entry] of Object.entries(store.metrics ?? {})) {
+    if (!entry?.repo || !entry?.commit_sha) continue;
+    const base = { key, repo: entry.repo, sha: entry.commit_sha };
+
+    let defaultBranch = defaultBranchCache.get(entry.repo);
+    if (defaultBranch === undefined) {
+      try {
+        defaultBranch = (await githubApi(`/repos/${entry.repo}`)).default_branch;
+      } catch (err) {
+        defaultBranch = null;
+        defaultBranchCache.set(entry.repo, null);
+        results.push({
+          ...base,
+          status: "UNVERIFIABLE",
+          detail:
+            `cannot read ${entry.repo} (${err.message}) — private repo or rate limit. ` +
+            `Set GITHUB_TOKEN (read-only, contents:read) to cover it.`,
+        });
+        continue;
+      }
+      defaultBranchCache.set(entry.repo, defaultBranch);
+    }
+    if (defaultBranch === null) {
+      results.push({
+        ...base,
+        status: "UNVERIFIABLE",
+        detail: `${entry.repo} unreadable without a credential — set GITHUB_TOKEN to cover it.`,
+      });
+      continue;
+    }
+
+    try {
+      // compare/base...head: "identical" or "behind" both mean head IS an
+      // ancestor of base. "ahead"/"diverged" mean it is not — the squash-merge
+      // signature.
+      const cmp = await githubApi(
+        `/repos/${entry.repo}/compare/${defaultBranch}...${entry.commit_sha}`
+      );
+      if (cmp.status === "identical" || cmp.status === "behind") {
+        results.push({
+          ...base,
+          status: "REACHABLE",
+          detail: `${entry.commit_sha.slice(0, 7)} is an ancestor of ${defaultBranch} (${cmp.status})`,
+        });
+      } else {
+        results.push({
+          ...base,
+          status: "UNREACHABLE",
+          detail:
+            `${entry.commit_sha.slice(0, 7)} is NOT an ancestor of ${entry.repo}'s ${defaultBranch} ` +
+            `(compare status: ${cmp.status}) — almost certainly a pre-squash-merge branch commit. ` +
+            `It resolves today and will stop resolving when that branch is pruned. ` +
+            `Re-point this entry at the merge commit that actually landed.`,
+        });
+      }
+    } catch (err) {
+      results.push({
+        ...base,
+        status: "UNVERIFIABLE",
+        detail: `compare failed for ${entry.repo} (${err.message})`,
+      });
+    }
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Layer 6: does the cited LINE, at the cited SHA, actually contain the value?
+//
+// WHY THIS EXISTS: `source_line` was never read by anything. Every other layer
+// fetches the whole source file and searches it for the value's numbers, so a
+// metric whose line number pointed at a completely different row still passed
+// every check — the number was somewhere in the file, and no check cared where.
+//
+// That is exactly how triageiq:classifier-top3 stayed wrong through multiple
+// audits. Its value led with the kubernetes 87.1% while its cited line held the
+// vscode row, and it survived because "87.1 appears in README.md" was true.
+// The field looked like provenance and functioned as decoration.
+//
+// The consequence is not cosmetic. `source_line` exists so a reader can follow
+// a number to the exact row that produced it. A wrong line sends them to a
+// different metric that looks plausible — the most expensive kind of wrong,
+// because it is silently confirmable.
+//
+// This is also the check that catches a whole-file value match that happens to
+// be a coincidence: a number appearing SOMEWHERE in a long report is weak
+// evidence; the same number on the line the entry names is strong evidence.
+//
+// Line numbers are 1-based and counted over raw newlines, including blank
+// lines. (Worth stating: `nl` skips blank lines by default, which is itself a
+// way to arrive at an off-by-N line number while looking careful.)
+async function checkCitedLines(store) {
+  const results = [];
+  const fileCache = new Map();
+
+  for (const [key, entry] of Object.entries(store.metrics ?? {})) {
+    if (!entry?.repo || !entry?.commit_sha) continue;
+    const base = { key, repo: entry.repo, sha: entry.commit_sha, line: entry.source_line };
+
+    if (entry.source_line === null || entry.source_line === undefined) {
+      results.push({ ...base, status: "NO_LINE", detail: "entry declares no source_line" });
+      continue;
+    }
+    const path = extractPath(entry.source_file);
+    if (!path || !/\.[a-z0-9]+$/i.test(path) || /\s/.test(path)) {
+      results.push({ ...base, status: "NO_LINE", detail: `source_file is not a fetchable path: ${entry.source_file}` });
+      continue;
+    }
+
+    const tokens = extractTokens(entry.value ?? "", LINE_SCOPED_MIN_TOKEN_LEN);
+    if (tokens.length === 0) {
+      // QUALITATIVE is reported apart from NO_LINE so a future reader does not
+      // mistake it for an unfixed defect. gold-rate-tracker:headline's value is
+      // "Naive wins — ships the honest baseline, not the model": there is no
+      // number in it, so there is nothing a line could anchor, and no amount of
+      // work would ever move it into LINE_MATCH. That is a permanent, correct
+      // end state, unlike a NO_LINE entry which is simply not yet anchored.
+      //
+      // Note the two reasons a value yields no token are different: genuinely
+      // having no digits (this case, correct forever), versus having digits
+      // below MIN_TOKEN_LEN — see aetherart:vram, "6.2GB peak VRAM", where the
+      // 3-digit floor that prevents coincidental whole-file matches also
+      // suppresses a perfectly valid short citation. That one IS a gap.
+      const hasAnyDigit = /\d/.test(String(entry.value ?? ""));
+      results.push({
+        ...base,
+        status: hasAnyDigit ? "TOKEN_TOO_SHORT" : "QUALITATIVE",
+        detail: hasAnyDigit
+          ? `value's number(s) fall below the ${LINE_SCOPED_MIN_TOKEN_LEN}-digit line-scoped floor: ${entry.value}`
+          : `value is qualitative — no number to anchor, and none expected: ${entry.value}`,
+      });
+      continue;
+    }
+
+    // Pin to the cited SHA, not HEAD — the question is whether the citation was
+    // correct when made, not whether the file drifted since.
+    const url = `https://raw.githubusercontent.com/${entry.repo}/${entry.commit_sha}/${path}`;
+    let text = fileCache.get(url);
+    if (text === undefined) {
+      try {
+        text = await fetchText(url);
+      } catch (err) {
+        text = null;
+        results.push({ ...base, status: "UNVERIFIABLE", detail: `fetch failed for ${path} @ ${entry.commit_sha.slice(0, 7)}: ${err.message}` });
+        fileCache.set(url, null);
+        continue;
+      }
+      fileCache.set(url, text);
+    }
+    if (text === null) {
+      results.push({ ...base, status: "UNVERIFIABLE", detail: `${path} unreadable at ${entry.commit_sha.slice(0, 7)} (private repo or missing)` });
+      continue;
+    }
+
+    const lines = text.split(/\r?\n/);
+    if (entry.source_line > lines.length) {
+      results.push({
+        ...base,
+        status: "LINE_MISMATCH",
+        detail: `cited line ${entry.source_line} is past end of ${path} (${lines.length} lines) at ${entry.commit_sha.slice(0, 7)}`,
+      });
+      continue;
+    }
+    const lineText = lines[entry.source_line - 1] ?? "";
+    const lineNumbers = extractSourceNumbers(lineText);
+    const missing = tokens.filter((t) => !tokenFoundIn(t, lineNumbers));
+
+    if (missing.length === 0) {
+      results.push({ ...base, status: "LINE_MATCH", detail: `all ${tokens.length} token(s) present on ${path}:${entry.source_line}` });
+    } else {
+      results.push({
+        ...base,
+        status: "LINE_MISMATCH",
+        detail:
+          `${path}:${entry.source_line} at ${entry.commit_sha.slice(0, 7)} does not contain ` +
+          `${missing.map((t) => `"${t.display}"`).join(", ")} — that line reads: ` +
+          `"${lineText.trim().slice(0, 100)}"`,
+      });
+    }
+  }
+  return results;
+}
+
 async function fetchText(url) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -337,7 +575,28 @@ function findApproximateRanges(text) {
 // feed tokenFoundIn's rounding tolerance, not exact-equality — a page is
 // allowed to round a source's more precise number for readability without
 // that reading as drift every week.
-function extractTokens(value) {
+// The floor is per-caller because the risk it guards against scales with how
+// much text is being searched.
+//
+// A WHOLE-FILE scan compares a token against every number in a long report, so
+// a short value like 6.2 stands a real chance of coinciding with an unrelated
+// figure — hence MIN_TOKEN_LEN of 3. A LINE-SCOPED check compares against the
+// handful of numbers on ONE named line, where that risk nearly vanishes, so
+// the same floor there is pure loss: it suppressed aetherart:vram's perfectly
+// valid "6.2GB" citation for a danger that does not exist at that scope.
+//
+// Worth being precise about what the floor never did: it does not prevent
+// SUBSTRING collisions. NUMBER_PATTERN already matches maximal numeric runs
+// and comparison is numeric, so 116.2, 46.2 and 6.25 all correctly fail to
+// match a 6.2 token. The floor only ever addressed genuine coincidence.
+//
+// 2, not 1: at 1 a bare single digit becomes a required token, which breaks
+// style-maitri:catalogue-size — its value reads "52,494 items across 8 stores"
+// and the "8" lives on the following line. A single digit is also the most
+// likely thing to coincide even within one line.
+const LINE_SCOPED_MIN_TOKEN_LEN = 2;
+
+function extractTokens(value, minTokenLen = MIN_TOKEN_LEN) {
   if (!value) return [];
   const approximateRanges = findApproximateRanges(value);
   const matches = [...value.matchAll(NUMBER_PATTERN)];
@@ -346,7 +605,7 @@ function extractTokens(value) {
   for (const m of matches) {
     const raw = m[0];
     const digitsOnly = raw.replace(/[,.]/g, "");
-    if (digitsOnly.length < MIN_TOKEN_LEN) continue;
+    if (digitsOnly.length < minTokenLen) continue;
     const n = parseNumber(raw);
     if (seen.has(n)) continue; // dedupe by value, not by the string that produced it
     seen.add(n);
@@ -845,6 +1104,12 @@ const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
 
 const svgResults = await checkSvgMetrics(store);
 const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
+
+const shaResults = await checkShaReachability(store);
+const shaByStatus = (s) => shaResults.filter((r) => r.status === s);
+
+const lineResults = await checkCitedLines(store);
+const lineByStatus = (s) => lineResults.filter((r) => r.status === s);
 const svgCurrent = svgByStatus("CURRENT");
 const svgDrift = svgByStatus("POSSIBLE_DRIFT");
 const svgMappingStale = svgByStatus("MAPPING_STALE");
@@ -1082,6 +1347,134 @@ if (staleVerification.length === 0 && missingVerification.length === 0) {
   lines.push(`All ${verifiedRows.length} case studies verified within the last ${VERIFIED_STALE_DAYS} days.`);
   lines.push("");
 }
+// --- Layer 5: commit-SHA reachability -------------------------------------
+const shaReachable = shaByStatus("REACHABLE");
+const shaUnreachable = shaByStatus("UNREACHABLE");
+const shaUnverifiable = shaByStatus("UNVERIFIABLE");
+
+lines.push("## Commit-SHA reachability");
+lines.push("");
+lines.push(
+  "Every other layer asks whether a metric's VALUE is still right. This one asks " +
+    "whether its CITATION still resolves — specifically, whether each `commit_sha` is " +
+    "an ancestor of its source repo's default branch. A squash-merged PR produces a " +
+    "NEW commit, so the branch commit you measured on is never an ancestor of `main`; " +
+    "it stays addressable until the branch is pruned, then the provenance dies quietly."
+);
+lines.push("");
+lines.push(
+  `**${shaResults.length} cited SHA(s) checked**: ${shaReachable.length} reachable, ` +
+    `${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable.`
+);
+lines.push("");
+
+if (shaUnreachable.length > 0) {
+  lines.push(`### UNREACHABLE — ${shaUnreachable.length} entr(ies), re-point at the merge commit`);
+  lines.push("");
+  for (const r of shaUnreachable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (shaUnverifiable.length > 0) {
+  lines.push(`### Unverifiable — ${shaUnverifiable.length} entr(ies)`);
+  lines.push("");
+  lines.push(
+    "Distinct from UNREACHABLE above: these were not checked at all, so they are " +
+      "neither confirmed nor flagged. To cover them, either (a) give CI a **read-only " +
+      "token** with `contents:read` on the private source repos and expose it as " +
+      "`GITHUB_TOKEN` to this step, or (b) move the cited artifact into a public repo. " +
+      "Until one of those happens, treat these as unverified, not as passing."
+  );
+  lines.push("");
+  for (const r of shaUnverifiable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (shaUnreachable.length === 0 && shaUnverifiable.length === 0) {
+  lines.push(`All ${shaResults.length} cited SHAs are reachable from their default branch.`);
+  lines.push("");
+}
+
+// --- Layer 6: cited-line content -------------------------------------------
+const lineMatch = lineByStatus("LINE_MATCH");
+const lineMismatch = lineByStatus("LINE_MISMATCH");
+const lineUnverifiable = lineByStatus("UNVERIFIABLE");
+const lineNone = lineByStatus("NO_LINE");
+const lineQualitative = lineByStatus("QUALITATIVE");
+const lineTooShort = lineByStatus("TOKEN_TOO_SHORT");
+
+lines.push("## Cited-line content");
+lines.push("");
+lines.push(
+  "Does the line each entry names actually contain that entry's value, at the commit " +
+    "it cites? Until 2026-08-13 nothing asked. Every other layer searches the WHOLE " +
+    "source file, so an entry whose `source_line` pointed at an unrelated row still " +
+    "passed — the number was somewhere in the file and no check cared where. That is " +
+    "how `triageiq:classifier-top3` stayed wrong through multiple audits: its value led " +
+    "with the kubernetes 87.1% while its cited line held the vscode row, and " +
+    '"87.1 appears in README.md" was true the whole time.'
+);
+lines.push("");
+lines.push(
+  `**${lineResults.length} entr(ies) with a cited SHA**: ${lineMatch.length} line-match, ` +
+    `${lineMismatch.length} LINE MISMATCH, ${lineUnverifiable.length} unverifiable, ` +
+    `${lineNone.length} no line cited, ${lineQualitative.length} qualitative (no anchor possible), ` +
+    `${lineTooShort.length} below the token floor.`
+);
+lines.push("");
+
+if (lineQualitative.length > 0) {
+  lines.push(`### Qualitative — ${lineQualitative.length} entr(ies), CORRECT AS-IS`);
+  lines.push("");
+  lines.push(
+    "Not a defect and not a backlog item. These values contain no number, so there is " +
+      "nothing a line could anchor and no work that would ever move them into " +
+      "line-match. Listed separately so nobody re-opens them as unfinished."
+  );
+  lines.push("");
+  for (const r of lineQualitative) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineTooShort.length > 0) {
+  lines.push(`### Below the token floor — ${lineTooShort.length} entr(ies), a real gap`);
+  lines.push("");
+  lines.push(
+    `These DO have a number, but one shorter than the ${LINE_SCOPED_MIN_TOKEN_LEN}-digit minimum this ` +
+      "check uses to avoid matching a coincidental figure elsewhere in a long file. The " +
+      "citation may be perfectly correct; this check simply cannot confirm it. Unlike the " +
+      "qualitative entries above, this one is a limitation of the checker, not a property " +
+      "of the metric."
+  );
+  lines.push("");
+  for (const r of lineTooShort) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+
+if (lineMismatch.length > 0) {
+  lines.push(`### LINE MISMATCH — ${lineMismatch.length} entr(ies)`);
+  lines.push("");
+  lines.push(
+    "The value is not on the line the entry names. Either the line number is wrong, or " +
+      "the entry's value spans rows and needs splitting so each number has one line."
+  );
+  lines.push("");
+  for (const r of lineMismatch) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineUnverifiable.length > 0) {
+  lines.push(`### Unverifiable — ${lineUnverifiable.length} entr(ies)`);
+  lines.push("");
+  for (const r of lineUnverifiable) lines.push(`- \`${r.key}\`: ${r.detail}`);
+  lines.push("");
+}
+if (lineMismatch.length === 0 && lineUnverifiable.length === 0) {
+  lines.push(
+    `All ${lineMatch.length} anchorable cited lines contain their entry's value.` +
+      (lineQualitative.length > 0 || lineTooShort.length > 0
+        ? " (Qualitative and below-floor entries are listed above and are not failures.)"
+        : "")
+  );
+  lines.push("");
+}
+
 lines.push(
   "_Generated by scripts/check-metric-freshness.mjs._"
 );
@@ -1103,5 +1496,7 @@ console.log(
     `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
-    `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies.`
+    `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +
+    `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited. ` +
+    `cited-line: ${lineMatch.length} match, ${lineMismatch.length} MISMATCH, ${lineUnverifiable.length} unverifiable, ${lineNone.length} no line, ${lineQualitative.length} qualitative, ${lineTooShort.length} below-floor, of ${lineResults.length}.`
 );

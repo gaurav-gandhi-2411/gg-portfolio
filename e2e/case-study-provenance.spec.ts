@@ -17,13 +17,13 @@ test.describe("Case-study metric provenance", () => {
     await page.goto("/work/triageiq");
 
     const trigger = page.getByRole("button", {
-      name: /show source for Component classifier accuracy/,
+      name: /show source for Component classifier top-3 accuracy \(vscode\)/,
     });
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
 
-    const panel = page.getByRole("group", { name: /Source for Component classifier accuracy/ });
+    const panel = page.getByRole("group", { name: /Source for Component classifier top-3 accuracy \(vscode\)/ });
     await expect(panel).toHaveCSS("opacity", "1");
     await expect(panel).toContainText("README.md");
     const link = panel.getByRole("link").first();
@@ -80,11 +80,11 @@ test.describe("Case-study metric provenance", () => {
     await page.goto("/work/triageiq");
 
     const trigger = page.getByRole("button", {
-      name: /show source for Resolution-time interval coverage/,
+      name: /show source for Resolution-time CQR interval coverage \(kubernetes\)/,
     });
     await trigger.click();
 
-    const panel = page.getByRole("group", { name: /Source for Resolution-time interval coverage/ });
+    const panel = page.getByRole("group", { name: /Source for Resolution-time CQR interval coverage \(kubernetes\)/ });
     await expect(panel).toHaveCSS("opacity", "1");
     // structured tier, backed by content/metrics.json's own
     // triageiq:cqr-coverage entry — proves this no longer shares sourceRef
@@ -127,11 +127,11 @@ test.describe("Case-study metric provenance", () => {
     await page.goto("/work/triageiq");
 
     const trigger = page.getByRole("button", {
-      name: /show source for Component classifier accuracy/,
+      name: /show source for Component classifier top-3 accuracy \(vscode\)/,
     });
     await trigger.click();
 
-    const panel = page.getByRole("group", { name: /Source for Component classifier accuracy/ });
+    const panel = page.getByRole("group", { name: /Source for Component classifier top-3 accuracy \(vscode\)/ });
     await expect(panel).toHaveCSS("opacity", "1");
     await expect(panel).toContainText("Verified source");
     const link = panel.getByRole("link").first();

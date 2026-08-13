@@ -76,10 +76,27 @@ export const warmer: CaseStudy = {
   ],
   results: [
     {
-      label: "Hinglish semantic accuracy (Spearman correlation vs. human judgments)",
-      value: "−0.003 → 0.813",
+      // Split from a single "−0.003 → 0.813" row on 2026-08-13. The two numbers
+      // come from the SAME file and line at two different commits (line 24 of
+      // baseline_report.md, pre- and post-fine-tune), so they are two separate
+      // citations and each now carries its own.
+      label: "Hinglish semantic accuracy after the fine-tune (Spearman vs. human judgments)",
+      value: "0.813",
       detail: "the script-mismatch fix reached 0.639; a LoRA fine-tune plus an eval-harness RNG fix took it to 0.813 on the production set (English holds at 0.842). The stricter held-out generalization number is 0.435 → 0.704 — both are reported, neither hidden",
       sourceRef: "warmer:hinglish-fix",
+    },
+    {
+      label: "The same metric before the fine-tune",
+      value: "−0.003",
+      detail: "literally no correlation — same eval, same file and line, at the pre-fix commit",
+      sourceRef: "warmer:hinglish-baseline",
+    },
+    {
+      label: "Cluster separation, base vs fine-tuned (mean silhouette, raw embeddings)",
+      value: "0.0370 base vs 0.0247 fine-tuned",
+      detail:
+        "each model scored on its OWN k=7 partition — the control. On the fine-tune's own partition the gap looks 9.3× the other way; that version favours the fine-tune by construction, so both are published and the viewer states the reversal",
+      sourceRef: "warmer:embedding-separation",
     },
     {
       label: "Cross-language consistency (translation pairs landing in the right band)",
