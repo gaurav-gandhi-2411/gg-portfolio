@@ -5,6 +5,7 @@ import {
   LinkedInIcon,
   MailIcon,
 } from "@/components/icons";
+import { EmbeddingCloud } from "@/components/hero/embedding-cloud";
 import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
 import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
@@ -47,19 +48,25 @@ function daysSince(iso: string): number {
  * as busier than either alone, and the brief for this one was explicit
  * that noticing the animation before the text is a failure.
  *
- * Static SVG only for now, not the animated WebGL version the brief asked
- * for: a real r3f/three.js build was done and benchmarked at 233.6KB gzip
- * for the Canvas/BufferGeometry/PointsMaterial chunk alone (irreducible --
- * that's @react-three/fiber's own baseline WebGL-renderer cost, not
- * anything this code added; removing this file's one direct `three` import
- * changed the number by under 20 bytes). Past the brief's own +150KB gzip
- * cap and its own explicit instruction for exactly this outcome ("ship the
- * static projection instead ... do not ship it anyway"). The working,
- * typechecked prototype is not committed — ask GG before resuming it.
+ * The background now has an ambient WebGL layer, chosen per device by
+ * components/hero/embedding-cloud.tsx; the static SVG above stays as the
+ * server-rendered default and the fallback for everyone else.
  *
- * Still deliberately NOT animated: every text node renders at full
- * opacity from first paint (wave-9 axe-race lesson); the entrance feeling
- * is the boot loader's curtain reveal.
+ * The earlier attempt at this was abandoned for two reasons, both since
+ * addressed rather than argued with. It used @react-three/fiber, whose
+ * Canvas/BufferGeometry/PointsMaterial chunk alone measured 233.6KB gzip —
+ * irreducible, r3f's own baseline rather than anything that build added — so
+ * this one is hand-rolled WebGL1 (lib/webgl/point-cloud.ts) with no new
+ * dependencies. And it animated continuously from load, which is what put the
+ * cost inside Lighthouse's Total Blocking Time window; this one defers its
+ * first frame past the load rush, caps itself to 30fps, and stops outright
+ * when the tab is hidden or the hero scrolls away.
+ *
+ * The TEXT is still deliberately not animated: every text node renders at
+ * full opacity from first paint (wave-9 axe-race lesson), the entrance
+ * feeling is the boot loader's curtain reveal, and the brief for the
+ * background was explicit that noticing it before the text is a failure —
+ * hence a ~5-minute revolution and no alpha lift on an already-faint ramp.
  */
 export async function Hero() {
   const currentlyBuilding = await getCurrentlyBuilding();
@@ -86,7 +93,9 @@ export async function Hero() {
   return (
     <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-20 pb-16 text-center sm:pt-28 md:pb-20">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <EmbeddingCloudStatic points={points} />
+        <EmbeddingCloud>
+          <EmbeddingCloudStatic points={points} />
+        </EmbeddingCloud>
       </div>
 
       <p className="text-sm">

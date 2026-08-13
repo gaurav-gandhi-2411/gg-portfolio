@@ -9,3 +9,14 @@
  * One accent, seven opacities — cluster identity never gets a second hue.
  */
 export const WARMER_CLUSTER_OPACITY = [0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82] as const;
+
+/**
+ * The hero's ramp, shared by its static SVG and its WebGL layer for the same
+ * reason.
+ *
+ * Much fainter than the Warmer viewer's, and deliberately so: the hero cloud
+ * sits behind headline copy, and the brief for it was explicit that noticing
+ * the background before the text is a failure. The ceiling stays under the
+ * 0.26 peak of the gradient halo this replaced.
+ */
+export const HERO_CLUSTER_OPACITY = [0.14, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5] as const;

@@ -31,6 +31,7 @@ const VERTEX_SHADER_SOURCE = `
   uniform float uAspect;
   uniform float uDpr;
   uniform float uGain;
+  uniform float uAngle;
 
   varying float vAlpha;
 
@@ -46,7 +47,17 @@ const VERTEX_SHADER_SOURCE = `
     // The whole point of the viewer: the same term's base-model position and
     // its fine-tuned position, interpolated. At uMorph=0 the field is the
     // scatter the base model produced; at 1 it is the clustered fine-tune.
-    vec3 pos = mix(aBase, aFinetuned, uMorph);
+    vec3 morphed = mix(aBase, aFinetuned, uMorph);
+
+    // Y-axis rotation. The Warmer viewer always passes 0 (a still field it
+    // can hit-test); the hero drifts it slowly for ambient depth.
+    float c = cos(uAngle);
+    float s = sin(uAngle);
+    vec3 pos = vec3(
+      morphed.x * c + morphed.z * s,
+      morphed.y,
+      morphed.z * c - morphed.x * s
+    );
 
     // Camera sits CAMERA_DIST back; points live in roughly [-1,1] on every
     // axis, so this never divides by anything near zero.
@@ -97,8 +108,11 @@ const FRAGMENT_SHADER_SOURCE = `
 const ACCENT_COLOR: readonly [number, number, number] = [0x81 / 255, 0x8c / 255, 0xf8 / 255];
 
 const FLOATS_PER_POINT = 7; // baseXYZ, finetunedXYZ, opacity
-// Global alpha lift for the GL layer (see uGain in the vertex shader).
-const POINT_ALPHA_GAIN = 1.25;
+// Default global alpha lift (see uGain in the vertex shader). The Warmer
+// viewer is a foreground figure and wants the lift; the hero is a background
+// texture behind headline copy and passes 1, since noticing it before the
+// text is a failure of the hero.
+const DEFAULT_ALPHA_GAIN = 1.25;
 const CLOUD_EXTENT = 1.02; // keep in step with the shader constant above
 const CAMERA_DIST = 3.0;
 
@@ -109,15 +123,15 @@ export interface MorphPoint {
 }
 
 export interface PointCloudRenderer {
-  /** Draws one frame. morph 0 = base model, 1 = fine-tuned. */
-  render(morph: number): void;
+  /** Draws one frame. morph 0 = base model, 1 = fine-tuned; angle in radians. */
+  render(morph: number, angleRadians?: number): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
   /**
-   * Screen-space (CSS px) position of every point at the given morph value,
-   * mirroring the vertex shader exactly. Used to build the hover hit-grid on
-   * settle — never per frame.
+   * Screen-space (CSS px) position of every point, mirroring the vertex
+   * shader exactly. Used to build hover hit targets on settle — never per
+   * frame.
    */
-  project(morph: number): Float32Array;
+  project(morph: number, angleRadians?: number): Float32Array;
   dispose(): void;
 }
 
@@ -185,7 +199,8 @@ export function createPointCloudRenderer(
   gl: WebGLRenderingContext,
   canvas: HTMLCanvasElement,
   points: MorphPoint[],
-  opacityRamp: readonly number[]
+  opacityRamp: readonly number[],
+  alphaGain: number = DEFAULT_ALPHA_GAIN
 ): PointCloudRenderer {
   const program = createProgram(gl);
 
@@ -206,6 +221,7 @@ export function createPointCloudRenderer(
   const uDpr = gl.getUniformLocation(program, "uDpr");
   const uColor = gl.getUniformLocation(program, "uColor");
   const uGain = gl.getUniformLocation(program, "uGain");
+  const uAngle = gl.getUniformLocation(program, "uAngle");
 
   const FLOAT_BYTES = Float32Array.BYTES_PER_ELEMENT;
   const stride = FLOATS_PER_POINT * FLOAT_BYTES;
@@ -233,7 +249,7 @@ export function createPointCloudRenderer(
     aspect = width / height;
   }
 
-  function render(morph: number): void {
+  function render(morph: number, angleRadians = 0): void {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
@@ -249,7 +265,8 @@ export function createPointCloudRenderer(
     gl.uniform1f(uMorph, morph);
     gl.uniform1f(uAspect, aspect);
     gl.uniform1f(uDpr, dpr);
-    gl.uniform1f(uGain, POINT_ALPHA_GAIN);
+    gl.uniform1f(uGain, alphaGain);
+    gl.uniform1f(uAngle, angleRadians);
     gl.uniform3f(uColor, ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
 
     gl.drawArrays(gl.POINTS, 0, points.length);
@@ -258,13 +275,17 @@ export function createPointCloudRenderer(
   // Mirrors the vertex shader's transform on the CPU. Kept adjacent to the
   // shader source on purpose: if one changes, the hover targets silently
   // stop matching the dots unless the other changes with it.
-  function project(morph: number): Float32Array {
+  function project(morph: number, angleRadians = 0): Float32Array {
     const out = new Float32Array(points.length * 2);
+    const c = Math.cos(angleRadians);
+    const s = Math.sin(angleRadians);
     for (let i = 0; i < points.length; i++) {
       const o = i * FLOATS_PER_POINT;
-      const x = cpuData[o] + (cpuData[o + 3] - cpuData[o]) * morph;
+      const mx = cpuData[o] + (cpuData[o + 3] - cpuData[o]) * morph;
       const y = cpuData[o + 1] + (cpuData[o + 4] - cpuData[o + 1]) * morph;
-      const z = cpuData[o + 2] + (cpuData[o + 5] - cpuData[o + 2]) * morph;
+      const mz = cpuData[o + 2] + (cpuData[o + 5] - cpuData[o + 2]) * morph;
+      const x = mx * c + mz * s;
+      const z = mz * c - mx * s;
       const scale = CAMERA_DIST / (CAMERA_DIST + z);
       let px = (x * scale) / CLOUD_EXTENT;
       let py = (y * scale) / CLOUD_EXTENT;

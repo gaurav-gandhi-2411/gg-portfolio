@@ -1,16 +1,9 @@
+import { HERO_CLUSTER_OPACITY as CLUSTER_OPACITY } from "@/lib/embedding-cluster-opacity";
 import type { EmbeddingPoint } from "@/lib/embedding-projection";
 
 interface EmbeddingCloudStaticProps {
   points: EmbeddingPoint[];
 }
-
-// One-accent discipline (app/globals.css's own rule): cluster structure
-// reads through OPACITY variance on the single indigo accent, never a
-// second hue — same technique the hero-halo this replaces already used
-// (color-mix against one accent at different alphas), just applied per
-// point instead of per gradient stop. Ceiling capped well below the old
-// halo's own 0.26 peak opacity (see design-review fix below).
-const CLUSTER_OPACITY = [0.14, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5];
 
 /**
  * No WebGL, no <canvas>, no animation — the prefers-reduced-motion and

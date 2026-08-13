@@ -213,6 +213,21 @@ test("axe: zero violations with a metric's source-provenance panel open (prose t
  * its live region) are actually audited; without it the suite would report
  * green over a surface it never visited.
  */
+/**
+ * Same blind spot as the Warmer scan below, on the homepage: gotoSettled()'s
+ * reduced-motion emulation is one of the conditions under which the hero's
+ * capability gate declines WebGL, so the "/" entry in ROUTES only ever audits
+ * the static scatter. This scan is the only one that sees the canvas layer.
+ */
+test("axe: zero violations on the homepage with the hero's WebGL layer active", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await forceWebGLCapability(page);
+  await page.goto("/");
+  await expect(page.locator("header canvas")).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
 test("axe: zero violations on the Warmer WebGL embedding viewer", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await forceWebGLCapability(page);
