@@ -73,13 +73,27 @@ test.describe("/ask degraded state (embedding dependency absent)", () => {
     await stubUnavailable(page);
     await page.goto("/ask");
 
+    // Capture the real chip texts BEFORE asking, so the assertion is about the
+    // chips themselves rather than about one container's copy. The first
+    // version of this test asserted only on "Or ask about:" — the post-turn
+    // block's heading — and sailed past five visible chips in the EMPTY-state
+    // block, which is what a 503 visitor actually sees (a 503 adds no turn, so
+    // isEmpty stays true). A screenshot caught what this test did not.
+    const chipTexts = await page.getByTestId("ask-suggestion").allInnerTexts();
+    expect(chipTexts.length).toBeGreaterThan(0);
+
     await page.getByRole("textbox", { name: /Ask a question/i }).fill("What does TriageIQ do?");
     await page.getByRole("button", { name: "Ask", exact: true }).click();
     await expect(page.getByTestId("ask-unavailable")).toBeVisible();
 
     // Absent, not present-and-disabled: a visible prompt that cannot be
     // answered is the "appears to work, returns nothing" failure mode.
+    await expect(page.getByTestId("ask-suggestion")).toHaveCount(0);
     await expect(page.getByText("Or ask about:")).toHaveCount(0);
+    await expect(page.getByText("try one of these")).toHaveCount(0);
+    for (const text of chipTexts) {
+      await expect(page.getByRole("button", { name: text, exact: true })).toHaveCount(0);
+    }
   });
 
   test("a healthy response still renders normally (the stub is what degrades, not the page)", async ({

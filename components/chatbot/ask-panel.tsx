@@ -281,7 +281,20 @@ export function AskPanel() {
         aria-live="polite"
         className="border-border/60 bg-card/40 flex min-h-[16rem] flex-col gap-5 rounded-xl border p-5"
       >
-        {isEmpty ? (
+        {isEmpty && status === "unavailable" ? (
+          // A 503 adds no turn, so isEmpty stays true and this empty state is
+          // what an unavailable visitor actually sees. Gating only the
+          // post-turn chip row below left five suggested questions on screen
+          // that could never be answered — the precise "looks like it works,
+          // returns nothing" failure this state exists to prevent. Caught by
+          // looking at a screenshot; the first version of the e2e test asserted
+          // on the OTHER chip block's copy and passed straight through it.
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-6 text-center">
+            <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
+              The assistant can&apos;t take questions right now.
+            </p>
+          </div>
+        ) : isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 py-6 text-center">
             <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               Ask a question, or try one of these:
@@ -450,6 +463,11 @@ function ChipRow({
         <button
           key={q}
           type="button"
+          // Marks every suggestion chip regardless of which block renders it,
+          // so a test can assert "no suggestions are offered" without knowing
+          // which container it came from — the gap that let five visible chips
+          // through the degraded-state test.
+          data-testid="ask-suggestion"
           onClick={() => onPick(q)}
           className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring rounded-full border px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
