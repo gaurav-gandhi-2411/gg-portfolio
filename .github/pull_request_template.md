@@ -13,7 +13,8 @@ applies to gate results too).
 - [ ] `npm run build` (chatbot index freshness + card/metrics/case-study consistency run inline):
 - [ ] `npm run test:e2e` — Playwright (desktop + mobile projects), incl. axe accessibility:
 - [ ] `node scripts/check-metric-freshness.mjs` — only if `content/*.ts`/`provenance.md` changed:
-- [ ] Lighthouse mobile (all categories) — only if a UI path changed:
+- [ ] `node scripts/check-bundle-size.mjs` — eager JS gzip vs. the 220,160-byte (215 KiB) ceiling, CI-blocking on every PR:
+- [ ] `node scripts/lighthouse.mjs` — mobile Lighthouse, n>=6, against `npm run start` — only if a UI path changed; local-only/non-blocking, commit the `reports/lighthouse-*.summary.json` + `.report.json` pair:
 
 ## Screenshots (before/after — required for any visible UI change, else state explicitly why not
 applicable, e.g. "docs/backend-only, no UI path touched")
