@@ -7,11 +7,12 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **five times in one
-day**, in five different disguises, by five unrelated routes. None of them was a
-bug in the usual sense. Every one of them was green.
+This is written down because the same failure was found **eight times in two
+days**, in eight different disguises, by eight unrelated routes. None of them was
+a bug in the usual sense. Almost every one of them was green — and the one that
+was red had already been explained away in advance.
 
-## The five
+## The eight
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -68,6 +69,71 @@ because GitHub runners report ≤4 cores and the capability gate correctly
 declined; every axe scan forced `prefers-reduced-motion`, which is exactly a
 condition under which that layer does not mount; and a behaviour test asserted
 one exact sentence, so it broke when the sentence was corrected for accuracy.
+
+**8. A check whose true positives arrive pre-labelled as noise.** Every other
+entry here is a check that went quiet. This one is the inverse, and it is worse,
+because the check *did* fire — correctly, on the first try — and the repository
+had already written down two reasons to ignore it.
+
+`link-check.yml` failed on `https://review-iq-ajjrytb3na-el.a.run.app/docs`. The
+first reading was rate limiting. It was not. **`review-iq-prod` has no billing
+account linked**, so Cloud Run refuses to start a container and Google's frontend
+returns 503 in ~0.09s. A T2 product's entire backend was down, on both the raw
+`.run.app` URL and its own custom domain `api.samidhareviews.xyz`, and the link
+checker was the only thing in the estate that said so.
+
+Two artefacts had prepared the dismissal in advance:
+
+- `.lychee.toml` said generous timeouts "absorb [Cloud Run cold starts] instead
+  of flagging it as broken every run."
+- `link-check.yml` set `continue-on-error` on PRs, reasoning: "don't gate on link
+  rot outside our control — e.g. Cloud Run cold starts."
+
+Both name *Cloud Run 503* as the canonical example of a failure worth ignoring.
+So the one failure mode most likely to represent a real outage of ours is
+precisely the one the config taught every reader to discount. The check was
+non-blocking, its failure was expected, and its explanation was pre-written.
+
+**The fix is not more retries.** Retries were already correct, and were the
+strongest evidence available — lychee's `should_retry()` covers
+`is_server_error()` (all 5xx), `TOO_MANY_REQUESTS` and `REQUEST_TIMEOUT`, and
+`retry_wait_time` doubles per attempt. At `retry_wait_time = 15,
+max_retries = 3` that 503 had already survived **four attempts across ~105
+seconds** before it was ever reported. No cold start and no rate limit does
+that.
+
+That proof is unrecoverable, and not by our misconfiguration. In
+`retry_request()`, `retries` is a local counter: incremented, compared against
+`max_retries`, and dropped when the function returns. There is no log line in
+the loop and no verbosity flag that reveals it — a failure that survived four
+attempts and one that failed instantly produce *byte-identical* output. So the
+reader was left holding the config's prior with nothing available to overturn
+it. The retries did their job and the tool destroyed the evidence that they had.
+
+Since the count cannot be surfaced, `.lychee.toml` now carries the arithmetic
+itself — the retry budget written out in seconds, next to the settings that
+produce it — so a reader can derive from the config what the report will never
+tell them. That is a compensating control, not a fix, and it is worth naming as
+such: it depends on someone reading the config, which is exactly the kind of
+assumption the rest of this document distrusts.
+
+The general shape: **a check earns its retries in order to make its failures
+trustworthy — and then must say so, or it has bought the credibility and thrown
+away the receipt.** A failure report that cannot distinguish "503 once" from
+"503 after four attempts over 105 seconds" hands the reader the same ambiguity
+the retries were supposed to resolve. Comments that pre-classify a whole status
+code as environmental complete the job: they convert a signal into a known
+false alarm before it has been read.
+
+Also worth noting what did *not* catch this. Every GCP-side check looked
+healthy: `gcloud run services describe` reports `Ready: True`,
+`RoutesReady: True`, and 100% of traffic on `review-iq-00038-nt2`, the latest
+ready revision. All of that is control-plane configuration, which billing does
+not touch — the service is perfectly configured and cannot run. Confirming the
+outage required either a request to the URL, or
+`gcloud billing projects describe`, which no check ran. This is instance 6's
+lesson in a different costume: state that looks like health, measured on the
+wrong plane.
 
 ## What follows from it
 
