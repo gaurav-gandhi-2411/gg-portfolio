@@ -3,11 +3,26 @@ name: CI
 on:
   push:
     branches: [main]
+  # Deliberately NOT filtered to `branches: [main]`. With that filter, a PR
+  # stacked on another feature branch fires no CI at all — `build` and `e2e`
+  # come back ABSENT rather than pending, and rule 70a treats an absent
+  # required check exactly like a failing one. The effect was that a stacked
+  # PR looked less verified than an unstacked one carrying identical code,
+  # which is the same shape as any other control that is green while covering
+  # less than its name implies.
+  #
+  # Found on PR #84 (hero WebGL layer, stacked on #83): only the Vercel checks
+  # ever appeared, and the suite had to be started by hand via
+  # workflow_dispatch. That workaround works but relies on someone remembering
+  # it at exactly the moment the checks look merely slow rather than missing.
+  #
+  # Cost of removing the filter is one extra CI run per stacked PR, which is
+  # cheap next to merging something whose tests never ran.
   pull_request:
-    branches: [main]
   # Dispatched by metrics-refresh.yml onto its PR branch: PRs created with
   # GITHUB_TOKEN don't fire pull_request workflows, so the required `build`
-  # check has to be started explicitly.
+  # check has to be started explicitly. Still needed — the trigger above
+  # covers base-branch breadth, not the GITHUB_TOKEN case.
   workflow_dispatch:
 
 concurrency:
