@@ -232,7 +232,23 @@ for (const p of products) {
     continue;
   }
   const figureTokens = extractTokens(p.figureRaw);
-  const missing = tokensFoundIn(figureTokens, metricEntry.value);
+  // A dumbbell figure shows a before/after pair, so its `from` value is the
+  // BASELINE — and since 2026-08-13 baselines live in their own
+  // `<id>-baseline` entry rather than being packed into the primary metric's
+  // value string. That split exists because a value holding two numbers
+  // cannot be anchored to a single source line (see
+  // check-metric-freshness.mjs's cited-line layer). Without this, the two
+  // checks pull in opposite directions: one demands both numbers in one
+  // value, the other demands one number per value.
+  //
+  // Scoped narrowly on purpose — only the exact `-baseline` sibling of THIS
+  // card's own metric is consulted, never an arbitrary other entry, so a
+  // figure still cannot quote a number that no sibling metric backs.
+  const baselineEntry = metrics[`${p.metricId}-baseline`];
+  const searchSpace = baselineEntry
+    ? `${metricEntry.value} ${baselineEntry.value}`
+    : metricEntry.value;
+  const missing = tokensFoundIn(figureTokens, searchSpace);
   if (missing.length > 0) {
     findings.push({
       check: "B",

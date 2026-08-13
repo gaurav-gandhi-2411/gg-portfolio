@@ -150,7 +150,7 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 | ID | Claim | Source |
 |---|---|---|
 | `triageiq:classifier-top3-k8s` / `triageiq:classifier-top3-vscode` | Component classifier top-3 accuracy: k8s 87.1% (README.md:81), vscode 89.8% (README.md:79); top-1 secondaries 60.5% / 76.5% sit one line below each. **Split 2026-08-13** from the single `triageiq:classifier-top3` entry, which anchored a four-number claim to one line and so could not be correct for more than one of them. | **Wave 19 correction (2026-07-31):** retrained via a one-vs-rest multi-label supervision fix, landed 2026-07-24 — `triage-iq/README.md:78-82`, `docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`. Prior value (82.5%/90.4% top-3) is superseded, was current at the case study's 2026-07-26 writing but the fix had already shipped by then — see the wave-19 provenance-failure note below. |
-| `triageiq:cqr-coverage` | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
+| `triageiq:cqr-coverage-k8s` / `-vscode` (split 2026-08-13) | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
 on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9.1% (vscode)**
@@ -197,7 +197,7 @@ small-n percentage), swapped in the actually-current number.
 
 | ID | Claim | Source |
 |---|---|---|
-| `shelfsense:wrmsse` | WRMSSE 0.8956 → 0.5693, 36% reduction | `shelfsense-m5/README.md:7`, `reports/leaderboard.md:233`. No commits since 2026-05-17 — unchanged, re-confirmed 2026-07-12 |
+| `shelfsense:wrmsse` + `shelfsense:wrmsse-baseline` (split 2026-08-13) | WRMSSE 0.8956 → 0.5693, 36% reduction | `shelfsense-m5/README.md:7`, `reports/leaderboard.md:233`. No commits since 2026-05-17 — unchanged, re-confirmed 2026-07-12 |
 
 No live deployment exists for this project (batch/local pipeline only per
 `shelfsense-m5/README.md` "Live Path (Local CLI)") — card shows repo link only, no live-link
@@ -229,7 +229,7 @@ claims change.
 
 | ID | Claim | Source |
 |---|---|---|
-| `mmfr:recall10` | Recall@10 lift 3.06× vs. popularity baseline (0.0328 vs. 0.0107) | `multimodal-fashion-recommender/README.md:113,119-126`; locked-gate cross-check `PROJECT_MEMORY.md:375-386` ("Δ = 0.000000 vs baseline, identical"). Re-confirmed unchanged 2026-07-12 (matches the earlier concurrent-session pass exactly) |
+| `mmfr:recall10` + `mmfr:recall10-baseline` (split 2026-08-13) | Recall@10 lift 3.06× vs. popularity baseline (0.0328 vs. 0.0107) | `multimodal-fashion-recommender/README.md:113,119-126`; locked-gate cross-check `PROJECT_MEMORY.md:375-386` ("Δ = 0.000000 vs baseline, identical"). Re-confirmed unchanged 2026-07-12 (matches the earlier concurrent-session pass exactly) |
 
 Live entry point is the Hugging Face Space (H&M-only demo); Cloud Run deploy is not yet live —
 used the HF Space URL as the card's live link, not an aspirational Cloud Run URL.
@@ -756,8 +756,8 @@ instruction.
 | Project | Claim | Correction | Source |
 |---|---|---|---|
 | TriageIQ | `triageiq:classifier-top3-k8s` / `-vscode` (split 2026-08-13) | Corrected 82.5%/90.4% (top-3 only, pre-ADR-0036) → 87.1%/60.5% (k8s top-3/top-1), 89.8%/76.5% (vscode top-3/top-1) | `triage-iq/README.md:79-82`; `triage-iq/docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md:58-67` |
-| TriageIQ | `triageiq:cqr-coverage` (new) | Conformal Quantile Regression coverage — never surfaced before — 76.2% (k8s) / 74.6% (vscode) vs. 80% nominal target; matches the live-serving artifact, not just a report | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` |
-| TriageIQ | `triageiq:retrieval-recall5` | Corrected 23.5% (k8s) / "vscode retired" → 18.0% (k8s) / 50.5% (vscode) — two eval-harness corrections deep (ADR-0033 found the original vscode gold pairs ~80% noise; ADR-0035 supersedes both ADR-0031's lever numbers and ADR-0033's baselines) | `triage-iq/README.md:86-89`; `triage-iq/docs/architecture/adr/0035-retrieval-harness-correction.md:1-18` |
+| TriageIQ | `triageiq:cqr-coverage-k8s` / `-vscode` (new; split 2026-08-13) | Conformal Quantile Regression coverage — never surfaced before — 76.2% (k8s) / 74.6% (vscode) vs. 80% nominal target; matches the live-serving artifact, not just a report | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` |
+| TriageIQ | `triageiq:retrieval-recall5-k8s` / `-vscode` (split 2026-08-13) | Corrected 23.5% (k8s) / "vscode retired" → 18.0% (k8s) / 50.5% (vscode) — two eval-harness corrections deep (ADR-0033 found the original vscode gold pairs ~80% noise; ADR-0035 supersedes both ADR-0031's lever numbers and ADR-0033's baselines) | `triage-iq/README.md:86-89`; `triage-iq/docs/architecture/adr/0035-retrieval-harness-correction.md:1-18` |
 | TriageIQ | Top-3-vs-top-1 gap framing | Recomputed 21–31pp → 13–27pp to match the corrected classifier numbers above | Derived from the two rows above |
 | TriageIQ | LLM synthesis shot count | Corrected "3-shot" → "4-shot" (ADR-0037 appended a 4th few-shot example; the repo's own README hadn't caught up either) | `triage-iq/docs/architecture/adr/0037-classifier-confidence-framing-judge-regression.md:103-114,172-174`; `triage-iq/src/triage_iq/prompts/triage_prompt.py:607` |
 | Style Maitri | `style-maitri:intent-accuracy` | Corrected 93.8% (n=211, 2026-07-12) → 94.4% (n=378) — a same-day (2026-08-05) eval report supersedes the cited one | `agentic-shopping-assistant/reports/model_eval_20260805T070638Z.md:7` |

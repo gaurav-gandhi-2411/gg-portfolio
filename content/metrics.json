@@ -63,34 +63,65 @@
       "measured_at": "2026-08-05",
       "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the vscode top-3 figure at README.md:79. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
     },
-    "triageiq:cqr-coverage": {
-      "label": "Resolution-time interval coverage after Conformal Quantile Regression, vs. 80% nominal target",
-      "value": "76.2% (k8s) / 74.6% (vscode)",
+    "triageiq:cqr-coverage-k8s": {
+      "label": "Resolution-time CQR interval coverage (kubernetes)",
+      "value": "76.2%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 94,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes coverage at README.md:94 (80% nominal target). Also re-pointed off 1ad094f, a pre-squash-merge branch commit. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
     },
-    "triageiq:retrieval-recall5": {
-      "label": "Similar-issue retrieval, Recall@5",
-      "value": "18.0% (k8s) / 50.5% (vscode)",
+    "triageiq:cqr-coverage-vscode": {
+      "label": "Resolution-time CQR interval coverage (vscode)",
+      "value": "74.6%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 98,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode coverage at README.md:98 (80% nominal target). Also re-pointed off 1ad094f. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+    },
+    "triageiq:retrieval-recall5-k8s": {
+      "label": "Similar-issue retrieval Recall@5, related task (kubernetes)",
+      "value": "18.0%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
       "source_line": 86,
-      "commit_sha": "1ad094f097efd0d9eec5cdb38de14c634cb1a0a8",
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
       "measured_at": "2026-08-05",
-      "note": "Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes Recall@5 at README.md:86. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+    },
+    "triageiq:retrieval-recall5-vscode": {
+      "label": "Similar-issue retrieval Recall@5, duplicate task (vscode)",
+      "value": "50.5%",
+      "repo": "gaurav-gandhi-2411/triage-iq",
+      "source_file": "README.md",
+      "source_line": 88,
+      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
+      "measured_at": "2026-08-05",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode Recall@5 at README.md:88. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
     },
     "shelfsense:wrmsse": {
-      "label": "WRMSSE vs. naive baseline",
-      "value": "36% reduction (0.8956 → 0.5693)",
+      "label": "WRMSSE, best private leaderboard",
+      "value": "0.5693",
       "repo": "gaurav-gandhi-2411/shelfsense-m5",
       "source_file": "reports/leaderboard.md",
       "source_line": 233,
       "commit_sha": "2cf85c6deac76665352a9217d7386a282d73888b",
-      "measured_at": "2026-05-07"
+      "measured_at": "2026-05-07",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The 36% reduction is DERIVED from this and shelfsense:wrmsse-baseline (0.8956 -> 0.5693); it is not a figure printed on any line, so it is stated here rather than cited as if it were. "
+    },
+    "shelfsense:wrmsse-baseline": {
+      "label": "WRMSSE, Seasonal Naive 28 reference baseline",
+      "value": "0.8956",
+      "repo": "gaurav-gandhi-2411/shelfsense-m5",
+      "source_file": "reports/leaderboard.md",
+      "source_line": 221,
+      "commit_sha": "2cf85c6deac76665352a9217d7386a282d73888b",
+      "measured_at": "2026-05-07",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The naive-seasonal reference this is measured against, at leaderboard.md:221. Same shape as warmer:hinglish-fix / warmer:hinglish-baseline. "
     },
     "reviewiq:extraction-eval": {
       "label": "Extraction accuracy (en/hi/hi-en)",
@@ -103,12 +134,23 @@
     },
     "mmfr:recall10": {
       "label": "Recall@10 lift vs. popularity baseline",
-      "value": "3.06× (0.0328 vs. 0.0107)",
+      "value": "3.06× (0.0328)",
       "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
       "source_file": "README.md",
       "source_line": 124,
       "commit_sha": "7b5d84b0cc2eb497b98e84c63bb6436858e9e48d",
-      "measured_at": "2026-07-12"
+      "measured_at": "2026-07-12",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. Both the lift and the absolute Recall@10 sit on README.md:124, so they stay together. The 0.0107 popularity baseline is on line 121 and is now mmfr:recall10-baseline. "
+    },
+    "mmfr:recall10-baseline": {
+      "label": "Recall@10, popularity baseline",
+      "value": "0.0107",
+      "repo": "gaurav-gandhi-2411/multimodal-fashion-recommender",
+      "source_file": "README.md",
+      "source_line": 121,
+      "commit_sha": "7b5d84b0cc2eb497b98e84c63bb6436858e9e48d",
+      "measured_at": "2026-07-12",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The popularity baseline the 3.06x lift is measured against, at README.md:121. "
     },
     "gold-rate-tracker:headline": {
       "label": "Naive baseline vs. ML model (199-fold backtest)",

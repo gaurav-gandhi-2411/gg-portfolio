@@ -88,9 +88,15 @@ export const mmfr: CaseStudy = {
   results: [
     {
       label: "Recall@10 vs. popularity baseline",
-      value: "0.0328 vs. 0.0107 — 3.06× lift",
+      value: "3.06× (0.0328)",
       detail: "also 2.12× vs. a co-purchase baseline (0.0155) and ahead of text-only SBERT (0.0248); temporal held-out test, 110,390 users",
       sourceRef: "mmfr:recall10",
+    },
+    {
+      label: "Popularity baseline, Recall@10",
+      value: "0.0107",
+      detail: "the baseline the 3.06× lift is measured against, same README table, same commit",
+      sourceRef: "mmfr:recall10-baseline",
     },
     {
       label: "NDCG@10 / MRR",
