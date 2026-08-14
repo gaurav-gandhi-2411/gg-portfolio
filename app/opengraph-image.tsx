@@ -8,7 +8,6 @@ const BG = "#0a0b0d";
 const TEXT_HI = "#edeef0";
 const TEXT_LO = "#9195a0";
 const INDIGO = "#818cf8";
-const STATUS_OPEN = "#34d399";
 
 export default function OgImage() {
   return new ImageResponse(
@@ -65,8 +64,12 @@ export default function OgImage() {
             and the production systems and research behind them.
           </div>
         </div>
+        {/* BL-3(b) — the status dot now matches the live site's own
+            availability badge (components/sections/hero.tsx's bg-accent
+            dot), not an undocumented green with no token anywhere in
+            globals.css. */}
         <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
-          <div style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: STATUS_OPEN }} />
+          <div style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: INDIGO }} />
           <div style={{ fontSize: 24, color: TEXT_LO }}>Open to Senior AI/ML roles</div>
         </div>
       </div>
