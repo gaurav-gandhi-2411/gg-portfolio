@@ -7,15 +7,16 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **eleven times in three
-days**, in eleven different disguises, by eleven unrelated routes. None of them
-was a bug in the usual sense. Almost every one of them was green — one that was
-red had already been explained away in advance, one was a `2>/dev/null` typed for
+This is written down because the same failure was found **twelve times in three
+days**, in twelve different disguises, by twelve unrelated routes. None of them
+was a bug in the usual sense. Almost every one was green — one that was red had
+already been explained away in advance, one was a `2>/dev/null` typed for
 tidiness, one was a check that ran perfectly against an address the product had
-moved out of, and the last was a monitoring stack installed after an outage that
-could not have detected that outage.
+moved out of, one was a monitoring stack installed after an outage it could not
+have detected, and the last was an alarm so confident about an outage that was
+not happening that its real warning would have been ignored.
 
-## The eleven
+## The twelve
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -314,6 +315,58 @@ unconfirmed channel accepts alerts and delivers nothing. The policies list looks
 identical either way. Creating a notification path and verifying a notification
 path are separate acts, and only one of them was ever performed here.
 
+**12. A guard that reports "could not verify" as "catastrophic outage".** Every
+other entry here describes a check that was too quiet. This one was too loud, and
+it is the worst of the set, because of *which* alarm it discredits.
+
+TriageIQ's `health-monitor.yml` asserts billing directly — deliberately, because
+a warm Cloud Run revision keeps returning 200 for hours after billing dies, so
+`/health` alone cannot catch the failure promptly. It read:
+
+```bash
+ENABLED=$(gcloud billing projects describe "$P" --format='value(billingEnabled)')
+if [ "$ENABLED" != "True" ]; then   # empty string is also != "True"
+```
+
+When that `gcloud` call *fails* — the monitor service account losing
+`roles/browser`, the Cloud Billing API being disabled, WIF auth expiring — the
+variable holds the empty string, and the guard announces a **confirmed billing
+outage**, citing two real incidents by ADR number and linking a recovery runbook.
+
+It did this on 2026-08-13/14, on `main`, while the service was healthy: `/health`
+returned 200 on a **61-second cold start**, and a cold start cannot happen without
+billing. The guard's own comment depends on that asymmetry — it exists precisely
+because *warm* serving proves nothing — so the evidence disproving its alarm was
+the mechanism it was built around.
+
+**Fail-closed was never the issue.** Both branches exit non-zero; the job goes red
+either way. What differs is what the operator does next: `UNVERIFIED` means fix
+the monitor's IAM, `DISABLED` means relink billing. Collapsing them doesn't just
+lose information — it dispatches you, with maximum confidence and two incident
+citations, to the wrong runbook. *Failing closed is about the exit code; being
+useful is about the message, and they are not the same property.*
+
+The asymmetry that makes this the worst variant: a check that goes silent fails
+**openly** and is found late, as instances 1–5 were. A check that fires falsely
+fails **credibly**, and is found never — because the first response to a familiar
+alarm that turned out to be nothing is to trust it less, and the second is to stop
+reading it. This is the alarm for a failure mode that already went undetected for
+**twelve days**. Teaching its owner that it cries wolf disarms the single signal
+that most needs to be believed, and does so quietly, in the operator's head, where
+no gate can catch it.
+
+It is instance 9's shape — empty is not absent — relocated from a shell one-liner
+in an ad-hoc sweep into a standing production guard, where the blast radius is not
+a wrong sentence in a report but a wrong emergency response. The same three-line
+mistake costs more the closer it sits to something that pages you.
+
+Fixed in `triage-iq` by separating the read's *failure* from its *answer*: a
+non-zero exit reports `UNVERIFIED` with gcloud's own stderr attached, `False`
+reports `DISABLED` with the original message intact, and an unexpected value on a
+zero exit also reports `UNVERIFIED` — because an unrecognised answer is not an
+answer, and a future change to gcloud's output format should not silently become
+an outage report.
+
 ## What follows from it
 
 - **Name the surface.** For every check, state which paths, which entries, which
@@ -327,6 +380,10 @@ path are separate acts, and only one of them was ever performed here.
 - **Print every one of them.** A status computed and not shown is the same bug
   as a status never computed.
 - **Fail closed.** "Could not verify" is a deny, never a silent pass.
+- **Failing closed is the exit code; being useful is the message.** Two failures
+  that need different responses must not share one alarm. A guard that reports a
+  broken check as a confirmed outage sends you to the wrong runbook with full
+  confidence (instance 12) — say `UNVERIFIED`, and say what actually failed.
 - **Never discard an error channel to tidy output.** `2>/dev/null`, `|| true`
   and `.catch(() => [])` convert "could not check" into an empty result, and an
   empty result reads as healthy. If output needs tidying, classify the error and
