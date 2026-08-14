@@ -1,0 +1,95 @@
+{
+  "route": "/projects",
+  "url": "http://localhost:3000/projects",
+  "branch": "before-bl9",
+  "date": "2026-08-14",
+  "n": 3,
+  "throttlingMethod": "devtools",
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 1,
+  "aggregate": {
+    "performance": {
+      "mean": 93,
+      "stddev": 0,
+      "values": [
+        93,
+        93,
+        93
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 96,
+      "stddev": 0,
+      "values": [
+        96,
+        96,
+        96
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 1978.48,
+      "stddev": 54.21,
+      "values": [
+        2040.863,
+        1951.769,
+        1942.816
+      ]
+    },
+    "lcp-ms": {
+      "mean": 1978.48,
+      "stddev": 54.21,
+      "values": [
+        2040.863,
+        1951.769,
+        1942.816
+      ]
+    },
+    "tbt-ms": {
+      "mean": 170.97,
+      "stddev": 11.84,
+      "values": [
+        177.6799999999996,
+        177.93900000000008,
+        157.30200000000013
+      ]
+    },
+    "cls": {
+      "mean": 0.1,
+      "stddev": 0,
+      "values": [
+        0.09828598807251705,
+        0.09828598807251705,
+        0.09828598807251705
+      ]
+    },
+    "si-ms": {
+      "mean": 2011.33,
+      "stddev": 49.12,
+      "values": [
+        2068,
+        1981,
+        1985
+      ]
+    }
+  }
+}
