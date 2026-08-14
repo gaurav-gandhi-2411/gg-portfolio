@@ -208,7 +208,7 @@ export function ProjectFilter({
         <p className="mt-6 text-center">
           <TransitionLink
             href={seeAllHref}
-            className="text-accent focus-visible:outline-ring text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             {seeAllLabel}
           </TransitionLink>
