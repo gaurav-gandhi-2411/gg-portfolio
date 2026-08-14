@@ -41,7 +41,7 @@ export async function ProjectGrid({
         // applies now that the container itself steps up at the same point).
         // mt-6, not mt-8: the filter's now-visible result counter (wave 14)
         // already carries mt-4 of its own above this grid.
-        className="project-grid mt-6 grid gap-4 lg:grid-cols-2 lg:gap-5"
+        className="project-grid mt-[var(--space-6)] grid gap-[var(--space-4)] lg:grid-cols-2 lg:gap-[var(--space-5)]"
       >
         {products.map((product) => (
           <ProjectCard

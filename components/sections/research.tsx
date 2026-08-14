@@ -20,9 +20,9 @@ export function Research() {
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
-            className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
+            className="flex flex-col gap-[var(--space-3)] lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
           >
-            <div className="contents lg:flex lg:flex-col lg:gap-3">
+            <div className="contents lg:flex lg:flex-col lg:gap-[var(--space-3)]">
               <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
                 {paper.title}
               </h3>
@@ -33,7 +33,7 @@ export function Research() {
                   : "Published and citable."}
               </p>
 
-              <p className="order-last flex flex-wrap gap-5 text-sm lg:order-none lg:mt-auto">
+              <p className="order-last flex flex-wrap gap-[var(--space-5)] text-sm lg:order-none lg:mt-auto">
                 {paper.arxivUrl && <InlineLink href={paper.arxivUrl}>arXiv ↗</InlineLink>}
                 <InlineLink href={paper.repoUrl}>Repo ↗</InlineLink>
                 {/* Wave 12: the benchmark behind the paper has its own case study. */}

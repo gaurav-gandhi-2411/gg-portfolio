@@ -83,21 +83,21 @@ function Scatter({ points, coordKey }: { points: EmbeddingPoint[]; coordKey: "ba
  */
 export function EmbeddingViewerStatic({ points }: EmbeddingViewerStaticProps) {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <figure className="border-border/40 flex flex-col gap-2 rounded-lg border">
+    <div className="grid grid-cols-1 gap-[var(--space-6)] sm:grid-cols-2">
+      <figure className="border-border/40 flex flex-col gap-[var(--space-2)] rounded-lg border">
         <div className="aspect-square">
           <Scatter points={points} coordKey="base" />
         </div>
-        <figcaption className="text-muted-foreground border-border/40 border-t px-3 py-2 text-xs">
+        <figcaption className="text-muted-foreground border-border/40 border-t px-[var(--space-3)] py-[var(--space-2)] text-caption">
           <span className="font-medium text-foreground">Before</span> — base model
           (paraphrase-multilingual-MiniLM-L12-v2), Hinglish terms scattered
         </figcaption>
       </figure>
-      <figure className="border-border/40 flex flex-col gap-2 rounded-lg border">
+      <figure className="border-border/40 flex flex-col gap-[var(--space-2)] rounded-lg border">
         <div className="aspect-square">
           <Scatter points={points} coordKey="finetuned" />
         </div>
-        <figcaption className="text-muted-foreground border-border/40 border-t px-3 py-2 text-xs">
+        <figcaption className="text-muted-foreground border-border/40 border-t px-[var(--space-3)] py-[var(--space-2)] text-caption">
           <span className="font-medium text-foreground">After</span> — fine-tuned model
           (hinglish-relatedness-sbert), the same terms now cluster by meaning
         </figcaption>

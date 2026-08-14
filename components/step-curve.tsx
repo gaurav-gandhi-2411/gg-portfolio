@@ -125,7 +125,7 @@ export function StepCurve({
           </g>
         ))}
       </svg>
-      <figcaption aria-hidden="true" className="text-muted-foreground mt-1 text-xs leading-snug">
+      <figcaption aria-hidden="true" className="text-muted-foreground mt-[var(--space-1)] text-caption leading-snug">
         {label} ({unit})
       </figcaption>
     </figure>

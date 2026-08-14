@@ -51,7 +51,7 @@ export function MetricProvenance({
         aria-label={`Source for ${label}`}
         data-open={open}
         className={cn(
-          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-xs normal-case opacity-0 transition-opacity duration-150 ease-out",
+          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-150 ease-out",
           "group-hover/prov:pointer-events-auto group-hover/prov:opacity-100",
           "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100"
         )}
@@ -74,7 +74,7 @@ export function MetricProvenance({
           file this parser picked out of its prose.
         */}
         {info.tier === "structured" && info.citations.length > 0 && (
-          <ul className="mt-2.5 flex flex-col gap-1">
+          <ul className="mt-[var(--space-2-5)] flex flex-col gap-[var(--space-1)]">
             {info.citations.map((c) => (
               <li key={`${c.file}:${c.line ?? ""}`} className="font-mono text-[11px]">
                 {c.url ? (
@@ -102,12 +102,12 @@ export function MetricProvenance({
             href={info.provenanceDocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent focus-visible:outline-ring mt-2.5 inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="text-accent focus-visible:outline-ring mt-[var(--space-2-5)] inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             View in content/provenance.md ↗
           </a>
         )}
-        <p className="text-muted-foreground/80 mt-2.5 text-[11px]">
+        <p className="text-muted-foreground/80 mt-[var(--space-2-5)] text-[11px]">
           {info.tier === "structured" && info.citations.some((c) => c.commitSha) && (
             <>commit {info.citations.find((c) => c.commitSha)?.commitSha?.slice(0, 7)} · </>
           )}

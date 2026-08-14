@@ -100,19 +100,19 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
   return (
     <main
       id="main"
-      className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-32 text-center"
+      className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-[var(--space-6)] py-32 text-center"
     >
       <Monogram className="mb-6 opacity-80" />
-      <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+      <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
         Waking a demo
       </p>
-      <h1 className="font-heading text-heading mt-4 font-semibold text-foreground">
+      <h1 className="font-heading text-heading mt-[var(--space-4)] font-semibold text-foreground">
         {config.name} is asleep
       </h1>
 
       {phase === "idle" && (
         <>
-          <p className="text-muted-foreground mt-4 max-w-measure text-base leading-relaxed">
+          <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
             This demo scales to zero when nobody&apos;s using it — $0 idle cost instead of paying
             for {config.gpuBacked ? "a GPU" : "a server"} to sit around 24/7. The tradeoff is a
             cold start: the first visit after a quiet stretch has to wait for it to spin back up,
@@ -121,7 +121,7 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
           <button
             type="button"
             onClick={() => void startWaking()}
-            className="bg-accent text-accent-foreground hover:shadow-card-hover focus-visible:outline-ring mt-8 inline-flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="bg-accent text-accent-foreground hover:shadow-card-hover focus-visible:outline-ring mt-[var(--space-8)] inline-flex items-center gap-[var(--space-2)] rounded-lg px-5 py-[var(--space-3)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             Wake the demo
           </button>
@@ -130,37 +130,37 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
 
       {phase === "waking" && (
         <>
-          <p className="text-muted-foreground mt-4 max-w-measure text-base leading-relaxed">
+          <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
             Waking {config.name}
-            <span className="ml-1 inline-flex gap-1 align-middle">
+            <span className="ml-1 inline-flex gap-[var(--space-1)] align-middle">
               <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
               <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
               <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
             </span>
           </p>
-          <p className="text-muted-foreground mt-2 font-mono text-xs">
+          <p className="text-muted-foreground mt-[var(--space-2)] font-mono text-caption">
             {elapsedSeconds}s elapsed — usually ready around {config.expectedWakeSeconds}s
           </p>
         </>
       )}
 
       {phase === "success" && (
-        <p className="mt-4 max-w-measure text-base leading-relaxed text-foreground">
+        <p className="mt-[var(--space-4)] max-w-measure text-base leading-relaxed text-foreground">
           Ready — taking you there now.
         </p>
       )}
 
       {phase === "failed" && (
         <>
-          <p className="text-muted-foreground mt-4 max-w-measure text-base leading-relaxed">
+          <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
             Still no response after {Math.floor(failAfterMs / 1000)}s — longer than a cold start
             should take, so it&apos;s more likely down than just asleep.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-[var(--space-8)] flex flex-wrap items-center justify-center gap-[var(--space-4)]">
             <button
               type="button"
               onClick={() => void startWaking()}
-              className="border-border/60 bg-card/60 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="border-border/60 bg-card/60 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring inline-flex items-center gap-[var(--space-2)] rounded-lg border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               Try again
             </button>
@@ -169,7 +169,7 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
         </>
       )}
 
-      <p className="mt-10 flex gap-6 text-sm">
+      <p className="mt-[var(--space-10)] flex gap-[var(--space-6)] text-sm">
         <Link
           href="/"
           className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
