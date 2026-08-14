@@ -7,8 +7,8 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **fourteen times in three
-days**, in fourteen different disguises, by fourteen unrelated routes. None was a
+This is written down because the same failure was found **fifteen times in three
+days**, in fifteen different disguises, by fifteen unrelated routes. None was a
 bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -16,12 +16,15 @@ a monitoring stack installed after an outage it could not have detected, and one
 an alarm so confident about an outage that was not happening that its real warning
 would have been ignored.
 
-The last two are different in kind and belong at the end for that reason. In
+The last three are different in kind and belong at the end for that reason. In
 instance 13 every control worked correctly and the defect was in **reading** one of
-them — which is the failure with the fewest available defenses, since no gate
-catches a wrong inference drawn from an accurate report.
+them; instance 14 is config and reality drifting with nothing scheduled to compare
+them; instance 15 is the identity running the commands changing underneath the
+session. These are the failures with the fewest available defenses, because no gate
+catches a wrong inference drawn from an accurate report, and none of them announces
+itself as anything other than an ordinary error.
 
-## The fourteen
+## The fifteen
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -459,6 +462,51 @@ Terraform last believed*; reading the function is reading *what will execute*. F
 anything whose value changes behaviour under load, only the second counts, and the
 habit of checking the config file because it is closer to hand is exactly how the
 divergence survives.
+
+**15. Two agents, one credential file, and an identity that changed mid-task.**
+`~/.config/gcloud` is machine-global. Every concurrent session shares it, so
+`gcloud config set account` in one repoints *every other session's* identity
+between one command and the next — including in the middle of a Terraform state
+migration.
+
+It never once looked like what it was. Three symptoms, one cause:
+
+| what happened | what I concluded | what it was |
+|---|---|---|
+| `403 cloudfunctions.functions.get denied` on a function I had just deployed | an IAM role was revoked | account had flipped to the one without access |
+| the identical retry succeeded seconds later | transient consistency lag after deploy | it had flipped back |
+| `storage: bucket doesn't exist` for a bucket created two minutes earlier | wrong project, or propagation | flipped again; the other account cannot read it |
+
+**Every one of those diagnoses blamed the environment — IAM, eventual
+consistency, propagation — and none asked whether the thing running the command
+was still the same principal.** The second is the worst of them: a failure that
+disappears on retry is the canonical signature of a transient fault, so the retry
+*succeeding* was read as confirmation. It was the account flipping back. I wrote
+"transient IAM/consistency lag" into a report on that basis.
+
+The rule is narrow and mechanical, because in the moment the reasoning is not
+available: **when an operation fails on permissions, confirm which identity
+actually ran it before diagnosing anything else.** `gcloud config get-value
+account` costs nothing and comes before IAM, before propagation, before API
+enablement. A changing principal is indistinguishable from a changing permission
+if you only ever look at the permission.
+
+Two aggravating details worth carrying:
+
+- **The workaround is not a fix.** Passing `--account=` on every invocation stops
+  a session inheriting someone else's switch, but the config is still shared and
+  still mutable by anyone. It is a seatbelt, not a lock — and a command that
+  omits the flag silently rejoins the hazard.
+- **Terraform does not use the gcloud CLI account at all.** It reads Application
+  Default Credentials, configured separately, carrying their own
+  `quota_project` — which here pointed at `iconic-reactor-496423-m4`, a project
+  unrelated to any of this work. So a single operation had *two* identities in
+  play, only one of which `gcloud config get-value account` reports. Checking the
+  obvious one would have told a true story about the wrong principal.
+
+Related in kind to instance 10 — a check running correctly against the wrong
+target — but the target here is not a URL or a project. It is *who you are*, and
+nothing in the output of a failing command mentions it.
 
 ## What follows from it
 
