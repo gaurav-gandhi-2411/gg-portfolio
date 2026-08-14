@@ -1,0 +1,95 @@
+{
+  "route": "/work/warmer",
+  "url": "http://localhost:3000/work/warmer",
+  "branch": "fix/perf-local",
+  "date": "2026-08-14",
+  "n": 3,
+  "throttlingMethod": "devtools",
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 2,
+  "aggregate": {
+    "performance": {
+      "mean": 76.67,
+      "stddev": 2.08,
+      "values": [
+        79,
+        76,
+        75
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 96,
+      "stddev": 0,
+      "values": [
+        96,
+        96,
+        96
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 2584.45,
+      "stddev": 91.96,
+      "values": [
+        2492.351,
+        2584.707,
+        2676.279
+      ]
+    },
+    "lcp-ms": {
+      "mean": 2584.45,
+      "stddev": 91.96,
+      "values": [
+        2492.351,
+        2584.707,
+        2676.279
+      ]
+    },
+    "tbt-ms": {
+      "mean": 478.65,
+      "stddev": 48.7,
+      "values": [
+        422.55399999999963,
+        503.3949999999995,
+        510.0149999999999
+      ]
+    },
+    "cls": {
+      "mean": 0.13,
+      "stddev": 0,
+      "values": [
+        0.1261212787144986,
+        0.1261212787144986,
+        0.1261212787144986
+      ]
+    },
+    "si-ms": {
+      "mean": 2583,
+      "stddev": 92.5,
+      "values": [
+        2490,
+        2584,
+        2675
+      ]
+    }
+  }
+}

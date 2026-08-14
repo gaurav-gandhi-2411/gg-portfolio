@@ -1,0 +1,77 @@
+{
+  "route": "/",
+  "url": "http://localhost:3000/",
+  "branch": "fix/perf-interleave-after1",
+  "date": "2026-08-14",
+  "n": 1,
+  "throttlingMethod": "devtools",
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 1,
+  "aggregate": {
+    "performance": {
+      "mean": 78,
+      "stddev": 0,
+      "values": [
+        78
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 96,
+      "stddev": 0,
+      "values": [
+        96
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 2396.45,
+      "stddev": 0,
+      "values": [
+        2396.45
+      ]
+    },
+    "lcp-ms": {
+      "mean": 2396.45,
+      "stddev": 0,
+      "values": [
+        2396.45
+      ]
+    },
+    "tbt-ms": {
+      "mean": 407.97,
+      "stddev": 0,
+      "values": [
+        407.967000000001
+      ]
+    },
+    "cls": {
+      "mean": 0.15,
+      "stddev": 0,
+      "values": [
+        0.1468295384216705
+      ]
+    },
+    "si-ms": {
+      "mean": 3164,
+      "stddev": 0,
+      "values": [
+        3164
+      ]
+    }
+  }
+}
