@@ -46,9 +46,14 @@
 //     CI-blocking gate (see .github/workflows/ci.yml's own comment on the
 //     bundle-size gate for the deterministic-vs-noisy split this repo
 //     draws).
-//   - Simulated throttling (Lighthouse's default), not real network/CPU
-//     conditions — a relative regression signal on THIS machine, not a
-//     promise of the field-observed number on a visitor's real device.
+//   - Simulated throttling (Lighthouse's default) unless THROTTLING_METHOD_
+//     OVERRIDE=devtools is set, in which case Chrome actually runs the CPU/
+//     network throttle (real, not Lantern-modeled) — see
+//     reports/wave4-lcp-investigation-2026-07-16.md for why this distinction
+//     matters on this app specifically: the two methods disagree on where
+//     the LCP time goes, not just by how much. Either way this is a relative
+//     regression signal on THIS machine, not a promise of the field-observed
+//     number on a visitor's real device.
 //   - Chrome version drifts with this machine's system Chrome install
 //     unless CHROME_PATH_OVERRIDE pins an exact binary — the aggregate
 //     records the exact Chrome version used per run so a future
@@ -88,6 +93,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORTS_DIR = process.env.REPORTS_DIR_OVERRIDE ?? join(ROOT, "reports");
 const BASE_URL = process.env.BASE_URL_OVERRIDE ?? "http://localhost:3000";
 const RUNS = Number(process.env.RUNS_OVERRIDE ?? 6);
+// Lighthouse's own default ('simulate', a Lantern model) unless overridden.
+// 'devtools' makes Chrome actually run the throttled CPU/network conditions
+// instead of estimating them from an unthrottled trace — slower per run, but
+// the only mode whose per-audit breakdown (e.g. lcp-breakdown-insight's
+// elementRenderDelay) is measuring something that really happened, not a
+// model's guess at what would happen.
+const THROTTLING_METHOD = process.env.THROTTLING_METHOD_OVERRIDE ?? "simulate";
 // Windows-repo wart avoided on purpose (rule from this script's own kickoff
 // instruction): os.tmpdir() resolves to the real per-user temp dir on
 // whatever OS this runs on, never a hardcoded POSIX /tmp default.
@@ -247,7 +259,11 @@ async function runOnce(url, chromePath, runIndex) {
   });
   let result;
   try {
-    result = await lighthouse(url, { port: chrome.port, onlyCategories: CATEGORIES, output: "json" });
+    result = await lighthouse(
+      url,
+      { port: chrome.port, onlyCategories: CATEGORIES, output: "json" },
+      { extends: "lighthouse:default", settings: { throttlingMethod: THROTTLING_METHOD } }
+    );
   } finally {
     await chrome.kill();
     // Best-effort: a leftover profile dir under os.tmpdir() is cosmetic
@@ -323,7 +339,11 @@ async function measureRoute(route, chromePath) {
 
   const today = new Date().toISOString().slice(0, 10);
   const branch = gitBranch();
-  const base = `lighthouse-${branchSlug(branch)}-${slug}-${today}`;
+  // Suffix only when non-default, so existing simulated-throttling artifact
+  // names/history stay stable and a devtools-throttled run never silently
+  // overwrites a simulated one measuring the same route/branch/day.
+  const throttlingSuffix = THROTTLING_METHOD === "simulate" ? "" : `-${THROTTLING_METHOD}`;
+  const base = `lighthouse-${branchSlug(branch)}-${slug}${throttlingSuffix}-${today}`;
   mkdirSync(REPORTS_DIR, { recursive: true });
 
   const summaryPath = join(REPORTS_DIR, `${base}.summary.json`);
@@ -333,6 +353,7 @@ async function measureRoute(route, chromePath) {
     branch,
     date: today,
     n: RUNS,
+    throttlingMethod: THROTTLING_METHOD,
     lighthouseVersion: results[0].lighthouseVersion,
     chromeVersion: results[0].chromeVersion,
     host: `${hostname()} (${platform()} ${release()})`,
