@@ -133,17 +133,17 @@ export const triageiq: CaseStudy = {
       // with no metrics.json entry — which left the two metric entries backing
       // these figures cited by nothing at all, and so silently uncovered by
       // check-card-consistency's Check A.
-      label: "Similar-issue retrieval, Recall@5 (kubernetes, related task)",
-      value: "18.0%",
+      label: "Similar-issue retrieval, Recall@5 (kubernetes, related task, clean eval subset)",
+      value: "39.39%",
       detail:
-        "the ADR-0032/0033 clean-pool rebuild produced a new baseline, which a later harness audit (ADR-0035) found was itself querying title-only against a title+body production index — correcting it upward a second time. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar on the corrected baseline; reranking made it worse at 190–330x the latency",
+        "the ADR-0035 harness fix (title-only queries against a title+body production index) produced 18.0%, later superseded by ADR-0040's truncation/query-instruction fixes at 24.67% measured over the full 150-pair eval population — but a 2026-08-11 audit found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues, causal-only references). 39.39% [27.3, 51.5] (n=66) is the hand-verified, outcome-blind clean subset and is now the project's own headline number for this metric. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar earlier in this chain; reranking made it worse at 190–330x the latency",
       sourceRef: "triageiq:retrieval-recall5-k8s",
     },
     {
       label: "Similar-issue retrieval, Recall@5 (vscode, duplicate task)",
-      value: "50.5%",
+      value: "53.50%",
       detail:
-        "vscode's original number was retired after ADR-0032 found the gold pairs were ~80% noise (dominated by a title_sim channel measured at only ~20% precision); this is the corrected figure from the same ADR-0035 harness fix",
+        "vscode's original number was retired after ADR-0032 found the gold pairs were ~80% noise (dominated by a title_sim channel measured at only ~20% precision); ADR-0035's harness fix then corrected it to 50.5%, and ADR-0040's corpus-truncation fix (Lever 1, shipped for both repos) raised it again to 53.50% [46.5, 60.5]",
       sourceRef: "triageiq:retrieval-recall5-vscode",
     },
     {
