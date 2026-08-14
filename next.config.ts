@@ -1,4 +1,14 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  // Opt-in only (`ANALYZE=true npm run build`) — never runs on a normal
+  // build/CI run. audit/BACKLOG.md's BL-4: there was previously no way to
+  // put a real KB number on any route's First Load JS, which blocked every
+  // 3D/bundle-budget judgment (see reports/bundle-baseline-*.md) from being
+  // more than a guess.
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   // /api/chat (lib/chatbot/embed.mjs) runs @huggingface/transformers, which on
@@ -16,4 +26,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
