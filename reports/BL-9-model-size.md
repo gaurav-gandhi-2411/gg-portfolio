@@ -5,6 +5,14 @@ artifacts are given so any of them can be reproduced or checked. This
 supersedes the "~25MB, BELIEVED" figure from an earlier round; that was a
 guess, this is a real `du`/curl-observed size.
 
+**Round 4 superseded Gate (ii) below** — that measurement blocked the model
+network entirely and so actually measured the KEYWORD tier's own cold
+start, not the semantic model's. See
+`reports/BL-9-round4-cold-start-and-model-comparison.md` for the honest,
+cache-disabled, Slow-4G cold-start number (the model download turned out to
+be ~2x the size reported here too, once `onnxruntime-web`'s WASM runtime is
+counted) and the model2vec/potion-base-8M static-embedding comparison.
+
 ## Model
 
 `Xenova/all-MiniLM-L6-v2`, `dtype: "q8"` (the quantized/int8 ONNX export),
