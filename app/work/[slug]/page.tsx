@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
+import { ProjectEmbeddingStatic } from "@/components/project-embedding/project-embedding-static";
+import { ProjectEmbeddingToggle } from "@/components/project-embedding/project-embedding-toggle";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
 import { EmbeddingViewerFrame } from "@/components/warmer/embedding-viewer-frame";
 import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
@@ -10,6 +12,7 @@ import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
 import { getWarmerPuzzleNumber } from "@/lib/live-data";
+import { getProjectEmbeddingProjection } from "@/lib/project-embedding-projection";
 import { relatedProducts } from "@/lib/related-products";
 
 export function generateStaticParams() {
@@ -158,18 +161,38 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       </>
     );
   } else if (slug === "triageiq") {
+    const projectProjection = getProjectEmbeddingProjection();
     demo = (
-      <section
-        aria-label="Try an illustrative TriageIQ classifier"
-        className="border-border/40 mt-16 flex flex-col gap-2 border-t pt-10"
-      >
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
-        <p className="max-w-measure text-base leading-relaxed text-foreground">
-          The same technique as stage 1, running live in your browser on a small sample of
-          real GitHub issues:
-        </p>
-        <TriageiqClassifyDisclosure />
-      </section>
+      <>
+        <section
+          aria-label="Try an illustrative TriageIQ classifier"
+          className="border-border/40 mt-16 flex flex-col gap-2 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            The same technique as stage 1, running live in your browser on a small sample of
+            real GitHub issues:
+          </p>
+          <TriageiqClassifyDisclosure />
+        </section>
+        <section
+          aria-label="Where TriageIQ sits in the portfolio"
+          className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+            The portfolio, as embeddings
+          </p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            Real {projectProjection.model} embeddings of every project&apos;s own case-study
+            text (the same {projectProjection.n_terms}-project embedding space
+            the site&apos;s own search feature uses), projected to 3D via PCA. TriageIQ is the
+            highlighted point — hover or tap any other point to see which project it is.
+          </p>
+          <ProjectEmbeddingToggle highlightSlug="triageiq">
+            <ProjectEmbeddingStatic points={projectProjection.points} highlightSlug="triageiq" />
+          </ProjectEmbeddingToggle>
+        </section>
+      </>
     );
   }
 

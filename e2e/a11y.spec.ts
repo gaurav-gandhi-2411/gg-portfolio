@@ -281,3 +281,46 @@ test("axe: zero violations on the Warmer WebGL embedding viewer", async ({ page 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
+
+/**
+ * perf/lcp-final Task 4 — same blind spot as the two scans above: every
+ * ROUTES entry goes through gotoSettled()'s reduced-motion emulation, which
+ * is one of the conditions under which mayUseWebGL() declines to offer the
+ * "Explore in 3D" toggle at all. The closed/static state on /work/triageiq is
+ * already covered by the ROUTES sweep; this is the only scan that reaches the
+ * toggle button and the mounted GL canvas behind it.
+ */
+test("axe: zero violations on the TriageIQ case study with the 3D embedding view open", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await forceWebGLCapability(page);
+  await page.goto("/work/triageiq");
+
+  const toggle = page.getByRole("button", { name: "Explore in 3D" });
+  await toggle.scrollIntoViewIfNeeded();
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(page.getByTestId("project-embedding-gl").locator("canvas")).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
+ * Same reasoning again for the /projects ambient layer: reduced-motion
+ * emulation keeps mayUseWebGL() false for every ROUTES-sweep scan of
+ * /projects, so that entry only ever audits the plain grid. This scan forces
+ * capability on and scrolls the grid into view so the ambient
+ * IntersectionObserver actually mounts the GL canvas before the audit runs.
+ */
+test("axe: zero violations on /projects with the ambient WebGL layer mounted", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await forceWebGLCapability(page);
+  await page.goto("/projects");
+  await page.locator(".project-grid").scrollIntoViewIfNeeded();
+  await expect(page.locator("canvas").first()).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
