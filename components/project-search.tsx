@@ -218,7 +218,18 @@ export function ProjectSearch({ products }: { products: Product[] }) {
     open && activeIndex >= 0 && ranked[activeIndex] ? `${listboxId}-${ranked[activeIndex].product.slug}` : undefined;
 
   return (
-    <div ref={containerRef} className="relative mx-auto w-full max-w-xl">
+    <div
+      ref={containerRef}
+      // data-search-enhanced-status: no visual/behavioral effect, read only
+      // by e2e/perf tooling (see e2e/project-search-cold-start.spec.ts) that
+      // needs to observe "tier-2 model loaded" and "dense scores applied for
+      // the current query" without guessing from a fixed sleep — the same
+      // reasoning that motivated data-testid="project-search-unavailable"
+      // below, generalized to the other two enhanced states.
+      data-search-enhanced-status={enhanced}
+      data-search-dense-scores-for={denseScoresFor ?? undefined}
+      className="relative mx-auto w-full max-w-xl"
+    >
       <label htmlFor={inputId} className="sr-only">
         Search projects by what they do
       </label>
