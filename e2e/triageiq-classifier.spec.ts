@@ -24,7 +24,11 @@ test.describe("TriageIQ illustrative classifier", () => {
     // Both repo score bars render with a numeric score.
     await expect(panel.getByText("k8s", { exact: true })).toBeVisible();
     await expect(panel.getByText("vscode", { exact: true })).toBeVisible();
-    const scoreText = await panel.locator("span.font-mono.text-xs.text-foreground").allTextContents();
+    // BL-2 renamed text-xs -> text-caption (components/triageiq-classify-toy.tsx)
+    // as part of the modular type-scale codemod; the locator follows the rename.
+    const scoreText = await panel
+      .locator("span.font-mono.text-caption.text-foreground")
+      .allTextContents();
     expect(scoreText.length).toBeGreaterThanOrEqual(2);
     for (const s of scoreText) expect(Number(s)).not.toBeNaN();
 

@@ -101,14 +101,14 @@ export function TriageiqClassifyToy() {
   const winner = result ? (result.k8s >= result.vscode ? "k8s" : "vscode") : null;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-[var(--space-4)]">
+      <div className="flex flex-wrap gap-[var(--space-2)]">
         {sampleIssues.map((s) => (
           <button
             key={s.number}
             type="button"
             onClick={() => classify(s.title)}
-            className="border-border bg-card hover:border-accent/40 focus-visible:outline-ring rounded-md border px-2.5 py-1 text-left font-mono text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="border-border bg-card hover:border-accent/40 focus-visible:outline-ring rounded-md border px-2.5 py-[var(--space-1)] text-left font-mono text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
             title={s.url}
           >
             {s.repo} #{s.number}
@@ -121,7 +121,7 @@ export function TriageiqClassifyToy() {
           e.preventDefault();
           classify(text);
         }}
-        className="flex gap-2"
+        className="flex gap-[var(--space-2)]"
       >
         <label htmlFor="triageiq-classify-text" className="sr-only">
           Bug title to classify
@@ -133,28 +133,28 @@ export function TriageiqClassifyToy() {
           // Focus ring matches heat-toy.tsx's input — the stronger of the two
           // treatments (design-review, wave 11: this input is newly prominent
           // now that the disclosure renders inline in the Work section).
-          className="border-border bg-card text-foreground w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring"
+          className="border-border bg-card text-foreground w-full rounded-md border px-[var(--space-3)] py-[var(--space-2)] text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring"
         />
         <button
           type="submit"
-          className="bg-primary text-primary-foreground focus-visible:outline-ring shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="bg-primary text-primary-foreground focus-visible:outline-ring shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           Classify
         </button>
       </form>
 
       {result && (
-        <div aria-live="polite" className="flex flex-col gap-2 text-sm">
+        <div aria-live="polite" className="flex flex-col gap-[var(--space-2)] text-sm">
           {(["k8s", "vscode"] as const).map((repo) => (
-            <div key={repo} className="flex items-center gap-3">
-              <span className="w-16 font-mono text-xs text-muted-foreground">{repo}</span>
+            <div key={repo} className="flex items-center gap-[var(--space-3)]">
+              <span className="w-16 font-mono text-caption text-muted-foreground">{repo}</span>
               <div className="bg-border/40 h-1.5 flex-1 overflow-hidden rounded-full">
                 <div
                   className={`h-full rounded-full ${repo === winner ? "bg-accent" : "bg-border"}`}
                   style={{ width: `${Math.max(2, result[repo] * 100)}%` }}
                 />
               </div>
-              <span className="w-14 text-right font-mono text-xs text-foreground">
+              <span className="w-14 text-right font-mono text-caption text-foreground">
                 {result[repo].toFixed(3)}
               </span>
             </div>
@@ -162,7 +162,7 @@ export function TriageiqClassifyToy() {
         </div>
       )}
 
-      <p className="text-muted-foreground max-w-[52ch] text-xs leading-relaxed">
+      <p className="text-muted-foreground max-w-[52ch] text-caption leading-relaxed">
         Illustrative reproduction only: real TF-IDF + cosine similarity, computed live in
         your browser over 12 real, sourced GitHub issue titles above (hover a button for
         its URL) — not TriageIQ&apos;s production model (no BGE+FAISS retrieval, no LightGBM,

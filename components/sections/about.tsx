@@ -18,7 +18,7 @@ export function About() {
   return (
     <Section id="about" label="About me" width="wide">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-x-14">
-        <RevealGroup mode="onview" className="flex flex-col items-center gap-5 lg:items-start">
+        <RevealGroup mode="onview" className="flex flex-col items-center gap-[var(--space-5)] lg:items-start">
           {aboutParagraphs.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
@@ -33,11 +33,11 @@ export function About() {
         </RevealGroup>
 
         <aside className="hidden lg:block" aria-label="Core skills">
-          <div className="border-border/40 rounded-xl border p-5">
-            <h3 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+          <div className="border-border/40 rounded-xl border p-[var(--space-5)]">
+            <h3 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
               Working across
             </h3>
-            <ul className="mt-4 flex flex-col gap-2.5">
+            <ul className="mt-[var(--space-4)] flex flex-col gap-[var(--space-2-5)]">
               {skillChips.map((chip) => (
                 <li key={chip} className="text-muted-foreground text-sm leading-snug">
                   {chip}

@@ -38,17 +38,17 @@ export function SiteNav() {
           whole nav on all 14 routes to reach content. */}
       <a
         href="#main"
-        className="bg-accent text-accent-foreground sr-only rounded-md px-4 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
+        className="bg-accent text-accent-foreground sr-only rounded-md px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
       >
         Skip to content
       </a>
       {/* Wave 13: tracks the one shared content width (lg:max-w-5xl — moved
           from xl in the 2026-07-30 UI/UX wave, see section.tsx) so the
           nav's edges align with every widened section below. */}
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-3 lg:max-w-5xl">
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-[var(--space-6)] py-[var(--space-3)] lg:max-w-5xl">
         <TransitionLink
           href="/"
-          className="focus-visible:outline-ring -m-2 flex min-h-11 min-w-11 items-center justify-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="focus-visible:outline-ring -m-2 flex min-h-11 min-w-11 items-center justify-center gap-[var(--space-2-5)] focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={`${site.name} — home`}
         >
           <Monogram className="size-7" />
@@ -57,7 +57,7 @@ export function SiteNav() {
           </span>
         </TransitionLink>
 
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-[var(--space-4)] sm:gap-[var(--space-6)]">
           {links.map((link) => (
             // TransitionLink's own guards keep hash links (/#about etc.) on
             // the plain Link path — only /projects is a clean route change.
