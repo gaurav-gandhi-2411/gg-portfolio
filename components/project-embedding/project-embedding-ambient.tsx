@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
-import { waitForViewTransition } from "@/lib/view-transition";
 import { mayUseWebGL } from "@/lib/webgl/capability";
 
 const ProjectEmbeddingAmbientGL = dynamic(() => import("./project-embedding-ambient-gl"), {
@@ -32,21 +31,9 @@ export function ProjectEmbeddingAmbient() {
   const [mount, setMount] = useState(false);
 
   useEffect(() => {
-    // The observer setup itself is deferred until any in-flight View
-    // Transition has actually finished — not a guessed delay. The project
-    // grid can already be within IntersectionObserver's `rootMargin` on
-    // initial mount (no scroll needed), so `observe()`'s first callback can
-    // fire while the browser is still mid-capture of the transition's "new"
-    // DOM snapshot on the destination page of a
-    // components/transition-link.tsx navigation — a real, reproduced crash
-    // (see lib/view-transition.ts's waitForViewTransition doc for the full
-    // mechanism; a fixed setTimeout(0) here was tried first and still failed
-    // under real parallel-test timing). Resolves immediately when there's no
-    // transition in flight, so this costs nothing on a hard navigation or
-    // the first page load.
     let cancelled = false;
     let cleanup = () => {};
-    waitForViewTransition().then(() => {
+    Promise.resolve().then(() => {
       if (cancelled) return;
       if (!mayUseWebGL()) return;
       const container = containerRef.current;

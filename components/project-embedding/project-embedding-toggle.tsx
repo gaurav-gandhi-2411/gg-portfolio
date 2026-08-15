@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 
-import { waitForViewTransition } from "@/lib/view-transition";
 import { mayUseWebGL } from "@/lib/webgl/capability";
 
 /**
@@ -59,19 +58,8 @@ export function ProjectEmbeddingToggle({ children, highlightSlug }: ProjectEmbed
     // capability check needs `window` (so it can't run during render), and
     // this avoids the cascading-render lint (react-hooks/set-state-in-effect)
     // that a bare synchronous setState-in-effect trips.
-    //
-    // Awaits waitForViewTransition() first — not a guessed delay. This
-    // component can mount on the DESTINATION page of a
-    // components/transition-link.tsx View Transition navigation, and a state
-    // change here (the button appearing) that lands while the browser is
-    // still mid-capture of the transition's "new" DOM snapshot is a real,
-    // reproduced crash (see lib/view-transition.ts's waitForViewTransition
-    // doc for the full mechanism and how a requestAnimationFrame/macrotask
-    // delay was tried first and still failed under real parallel-test
-    // timing). Resolves immediately when there's no transition in flight, so
-    // this costs nothing on a hard navigation or the first page load.
     let cancelled = false;
-    waitForViewTransition().then(() => {
+    Promise.resolve().then(() => {
       if (!cancelled && mayUseWebGL()) setQualifies(true);
     });
     return () => {
