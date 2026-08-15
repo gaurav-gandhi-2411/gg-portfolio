@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectCard } from "@/components/project-card";
 import { RevealGroup } from "@/components/reveal-group";
-import { TransitionLink } from "@/components/transition-link";
 import { products } from "@/content/products";
 import { CATEGORIES, type CategoryId } from "@/content/types";
 import { getProjectDisplayData } from "@/lib/project-display";
@@ -57,12 +57,12 @@ export default async function CategoryProjectsPage({
     >
       <div className="flex flex-col items-center text-center">
         <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
-          <TransitionLink
+          <Link
             href="/projects"
             className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             ← All projects
-          </TransitionLink>
+          </Link>
         </p>
         <h1 className="font-heading text-heading mt-6 font-semibold tracking-tight text-foreground">
           {cat.label}
@@ -91,12 +91,12 @@ export default async function CategoryProjectsPage({
       </div>
 
       <p className="mt-12 text-center">
-        <TransitionLink
+        <Link
           href="/projects"
           className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Back to all projects
-        </TransitionLink>
+        </Link>
       </p>
     </main>
   );

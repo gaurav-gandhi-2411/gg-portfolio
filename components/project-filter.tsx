@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
-import { TransitionLink } from "@/components/transition-link";
 import { CATEGORIES, type CategoryId } from "@/content/types";
 
 type Active = CategoryId | "all";
@@ -206,12 +206,12 @@ export function ProjectFilter({
 
       {showSeeAll && (
         <p className="mt-[var(--space-6)] text-center">
-          <TransitionLink
+          <Link
             href={seeAllHref}
             className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             {seeAllLabel}
-          </TransitionLink>
+          </Link>
         </p>
       )}
 

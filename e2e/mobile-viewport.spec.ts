@@ -15,9 +15,8 @@ import { expect, test } from "@playwright/test";
  * self-reinforcing once the viewport has already been nudged wider by
  * anything else without containment.
  *
- * The fix (`overflow-x: clip` on `html`, lifted during
- * `:active-view-transition`, plus `.hero-halo` switching from the
- * self-reinforcing `max-width:100vw` to `width:min(42rem,100%)` — see
+ * The fix (`overflow-x: clip` on `html`, plus `.hero-halo` switching from
+ * the self-reinforcing `max-width:100vw` to `width:min(42rem,100%)` — see
  * app/globals.css) makes `document.documentElement.clientWidth` correct,
  * which is what actually governs rendering (percentage/vw resolution,
  * whether content visibly overflows) and is the same signal Lighthouse's

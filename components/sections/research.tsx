@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { InlineLink } from "@/components/inline-link";
 import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
-import { TransitionLink } from "@/components/transition-link";
 import { researchPapers } from "@/content/research";
 
 /**
@@ -43,12 +43,12 @@ export function Research() {
                   Repo ↗
                 </InlineLink>
                 {/* Wave 12: the benchmark behind the paper has its own case study. */}
-                <TransitionLink
+                <Link
                   href="/work/agentgauge"
                   className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 >
                   Read the benchmark&apos;s case study →
-                </TransitionLink>
+                </Link>
               </p>
             </div>
 
