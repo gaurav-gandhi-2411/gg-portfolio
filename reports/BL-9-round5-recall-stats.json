@@ -1,0 +1,628 @@
+{
+  "generatedAt": "2026-08-15T13:07:28.026Z",
+  "nCases": 28,
+  "wilson": {
+    "minilm": {
+      "recallAt1": {
+        "hits": 25,
+        "n": 28,
+        "point": 0.8928571428571429,
+        "low": 0.7280377463234293,
+        "high": 0.9628823079452005
+      },
+      "recallAt3": {
+        "hits": 28,
+        "n": 28,
+        "point": 1,
+        "low": 0.8793527963418923,
+        "high": 1
+      }
+    },
+    "potionBase8m": {
+      "recallAt1": {
+        "hits": 25,
+        "n": 28,
+        "point": 0.8928571428571429,
+        "low": 0.7280377463234293,
+        "high": 0.9628823079452005
+      },
+      "recallAt3": {
+        "hits": 26,
+        "n": 28,
+        "point": 0.9285714285714286,
+        "low": 0.7735426157408214,
+        "high": 0.9801883525522292
+      }
+    },
+    "staticMatrix": {
+      "recallAt1": {
+        "hits": 22,
+        "n": 28,
+        "point": 0.7857142857142857,
+        "low": 0.6046105292072612,
+        "high": 0.8978767829881058
+      },
+      "recallAt3": {
+        "hits": 25,
+        "n": 28,
+        "point": 0.8928571428571429,
+        "low": 0.7280377463234293,
+        "high": 0.9628823079452005
+      }
+    },
+    "keywordOnly": {
+      "recallAt1": {
+        "hits": 24,
+        "n": 28,
+        "point": 0.8571428571428571,
+        "low": 0.6850982695512267,
+        "high": 0.9430108706929821
+      },
+      "recallAt3": {
+        "hits": 27,
+        "n": 28,
+        "point": 0.9642857142857143,
+        "low": 0.8228742388150135,
+        "high": 0.9936676435024582
+      }
+    }
+  },
+  "mcnemar": {
+    "recallAt1": {
+      "b": 1,
+      "c": 1,
+      "n": 2,
+      "pValue": 1,
+      "bMeans": "minilm right, potion wrong",
+      "cMeans": "minilm wrong, potion right"
+    },
+    "recallAt3": {
+      "b": 2,
+      "c": 0,
+      "n": 2,
+      "pValue": 0.5,
+      "bMeans": "minilm right, potion wrong",
+      "cMeans": "minilm wrong, potion right"
+    }
+  },
+  "overlapConclusions": {
+    "minilmVsPotion": {
+      "recallAt1Overlap": true,
+      "recallAt3Overlap": true
+    }
+  },
+  "winLossTable": [
+    {
+      "id": "agent-tool-description-eval",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "ai-wedding-stylist",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "claude-code-token-waste",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "clip-clothing-recommender",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "coding-agent-efficiency-score",
+      "minilm": {
+        "hit1": false,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": false,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "controlnet-art-generator",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "daily-secret-word-app",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "fake-review-detection",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": false,
+        "hit3": false
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": false
+      },
+      "keywordOnly": {
+        "hit1": false,
+        "hit3": true
+      }
+    },
+    {
+      "id": "fashion-from-photos",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": false
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "github-issue-resolution-time",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "gold-price-baseline",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "gold-rate-pwa-india",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "issue-triage-similar-bugs",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "japanese-woodblock-art",
+      "minilm": {
+        "hit1": false,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": false,
+        "hit3": false
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": false
+      },
+      "keywordOnly": {
+        "hit1": false,
+        "hit3": true
+      }
+    },
+    {
+      "id": "lora-image-generation",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": false,
+        "hit3": false
+      }
+    },
+    {
+      "id": "mcp-ab-testing-harness",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "multi-agent-flight-booking",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": false,
+        "hit3": true
+      }
+    },
+    {
+      "id": "multi-store-fashion-search-guardrails",
+      "minilm": {
+        "hit1": false,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "oncall-triage-time",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "personal-spending-forecast",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "plain-english-expense-entry",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": false,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "retail-demand-forecast",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "review-analysis-hindi-english",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "safe-pc-cleanup",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "two-itinerary-travel-planner",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "walmart-sales-lightgbm",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "windows-disk-cleanup",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    },
+    {
+      "id": "word-guessing-embeddings",
+      "minilm": {
+        "hit1": true,
+        "hit3": true
+      },
+      "potionBase8m": {
+        "hit1": true,
+        "hit3": true
+      },
+      "staticMatrix": {
+        "hit1": true,
+        "hit3": true
+      },
+      "keywordOnly": {
+        "hit1": true,
+        "hit3": true
+      }
+    }
+  ]
+}
