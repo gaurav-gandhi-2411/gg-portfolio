@@ -1,42 +1,18 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
- * BL-9 — /projects search box. Every test in this file (except the no-JS
- * one) blocks the tier-2 model's network requests, so what's under test is
- * exactly the keyword tier — deterministic, no real ~23MB model download in
- * every CI run. e2e/project-search-network.spec.ts covers the OPPOSITE
- * case: a real, unblocked page proving the model genuinely loads and stays
- * lazy. Together the two files cover both required states (Task 3 and
- * Task 4 of BL-9's brief) rather than one file trying to do both.
+ * BL-9 — /projects search box. Round 5 removed the client-side MiniLM
+ * semantic-reranking tier entirely (see components/project-search.tsx's
+ * header for the decision) — keyword/substring matching
+ * (lib/search/keyword-score.ts) is now the ONLY ranking tier, so these
+ * tests exercise it directly with no model network to block or wait on.
+ * (Round 4's e2e/project-search-network.spec.ts, which proved the
+ * now-removed tier stayed lazy until focus, is gone with it — there is no
+ * model network left for this feature to prove anything about.)
  */
 
-/** Blocks every request the tier-2 model would make (the ONNX weights file
- * itself, any huggingface.co/hf.co-hosted config/tokenizer/Xet-CDN asset,
- * and onnxruntime-web's CDN-hosted WASM runtime) so a test exercises the
- * keyword-only tier deterministically, the way a visitor on a blocked/slow
- * connection would experience it. Same predicate as
- * e2e/project-search-network.spec.ts's isModelRequest() — see that file's
- * header for why "huggingface.co" alone under-covers the real download
- * (round 4 finding: the weights file actually downloads from a distinct
- * `*.cdn.hf.co` host that a huggingface.co-only match would miss). Blocking
- * still works correctly even before this fix, because the Xet CDN fetch is
- * downstream of the huggingface.co metadata call this predicate already
- * caught — but the predicates staying in sync matters for when that
- * changes. */
-async function blockModelNetwork(page: Page): Promise<void> {
-  await page.route(
-    (url) =>
-      /\.onnx(\?|$)/.test(url.pathname) ||
-      url.hostname.endsWith("huggingface.co") ||
-      url.hostname.endsWith("hf.co") ||
-      (url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("onnxruntime-web")),
-    (route) => route.abort()
-  );
-}
-
-test.describe("/projects search — keyword tier (model network blocked)", () => {
+test.describe("/projects search", () => {
   test("loads with the input visible and no results panel open", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await expect(input).toBeVisible();
@@ -45,7 +21,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   });
 
   test("typing a plain-language query ranks the matching project first", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     // Zero literal keyword overlap with TriageIQ's own product name — this
@@ -57,18 +32,9 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
     await expect(listbox).toBeVisible();
     const options = listbox.getByRole("option");
     await expect(options.first()).toContainText("TriageIQ");
-
-    // The keyword tier alone is what's under test here — confirms the
-    // model never silently rescues a query the tier-1 scorer is supposed
-    // to handle on its own.
-    await expect(page.getByTestId("project-search-unavailable")).toBeVisible();
-    await expect(page.getByTestId("project-search-unavailable")).toContainText(
-      "showing keyword matches"
-    );
   });
 
   test("a literal tech-chip substring ranks that project first", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("LangGraph");
@@ -78,7 +44,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   });
 
   test("a query matching nothing still ranks all 13, none hidden", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("quantum spreadsheet nonsense");
@@ -90,7 +55,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   test("keyboard flow: focus, type, ArrowDown, Enter navigates to the top result", async ({
     page,
   }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
 
@@ -107,7 +71,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   });
 
   test("Enter with no ArrowDown navigates to the top-ranked (first) result", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("reduces on-call issue triage time");
@@ -117,7 +80,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   });
 
   test("Escape clears the query and closes the panel", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("triage");
@@ -129,7 +91,6 @@ test.describe("/projects search — keyword tier (model network blocked)", () =>
   });
 
   test("clicking a result navigates via the mouse without keyboard", async ({ page }) => {
-    await blockModelNetwork(page);
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("LangGraph");

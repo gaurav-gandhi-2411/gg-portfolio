@@ -63,13 +63,6 @@ jobs:
       - name: Verify chatbot index is up to date
         run: node scripts/chatbot/check-index-fresh.mjs
 
-      # BL-9 — content/search/project-embeddings.json is a build artifact of
-      # content/products.ts + content/types.ts, same class of thing as the
-      # chatbot index above and the same reason it needs its own gate: see
-      # scripts/search/check-project-embeddings-fresh.mjs's header.
-      - name: Verify project search index is up to date
-        run: node scripts/search/check-project-embeddings-fresh.mjs
-
       - name: Lint
         run: npm run lint
 

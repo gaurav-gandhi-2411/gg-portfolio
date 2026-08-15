@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { keywordScore } from "@/lib/search/keyword-score";
 import { buildSearchableText } from "@/lib/search/searchable-text";
@@ -8,27 +8,33 @@ import { CATEGORIES, type Product } from "@/content/types";
 import { cn } from "@/lib/utils";
 
 /**
- * BL-9 — plain-language project search for /projects. Two tiers, always in
- * this order:
+ * BL-9 — plain-language project search for /projects. Keyword/substring
+ * matching only (lib/search/keyword-score.ts) against each project's
+ * name/tagline/tech chips/categories — zero model, computed synchronously
+ * on every keystroke.
  *
- *   1. Keyword/substring matching (lib/search/keyword-score.ts) against each
- *      project's name/tagline/tech chips/categories — zero model, computed
- *      synchronously on every keystroke, and the ONLY thing this component
- *      depends on to be useful. This is what every visitor gets by default,
- *      including anyone who never focuses the input, anyone on a slow
- *      connection, and anyone whose JS partially fails — see Tier 2 below,
- *      which degrades to exactly this with no user-facing error.
+ * BL-9 round 5 removed this component's original two-tier design (a
+ * client-side MiniLM semantic reranking tier, loaded on focus). Round 4
+ * measured that tier's honest, cache-disabled, Slow-4G cold start at
+ * 570,121 ms (~9.5 minutes) — see reports/BL-9-round4-cold-start-and-model-
+ * comparison.md. Round 5 re-ran the statistics properly (Wilson 95% CIs,
+ * McNemar's exact test on the 28-query eval set — see
+ * reports/BL-9-round5-recall-stats.json) and found MiniLM's recall was NOT
+ * statistically distinguishable from this keyword-only tier's own recall,
+ * a purpose-built zero-dependency pruned static-embedding alternative, or
+ * a third-party static-embedding package, at n=28 — every tier's Wilson CI
+ * overlapped every other tier's. Combined with the stated decision rule
+ * (a multi-minute cold start is a kill regardless of recall; among the
+ * rest, ship the smallest option whose CI overlaps the best performer's),
+ * this keyword-only tier is what ships: it is the smallest (zero
+ * additional bytes, already on every page load) option whose recall is
+ * statistically indistinguishable from every model-based alternative
+ * measured. See reports/BL-9-round5-static-embedding-and-decision.md for
+ * the full comparison table and the four measured alternatives.
  *
- *   2. Semantic reranking, loaded ONLY on focus/first keystroke (never on
- *      page load — see lib/search/embed-client.ts's header for why this
- *      runs client-side, unlike the /ask chatbot's server-side embedding).
- *      Both the client-side embedding module and the precomputed
- *      content/search/project-embeddings.json vector file are pulled in via
- *      `await import()` inside the interaction handlers below, never a
- *      top-level import — that is what keeps them out of this route's
- *      initial JS and off the network until a visitor actually interacts
- *      with the box (verified with a captured network log, see the PR
- *      description).
+ * The `@huggingface/transformers` package itself stays in package.json —
+ * /ask's server-side chatbot still uses it (lib/chatbot/embed.mjs). Only
+ * THIS feature's client-side use of it is gone.
  *
  * All 13 projects are always shown, re-ranked — this box ranks, it never
  * filters to zero, so there is no "no results" state to design for (the
@@ -47,12 +53,7 @@ import { cn } from "@/lib/utils";
  * also click any result directly.
  */
 
-const DENSE_WEIGHT = 0.6;
-const DEBOUNCE_MS = 250;
-
 const CATEGORY_LABEL_BY_ID = new Map(CATEGORIES.map((c) => [c.id, c.label]));
-
-type EnhancedStatus = "idle" | "loading" | "ready" | "unavailable";
 
 interface ScoredProduct {
   product: Product;
@@ -63,19 +64,11 @@ export function ProjectSearch({ products }: { products: Product[] }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [enhanced, setEnhanced] = useState<EnhancedStatus>("idle");
-  const [denseScores, setDenseScores] = useState<Record<string, number> | null>(null);
-  const [denseScoresFor, setDenseScoresFor] = useState<string | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const embeddingsRef = useRef<Map<string, number[]> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const embedTokenRef = useRef(0);
 
   const inputId = useId();
   const listboxId = useId();
-  const statusId = useId();
 
   const productsWithText = useMemo(
     () =>
@@ -95,83 +88,15 @@ export function ProjectSearch({ products }: { products: Product[] }) {
 
   const ranked: ScoredProduct[] = useMemo(() => {
     if (trimmedQuery.length === 0) return [];
-    const useDense = denseScores !== null && denseScoresFor === trimmedQuery;
-    const scored = productsWithText.map(({ product, text }) => {
-      const kw = keywordScore(trimmedQuery, text);
-      if (!useDense) return { product, score: kw };
-      const dense = denseScores![product.slug] ?? 0;
-      return { product, score: DENSE_WEIGHT * dense + (1 - DENSE_WEIGHT) * kw };
-    });
+    const scored = productsWithText.map(({ product, text }) => ({
+      product,
+      score: keywordScore(trimmedQuery, text),
+    }));
     scored.sort((a, b) => b.score - a.score);
     return scored;
-  }, [productsWithText, trimmedQuery, denseScores, denseScoresFor]);
-
-  // Stable across renders (useCallback, empty deps — everything it reads is
-  // a ref or a setState setter, both stable identities) so the effect below
-  // can list it as a real dependency instead of an eslint-disabled one.
-  const runEmbedding = useCallback(async (text: string): Promise<void> => {
-    const token = ++embedTokenRef.current;
-    try {
-      const { embedQuery, cosineSimilarity } = await import("@/lib/search/embed-client");
-      const vector = await embedQuery(text);
-      if (token !== embedTokenRef.current || !embeddingsRef.current) return; // superseded or unloaded
-      const scores: Record<string, number> = {};
-      for (const [slug, embedding] of embeddingsRef.current) {
-        scores[slug] = cosineSimilarity(vector, embedding);
-      }
-      setDenseScores(scores);
-      setDenseScoresFor(text);
-    } catch {
-      // A query embed failing (e.g. the model unloaded mid-session) leaves
-      // the keyword tier as the ranking — no user-facing error, matching
-      // the load-failure path below.
-    }
-  }, []);
-
-  // Re-embed the query (debounced) whenever it changes and the enhanced
-  // tier is ready — a fresh embedTokenRef value guards against a slow
-  // in-flight embed() call resolving after a NEWER query has already
-  // superseded it (stale-result race, not just a UI nicety: without this a
-  // fast typist could see results ranked for a query two keystrokes old).
-  useEffect(() => {
-    if (enhanced !== "ready" || trimmedQuery.length === 0) return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      void runEmbedding(trimmedQuery);
-    }, DEBOUNCE_MS);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [trimmedQuery, enhanced, runEmbedding]);
-
-  /** Starts the tier-2 load on first focus/keystroke — guarded so it only
-   * ever runs once per mount, per the "focuses or types" trigger. */
-  function ensureEnhancedLoading(): void {
-    if (enhanced !== "idle") return;
-    setEnhanced("loading");
-    void (async () => {
-      try {
-        const [{ preloadExtractor }, embeddingsModule] = await Promise.all([
-          import("@/lib/search/embed-client"),
-          import("@/content/search/project-embeddings.json"),
-        ]);
-        await preloadExtractor();
-        const data = embeddingsModule.default as {
-          projects: { slug: string; embedding: number[] }[];
-        };
-        embeddingsRef.current = new Map(data.projects.map((p) => [p.slug, p.embedding]));
-        setEnhanced("ready");
-      } catch {
-        // Optional dependency absent, model fetch blocked/failed, or the
-        // embeddings JSON failed to load — the keyword tier already covers
-        // every visitor, so this degrades silently rather than erroring.
-        setEnhanced("unavailable");
-      }
-    })();
-  }
+  }, [productsWithText, trimmedQuery]);
 
   function handleFocus(): void {
-    ensureEnhancedLoading();
     if (trimmedQuery.length > 0) setOpen(true);
   }
 
@@ -218,30 +143,17 @@ export function ProjectSearch({ products }: { products: Product[] }) {
     open && activeIndex >= 0 && ranked[activeIndex] ? `${listboxId}-${ranked[activeIndex].product.slug}` : undefined;
 
   return (
-    <div
-      ref={containerRef}
-      // data-search-enhanced-status: no visual/behavioral effect, read only
-      // by e2e/perf tooling (see e2e/project-search-cold-start.spec.ts) that
-      // needs to observe "tier-2 model loaded" and "dense scores applied for
-      // the current query" without guessing from a fixed sleep — the same
-      // reasoning that motivated data-testid="project-search-unavailable"
-      // below, generalized to the other two enhanced states.
-      data-search-enhanced-status={enhanced}
-      data-search-dense-scores-for={denseScoresFor ?? undefined}
-      className="relative mx-auto w-full max-w-xl"
-    >
+    <div ref={containerRef} className="relative mx-auto w-full max-w-xl">
       <label htmlFor={inputId} className="sr-only">
         Search projects by what they do
       </label>
       <input
         id={inputId}
-        ref={inputRef}
         type="text"
         role="combobox"
         aria-expanded={open}
         aria-controls={listboxId}
         aria-activedescendant={activeOptionId}
-        aria-describedby={enhanced === "loading" || enhanced === "unavailable" ? statusId : undefined}
         aria-autocomplete="list"
         autoComplete="off"
         value={query}
@@ -252,27 +164,6 @@ export function ProjectSearch({ products }: { products: Product[] }) {
         placeholder="Try: reduces on-call issue triage time"
         className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
       />
-
-      {enhanced === "loading" ? (
-        <p id={statusId} role="status" className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
-          <span aria-hidden="true" className="flex items-center gap-1">
-            <span className="typing-dot bg-muted-foreground inline-block h-1 w-1 rounded-full" />
-            <span className="typing-dot bg-muted-foreground inline-block h-1 w-1 rounded-full" />
-            <span className="typing-dot bg-muted-foreground inline-block h-1 w-1 rounded-full" />
-          </span>
-          Loading smarter ranking…
-        </p>
-      ) : null}
-      {enhanced === "unavailable" ? (
-        <p
-          id={statusId}
-          role="status"
-          data-testid="project-search-unavailable"
-          className="text-muted-foreground mt-2 text-xs"
-        >
-          Smarter ranking unavailable — showing keyword matches.
-        </p>
-      ) : null}
 
       {open && ranked.length > 0 ? (
         <ul

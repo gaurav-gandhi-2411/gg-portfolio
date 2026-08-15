@@ -1,9 +1,23 @@
-// BL-9 — build-time embedder for the /projects search feature's tier-2
-// (semantic) ranking. Embeds each of content/products.ts's projects with
-// the shared lib/chatbot/embed.mjs module (same Node/local-ONNX path
-// scripts/chatbot/build-index.mjs already uses — same model, same vector
-// space as this repo's other build-time embedding artifact) and writes the
-// result to content/search/project-embeddings.json.
+// BL-9 round 4/5 — build-time embedder that originally fed the /projects
+// search feature's client-side MiniLM semantic-reranking tier. Embeds each
+// of content/products.ts's projects with the shared lib/chatbot/embed.mjs
+// module (same Node/local-ONNX path scripts/chatbot/build-index.mjs
+// already uses) and writes the result to
+// content/search/project-embeddings.json.
+//
+// ROUND 5 STATUS CHANGE: that client-side MiniLM tier was removed from
+// production (see components/project-search.tsx's header for the full
+// decision — a 570-second real cold start on Slow-4G is a kill, and the
+// recall gain over keyword-only ranking was not statistically
+// distinguishable at n=28 anyway). content/search/project-embeddings.json
+// is NO LONGER a production build artifact and NOTHING in the shipped app
+// reads it. It is kept, uncommitted-to-freshness (no CI gate, no
+// pre-commit hook enforces it matches content/products.ts anymore — see
+// git history for their removal), purely so
+// evals/project-search/run-recall-eval.mjs's MiniLM comparison tier stays
+// reproducible for any future round that wants to re-run this comparison.
+// If this file goes stale relative to content/products.ts, it affects only
+// that eval's numbers, not production.
 //
 // Run: node scripts/search/build-project-embeddings.mjs
 //
@@ -13,12 +27,6 @@
 // via regex rather than imported. content/types.ts has no unresolvable
 // runtime imports, so it's imported directly by file URL for the
 // CATEGORIES id->label lookup lib/search/searchable-text.ts needs.
-//
-// Deliberately NOT wired into `npm run build`: matching
-// scripts/chatbot/build-index.mjs's own convention, this is an author-time
-// artifact, committed to the repo and verified fresh by a dedicated CI step
-// (scripts/search/check-project-embeddings-fresh.mjs) plus a pre-commit
-// hook — never re-run live during a production build.
 //
 // Zero dependencies beyond @huggingface/transformers (via
 // lib/chatbot/embed.mjs); Node 20+.

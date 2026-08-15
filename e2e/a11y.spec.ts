@@ -100,14 +100,11 @@ test("axe: zero violations on a filtered /projects view", async ({ page }) => {
  * is exactly where a missing accessible name or a bad focus-order bug
  * would surface — the closed default state is already covered by the
  * route-level scan above via ROUTES, which would never reach this markup).
- * Model network blocked so this scan exercises the keyword tier
- * deterministically, same reasoning as e2e/project-search.spec.ts.
+ * Round 5 removed this feature's client-side model tier entirely (see
+ * components/project-search.tsx's header) — keyword ranking is the only
+ * tier there is now, so there is no model network left to block.
  */
 test("axe: zero violations on /projects with search results open", async ({ page }) => {
-  await page.route(
-    (url) => /\.onnx(\?|$)/.test(url.pathname) || url.hostname.endsWith("huggingface.co"),
-    (route) => route.abort()
-  );
   await gotoSettled(page, "/projects");
   const input = page.getByRole("combobox", { name: /search projects/i });
   await input.fill("reduces on-call issue triage time");

@@ -43,12 +43,3 @@ repos:
         files: ^content/(case-studies/.*\.ts|provenance\.md)$
         pass_filenames: false
 
-      # BL-9 — content/search/project-embeddings.json has the same
-      # stale-artifact risk as the chatbot index above. See
-      # scripts/search/check-project-embeddings-fresh.mjs's header.
-      - id: project-search-index-fresh
-        name: project search index is up to date
-        entry: node scripts/search/check-project-embeddings-fresh.mjs
-        language: system
-        files: ^content/(products\.ts|types\.ts)$
-        pass_filenames: false
