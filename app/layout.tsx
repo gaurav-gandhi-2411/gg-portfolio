@@ -48,6 +48,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: homeTitle,
   description: homeDescription,
+  // F3 — SEO audit: every route emits its own canonical tag so search
+  // engines don't fold the homepage and its query-string/trailing-slash
+  // variants into ambiguous duplicates. Relative path resolves against
+  // metadataBase above (rule: Next's metadata docs, generate-metadata.md).
+  alternates: { canonical: "/" },
   openGraph: {
     title: homeTitle,
     description:
