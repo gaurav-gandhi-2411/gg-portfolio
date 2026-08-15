@@ -7,16 +7,24 @@ fine" and "I never looked" produce the same output, the check is not a control;
 it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
-This is written down because the same failure was found **twelve times in three
-days**, in twelve different disguises, by twelve unrelated routes. None of them
-was a bug in the usual sense. Almost every one was green — one that was red had
-already been explained away in advance, one was a `2>/dev/null` typed for
-tidiness, one was a check that ran perfectly against an address the product had
-moved out of, one was a monitoring stack installed after an outage it could not
-have detected, and the last was an alarm so confident about an outage that was
-not happening that its real warning would have been ignored.
+This is written down because the same failure was found **fifteen times in three
+days**, in fifteen different disguises, by fifteen unrelated routes. None was a
+bug in the usual sense. Almost every one was green — one that was red had already
+been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
+a check that ran perfectly against an address the product had moved out of, one was
+a monitoring stack installed after an outage it could not have detected, and one was
+an alarm so confident about an outage that was not happening that its real warning
+would have been ignored.
 
-## The twelve
+The last three are different in kind and belong at the end for that reason. In
+instance 13 every control worked correctly and the defect was in **reading** one of
+them; instance 14 is config and reality drifting with nothing scheduled to compare
+them; instance 15 is the identity running the commands changing underneath the
+session. These are the failures with the fewest available defenses, because no gate
+catches a wrong inference drawn from an accurate report, and none of them announces
+itself as anything other than an ordinary error.
+
+## The fifteen
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -367,6 +375,139 @@ zero exit also reports `UNVERIFIED` — because an unrecognised answer is not an
 answer, and a future change to gcloud's output format should not silently become
 an outage report.
 
+**13. A synthetic test value read as production fact.** Every previous entry
+records a defect in a check. This one is a defect in *reading* — the checks all
+worked, reported accurately, and I drew an urgent, wrong conclusion from them and
+acted on it in production.
+
+Investigating why review-iq's old project lost its billing link, I found the
+budget kill-switch's fire log:
+
+```
+AUTOMATED_KILLSWITCH_FIRED {"project": "reviewiq-prod-260813",
+  "cost_amount": 2600.0, "budget_amount": 2500.0, "currency": "INR",
+  "threshold": 1.04, "dry_run": true, "action": "would_disable_billing"}
+```
+
+I read `cost_amount: 2600.0` as spend, concluded the project was 104% over budget
+with a kill-switch newly armed against it, escalated it as an urgent live hazard,
+and disarmed a working production safety control.
+
+**Actual spend was ₹0.00.** The same log stream carried a `cost=0.00 INR /
+2500.00 INR` line every twenty to forty minutes, before and after, which I had
+not read. `ops/runbooks/killswitch-test.md` explains the payload: *"Prove the
+kill switch fires correctly… re-run after any changes to
+`ops/budget-killswitch/`."* The 08-13 migration was such a change. Both fires
+were that verification, one per project, with synthetic costs sitting exactly at
+the cap (2500.00/2500.00 = threshold 1.0) and just over it (2600/2500 = 1.04).
+Setting `DRY_RUN=false` two minutes later was the runbook's intended final step.
+
+**The disproof was arithmetic and available immediately.** Month-to-date cost is
+monotonically non-decreasing inside a calendar month, so ₹2600 on the 13th and
+₹0.00 on the 14th cannot both be spend. One subtraction would have killed the
+conclusion before it reached a recommendation.
+
+Two things generalise:
+
+- **A test that emits production-shaped telemetry must mark itself
+  unmistakably.** This payload is byte-identical in structure to a real breach;
+  the only tell is `"dry_run": true`, one field among nine, and the human-readable
+  half of the marker (`AUTOMATED_KILLSWITCH_FIRED`, `would_disable_billing`) reads
+  as an incident either way. A synthetic event should be as loud about being
+  synthetic as a real one is about being real — a distinct marker string, not a
+  boolean buried mid-object.
+- **A single data point must never outrank the series available beside it.** The
+  contradicting evidence was not hidden, not in another system, not expensive to
+  fetch: same project, same log, same query shape, seconds away. I did not look,
+  because the first reading was alarming and alarm shortens the search.
+
+The reason this belongs in a file about checks: **every control here was working.**
+The kill-switch fired correctly. The logs recorded honestly. The runbook documented
+the procedure. Reading one payload out of its series defeated all of it, and no
+gate in this repository or any other can catch that — which makes it the failure
+mode with the fewest defenses, not the most.
+
+Recorded with the outcome, not just the lesson: I disarmed the control at 10:14Z
+and re-armed it at 10:28Z after being corrected. For fourteen minutes a production
+billing guard was off because of a misread number.
+
+**14. Config and reality diverged, and nothing was watching.** Found in the same
+hour, and it is what let instance 13 be discoverable at all.
+
+`terraform.tfstate` recorded `DRY_RUN = "false"` for the kill-switch. The running
+function had been redeployed since, and only `gcloud functions describe` could say
+what it actually held. The two agreed at the moment I checked — but the divergence
+was real minutes later, when a `gcloud functions deploy` changed the live value and
+left the state file behind, and `terraform plan` then reported:
+
+```
+~ "DRY_RUN" = "true" -> "false"
+Plan: 0 to add, 1 to change, 0 to destroy.
+```
+
+That plan is the whole finding: **`terraform plan -detailed-exitcode` detects
+config-vs-live divergence in either direction, it already exists, and nothing runs
+it.** `killswitch-test.md` even cites it — *"terraform plan -detailed-exitcode exit
+0, zero drift"* — as a manual step performed once, on 2026-05-11.
+
+The failure shape is familiar by now: a source of truth that is only true until
+someone touches the live resource, with no scheduled comparison to notice. It is
+worse here than for most infrastructure, because the drifting field decides whether
+a control that can disable production billing is armed. Either direction is a
+silent hazard — drifting to `true` disarms the guard, drifting to `false` arms it
+where it was deliberately disabled — and neither produces any output at all today.
+
+Note also which artifact was authoritative. Reading tfstate is reading *what
+Terraform last believed*; reading the function is reading *what will execute*. For
+anything whose value changes behaviour under load, only the second counts, and the
+habit of checking the config file because it is closer to hand is exactly how the
+divergence survives.
+
+**15. Two agents, one credential file, and an identity that changed mid-task.**
+`~/.config/gcloud` is machine-global. Every concurrent session shares it, so
+`gcloud config set account` in one repoints *every other session's* identity
+between one command and the next — including in the middle of a Terraform state
+migration.
+
+It never once looked like what it was. Three symptoms, one cause:
+
+| what happened | what I concluded | what it was |
+|---|---|---|
+| `403 cloudfunctions.functions.get denied` on a function I had just deployed | an IAM role was revoked | account had flipped to the one without access |
+| the identical retry succeeded seconds later | transient consistency lag after deploy | it had flipped back |
+| `storage: bucket doesn't exist` for a bucket created two minutes earlier | wrong project, or propagation | flipped again; the other account cannot read it |
+
+**Every one of those diagnoses blamed the environment — IAM, eventual
+consistency, propagation — and none asked whether the thing running the command
+was still the same principal.** The second is the worst of them: a failure that
+disappears on retry is the canonical signature of a transient fault, so the retry
+*succeeding* was read as confirmation. It was the account flipping back. I wrote
+"transient IAM/consistency lag" into a report on that basis.
+
+The rule is narrow and mechanical, because in the moment the reasoning is not
+available: **when an operation fails on permissions, confirm which identity
+actually ran it before diagnosing anything else.** `gcloud config get-value
+account` costs nothing and comes before IAM, before propagation, before API
+enablement. A changing principal is indistinguishable from a changing permission
+if you only ever look at the permission.
+
+Two aggravating details worth carrying:
+
+- **The workaround is not a fix.** Passing `--account=` on every invocation stops
+  a session inheriting someone else's switch, but the config is still shared and
+  still mutable by anyone. It is a seatbelt, not a lock — and a command that
+  omits the flag silently rejoins the hazard.
+- **Terraform does not use the gcloud CLI account at all.** It reads Application
+  Default Credentials, configured separately, carrying their own
+  `quota_project` — which here pointed at `iconic-reactor-496423-m4`, a project
+  unrelated to any of this work. So a single operation had *two* identities in
+  play, only one of which `gcloud config get-value account` reports. Checking the
+  obvious one would have told a true story about the wrong principal.
+
+Related in kind to instance 10 — a check running correctly against the wrong
+target — but the target here is not a URL or a project. It is *who you are*, and
+nothing in the output of a failing command mentions it.
+
 ## What follows from it
 
 - **Name the surface.** For every check, state which paths, which entries, which
@@ -380,6 +521,18 @@ an outage report.
 - **Print every one of them.** A status computed and not shown is the same bug
   as a status never computed.
 - **Fail closed.** "Could not verify" is a deny, never a silent pass.
+- **Never let one data point outrank the series beside it.** Instance 13 escalated
+  a synthetic test value to an urgent production recommendation while the same log
+  stream carried the contradicting series, seconds away. Alarm shortens the search;
+  that is precisely when to widen it and check the trend, the units, and the
+  arithmetic before acting.
+- **Make synthetic events unmistakably synthetic.** A test that emits
+  production-shaped telemetry needs a distinct marker, not a boolean field inside
+  an otherwise identical payload.
+- **Read the running thing, not the config that describes it.** tfstate is what
+  Terraform last believed; `describe` is what will execute. Where the value
+  changes behaviour, only the second counts — and schedule the comparison
+  (`terraform plan -detailed-exitcode`) rather than trusting they still agree.
 - **Failing closed is the exit code; being useful is the message.** Two failures
   that need different responses must not share one alarm. A guard that reports a
   broken check as a confirmed outage sends you to the wrong runbook with full
