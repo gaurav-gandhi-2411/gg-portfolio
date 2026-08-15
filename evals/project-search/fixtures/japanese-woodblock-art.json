@@ -1,0 +1,7 @@
+{
+  "id": "japanese-woodblock-art",
+  "query": "generates Japanese woodblock print style artwork",
+  "expectedSlug": "aetherart",
+  "ambiguousWith": null,
+  "notes": null
+}

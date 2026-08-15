@@ -1,0 +1,7 @@
+{
+  "id": "word-guessing-embeddings",
+  "query": "a word guessing game powered by embeddings",
+  "expectedSlug": "warmer",
+  "ambiguousWith": null,
+  "notes": null
+}

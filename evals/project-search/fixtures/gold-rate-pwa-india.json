@@ -1,0 +1,7 @@
+{
+  "id": "gold-rate-pwa-india",
+  "query": "PWA that tracks 22 karat gold rates in India",
+  "expectedSlug": "gold-rate-tracker",
+  "ambiguousWith": null,
+  "notes": null
+}

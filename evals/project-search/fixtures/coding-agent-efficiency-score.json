@@ -1,0 +1,7 @@
+{
+  "id": "coding-agent-efficiency-score",
+  "query": "scores how efficient a coding agent's session was",
+  "expectedSlug": "tracegauge",
+  "ambiguousWith": null,
+  "notes": null
+}

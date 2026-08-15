@@ -1,0 +1,7 @@
+{
+  "id": "ai-wedding-stylist",
+  "query": "an AI shopping assistant for wedding outfits",
+  "expectedSlug": "style-maitri",
+  "ambiguousWith": null,
+  "notes": null
+}
