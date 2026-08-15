@@ -18,9 +18,17 @@
  * single pre-LCP long task on `/` sitting almost exactly under the LCP
  * paint — moving this component's mount/hydration cost out of that budget
  * entirely (not just deferring it) was worth measuring since the DOM-removal
- * step was never load-bearing. The removal itself now happens from a plain
- * `<script>` in app/layout.tsx's existing pre-paint inline script, which
- * already runs outside React — see that file for the timing.
+ * step was never load-bearing.
+ *
+ * fix/remove-view-transitions — P0: that DOM-removal step (a raw
+ * `#boot-loader.remove()` from app/layout.tsx's inline script) turned out
+ * to be actively harmful, not just unnecessary — this component stays
+ * mounted in React's fiber tree for the whole SPA session (it's
+ * unconditional in the root layout), so removing its DOM node from
+ * outside React corrupts React's own fiber-to-DOM bookkeeping and crashes
+ * a later, unrelated commit with `insertBefore`/`removeChild` errors. The
+ * script no longer removes the node at all — see app/layout.tsx for the
+ * full mechanism and why deleting `data-boot` is sufficient on its own.
  *
  * Whether the overlay is VISIBLE at all is still decided entirely by that
  * same inline script (html[data-boot="1"]) — no JS or prefers-reduced-motion
