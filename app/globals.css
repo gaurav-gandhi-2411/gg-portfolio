@@ -17,6 +17,8 @@
  *                             the original #2C2F36 pick only hit 1.47:1 and
  *                             was raised to #62656E specifically so chip/card
  *                             outlines stay visible, not just decorative)
+ *   status-open on background    10.24:1 (AA non-text/UI needs 3:1)
+ *   status-closed on background   4.08:1
  */
 @theme inline {
   --color-background: var(--background);
@@ -37,6 +39,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-status-open: var(--status-open);
+  --color-status-closed: var(--status-closed);
 
   --font-sans: var(--font-space-grotesk);
   --font-heading: var(--font-fraunces);
@@ -91,6 +95,8 @@
   --text-hi: #edeef0;
   --text-lo: #9195a0;
   --indigo: #818cf8;
+  --emerald: #34d399;
+  --slate: #6b7280;
 
   /* Semantic tokens (consumed by shadcn components) */
   --background: var(--graphite-950);
@@ -111,6 +117,19 @@
   --border: var(--graphite-line);
   --input: var(--graphite-line);
   --ring: var(--indigo);
+
+  /* BL-3a — the one status pair the site actually needs (open/closed to
+   * roles), deliberately not the indigo accent: indigo is the page's
+   * generic decorative/link hue, reused everywhere, so an availability
+   * signal painted the same color would read as "just another link" —
+   * green-for-open/gray-for-closed is the universal status-light
+   * convention (LinkedIn's "Open to work", GitHub's activity squares) and
+   * keeps this one signal visually distinct from ambient accent color.
+   * Single source of truth for both the on-site badge (bg-status-open,
+   * app/globals.css) and the OG image (app/opengraph-image.tsx hardcodes
+   * the same hex, since next/og can't read CSS custom properties). */
+  --status-open: var(--emerald);
+  --status-closed: var(--slate);
 
   --radius: 0.5rem;
 }

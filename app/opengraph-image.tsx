@@ -8,6 +8,10 @@ const BG = "#0a0b0d";
 const TEXT_HI = "#edeef0";
 const TEXT_LO = "#9195a0";
 const INDIGO = "#818cf8";
+// Mirrors app/globals.css's --status-open token (BL-3a) — next/og's
+// ImageResponse can't consume CSS custom properties, so this is a literal
+// copy of that token's resolved value. Keep the two in sync by hand; this
+// is the only other place the color is allowed to be hardcoded.
 const STATUS_OPEN = "#34d399";
 
 export default function OgImage() {
