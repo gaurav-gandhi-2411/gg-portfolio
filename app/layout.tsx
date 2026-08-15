@@ -89,10 +89,19 @@ export default function RootLayout({
         {/* Wave 12: the entrance is scoped to the homepage — a visitor
             opening a shared /work/... link shouldn't wait through a brand
             moment before the content they were sent. */}
+        {/* fix/perf: this script also now owns the #boot-loader node's
+            eventual DOM removal (was previously a React
+            useEffect+setTimeout in components/boot-loader.tsx, which is a
+            Server Component as of this change and can't run client-side
+            code). The removal is pure cleanup, not gating — the CSS exit
+            animation (app/globals.css) already visually hides the overlay
+            on its own fixed schedule regardless of when/whether this runs;
+            see that file's comment. Deferred past DOMContentLoaded so the
+            lookup never races the element's own parse. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(location.pathname==='/'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.dataset.boot='1'}catch(e){}",
+              "try{var b=location.pathname==='/'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;if(b)document.documentElement.dataset.boot='1';document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){delete document.documentElement.dataset.boot;var el=document.getElementById('boot-loader');if(el)el.remove();},b?1150:0)})}catch(e){}",
           }}
         />
       </head>

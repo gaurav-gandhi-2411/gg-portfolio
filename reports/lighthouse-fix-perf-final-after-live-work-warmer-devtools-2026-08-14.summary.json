@@ -1,0 +1,95 @@
+{
+  "route": "/work/warmer",
+  "url": "https://gaurav-gandhi.vercel.app/work/warmer",
+  "branch": "fix/perf-final-after-live",
+  "date": "2026-08-14",
+  "n": 3,
+  "throttlingMethod": "devtools",
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 2,
+  "aggregate": {
+    "performance": {
+      "mean": 76.33,
+      "stddev": 0.58,
+      "values": [
+        77,
+        76,
+        76
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 2367.51,
+      "stddev": 37.63,
+      "values": [
+        2330.943,
+        2406.12,
+        2365.478
+      ]
+    },
+    "lcp-ms": {
+      "mean": 2367.51,
+      "stddev": 37.63,
+      "values": [
+        2330.943,
+        2406.12,
+        2365.478
+      ]
+    },
+    "tbt-ms": {
+      "mean": 572.33,
+      "stddev": 6.99,
+      "values": [
+        573.8839999999996,
+        564.692,
+        578.4029999999998
+      ]
+    },
+    "cls": {
+      "mean": 0.12,
+      "stddev": 0,
+      "values": [
+        0.1204945047472448,
+        0.1204945047472448,
+        0.1204945047472448
+      ]
+    },
+    "si-ms": {
+      "mean": 2373.67,
+      "stddev": 37,
+      "values": [
+        2337,
+        2411,
+        2373
+      ]
+    }
+  }
+}

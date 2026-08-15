@@ -144,8 +144,13 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
       renderer.resize(rect.width, rect.height, cappedDevicePixelRatio());
       drawStill(morphRef.current);
     };
-    sizeToBox();
 
+    // fix/perf round 4: no longer called eagerly here — same forced-reflow
+    // shape as the hero's embedding-cloud-gl.tsx sibling (see that file's
+    // comment for the mechanism). ResizeObserver.observe() already delivers
+    // an initial callback with the target's current box once layout is
+    // fresh, so the eager synchronous getBoundingClientRect() read here was
+    // both forced and redundant.
     const observer = new ResizeObserver(sizeToBox);
     observer.observe(canvas);
 
