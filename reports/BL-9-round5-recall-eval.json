@@ -1,0 +1,1549 @@
+{
+  "generatedAt": "2026-08-15T13:06:39.785Z",
+  "nCases": 28,
+  "minilm": {
+    "model": "Xenova/all-MiniLM-L6-v2",
+    "recallAt1": 0.8928571428571429,
+    "recallAt3": 1,
+    "meanLatencyMs": 2.447167857142856,
+    "perQuery": [
+      {
+        "id": "agent-tool-description-eval",
+        "query": "measures if changing an AI agent's tool descriptions actually helps",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "aetherart",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "ai-wedding-stylist",
+        "query": "an AI shopping assistant for wedding outfits",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      },
+      {
+        "id": "claude-code-token-waste",
+        "query": "tool that evaluates Claude Code token usage waste",
+        "expected": "tracegauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "tracegauge",
+          "reclaim",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "clip-clothing-recommender",
+        "query": "clothing recommendation engine using CLIP embeddings",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "warmer",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "dealhunter",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "controlnet-art-generator",
+        "query": "AI art generator using ControlNet",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "multimodal-fashion-recommender",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "daily-secret-word-app",
+        "query": "app for finding the closest secret word each day",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "expense-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reviewiq",
+          "agentgauge",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "fashion-from-photos",
+        "query": "an app that recommends fashion items from photos",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "github-issue-resolution-time",
+        "query": "resolution time estimator for GitHub issues",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "agentgauge",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "gold-price-baseline",
+        "query": "predicts gold prices better than a baseline",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "shelfsense",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "gold-rate-pwa-india",
+        "query": "PWA that tracks 22 karat gold rates in India",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "shelfsense",
+          "reviewiq"
+        ]
+      },
+      {
+        "id": "issue-triage-similar-bugs",
+        "query": "an issue triage system that retrieves similar past bugs",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "multimodal-fashion-recommender",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "mcp-ab-testing-harness",
+        "query": "statistical A/B testing harness for MCP servers",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "multi-agent-flight-booking",
+        "query": "books flights using multiple AI agents",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "aetherart",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "oncall-triage-time",
+        "query": "something that reduces on-call issue triage time",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "agentgauge",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "personal-spending-forecast",
+        "query": "tracks personal spending and predicts future expenses",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "gold-rate-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "plain-english-expense-entry",
+        "query": "an app where you type expenses in plain English and it auto-categorizes them",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "warmer",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "retail-demand-forecast",
+        "query": "forecasts retail demand for thousands of products",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "gold-rate-tracker",
+          "multimodal-fashion-recommender"
+        ]
+      },
+      {
+        "id": "review-analysis-hindi-english",
+        "query": "analyzes customer reviews in Hindi and English",
+        "expected": "reviewiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reviewiq",
+          "style-maitri",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "safe-pc-cleanup",
+        "query": "safe automated cleanup of unnecessary files on my PC",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "two-itinerary-travel-planner",
+        "query": "travel planner that gives two different itinerary options",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "expense-tracker",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "walmart-sales-lightgbm",
+        "query": "predicting Walmart sales with LightGBM",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "gold-rate-tracker",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "windows-disk-cleanup",
+        "query": "cleans up disk space on Windows safely",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "word-guessing-embeddings",
+        "query": "a word guessing game powered by embeddings",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      }
+    ],
+    "misses": [
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "top3": [
+          "agentgauge",
+          "dealhunter",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "shelfsense"
+        ]
+      }
+    ]
+  },
+  "potionBase8m": {
+    "model": "minishlab/potion-base-8M (via @yarflam/potion-base-8m npm package)",
+    "recallAt1": 0.8928571428571429,
+    "recallAt3": 0.9285714285714286,
+    "meanLatencyMs": 4.519700000000005,
+    "perQuery": [
+      {
+        "id": "agent-tool-description-eval",
+        "query": "measures if changing an AI agent's tool descriptions actually helps",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "ai-wedding-stylist",
+        "query": "an AI shopping assistant for wedding outfits",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      },
+      {
+        "id": "claude-code-token-waste",
+        "query": "tool that evaluates Claude Code token usage waste",
+        "expected": "tracegauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "tracegauge",
+          "reclaim",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "clip-clothing-recommender",
+        "query": "clothing recommendation engine using CLIP embeddings",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "warmer",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "reviewiq"
+        ]
+      },
+      {
+        "id": "controlnet-art-generator",
+        "query": "AI art generator using ControlNet",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "daily-secret-word-app",
+        "query": "app for finding the closest secret word each day",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "agentgauge",
+          "gold-rate-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "fashion-from-photos",
+        "query": "an app that recommends fashion items from photos",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "github-issue-resolution-time",
+        "query": "resolution time estimator for GitHub issues",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "expense-tracker",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "gold-price-baseline",
+        "query": "predicts gold prices better than a baseline",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "shelfsense",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "gold-rate-pwa-india",
+        "query": "PWA that tracks 22 karat gold rates in India",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "expense-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "issue-triage-similar-bugs",
+        "query": "an issue triage system that retrieves similar past bugs",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "warmer"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "multimodal-fashion-recommender",
+          "warmer"
+        ]
+      },
+      {
+        "id": "mcp-ab-testing-harness",
+        "query": "statistical A/B testing harness for MCP servers",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "multi-agent-flight-booking",
+        "query": "books flights using multiple AI agents",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "style-maitri",
+          "reviewiq"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "dealhunter",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "oncall-triage-time",
+        "query": "something that reduces on-call issue triage time",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "agentgauge",
+          "dealhunter"
+        ]
+      },
+      {
+        "id": "personal-spending-forecast",
+        "query": "tracks personal spending and predicts future expenses",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "gold-rate-tracker",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "plain-english-expense-entry",
+        "query": "an app where you type expenses in plain English and it auto-categorizes them",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "dealhunter",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "retail-demand-forecast",
+        "query": "forecasts retail demand for thousands of products",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "gold-rate-tracker",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "review-analysis-hindi-english",
+        "query": "analyzes customer reviews in Hindi and English",
+        "expected": "reviewiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reviewiq",
+          "warmer",
+          "dealhunter"
+        ]
+      },
+      {
+        "id": "safe-pc-cleanup",
+        "query": "safe automated cleanup of unnecessary files on my PC",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "two-itinerary-travel-planner",
+        "query": "travel planner that gives two different itinerary options",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "reviewiq",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "walmart-sales-lightgbm",
+        "query": "predicting Walmart sales with LightGBM",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "gold-rate-tracker",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "windows-disk-cleanup",
+        "query": "cleans up disk space on Windows safely",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "agentgauge",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "word-guessing-embeddings",
+        "query": "a word guessing game powered by embeddings",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "multimodal-fashion-recommender",
+          "expense-tracker"
+        ]
+      }
+    ],
+    "misses": [
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "reviewiq"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "top3": [
+          "agentgauge",
+          "gold-rate-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "tracegauge"
+        ]
+      }
+    ]
+  },
+  "staticMatrix": {
+    "model": "Xenova/all-MiniLM-L6-v2 (word-level distillation, see this file's own build script header)",
+    "vocabSize": 983,
+    "recallAt1": 0.7857142857142857,
+    "recallAt3": 0.8928571428571429,
+    "meanLatencyMs": 0.22613571428569149,
+    "perQuery": [
+      {
+        "id": "agent-tool-description-eval",
+        "query": "measures if changing an AI agent's tool descriptions actually helps",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "ai-wedding-stylist",
+        "query": "an AI shopping assistant for wedding outfits",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "agentgauge",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "claude-code-token-waste",
+        "query": "tool that evaluates Claude Code token usage waste",
+        "expected": "tracegauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "tracegauge",
+          "agentgauge",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "clip-clothing-recommender",
+        "query": "clothing recommendation engine using CLIP embeddings",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "controlnet-art-generator",
+        "query": "AI art generator using ControlNet",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "agentgauge",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "daily-secret-word-app",
+        "query": "app for finding the closest secret word each day",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "style-maitri",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "agentgauge",
+          "reclaim",
+          "warmer"
+        ]
+      },
+      {
+        "id": "fashion-from-photos",
+        "query": "an app that recommends fashion items from photos",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "style-maitri",
+          "warmer",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "github-issue-resolution-time",
+        "query": "resolution time estimator for GitHub issues",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "gold-price-baseline",
+        "query": "predicts gold prices better than a baseline",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "shelfsense",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "gold-rate-pwa-india",
+        "query": "PWA that tracks 22 karat gold rates in India",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "issue-triage-similar-bugs",
+        "query": "an issue triage system that retrieves similar past bugs",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "aetherart",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "mcp-ab-testing-harness",
+        "query": "statistical A/B testing harness for MCP servers",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "multi-agent-flight-booking",
+        "query": "books flights using multiple AI agents",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "aetherart",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "shelfsense",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "oncall-triage-time",
+        "query": "something that reduces on-call issue triage time",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "personal-spending-forecast",
+        "query": "tracks personal spending and predicts future expenses",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "style-maitri",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "plain-english-expense-entry",
+        "query": "an app where you type expenses in plain English and it auto-categorizes them",
+        "expected": "expense-tracker",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "expense-tracker",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "retail-demand-forecast",
+        "query": "forecasts retail demand for thousands of products",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "expense-tracker",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "review-analysis-hindi-english",
+        "query": "analyzes customer reviews in Hindi and English",
+        "expected": "reviewiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reviewiq",
+          "dealhunter",
+          "style-maitri"
+        ]
+      },
+      {
+        "id": "safe-pc-cleanup",
+        "query": "safe automated cleanup of unnecessary files on my PC",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "dealhunter",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "two-itinerary-travel-planner",
+        "query": "travel planner that gives two different itinerary options",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "warmer",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "walmart-sales-lightgbm",
+        "query": "predicting Walmart sales with LightGBM",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "style-maitri",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "windows-disk-cleanup",
+        "query": "cleans up disk space on Windows safely",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "aetherart",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "word-guessing-embeddings",
+        "query": "a word guessing game powered by embeddings",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "multimodal-fashion-recommender",
+          "triageiq"
+        ]
+      }
+    ],
+    "misses": [
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "top3": [
+          "dealhunter",
+          "tracegauge",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "top3": [
+          "agentgauge",
+          "reclaim",
+          "warmer"
+        ]
+      },
+      {
+        "id": "fashion-from-photos",
+        "query": "an app that recommends fashion items from photos",
+        "expected": "multimodal-fashion-recommender",
+        "top3": [
+          "style-maitri",
+          "warmer",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "expense-tracker"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "aetherart",
+          "agentgauge"
+        ]
+      },
+      {
+        "id": "plain-english-expense-entry",
+        "query": "an app where you type expenses in plain English and it auto-categorizes them",
+        "expected": "expense-tracker",
+        "top3": [
+          "warmer",
+          "expense-tracker",
+          "style-maitri"
+        ]
+      }
+    ]
+  },
+  "keywordOnly": {
+    "model": "lib/search/keyword-score.ts (no model)",
+    "recallAt1": 0.8571428571428571,
+    "recallAt3": 0.9642857142857143,
+    "meanLatencyMs": 0.060257142857125245,
+    "perQuery": [
+      {
+        "id": "agent-tool-description-eval",
+        "query": "measures if changing an AI agent's tool descriptions actually helps",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "triageiq",
+          "dealhunter"
+        ]
+      },
+      {
+        "id": "ai-wedding-stylist",
+        "query": "an AI shopping assistant for wedding outfits",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "claude-code-token-waste",
+        "query": "tool that evaluates Claude Code token usage waste",
+        "expected": "tracegauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "tracegauge",
+          "agentgauge",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "clip-clothing-recommender",
+        "query": "clothing recommendation engine using CLIP embeddings",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "tracegauge",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "controlnet-art-generator",
+        "query": "AI art generator using ControlNet",
+        "expected": "aetherart",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "aetherart",
+          "shelfsense",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "daily-secret-word-app",
+        "query": "app for finding the closest secret word each day",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "triageiq",
+          "multimodal-fashion-recommender"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "reviewiq",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "fashion-from-photos",
+        "query": "an app that recommends fashion items from photos",
+        "expected": "multimodal-fashion-recommender",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "github-issue-resolution-time",
+        "query": "resolution time estimator for GitHub issues",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "gold-price-baseline",
+        "query": "predicts gold prices better than a baseline",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "style-maitri",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "gold-rate-pwa-india",
+        "query": "PWA that tracks 22 karat gold rates in India",
+        "expected": "gold-rate-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "gold-rate-tracker",
+          "style-maitri",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "issue-triage-similar-bugs",
+        "query": "an issue triage system that retrieves similar past bugs",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "warmer"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "aetherart",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "hit1": false,
+        "hit3": false,
+        "top3": [
+          "multimodal-fashion-recommender",
+          "warmer",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "mcp-ab-testing-harness",
+        "query": "statistical A/B testing harness for MCP servers",
+        "expected": "agentgauge",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "agentgauge",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "multi-agent-flight-booking",
+        "query": "books flights using multiple AI agents",
+        "expected": "dealhunter",
+        "hit1": false,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "style-maitri",
+          "dealhunter"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "gold-rate-tracker"
+        ]
+      },
+      {
+        "id": "oncall-triage-time",
+        "query": "something that reduces on-call issue triage time",
+        "expected": "triageiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "triageiq",
+          "reclaim",
+          "warmer"
+        ]
+      },
+      {
+        "id": "personal-spending-forecast",
+        "query": "tracks personal spending and predicts future expenses",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "plain-english-expense-entry",
+        "query": "an app where you type expenses in plain English and it auto-categorizes them",
+        "expected": "expense-tracker",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "expense-tracker",
+          "reviewiq",
+          "dealhunter"
+        ]
+      },
+      {
+        "id": "retail-demand-forecast",
+        "query": "forecasts retail demand for thousands of products",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "expense-tracker",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "review-analysis-hindi-english",
+        "query": "analyzes customer reviews in Hindi and English",
+        "expected": "reviewiq",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reviewiq",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "safe-pc-cleanup",
+        "query": "safe automated cleanup of unnecessary files on my PC",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "agentgauge",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "two-itinerary-travel-planner",
+        "query": "travel planner that gives two different itinerary options",
+        "expected": "dealhunter",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "dealhunter",
+          "multimodal-fashion-recommender",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "walmart-sales-lightgbm",
+        "query": "predicting Walmart sales with LightGBM",
+        "expected": "shelfsense",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "shelfsense",
+          "triageiq",
+          "reclaim"
+        ]
+      },
+      {
+        "id": "windows-disk-cleanup",
+        "query": "cleans up disk space on Windows safely",
+        "expected": "reclaim",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "reclaim",
+          "triageiq",
+          "warmer"
+        ]
+      },
+      {
+        "id": "word-guessing-embeddings",
+        "query": "a word guessing game powered by embeddings",
+        "expected": "warmer",
+        "hit1": true,
+        "hit3": true,
+        "top3": [
+          "warmer",
+          "triageiq",
+          "multimodal-fashion-recommender"
+        ]
+      }
+    ],
+    "misses": [
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "top3": [
+          "agentgauge",
+          "reviewiq",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "style-maitri",
+          "aetherart",
+          "triageiq"
+        ]
+      },
+      {
+        "id": "lora-image-generation",
+        "query": "a LoRA fine-tuned image generation model",
+        "expected": "aetherart",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "warmer",
+          "shelfsense"
+        ]
+      },
+      {
+        "id": "multi-agent-flight-booking",
+        "query": "books flights using multiple AI agents",
+        "expected": "dealhunter",
+        "top3": [
+          "triageiq",
+          "style-maitri",
+          "dealhunter"
+        ]
+      }
+    ]
+  }
+}

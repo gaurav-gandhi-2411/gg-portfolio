@@ -95,6 +95,44 @@ test("axe: zero violations on a filtered /projects view", async ({ page }) => {
 });
 
 /**
+ * BL-9 — /projects' search box scanned OPEN, with a real ranked-results
+ * listbox showing (a combobox's expanded state, per CHECKS.md's own rule,
+ * is exactly where a missing accessible name or a bad focus-order bug
+ * would surface — the closed default state is already covered by the
+ * route-level scan above via ROUTES, which would never reach this markup).
+ * Round 5 removed this feature's client-side model tier entirely (see
+ * components/project-search.tsx's header) — keyword ranking is the only
+ * tier there is now, so there is no model network left to block.
+ */
+test("axe: zero violations on /projects with search results open", async ({ page }) => {
+  await gotoSettled(page, "/projects");
+  const input = page.getByRole("combobox", { name: /search projects/i });
+  await input.fill("reduces on-call issue triage time");
+  await expect(page.getByRole("listbox")).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
+ * BL-9 round 5 — the "How this search was built" methodology disclosure
+ * (components/search-methodology.tsx) is new markup on /projects that the
+ * route-level closed-state scan above (ROUTES) never expands past its own
+ * trigger button. Its expanded content nests several MetricProvenance
+ * disclosures (the same component the case-study provenance tests below
+ * already cover open) — scanned here specifically to catch a bad
+ * accessible name or focus-order bug in the combination that only exists
+ * on this route: a plain disclosure containing several nested disclosures.
+ */
+test("axe: zero violations on /projects with the search-methodology panel open", async ({ page }) => {
+  await gotoSettled(page, "/projects");
+  const trigger = page.getByRole("button", { name: /how this search was built/i });
+  await trigger.click();
+  await expect(page.getByText(/every tier's 95% wilson confidence interval/i)).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
  * Wave 16 — deliberately drives the actual bug this wave fixed: a real
  * mouse hover on one card recedes every sibling (app/globals.css,
  * `.project-grid:has(article:hover) article:not(:hover)`). 0.55 passed
