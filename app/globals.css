@@ -73,6 +73,79 @@
    * (wave-6 review). */
   --container-measure: 62ch;
 
+  /*
+   * BL-1 — named spacing layer. Tailwind v4's default spacing scale is a
+   * single `--spacing: 0.25rem` multiplier (node_modules/tailwindcss/
+   * theme.css) — bare utilities like `mt-4` compile to
+   * `calc(var(--spacing) * 4)` algorithmically, with no per-step token to
+   * hang a name on. `--space-*` is NOT a namespace Tailwind recognizes for
+   * utility generation (unlike `--radius-*`/`--text-*` above), so these are
+   * plain custom properties consumed via arbitrary-value syntax
+   * (`mt-[var(--space-4)]`) — confirmed empirically (a scratch @theme
+   * block with `--spacing-card` DID auto-generate `.p-card`/`.gap-card`
+   * utilities; an equivalent `--space-card` did not) before choosing this
+   * mechanism, per this repo's own Tailwind-version warning. Each value is
+   * `calc(var(--spacing) * N)` — identical to what the equivalent bare
+   * utility already computes, so adopting a token never changes a
+   * rendered value. Full 20-step scale defined (every raw step observed
+   * in the codebase); only the highest-frequency classes were codemod'd
+   * onto it (see PR body for the adoption-% breakdown) — BL-1 does not
+   * require collapsing the step count, only naming it.
+   */
+  --space-0: calc(var(--spacing) * 0);
+  --space-0-5: calc(var(--spacing) * 0.5);
+  --space-1: calc(var(--spacing) * 1);
+  --space-1-5: calc(var(--spacing) * 1.5);
+  --space-2: calc(var(--spacing) * 2);
+  --space-2-5: calc(var(--spacing) * 2.5);
+  --space-3: calc(var(--spacing) * 3);
+  --space-3-5: calc(var(--spacing) * 3.5);
+  --space-4: calc(var(--spacing) * 4);
+  --space-5: calc(var(--spacing) * 5);
+  --space-6: calc(var(--spacing) * 6);
+  --space-8: calc(var(--spacing) * 8);
+  --space-10: calc(var(--spacing) * 10);
+  --space-12: calc(var(--spacing) * 12);
+  --space-14: calc(var(--spacing) * 14);
+  --space-16: calc(var(--spacing) * 16);
+  --space-20: calc(var(--spacing) * 20);
+  --space-24: calc(var(--spacing) * 24);
+  --space-28: calc(var(--spacing) * 28);
+  --space-32: calc(var(--spacing) * 32);
+
+  /*
+   * BL-2 — modular type scale extended downward. The existing ladder
+   * (below) anchors ratio^0 at 1.125rem/18px (text-lg's own default
+   * value — the size the site already reads body copy at); these three
+   * steps continue the same 1.25 ratio down to caption/UI sizes.
+   * `--text-body-lg` is exactly text-lg's default (1.125rem), so
+   * migrating `text-lg` usages onto it is a zero-diff rename — adopted
+   * codebase-wide (3/3 usages).
+   * `--text-caption` (0.72rem) sits 0.48px below text-xs's 12px default —
+   * a *shrink*, which can only relax an existing flex-wrap fit, never
+   * newly break one — adopted codebase-wide (55/55 usages).
+   * `--text-body` (0.9rem) is defined (continues the ratio one rung below
+   * text-lg) but deliberately NOT migrated onto text-sm's 66 usages: the
+   * screenshot-diff gate caught a real regression from the 14px -> 14.4px
+   * *growth* direction — on /work/aetherart at 390px, "Source on GitHub"
+   * no longer fit next to "Try AetherArt" in their flex-wrap action-button
+   * row, so the row's wrap point moved (see PR body). Growing text-sm is
+   * not safe sitewide without per-callsite layout review that's out of
+   * this PR's scope; the token stays defined for a future, more
+   * surgical adoption pass. text-base (16px) has no rung on this ladder
+   * within a safe margin either way (nearest steps are 14.4px/18px, both
+   * >10% off) and was never a migration candidate.
+   * Line-heights reuse each replaced token's own unitless ratio (not a
+   * new value) so line-height scales proportionally with the tiny
+   * font-size delta instead of introducing an independent mismatch.
+   */
+  --text-caption: 0.72rem;
+  --text-caption--line-height: calc(1 / 0.75);
+  --text-body: 0.9rem;
+  --text-body--line-height: calc(1.25 / 0.875);
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: calc(1.75 / 1.125);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

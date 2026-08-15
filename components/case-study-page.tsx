@@ -40,7 +40,7 @@ function SectionHeading({ index, title }: { index: number; title: string }) {
   return (
     <h2
       id={headingId(title)}
-      className="font-heading text-title mt-14 flex scroll-mt-24 items-baseline gap-4 font-semibold text-foreground"
+      className="font-heading text-title mt-14 flex scroll-mt-24 items-baseline gap-[var(--space-4)] font-semibold text-foreground"
     >
       <span aria-hidden="true" className="text-accent font-mono text-sm font-medium">
         {String(index).padStart(2, "0")}
@@ -81,13 +81,13 @@ export function CaseStudyPage({
   return (
     <main
       id="main"
-      className="mx-auto w-full max-w-2xl flex-1 px-6 pt-12 pb-20 md:pt-16 lg:max-w-5xl"
+      className="mx-auto w-full max-w-2xl flex-1 px-[var(--space-6)] pt-[var(--space-12)] pb-[var(--space-20)] md:pt-[var(--space-16)] lg:max-w-5xl"
     >
       <div aria-hidden="true" className="reading-progress" />
 
       <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_15rem] lg:justify-between lg:gap-x-12">
         <div className="min-w-0">
-          <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+          <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
             <TransitionLink
               href="/projects"
               className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -97,12 +97,12 @@ export function CaseStudyPage({
           </p>
 
           <h1
-            className="font-heading text-display mt-6 font-semibold tracking-tight text-foreground"
+            className="font-heading text-display mt-[var(--space-6)] font-semibold tracking-tight text-foreground"
             style={{ viewTransitionName: `vt-title-${study.slug}` }}
           >
             {study.title}
           </h1>
-          <p className="text-muted-foreground mt-4 text-lg leading-relaxed">{study.dek}</p>
+          <p className="text-muted-foreground mt-[var(--space-4)] text-body-lg leading-relaxed">{study.dek}</p>
 
           {/* Wave 15 — signals the page is maintained (not a stale
               write-once artifact) and helps a skimmer decide whether to
@@ -111,17 +111,17 @@ export function CaseStudyPage({
               hand-typed, so it can't silently go stale; renders nothing if
               git history isn't available (fail-soft, same convention as
               every other derived value on this site). */}
-          <p className="text-muted-foreground mt-3 font-mono text-xs">
+          <p className="text-muted-foreground mt-[var(--space-3)] font-mono text-caption">
             {lastUpdated && <>Last updated {lastUpdated} · </>}
             {readingMinutes} min read
           </p>
 
           {(product?.techChips?.length ?? 0) > 0 && (
-            <p className="mt-5 flex flex-wrap gap-2">
+            <p className="mt-[var(--space-5)] flex flex-wrap gap-[var(--space-2)]">
               {product?.techChips?.map((chip) => (
                 <span
                   key={chip}
-                  className="border-border/40 text-muted-foreground rounded-full border px-3 py-1 font-mono text-xs"
+                  className="border-border/40 text-muted-foreground rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-mono text-caption"
                 >
                   {chip}
                 </span>
@@ -132,7 +132,7 @@ export function CaseStudyPage({
           {/* Design-review (wave 12): one primary action per surface — the
               first link (the live/try destination, or the repo when that's
               all there is) carries the filled variant. */}
-          <p className="mt-6 flex flex-wrap gap-3">
+          <p className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-3)]">
             {study.links.map((link, i) => (
               <LinkButton
                 key={link.href}
@@ -153,7 +153,7 @@ export function CaseStudyPage({
           {study.problem.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
-              className="text-muted-foreground mt-4 text-base leading-relaxed"
+              className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
             >
               {paragraph}
             </p>
@@ -163,7 +163,7 @@ export function CaseStudyPage({
           {study.approach.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
-              className="text-muted-foreground mt-4 text-base leading-relaxed"
+              className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
             >
               {paragraph}
             </p>
@@ -173,18 +173,18 @@ export function CaseStudyPage({
             <>
               <SectionHeading index={next()} title="Architecture" />
               {study.architecture.intro && (
-                <p className="text-muted-foreground mt-4 text-base leading-relaxed">
+                <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
                   {study.architecture.intro}
                 </p>
               )}
-              <div className="mt-6">
+              <div className="mt-[var(--space-6)]">
                 <FlowDiagram
                   stages={study.architecture.stages}
                   label={`${study.title} architecture diagram`}
                 />
               </div>
               {study.architecture.note && (
-                <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+                <p className="text-muted-foreground mt-[var(--space-4)] text-sm leading-relaxed">
                   {study.architecture.note}
                 </p>
               )}
@@ -194,7 +194,7 @@ export function CaseStudyPage({
           {(study.decisions?.length ?? 0) > 0 && (
             <>
               <SectionHeading index={next()} title="Key decisions — and why" />
-              <ol className="mt-4 flex flex-col gap-6">
+              <ol className="mt-[var(--space-4)] flex flex-col gap-[var(--space-6)]">
                 {study.decisions?.map((decision) => (
                   <li key={decision.sourceRef} className="border-border/40 border-l-2 pl-5">
                     <p className="font-medium text-foreground">{decision.title}</p>
@@ -210,14 +210,14 @@ export function CaseStudyPage({
           {study.diagram && (
             <>
               <SectionHeading index={next()} title={study.diagram.title} />
-              <div className="mt-6">
+              <div className="mt-[var(--space-6)]">
                 <StepCurve
                   points={study.diagram.points}
                   unit={study.diagram.unit}
                   label={study.diagram.title}
                 />
               </div>
-              <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
+              <p className="text-muted-foreground mt-[var(--space-4)] text-sm leading-relaxed">
                 {study.diagram.caption}
               </p>
             </>
@@ -226,13 +226,13 @@ export function CaseStudyPage({
           {(study.results?.length ?? 0) > 0 && (
             <>
               <SectionHeading index={next()} title="Results — the honest numbers" />
-              <dl className="mt-4 flex flex-col">
+              <dl className="mt-[var(--space-4)] flex flex-col">
                 {study.results?.map((result) => {
                   const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
                   return (
                     <div
                       key={result.sourceRef + result.label}
-                      className="border-border/30 flex flex-col gap-1 border-b py-4 first:pt-0 last:border-b-0"
+                      className="border-border/30 flex flex-col gap-[var(--space-1)] border-b py-4 first:pt-0 last:border-b-0"
                     >
                       <dd className="font-mono text-base font-medium text-foreground">
                         <MetricProvenance info={provenance} label={result.label}>
@@ -256,7 +256,7 @@ export function CaseStudyPage({
             <>
               <SectionHeading index={next()} title={study.story.title} />
               {study.story.leadIn && (
-                <p className="text-muted-foreground mt-4 text-base leading-relaxed">
+                <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
                   {study.story.leadIn.text}
                 </p>
               )}
@@ -265,7 +265,7 @@ export function CaseStudyPage({
                 return (
                   <p
                     key={text.slice(0, 32)}
-                    className="text-muted-foreground mt-4 text-base leading-relaxed"
+                    className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
                   >
                     {text}
                   </p>
@@ -285,7 +285,7 @@ export function CaseStudyPage({
               {study.closing?.map((paragraph) => (
                 <p
                   key={paragraph.slice(0, 32)}
-                  className="text-muted-foreground mt-4 text-base leading-relaxed"
+                  className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
                 >
                   {paragraph}
                 </p>
@@ -299,11 +299,11 @@ export function CaseStudyPage({
               generic project links below, and Contact at the very bottom
               of the homepage). Same copy register as components/sections/
               contact.tsx, so it reads as one voice, not a bolted-on ad. */}
-          <div className="border-accent/30 bg-accent/5 print-hide mt-16 flex flex-col items-center gap-3 rounded-xl border px-6 py-8 text-center">
+          <div className="border-accent/30 bg-accent/5 print-hide mt-[var(--space-16)] flex flex-col items-center gap-[var(--space-3)] rounded-xl border px-[var(--space-6)] py-8 text-center">
             <p className="text-foreground text-base leading-relaxed">
               Building something like this? {availability.summary}
             </p>
-            <p className="flex flex-wrap justify-center gap-3">
+            <p className="flex flex-wrap justify-center gap-[var(--space-3)]">
               <LinkButton href={`mailto:${site.email}`} variant="primary">
                 Email me ↗
               </LinkButton>
@@ -313,9 +313,9 @@ export function CaseStudyPage({
             </p>
           </div>
 
-          <div className="border-border/40 mt-10 flex flex-col items-center gap-5 border-t pt-10 text-center">
+          <div className="border-border/40 mt-[var(--space-10)] flex flex-col items-center gap-[var(--space-5)] border-t pt-[var(--space-10)] text-center">
             <p className="text-muted-foreground text-sm">Want to see it for yourself?</p>
-            <p className="flex flex-wrap justify-center gap-3">
+            <p className="flex flex-wrap justify-center gap-[var(--space-3)]">
               {study.links.map((link, i) => (
                 <LinkButton
                   key={link.href}
@@ -336,17 +336,17 @@ export function CaseStudyPage({
         </div>
 
         <aside className="print-hide hidden lg:block">
-          <div className="sticky top-20 flex flex-col gap-8 pt-16">
+          <div className="sticky top-20 flex flex-col gap-8 pt-[var(--space-16)]">
             <nav aria-label="On this page">
-              <h2 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+              <h2 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
                 On this page
               </h2>
-              <ol className="border-border/40 mt-3 flex flex-col gap-1.5 border-l">
+              <ol className="border-border/40 mt-[var(--space-3)] flex flex-col gap-[var(--space-1-5)] border-l">
                 {tocSections.map((title) => (
                   <li key={title}>
                     <a
                       href={`#${headingId(title)}`}
-                      className="text-muted-foreground focus-visible:outline-ring block py-0.5 pl-4 text-sm leading-snug transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                      className="text-muted-foreground focus-visible:outline-ring block py-[var(--space-0-5)] pl-4 text-sm leading-snug transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                     >
                       {title}
                     </a>
@@ -356,17 +356,17 @@ export function CaseStudyPage({
             </nav>
 
             {product?.metric && (
-              <div className="border-border/40 rounded-xl border p-5">
+              <div className="border-border/40 rounded-xl border p-[var(--space-5)]">
                 <p className="font-mono text-base font-medium text-foreground">
                   {product.metric.value}
                 </p>
-                <p className="text-muted-foreground mt-1.5 text-xs leading-snug">
+                <p className="text-muted-foreground mt-1.5 text-caption leading-snug">
                   {product.metric.label}
                 </p>
               </div>
             )}
 
-            <p className="flex flex-col gap-2.5 text-sm">
+            <p className="flex flex-col gap-[var(--space-2-5)] text-sm">
               {study.links.map((link) => (
                 <InlineLink key={link.href} href={link.href} className="w-fit">
                   {link.label} ↗
@@ -380,10 +380,10 @@ export function CaseStudyPage({
                 rendering an empty heading. */}
             {related.length > 0 && (
               <div>
-                <h2 className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+                <h2 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
                   Related projects
                 </h2>
-                <ul className="mt-3 flex flex-col gap-3">
+                <ul className="mt-[var(--space-3)] flex flex-col gap-[var(--space-3)]">
                   {related.map(({ product: relatedProduct, sharedCategories }) => (
                     <li key={relatedProduct.slug}>
                       <TransitionLink
@@ -392,11 +392,11 @@ export function CaseStudyPage({
                       >
                         {relatedProduct.name}
                       </TransitionLink>
-                      <p className="mt-1 flex flex-wrap gap-1.5">
+                      <p className="mt-[var(--space-1)] flex flex-wrap gap-[var(--space-1-5)]">
                         {sharedCategories.map((categoryId) => (
                           <span
                             key={categoryId}
-                            className="border-border/40 text-muted-foreground rounded-full border px-2 py-0.5 font-mono text-xs"
+                            className="border-border/40 text-muted-foreground rounded-full border px-2 py-[var(--space-0-5)] font-mono text-caption"
                           >
                             {CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId}
                           </span>

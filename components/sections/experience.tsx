@@ -18,7 +18,7 @@ import { site } from "@/content/site";
 export function Experience() {
   return (
     <Section id="experience" label="Experience" width="wide">
-      <RevealGroup mode="onview" className="flex flex-col gap-6">
+      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
         {experience.map((entry) => (
           <article
             key={entry.company}
@@ -29,24 +29,24 @@ export function Experience() {
                 (design-review finding 3). */}
             <div className="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-x-10">
               <div>
-                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 lg:flex-col lg:gap-y-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 lg:flex-col lg:gap-y-[var(--space-2)]">
                   <h3 className="font-heading text-lead font-semibold text-foreground">
                     {entry.company}
                   </h3>
-                  <span className="text-muted-foreground font-mono text-xs">
+                  <span className="text-muted-foreground font-mono text-caption">
                     {entry.dateRange}
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1 text-sm lg:mt-2">
+                <p className="text-muted-foreground mt-[var(--space-1)] text-sm lg:mt-[var(--space-2)]">
                   {entry.companyDetail ? `${entry.companyDetail} · ` : ""}
                   {entry.location}
                 </p>
 
-                <p className="mt-6 hidden flex-wrap gap-2 lg:flex">
+                <p className="mt-[var(--space-6)] hidden flex-wrap gap-[var(--space-2)] lg:flex">
                   {entry.techChips.map((chip) => (
                     <span
                       key={chip}
-                      className="border-border/40 text-muted-foreground rounded-full border px-3 py-1 font-mono text-xs"
+                      className="border-border/40 text-muted-foreground rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-mono text-caption"
                     >
                       {chip}
                     </span>
@@ -54,22 +54,22 @@ export function Experience() {
                 </p>
               </div>
 
-              <div className="mt-5 flex flex-col gap-5 lg:mt-0">
+              <div className="mt-[var(--space-5)] flex flex-col gap-[var(--space-5)] lg:mt-0">
                 {entry.subRoles?.map((role) => {
                   const showDates =
                     (entry.subRoles?.length ?? 0) > 1 || role.dateRange !== entry.dateRange;
                   return (
-                    <div key={role.title} className="flex flex-col gap-2.5">
+                    <div key={role.title} className="flex flex-col gap-[var(--space-2-5)]">
                       <p className="text-sm">
                         <span className="font-medium text-foreground">{role.title}</span>
                         {showDates && (
-                          <span className="text-muted-foreground font-mono text-xs">
+                          <span className="text-muted-foreground font-mono text-caption">
                             {" "}
                             · {role.dateRange}
                           </span>
                         )}
                       </p>
-                      <ul className="flex flex-col gap-2">
+                      <ul className="flex flex-col gap-[var(--space-2)]">
                         {role.bullets.map((bullet) => (
                           <li
                             key={bullet.sourceRef}
@@ -85,11 +85,11 @@ export function Experience() {
               </div>
             </div>
 
-            <p className="mt-6 flex flex-wrap gap-2 lg:hidden">
+            <p className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)] lg:hidden">
               {entry.techChips.map((chip) => (
                 <span
                   key={chip}
-                  className="border-border/40 text-muted-foreground rounded-full border px-3 py-1 font-mono text-xs"
+                  className="border-border/40 text-muted-foreground rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-mono text-caption"
                 >
                   {chip}
                 </span>
@@ -98,7 +98,7 @@ export function Experience() {
           </article>
         ))}
 
-        <p className="mt-2 text-center">
+        <p className="mt-[var(--space-2)] text-center">
           <LinkButton href={site.resumeUrl} icon={<FileTextIcon />}>
             View the full resume
           </LinkButton>
