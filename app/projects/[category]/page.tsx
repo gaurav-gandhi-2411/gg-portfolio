@@ -34,6 +34,7 @@ export async function generateMetadata({
   return {
     title: `${cat.label} projects — Gaurav Gandhi`,
     description: `Every AI product and research tool I've built and shipped in ${cat.label} — each with an honest, sourced case study.`,
+    alternates: { canonical: `/projects/${cat.id}` },
   };
 }
 
@@ -58,7 +59,7 @@ export default async function CategoryProjectsPage({
         <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
           <TransitionLink
             href="/projects"
-            className="focus-visible:outline-ring transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             ← All projects
           </TransitionLink>

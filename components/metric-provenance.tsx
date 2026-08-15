@@ -51,7 +51,25 @@ export function MetricProvenance({
         aria-label={`Source for ${label}`}
         data-open={open}
         className={cn(
-          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-2 w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-xs normal-case opacity-0 transition-opacity duration-150 ease-out",
+          // Mobile audit follow-up (2026-08-14): document.documentElement
+          // .scrollWidth was registering ink overflow on every case-study
+          // route with a "prose"-tier metric whose sourceText (or a
+          // structured citation's file path) contains a long unbroken
+          // token — a backtick-wrapped path/command with no spaces, most
+          // commonly. Neither the panel's own position (left-0 vs.
+          // centered — tried and ruled out empirically) nor its
+          // max-w-[calc(100vw-3rem)] clamp caused this: the panel's own
+          // box already fits within the viewport (confirmed via
+          // getBoundingClientRect on every trigger on the worst-case
+          // route); the overflow is the *unwrapped text itself* exceeding
+          // the panel's own w-72 box internally (panel.scrollWidth was up
+          // to 473px against a 288px offsetWidth), which counts toward the
+          // document's ink overflow even though the panel is invisible
+          // (opacity-0/pointer-events-none) while closed. break-words on
+          // both text children below forces a break inside an otherwise
+          // unbroken token instead of letting it run past the box —
+          // fixes the true cause; see the two className additions below.
+          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-150 ease-out",
           "group-hover/prov:pointer-events-auto group-hover/prov:opacity-100",
           "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100"
         )}
@@ -59,7 +77,7 @@ export function MetricProvenance({
         <p className="text-muted-foreground font-mono text-[11px] tracking-eyebrow uppercase">
           {info.tier === "structured" ? "Verified source" : "Cited in provenance.md"}
         </p>
-        <p className="text-foreground mt-1.5 leading-relaxed">{info.sourceText}</p>
+        <p className="text-foreground mt-1.5 leading-relaxed break-words">{info.sourceText}</p>
         {/*
           Confidence distinction (GG, 2026-08-06): a "structured" ref comes
           straight from content/metrics.json (machine-refreshed via a
@@ -74,9 +92,9 @@ export function MetricProvenance({
           file this parser picked out of its prose.
         */}
         {info.tier === "structured" && info.citations.length > 0 && (
-          <ul className="mt-2.5 flex flex-col gap-1">
+          <ul className="mt-[var(--space-2-5)] flex flex-col gap-[var(--space-1)]">
             {info.citations.map((c) => (
-              <li key={`${c.file}:${c.line ?? ""}`} className="font-mono text-[11px]">
+              <li key={`${c.file}:${c.line ?? ""}`} className="font-mono text-[11px] break-words">
                 {c.url ? (
                   <a
                     href={c.url}
@@ -102,12 +120,12 @@ export function MetricProvenance({
             href={info.provenanceDocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent focus-visible:outline-ring mt-2.5 inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="text-accent focus-visible:outline-ring mt-[var(--space-2-5)] inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             View in content/provenance.md ↗
           </a>
         )}
-        <p className="text-muted-foreground/80 mt-2.5 text-[11px]">
+        <p className="text-muted-foreground/80 mt-[var(--space-2-5)] text-[11px]">
           {info.tier === "structured" && info.citations.some((c) => c.commitSha) && (
             <>commit {info.citations.find((c) => c.commitSha)?.commitSha?.slice(0, 7)} · </>
           )}

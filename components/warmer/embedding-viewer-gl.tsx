@@ -210,7 +210,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-[var(--space-3)]">
       <div
         className="border-border/40 relative aspect-square overflow-hidden rounded-lg border sm:aspect-[16/10]"
         data-testid="warmer-embedding-gl"
@@ -227,7 +227,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
         />
         {hovered ? (
           <span
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded border border-border/60 bg-background/95 px-2 py-1 font-mono text-xs text-foreground"
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[calc(100%+10px)] rounded border border-border/60 bg-background/95 px-2 py-[var(--space-1)] font-mono text-caption text-foreground"
             style={{ left: hovered.x, top: hovered.y }}
           >
             {hovered.term}
@@ -235,13 +235,13 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-[var(--space-2)]">
         <div className="border-border/40 inline-flex overflow-hidden rounded-md border">
           <button
             type="button"
             aria-pressed={!showFinetuned}
             onClick={() => onToggle(false)}
-            className={`min-h-11 px-4 text-sm transition-colors ${
+            className={`min-h-11 px-[var(--space-4)] text-sm transition-colors ${
               !showFinetuned
                 ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -253,7 +253,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
             type="button"
             aria-pressed={showFinetuned}
             onClick={() => onToggle(true)}
-            className={`border-border/40 min-h-11 border-l px-4 text-sm transition-colors ${
+            className={`border-border/40 min-h-11 border-l px-[var(--space-4)] text-sm transition-colors ${
               showFinetuned
                 ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -271,7 +271,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
           that, so this line stays neutral rather than restating a claim the
           measurement withdrew.
         */}
-        <p aria-live="polite" className="text-muted-foreground text-xs">
+        <p aria-live="polite" className="text-muted-foreground text-caption">
           {showFinetuned
             ? "Fine-tuned — the same terms, after fine-tuning."
             : "Base model — the same terms, before fine-tuning."}

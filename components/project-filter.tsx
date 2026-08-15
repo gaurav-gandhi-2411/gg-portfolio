@@ -115,7 +115,7 @@ export function ProjectFilter({
       : `See all ${totalMatching} in ${CATEGORIES.find((c) => c.id === active)?.label ?? ""} →`;
 
   const pillBase =
-    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
+    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
   // Wave 14 fix: a solid fill, not a 15%-tint border — GG reported clicking
   // a pill and "nothing happens." The mechanism was firing correctly (the
   // bug hunt is in reports/wave14-…); the actual defect was that success
@@ -138,7 +138,7 @@ export function ProjectFilter({
       <div
         role="group"
         aria-label="Filter projects by category"
-        className="flex flex-wrap justify-start gap-2 sm:justify-center"
+        className="flex flex-wrap justify-start gap-[var(--space-2)] sm:justify-center"
       >
         <button
           type="button"
@@ -156,7 +156,7 @@ export function ProjectFilter({
               the dim comes off entirely rather than being patched around
               per-badge (wave 14, caught once this suite actually clicked
               a filter into the state where "All 12" goes inactive). */}
-          All <span className="font-mono text-xs">{cats.length}</span>
+          All <span className="font-mono text-caption">{cats.length}</span>
         </button>
         {CATEGORIES.map((c) => (
           <button
@@ -166,7 +166,7 @@ export function ProjectFilter({
             onClick={() => select(c.id)}
             className={`${pillBase} ${active === c.id ? pillOn : pillOff}`}
           >
-            {c.label} <span className="font-mono text-xs">{counts.get(c.id)}</span>
+            {c.label} <span className="font-mono text-caption">{counts.get(c.id)}</span>
           </button>
         ))}
       </div>
@@ -179,7 +179,7 @@ export function ProjectFilter({
           Wave 15: denominator is now the active view's own total (more
           informative once a view can be capped — "4 of 6" beats "4 of 13"
           at telling you how much more there is to see in THIS category). */}
-      <p aria-live="polite" className="text-muted-foreground mt-4 text-center font-mono text-xs">
+      <p aria-live="polite" className="text-muted-foreground mt-[var(--space-4)] text-center font-mono text-caption">
         Showing {displayedCount} of {totalMatching} projects
       </p>
 
@@ -205,10 +205,10 @@ export function ProjectFilter({
       <div data-active-category={active}>{children}</div>
 
       {showSeeAll && (
-        <p className="mt-6 text-center">
+        <p className="mt-[var(--space-6)] text-center">
           <TransitionLink
             href={seeAllHref}
-            className="text-accent focus-visible:outline-ring text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             {seeAllLabel}
           </TransitionLink>
@@ -216,12 +216,12 @@ export function ProjectFilter({
       )}
 
       {totalMatching === 0 && (
-        <div className="border-border/40 bg-card/40 mt-8 rounded-xl border px-6 py-10 text-center">
+        <div className="border-border/40 bg-card/40 mt-[var(--space-8)] rounded-xl border px-[var(--space-6)] py-10 text-center">
           <p className="text-foreground">Nothing in this category yet.</p>
           <button
             type="button"
             onClick={() => select("all")}
-            className="text-accent focus-visible:outline-ring mt-2 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="text-accent focus-visible:outline-ring mt-[var(--space-2)] text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             Show all projects
           </button>

@@ -34,7 +34,7 @@ import type { ProductFigure } from "@/content/types";
 const TRACK = "color-mix(in oklab, var(--border) 40%, transparent)";
 const MARK = "var(--indigo)";
 const MONO = "var(--font-jetbrains-mono)";
-// Matches the caption's text-xs (12px) so the figure's own labels and its
+// Matches the figcaption's text-caption size (12px) so the figure's own labels and its
 // caption sit on one size (design-review finding: 11px was a tokenless 1px
 // mismatch with the figcaption directly below).
 const FIG_TEXT_PX = 12;
@@ -49,7 +49,7 @@ function Caption({ children }: { children: React.ReactNode }) {
   // full claim (label + values) — announcing the label phrase twice
   // back-to-back is redundant for SR users (design-review finding, wave 7).
   return (
-    <figcaption aria-hidden="true" className="text-muted-foreground mt-2 text-xs leading-snug">
+    <figcaption aria-hidden="true" className="text-muted-foreground mt-[var(--space-2)] text-caption leading-snug">
       {children}
     </figcaption>
   );

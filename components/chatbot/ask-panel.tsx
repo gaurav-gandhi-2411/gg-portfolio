@@ -276,10 +276,10 @@ export function AskPanel() {
   const remainingQuestions = SUGGESTED_QUESTIONS.filter((q) => !askedQuestions.has(q));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-[var(--space-6)]">
       <div
         aria-live="polite"
-        className="border-border/60 bg-card/40 flex min-h-[16rem] flex-col gap-5 rounded-xl border p-5"
+        className="border-border/60 bg-card/40 flex min-h-[16rem] flex-col gap-[var(--space-5)] rounded-xl border p-[var(--space-5)]"
       >
         {isEmpty && status === "unavailable" ? (
           // A 503 adds no turn, so isEmpty stays true and this empty state is
@@ -289,32 +289,32 @@ export function AskPanel() {
           // returns nothing" failure this state exists to prevent. Caught by
           // looking at a screenshot; the first version of the e2e test asserted
           // on the OTHER chip block's copy and passed straight through it.
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-6 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-[var(--space-4)] py-6 text-center">
             <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               The assistant can&apos;t take questions right now.
             </p>
           </div>
         ) : isEmpty ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-6 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center gap-[var(--space-4)] py-6 text-center">
             <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               Ask a question, or try one of these:
             </p>
             <ChipRow questions={SUGGESTED_QUESTIONS} onPick={handlePickSuggestion} />
           </div>
         ) : (
-          <ol className="flex flex-col gap-5">
+          <ol className="flex flex-col gap-[var(--space-5)]">
             {turns.map((turn, i) => (
-              <li key={i} className="message-in flex flex-col gap-3">
-                <p className="text-foreground self-end rounded-xl rounded-br-sm bg-secondary px-4 py-2.5 text-sm font-medium">
+              <li key={i} className="message-in flex flex-col gap-[var(--space-3)]">
+                <p className="text-foreground self-end rounded-xl rounded-br-sm bg-secondary px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium">
                   {turn.question}
                 </p>
                 <TurnAnswer turn={turn} shouldAnimate={i === turns.length - 1} />
               </li>
             ))}
             {status === "loading" ? (
-              <li className="message-in text-muted-foreground self-start rounded-xl rounded-bl-sm border border-border/60 px-4 py-3 text-sm">
+              <li className="message-in text-muted-foreground self-start rounded-xl rounded-bl-sm border border-border/60 px-[var(--space-4)] py-[var(--space-3)] text-sm">
                 <span className="sr-only">Thinking…</span>
-                <span aria-hidden="true" className="flex items-center gap-1 py-0.5">
+                <span aria-hidden="true" className="flex items-center gap-[var(--space-1)] py-[var(--space-0-5)]">
                   <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
                   <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
                   <span className="typing-dot bg-muted-foreground inline-block h-1.5 w-1.5 rounded-full" />
@@ -348,13 +348,13 @@ export function AskPanel() {
       status !== "loading" &&
       status !== "unavailable" &&
       remainingQuestions.length > 0 ? (
-        <div className="message-in flex flex-col gap-2">
-          <p className="text-muted-foreground text-xs">Or ask about:</p>
+        <div className="message-in flex flex-col gap-[var(--space-2)]">
+          <p className="text-muted-foreground text-caption">Or ask about:</p>
           <ChipRow questions={remainingQuestions} onPick={handlePickSuggestion} compact />
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-[var(--space-2)]">
         <label htmlFor={inputId} className="sr-only">
           Ask a question about Gaurav&apos;s work
         </label>
@@ -370,14 +370,14 @@ export function AskPanel() {
               : "Ask about a project, the architecture, or what I'm looking for…"
           }
           autoComplete="off"
-          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring min-h-11 w-full rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
         />
         <button
           type="submit"
           disabled={
             status === "loading" || status === "unavailable" || question.trim().length === 0
           }
-          className="bg-accent text-accent-foreground focus-visible:outline-ring shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-accent text-accent-foreground focus-visible:outline-ring min-h-11 shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ask
         </button>
@@ -407,7 +407,7 @@ function TurnAnswer({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-xl rounded-bl-sm border px-4 py-3 text-sm leading-relaxed",
+        "flex flex-col gap-[var(--space-2)] rounded-xl rounded-bl-sm border px-[var(--space-4)] py-[var(--space-3)] text-sm leading-relaxed",
         turn.refused
           ? "border-border/60 bg-transparent text-muted-foreground"
           : "border-border/60 bg-card text-foreground"
@@ -422,9 +422,9 @@ function TurnAnswer({
       <p aria-hidden="true">{revealed}</p>
       <p className="sr-only">{turn.answer}</p>
       {turn.citations.length > 0 && isFullyRevealed ? (
-        <ul className="message-in mt-1 flex flex-wrap gap-x-4 gap-y-1 border-t border-border/40 pt-2">
+        <ul className="message-in mt-[var(--space-1)] flex flex-wrap gap-x-4 gap-y-1 border-t border-border/40 pt-2">
           {turn.citations.map((c) => (
-            <li key={c.sourceRef} className="font-mono text-xs">
+            <li key={c.sourceRef} className="font-mono text-caption">
               {c.url ? (
                 <TransitionLink
                   href={c.url}
@@ -455,7 +455,7 @@ function ChipRow({
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-2",
+        "flex flex-wrap gap-[var(--space-2)]",
         compact ? "justify-start" : "justify-center"
       )}
     >
@@ -469,7 +469,7 @@ function ChipRow({
           // through the degraded-state test.
           data-testid="ask-suggestion"
           onClick={() => onPick(q)}
-          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring rounded-full border px-3 py-1.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           {q}
         </button>

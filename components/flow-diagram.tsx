@@ -19,7 +19,7 @@ export function FlowDiagram({ stages, label }: { stages: FlowStage[]; label: str
             {i > 0 && (
               <span
                 aria-hidden="true"
-                className="text-muted-foreground/70 self-center py-0.5 leading-none select-none"
+                className="text-muted-foreground/70 self-center py-[var(--space-0-5)] leading-none select-none"
               >
                 ↓
               </span>
@@ -27,26 +27,26 @@ export function FlowDiagram({ stages, label }: { stages: FlowStage[]; label: str
             <div
               className={
                 stage.kind === "input" || stage.kind === "output"
-                  ? "border-accent/50 bg-accent/5 rounded-lg border border-dashed px-4 py-3"
-                  : "border-border/50 bg-card/60 rounded-lg border px-4 py-3"
+                  ? "border-accent/50 bg-accent/5 rounded-lg border border-dashed px-[var(--space-4)] py-[var(--space-3)]"
+                  : "border-border/50 bg-card/60 rounded-lg border px-[var(--space-4)] py-[var(--space-3)]"
               }
             >
               <p className="text-sm font-medium text-foreground">{stage.label}</p>
               {stage.detail && (
-                <p className="text-muted-foreground mt-0.5 font-mono text-xs leading-relaxed">
+                <p className="text-muted-foreground mt-0.5 font-mono text-caption leading-relaxed">
                   {stage.detail}
                 </p>
               )}
               {stage.parallel && (
-                <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+                <div className="mt-[var(--space-2-5)] grid gap-[var(--space-2)] sm:grid-cols-2">
                   {stage.parallel.map((branch) => (
                     <div
                       key={branch.label}
-                      className="border-border/40 bg-background/60 rounded-md border px-3 py-2"
+                      className="border-border/40 bg-background/60 rounded-md border px-[var(--space-3)] py-[var(--space-2)]"
                     >
-                      <p className="text-xs font-medium text-foreground">{branch.label}</p>
+                      <p className="text-caption font-medium text-foreground">{branch.label}</p>
                       {branch.detail && (
-                        <p className="text-muted-foreground mt-0.5 font-mono text-xs leading-relaxed">
+                        <p className="text-muted-foreground mt-0.5 font-mono text-caption leading-relaxed">
                           {branch.detail}
                         </p>
                       )}

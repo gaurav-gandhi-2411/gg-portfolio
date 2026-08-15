@@ -18,11 +18,11 @@ export function Contact() {
       {/* Wave 11: fully centered — Contact is the page's closing note and
           the one section short enough to read comfortably center-aligned;
           the display-size email anchors the axis. */}
-      <RevealGroup mode="onview" className="flex flex-col items-center gap-6 text-center">
+      <RevealGroup mode="onview" className="flex flex-col items-center gap-[var(--space-6)] text-center">
         {/* Wave 10 (GG: previous copy read vague/casual — "let's talk",
             "if the scope is a good fit"). Direct and professional: what I'm
             looking for, how to reach me, where I am. */}
-        <div className="flex max-w-measure flex-col gap-2">
+        <div className="flex max-w-measure flex-col gap-[var(--space-2)]">
           <p className="text-base leading-relaxed text-foreground">{availability.summary}</p>
           <p className="text-muted-foreground text-base leading-relaxed">
             If my work fits what you&apos;re building, email is the fastest way to reach me — I
@@ -36,20 +36,29 @@ export function Contact() {
             primary action. */}
         <a
           href={`mailto:${site.email}`}
-          className="font-heading w-fit text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"
+          className="font-heading inline-flex min-h-11 w-fit items-center text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"
         >
           {site.email}
         </a>
 
-        <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+        <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-[var(--space-2)] text-sm">
           <span>{site.location}</span>
-          <InlineLink href={site.githubUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.githubUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             GitHub
           </InlineLink>
-          <InlineLink href={site.linkedinUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.linkedinUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             LinkedIn
           </InlineLink>
-          <InlineLink href={site.huggingfaceUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.huggingfaceUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             Hugging Face
           </InlineLink>
         </p>
@@ -60,8 +69,8 @@ export function Contact() {
 
 export function Footer() {
   return (
-    <footer className="mx-auto w-full max-w-2xl px-6 pt-4 pb-10">
-      <p className="text-muted-foreground text-center text-xs leading-relaxed">
+    <footer className="mx-auto w-full max-w-2xl px-[var(--space-6)] pt-4 pb-10">
+      <p className="text-muted-foreground text-center text-caption leading-relaxed">
         © {new Date().getFullYear()} {site.name}. Set in Fraunces, Space Grotesk, and JetBrains
         Mono. Every number on this page is derived from live data or a sourced record.
       </p>

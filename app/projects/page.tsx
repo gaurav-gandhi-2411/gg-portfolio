@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "All projects — Gaurav Gandhi",
   description:
     "Every AI product and research tool I've built and shipped — each with an honest, sourced case study.",
+  alternates: { canonical: "/projects" },
 };
 
 /**

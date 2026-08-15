@@ -44,14 +44,14 @@ export function ProjectCard({
             <Heading className="font-heading text-lead font-semibold text-foreground">
               <TransitionLink
                 href={`/work/${product.slug}`}
-                className="focus-visible:outline-ring transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                className="focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 style={{ viewTransitionName: `vt-title-${product.slug}` }}
               >
                 {product.name}
               </TransitionLink>
             </Heading>
             {dateline && (
-              <span className="text-muted-foreground inline-flex items-center gap-1.5 font-mono text-xs">
+              <span className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption">
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -71,22 +71,22 @@ export function ProjectCard({
             )}
           </div>
 
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{product.tagline}</p>
+          <p className="text-muted-foreground mt-[var(--space-2)] text-sm leading-relaxed">{product.tagline}</p>
 
           {product.pypi && (
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <code className="border-border/60 bg-background text-foreground w-fit rounded-md border px-3 py-1.5 font-mono text-xs">
+            <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-x-4 gap-y-[var(--space-2)]">
+              <code className="border-border/60 bg-background text-foreground w-fit rounded-md border px-[var(--space-3)] py-[var(--space-1-5)] font-mono text-caption">
                 {product.pypi.installCommand}
               </code>
               {downloads?.lastWeek !== undefined && (
-                <span className="text-muted-foreground font-mono text-xs">
+                <span className="text-muted-foreground font-mono text-caption">
                   {downloads.lastWeek.toLocaleString()} downloads last week
                 </span>
               )}
             </div>
           )}
 
-          <div className="mt-auto flex flex-wrap gap-x-5 gap-y-2 pt-5 text-sm">
+          <div className="mt-auto flex flex-wrap gap-x-5 gap-y-[var(--space-2)] pt-5 text-sm">
             <TransitionLink
               href={`/work/${product.slug}`}
               className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -94,12 +94,18 @@ export function ProjectCard({
               Case study →
             </TransitionLink>
             {product.liveUrl && (
-              <InlineLink href={product.liveUrl} className="-my-3 inline-flex min-h-11 items-center">
+              <InlineLink
+                href={product.liveUrl}
+                className="-my-3 inline-flex min-h-11 min-w-11 items-center justify-center"
+              >
                 Live ↗
               </InlineLink>
             )}
             {product.repoUrl && (
-              <InlineLink href={product.repoUrl} className="-my-3 inline-flex min-h-11 items-center">
+              <InlineLink
+                href={product.repoUrl}
+                className="-my-3 inline-flex min-h-11 min-w-11 items-center justify-center"
+              >
                 Source ↗
               </InlineLink>
             )}
