@@ -21,6 +21,8 @@ export async function generateMetadata({
     title,
     description,
     robots: { index: false, follow: true },
+    // F3 — canonical tag per warmup route.
+    alternates: { canonical: `/warmup/${service}` },
     openGraph: { title, description, siteName: "Gaurav Gandhi", type: "website" },
     twitter: { card: "summary", title, description },
   };
