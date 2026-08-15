@@ -43,9 +43,9 @@
       "why": "Repo path in <title>. Deliberately NOT the version — /latest moves, and pinning v1.3.0 would fail on the next release for no real reason."
     },
     {
-      "url": "https://review-iq-ajjrytb3na-el.a.run.app/docs",
+      "url": "https://api.samidhareviews.xyz/docs",
       "markers": ["Swagger UI"],
-      "why": "FastAPI's Swagger page signature. THIS ONE FAILS TODAY, and should: the URL points at the decommissioned review-iq-prod project (no billing account), so it 503s. The live service moved to reviewiq-prod-260813. Fixing the citation is tracked separately — do not silence this by weakening the marker."
+      "why": "FastAPI's Swagger page signature, copied from this URL's actual 2026-08-15 response body (200), not carried over from the old entry. The citation was fixed in PR #93 (content/products.ts now points here instead of the decommissioned review-iq-prod Cloud Run URL, which 503s) — this entry follows that fix rather than tracking it as separately outstanding."
     },
     {
       "url": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
