@@ -1,0 +1,7 @@
+{
+  "id": "two-itinerary-travel-planner",
+  "query": "travel planner that gives two different itinerary options",
+  "expectedSlug": "dealhunter",
+  "ambiguousWith": null,
+  "notes": null
+}

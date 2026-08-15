@@ -1,0 +1,7 @@
+{
+  "id": "fake-review-detection",
+  "query": "detects fake or low quality product reviews",
+  "expectedSlug": "reviewiq",
+  "ambiguousWith": null,
+  "notes": "Maps to reviewiq's 'authenticity scoring' claim."
+}

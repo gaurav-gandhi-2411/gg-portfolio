@@ -1,0 +1,7 @@
+{
+  "id": "fashion-from-photos",
+  "query": "an app that recommends fashion items from photos",
+  "expectedSlug": "multimodal-fashion-recommender",
+  "ambiguousWith": null,
+  "notes": "Task brief's own example query."
+}

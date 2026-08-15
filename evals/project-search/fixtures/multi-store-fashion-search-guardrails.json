@@ -1,0 +1,7 @@
+{
+  "id": "multi-store-fashion-search-guardrails",
+  "query": "multi-store fashion search assistant with price guardrails",
+  "expectedSlug": "style-maitri",
+  "ambiguousWith": null,
+  "notes": null
+}

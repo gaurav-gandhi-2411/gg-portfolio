@@ -1,0 +1,7 @@
+{
+  "id": "review-analysis-hindi-english",
+  "query": "analyzes customer reviews in Hindi and English",
+  "expectedSlug": "reviewiq",
+  "ambiguousWith": null,
+  "notes": null
+}

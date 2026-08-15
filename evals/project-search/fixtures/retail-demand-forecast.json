@@ -1,0 +1,7 @@
+{
+  "id": "retail-demand-forecast",
+  "query": "forecasts retail demand for thousands of products",
+  "expectedSlug": "shelfsense",
+  "ambiguousWith": null,
+  "notes": null
+}

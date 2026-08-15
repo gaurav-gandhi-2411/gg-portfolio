@@ -1,0 +1,7 @@
+{
+  "id": "issue-triage-similar-bugs",
+  "query": "an issue triage system that retrieves similar past bugs",
+  "expectedSlug": "triageiq",
+  "ambiguousWith": null,
+  "notes": null
+}
