@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ProjectGrid } from "@/components/project-grid";
 import { ProjectSearch } from "@/components/project-search";
+import { SearchMethodology } from "@/components/search-methodology";
 import { TransitionLink } from "@/components/transition-link";
 import { liveProductCount, products } from "@/content/products";
 
@@ -44,6 +45,7 @@ export default function ProjectsPage() {
           on home. */}
       <div className="mt-8">
         <ProjectSearch products={products} />
+        <SearchMethodology />
       </div>
 
       <div className="mt-10">
