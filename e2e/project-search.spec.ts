@@ -11,12 +11,25 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 /** Blocks every request the tier-2 model would make (the ONNX weights file
- * itself, plus any huggingface.co-hosted config/tokenizer asset) so a test
- * exercises the keyword-only tier deterministically, the way a visitor on a
- * blocked/slow connection would experience it. */
+ * itself, any huggingface.co/hf.co-hosted config/tokenizer/Xet-CDN asset,
+ * and onnxruntime-web's CDN-hosted WASM runtime) so a test exercises the
+ * keyword-only tier deterministically, the way a visitor on a blocked/slow
+ * connection would experience it. Same predicate as
+ * e2e/project-search-network.spec.ts's isModelRequest() — see that file's
+ * header for why "huggingface.co" alone under-covers the real download
+ * (round 4 finding: the weights file actually downloads from a distinct
+ * `*.cdn.hf.co` host that a huggingface.co-only match would miss). Blocking
+ * still works correctly even before this fix, because the Xet CDN fetch is
+ * downstream of the huggingface.co metadata call this predicate already
+ * caught — but the predicates staying in sync matters for when that
+ * changes. */
 async function blockModelNetwork(page: Page): Promise<void> {
   await page.route(
-    (url) => /\.onnx(\?|$)/.test(url.pathname) || url.hostname.endsWith("huggingface.co"),
+    (url) =>
+      /\.onnx(\?|$)/.test(url.pathname) ||
+      url.hostname.endsWith("huggingface.co") ||
+      url.hostname.endsWith("hf.co") ||
+      (url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("onnxruntime-web")),
     (route) => route.abort()
   );
 }

@@ -11,14 +11,33 @@ import { expect, test } from "@playwright/test";
  * test's generous timeout) — same real download, this time in the browser
  * rather than the Playwright-launched Node server.
  *
- * A request is classed as "model traffic" if it targets an `.onnx` file or
- * any huggingface.co-hosted path — the same predicate
- * e2e/project-search.spec.ts's blockModelNetwork() uses to block it, used
- * here instead to detect it.
+ * A request is classed as "model traffic" if it targets an `.onnx` file, any
+ * huggingface.co/hf.co-hosted path, or onnxruntime-web's CDN-hosted WASM
+ * runtime — the same predicate e2e/project-search.spec.ts's
+ * blockModelNetwork() uses to block it, used here instead to detect it.
+ *
+ * BL-9 round 4 finding: the ACTUAL ~23MB weights file is never fetched from
+ * a huggingface.co URL at all. transformers.js resolves it via a
+ * huggingface.co-hosted `/api/resolve-cache/...` metadata call, then issues
+ * a brand-new `fetch()` straight to a signed URL on HF's Xet CDN
+ * (`*.cdn.hf.co` — a distinct host that does NOT end in "huggingface.co"),
+ * which the original predicate silently missed — the printed network
+ * evidence undercounted its own central claim without ever failing an
+ * assertion (see CHECKS.md: a check whose non-coverage is invisible is not
+ * a control). onnxruntime-web's WASM runtime (~23.5MB, separately
+ * downloaded from cdn.jsdelivr.net on the FIRST model use — see
+ * reports/BL-9-round4-*.md) is real, load-bearing "does this stay lazy"
+ * traffic too and was entirely absent from both count and predicate before
+ * this round.
  */
 function isModelRequest(url: string): boolean {
   const parsed = new URL(url);
-  return /\.onnx(\?|$)/.test(parsed.pathname) || parsed.hostname.endsWith("huggingface.co");
+  return (
+    /\.onnx(\?|$)/.test(parsed.pathname) ||
+    parsed.hostname.endsWith("huggingface.co") ||
+    parsed.hostname.endsWith("hf.co") ||
+    (parsed.hostname === "cdn.jsdelivr.net" && parsed.pathname.includes("onnxruntime-web"))
+  );
 }
 
 test("zero model requests on page load; the model loads only after the search box is focused", async ({
