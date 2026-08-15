@@ -8,11 +8,22 @@
 // the target actually needs.
 //
 // Two targets:
-//   --target=app     drives the real /projects search box end-to-end
-//                     (focus -> type query -> wait for
-//                     data-search-dense-scores-for to match the query,
-//                     i.e. the tier-2 MiniLM reranking has actually landed).
-//                     Requires `npm run start` already running at BASE_URL.
+//   --target=app     ROUND 5 STATUS: historical only. Drove the real
+//                     /projects search box end-to-end (focus -> type query
+//                     -> wait for data-search-dense-scores-for to match the
+//                     query, i.e. the client-side MiniLM tier had actually
+//                     landed). That tier was REMOVED from production in
+//                     round 5 (see components/project-search.tsx's header)
+//                     after this exact measurement — 570,121 ms, see
+//                     reports/BL-9-round4-cold-start-and-model-comparison
+//                     .md — showed a real visitor would wait ~9.5 minutes.
+//                     `data-search-dense-scores-for` no longer exists on
+//                     the page, so this target will now time out; kept,
+//                     unmodified, as the exact reproduction recipe for the
+//                     570,121 ms figure cited in reports/BL-9-round4-*.md
+//                     and reports/BL-9-round5-static-embedding-and-decision
+//                     .md — do not delete it to make the file "work", the
+//                     honest state is "this is what killed the feature".
 //   --target=potion   there is no real in-browser integration of
 //                     potion-base-8M in this repo (see BL-9 round 4's
 //                     report for why) — this fetches the exact two files a
@@ -23,7 +34,10 @@
 //                     portion of a cold start. This is NOT the same kind of
 //                     measurement as --target=app (no DOM interaction, no
 //                     parse/tokenize/embed step) — see the printed output
-//                     and the report for the explicit distinction.
+//                     and the report for the explicit distinction. Still
+//                     live and reproducible in round 5 — re-run and
+//                     reconfirmed at 612,342 ms, see
+//                     reports/BL-9-round5-static-embedding-and-decision.md.
 //
 // Throttle profile (exact numbers, per task brief): "Slow 4G" ~= 400 Kbps
 // down / 400 Kbps up / 400ms RTT. Kbps here is decimal (1 Kbps = 1000
