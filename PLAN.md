@@ -4,6 +4,91 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## P0 — sitewide DOM-crash fix; the original View-Transitions diagnosis was wrong (2026-08-16, PR pending GG's merge)
+
+**Severity confirmed, root cause was NOT what the assigning brief (or the prior session) believed.**
+A prior session found the site could crash with `insertBefore`/`removeChild` DOMExceptions and
+attributed it to `components/transition-link.tsx`'s View Transitions API navigation, then shipped
+a partial mitigation scoped to only 2 new draft-PR components (`perf/lcp-final`, PR #118) — worse
+than no fix, since it suppressed the evidence exactly where it was tested and left the crash live
+everywhere else. This round's brief inherited that diagnosis and assigned "remove View Transitions
+sitewide" as the fix. **Removing View Transitions did not close the crash** — verified directly,
+not assumed (see Task 4) — because View Transitions was never the actual mechanism. The real cause,
+found via direct-load isolation and a monkey-patched `Node.prototype.insertBefore/removeChild`,
+was `app/layout.tsx`'s boot-loader cleanup script calling `#boot-loader.remove()` on a DOM node
+still owned by a mounted React Server Component, corrupting React's fiber-to-DOM bookkeeping for
+the rest of the SPA session. Both fixes are in this PR; only the second one actually closes the
+crash. Rule 101c / rule 99 applied here: a shipped conclusion (View Transitions is the cause) was
+tested against ground truth rather than carried forward, and it did not hold.
+
+- [x] **Task 1 — local repro, headed Playwright, production build, unmodified `main`.** `npm run
+      build && npm run start`, headed Chromium (`headless: false`), 8 navigation cycles across
+      home↔case-study and /projects↔case-study routes via the real nav (site-nav.tsx logo/links,
+      project-card.tsx title/"Case study →" link). **6/8 hit rate** — first hit threw the exact
+      `insertBefore`/`removeChild` `NotFoundError` DOMExceptions the prior report described; the
+      remaining hits threw React error #418 (hydration mismatch), a softer, self-recovering
+      symptom of the same underlying corruption.
+- [x] **Task 2 — real production, headed Playwright, 10 cycles.** Against
+      `https://gaurav-gandhi.vercel.app/` (not a preview, not local): home→4 case studies via
+      card and header-logo nav, /projects→3 case studies via card. **10/10 cycles produced at
+      least one uncaught page error.** 3/10 were the hard `insertBefore`/`removeChild` crash,
+      screenshot-confirmed as Chromium's own native "This page couldn't load" interstitial (not
+      a Next.js error boundary — the renderer itself gives up); the rest were the recoverable
+      React #418 hydration mismatch (page still renders, console-only). Conclusion: real,
+      frequent, production-reproducing P0, not a hypothetical.
+- [x] **Task 3 — revert PR #118's partial mitigation.** `perf/lcp-final`'s
+      `fix(nav): resolve in-flight view transitions before an async component mutates DOM`
+      (commit `75b81eb`) reverted via `git revert`; its two call sites
+      (`project-embedding-toggle.tsx`, `project-embedding-ambient.tsx`) updated in a follow-up
+      commit since they imported the now-removed `waitForViewTransition` export — branch
+      wouldn't otherwise build. `npm run typecheck && npm run build` reconfirmed clean on
+      `perf/lcp-final` after both commits; pushed. PR #118 stays draft, not merged.
+- [x] **Task 4 — removed the View Transitions API sitewide** (all 12 files:
+      `components/transition-link.tsx`, `lib/view-transition.ts` deleted; 9 call sites moved to
+      plain `next/link`; the per-slug `view-transition-name` shared-element morph and the
+      `::view-transition-old/new(root)` cross-fade CSS removed from `app/globals.css`;
+      `html:active-view-transition` overflow-lift rule removed, `overflow-x: clip` guard kept) —
+      done as instructed, but **rebuilding and re-testing after this alone showed the crash
+      completely unchanged (8/8 hit rate)**, which is the finding that triggered the actual
+      investigation below. What's visually lost from this task alone: the browser-native
+      cross-fade between routes and the project-card-title↔case-study-h1 shared-element morph.
+      What's kept, cheaply: `app/template.tsx`'s pre-existing wave-12 `.page-enter` 240ms
+      opacity/rise CSS fade now runs on every client-side nav unconditionally.
+  - [x] **Root-cause investigation (not in the original task list, added because Task 4 alone
+        didn't fix anything).** Direct `page.goto('/work/<slug>')` with zero client-side
+        navigation involved still threw React error #418 on every route except `/` — proving the
+        mechanism had nothing to do with client-side transitions or View Transitions at all.
+        `npm run dev`'s unminified hydration diff pointed at `<BootLoader>`:
+        `+ id="boot-loader" / - id={null}`. Traced to `app/layout.tsx`'s inline `<head>` script,
+        which called `document.getElementById('boot-loader').remove()` 0ms after
+        `DOMContentLoaded` on every non-home route (1150ms-delayed only on `/`) — racing React's
+        hydration of `components/boot-loader.tsx` (a Server Component, rendered unconditionally
+        on every route). Monkey-patching `Node.prototype.insertBefore`/`removeChild` to log the
+        actual parent/child/reference nodes on failure confirmed the deeper problem: `<body>` was
+        the parent, `#boot-loader` (already detached) was React's stale `insertBefore` anchor —
+        and this reproduced on **any** later commit that touched `<body>`'s children, including
+        client-side navigations that happened *well after* the 1150ms removal window (6/6 on a
+        deliberately-late 1500ms-then-click retest), which is what proved a longer delay would
+        not have fixed it either. Fix: the script no longer calls `.remove()` at all — it only
+        deletes the `data-boot` attribute, which is sufficient on its own since `#boot-loader` is
+        `display:none` by default in `globals.css`. `components/boot-loader.tsx` and
+        `app/layout.tsx` both carry the full mechanism in comments.
+- [x] **Gate — 24-hop single-session stress test (exceeds the assigned 20/10 gate) + full 8-cycle
+      fresh-context sanity suite, both 0 errors after the real fix; re-ran against the fix
+      branch's Vercel preview deployment per the assigned gate — see PR body for the preview URL,
+      exact route pairs, and Playwright output.**
+- [x] **Task 5 — e2e regression test** (`e2e/nav-crash-regression.spec.ts`) covering every route
+      pair reachable from the header nav plus home→each case study in `content/products.ts`,
+      failing on any `pageerror` or rendered error-page text. Prevents recurrence of either
+      mechanism (View Transitions or a future React-ownership DOM conflict), not just documents
+      this one fix.
+- [x] **Task 6 — `git fsck --full`** on both `gg-portfolio` and `gh-profile` main checkouts:
+      clean, no dangling/corrupt objects. Last check per this round's instruction.
+
+Full methodology, exact hit-rate numbers, and screenshots: PR body (`fix/remove-view-
+transitions`, not yet merged — this needs GG's review given severity and reach, and given the
+mid-task pivot away from the assigned diagnosis).
+
 ## Wave 18 — site-vs-repo + resume-vs-site reconciliation (2026-08-05, content-only, not yet deployed)
 
 GG's brief, two items, item B priority: (A) cap resume-generator full entries at
