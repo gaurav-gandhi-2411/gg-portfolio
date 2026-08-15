@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ProjectEmbeddingAmbient } from "@/components/project-embedding/project-embedding-ambient";
 import { ProjectGrid } from "@/components/project-grid";
 import { ProjectSearch } from "@/components/project-search";
 import { SearchMethodology } from "@/components/search-methodology";
@@ -49,7 +50,13 @@ export default function ProjectsPage() {
         <SearchMethodology />
       </div>
 
-      <div className="mt-10">
+      {/* perf/lcp-final Task 4, surface 2 — ambient WebGL depth layer behind
+          the grid. relative so the ambient layer's absolute inset-0 sizes
+          against this wrapper, not the whole page; the grid itself is
+          unchanged and remains the only thing that renders for anyone who
+          doesn't qualify for or hasn't yet scrolled to the WebGL layer. */}
+      <div className="relative mt-10">
+        <ProjectEmbeddingAmbient />
         <ProjectGrid cardHeadingLevel="h2" />
       </div>
 
