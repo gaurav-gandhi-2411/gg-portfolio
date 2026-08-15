@@ -15,9 +15,17 @@ concurrency:
 jobs:
   lychee:
     runs-on: ubuntu-latest
-    # Non-blocking on PRs (rule: warn, don't gate on link rot outside our control —
-    # e.g. Cloud Run cold starts, third-party badge services). The weekly scheduled
-    # run has no PR to annotate, so it's allowed to fail loudly instead.
+    # Non-blocking on PRs: a link owned by a third party can rot between a PR
+    # being opened and merged, and that is not the PR author's problem to fix.
+    # The weekly scheduled run has no PR to annotate, so it fails loudly instead.
+    #
+    # This is NOT a licence to ignore the result. `.lychee.toml` retries every 5xx
+    # and 429 four times over ~105s, so anything reported here has already
+    # outlived cold starts and rate limits. A previous version of this comment
+    # named "Cloud Run cold starts" as the example of ignorable noise, which on
+    # 2026-08-13 nearly buried a real outage — review-iq's backend was 503-ing
+    # because its GCP project had no billing account. Read the failure before
+    # attributing it to the environment. See CHECKS.md instance 8.
     continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout
