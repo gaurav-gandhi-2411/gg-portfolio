@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "projection": "pca3-gram",
+  "n_terms": 13,
+  "n_clusters": 6,
+  "source": "content/search/project-embeddings.json",
+  "generated_at": "2026-08-15T21:23:34.215Z",
+  "points": [
+    {
+      "term": "triageiq",
+      "cluster": 2,
+      "finetuned": [
+        0.4217729126471327,
+        -0.14061407876645893,
+        0.4635394387004309
+      ]
+    },
+    {
+      "term": "warmer",
+      "cluster": 3,
+      "finetuned": [
+        -0.5169997767086262,
+        -0.2952415164092985,
+        0.2534189031361274
+      ]
+    },
+    {
+      "term": "multimodal-fashion-recommender",
+      "cluster": 5,
+      "finetuned": [
+        -0.8898103067552919,
+        -0.1804980807554005,
+        -0.4937396970964365
+      ]
+    },
+    {
+      "term": "style-maitri",
+      "cluster": 2,
+      "finetuned": [
+        -0.8604968104778522,
+        -0.18347502391787487,
+        -0.7124365505135251
+      ]
+    },
+    {
+      "term": "shelfsense",
+      "cluster": 1,
+      "finetuned": [
+        -0.15485400174072433,
+        0.9499698596995142,
+        -0.009395000643151703
+      ]
+    },
+    {
+      "term": "aetherart",
+      "cluster": 5,
+      "finetuned": [
+        -0.11536629323228655,
+        -0.6397106623275968,
+        -0.40229169394199404
+      ]
+    },
+    {
+      "term": "agentgauge",
+      "cluster": 0,
+      "finetuned": [
+        1,
+        -0.392173093282764,
+        0.4792973751156929
+      ]
+    },
+    {
+      "term": "reclaim",
+      "cluster": 4,
+      "finetuned": [
+        0.7762187250780065,
+        0.03994321744842349,
+        -1
+      ]
+    },
+    {
+      "term": "reviewiq",
+      "cluster": 2,
+      "finetuned": [
+        -0.5475531100949742,
+        -0.19398625108827866,
+        0.6746435532595921
+      ]
+    },
+    {
+      "term": "gold-rate-tracker",
+      "cluster": 1,
+      "finetuned": [
+        -0.16036366301902474,
+        1,
+        0.35303192434722974
+      ]
+    },
+    {
+      "term": "dealhunter",
+      "cluster": 2,
+      "finetuned": [
+        -0.009383531396267445,
+        -0.47552340587317254,
+        0.7591270901860785
+      ]
+    },
+    {
+      "term": "tracegauge",
+      "cluster": 4,
+      "finetuned": [
+        0.954283145896378,
+        0.02336462756199593,
+        -0.4663771171397539
+      ]
+    },
+    {
+      "term": "expense-tracker",
+      "cluster": 3,
+      "finetuned": [
+        0.10255270980353091,
+        0.48794440771091213,
+        0.10118177458971125
+      ]
+    }
+  ]
+}

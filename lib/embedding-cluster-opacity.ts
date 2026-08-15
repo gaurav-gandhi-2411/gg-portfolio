@@ -20,3 +20,12 @@ export const WARMER_CLUSTER_OPACITY = [0.22, 0.32, 0.42, 0.52, 0.62, 0.72, 0.82]
  * 0.26 peak of the gradient halo this replaced.
  */
 export const HERO_CLUSTER_OPACITY = [0.14, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5] as const;
+
+/**
+ * perf/lcp-final Task 4 — shared by both new project-embedding surfaces (the
+ * case-study "explore in 3D" toggle and the /projects grid ambient layer) so
+ * neither can drift from the other. Same fainter-than-Warmer ceiling as the
+ * hero ramp: both new surfaces sit behind or beside real page content, never
+ * as the primary focus.
+ */
+export const PROJECT_CLUSTER_OPACITY = [0.18, 0.26, 0.34, 0.42, 0.5, 0.58, 0.66] as const;
