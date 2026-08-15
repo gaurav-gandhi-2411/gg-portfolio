@@ -349,7 +349,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `triageiq:classifier-bakeoff` | DistilBERT +1.2pp on vscode (needed +11pp for 20x latency), −5.1pp on kubernetes; TF-IDF wins at this data scale | `reports/03_classifier_comparison.md:257-260,395-412` |
 | `triageiq:cqr` | Raw quantile coverage unreliable (74.4%/38.2%); CQR gives distribution-free guaranteed coverage | `docs/architecture/adr/0010-conformal-quantile-regression.md:14-38` |
 | `triageiq:split-fix` | closed_at split leaked (train median 1.0d vs test 677d); created_at re-split dropped MAE 693→87 days; has_priority feature leak (corr 0.595, applied during triage) | `docs/architecture/adr/0009-resolution-predictor-diagnosis.md:60-93,184` |
-| `triageiq:retrieval` | k8s Recall@5 18.0% (related-issue task); vscode Recall@5 50.5% (duplicate-issue task, via the `dup_comment` channel) — both corrected upward from earlier, lower measurements; 3 zero-training fixes (BM25 fusion, cross-encoder reranking, a stronger embedder) still fail to clear the bar on the corrected baseline | **Wave 19 correction (2026-07-31):** `triage-iq/README.md:107-136` headline-finding blockquote — full correction chain: 23.5% (uncorrected, contaminated gold set) → 9.3%/vscode-retired (ADR-0033, clean eval) → 18.0%/50.5% (ADR-0035, harness-bug fix: eval was querying title-only against a title+body production index). Prior page text ("vscode retired, gold pairs ~80% noise") described the ADR-0032/pre-0033 state and was already superseded before the case study's 2026-07-26 writing. |
+| `triageiq:retrieval` | **Superseded twice more since Wave 19 — see Wave 22 correction below.** k8s Recall@5 39.39% (related task, clean eval subset, n=66); vscode Recall@5 53.50% (duplicate task) — both corrected upward again from the 18.0%/50.5% Wave 19 figures; 3 zero-training fixes (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar earlier in this chain | **Wave 22 correction (2026-08-15):** `triage-iq/README.md:100,103` @ `77bebccb` — full correction chain, now five deep: 23.5% (uncorrected, contaminated gold set) → 9.3%/vscode-retired (ADR-0033, clean eval) → 18.0%/50.5% (ADR-0035, 2026-07-24, harness-bug fix: eval was querying title-only against a title+body production index) → 24.67%/53.50% (ADR-0040, 2026-08-10, truncation + query-instruction fixes; vscode's 53.50% has held unchanged since) → **39.39%** (k8s only; 2026-08-11 eval-population audit, PR #81: ~56% of the 150-pair eval population is structurally invalid as a content-similarity test — umbrella issues and causal-only references — so a hand-verified, outcome-blind 66-pair clean subset is now the project's own bolded/primary headline number, not the 24.67% unfiltered figure). ~~Wave 19 correction (2026-07-31): `triage-iq/README.md:107-136` headline-finding blockquote.~~ |
 | `triageiq:wave19-provenance-note` | The classifier retrain (ADR-0036) and retrieval harness fix (ADR-0035) both landed in `triage-iq` on **2026-07-24** — two days *before* this case study's own last edit (2026-07-26, commit `24a258d`). The page shipped already behind its own cited source, not merely overtaken by later work. Root cause: the wave-12/13 provenance pass read the repo once and cited specific README line ranges; nothing in this site's process re-reads a source repo at case-study-edit time, so a source that changed between "provenance last verified" and "case study last touched" isn't caught by construction. See PR4 (`.portfolio/metrics.json` pipeline / scheduled drift-check) for the systemic fix under discussion. | investigation this wave — `git log` timestamps on both repos, no code changed by this note |
 | `triageiq:resolution` | Resolution MAE: k8s 104.05d vs 106.29d naive (+2.1%); vscode 6.02d vs 3.53d naive (70.5% worse, served with transparency badge) | `README.md:91-98` |
 
@@ -947,6 +947,32 @@ claims with no store id.
 New sourceRef `dealhunter:ci-gates` cites `README.md:115-120` (the actual lint/typecheck/test
 commands and the VCR-replay eval harness) — real, current, checkable, and asserts no specific
 count.
+
+## Wave 22 (2026-08-15) — TriageIQ retrieval Recall@5, stale by two more corrections
+
+`triageiq:retrieval-recall5-k8s` / `-vscode` (site claims and `content/metrics.json`) still stated
+18.0% (k8s) / 50.5% (vscode) — the Wave 18/19 numbers, from ADR-0035 (2026-07-24). Re-verified from
+scratch against `triage-iq`'s current `README.md` (HEAD `77bebccb`, unchanged since a prior audit's
+2026-08-12 snapshot) rather than trusting that prior audit's own figures blindly, per rule 101c.
+
+Two corrections had landed in `triage-iq` since Wave 19 and neither had reached this site:
+
+| Project | Claim | Correction | Source |
+|---|---|---|---|
+| TriageIQ | `triageiq:retrieval-recall5-vscode` | 50.5% → **53.50%** [46.5, 60.5] — ADR-0040 (2026-08-10): the retrieval corpus was truncated at 512 *characters* instead of BGE's real 512-*token* limit; the truncation fix (Lever 1) shipped unconditionally for both repos. vscode does not get Lever 2 (the query-instruction prefix) — it tested directionally negative for vscode's duplicate-matching task — so 53.50% is vscode's current, unchanged-since figure | `triage-iq/README.md:103` @ `6cb695ab` (2026-08-11) |
+| TriageIQ | `triageiq:retrieval-recall5-k8s` | 18.0% → 24.67% [18.0, 31.3] (ADR-0040, same truncation + query-instruction fixes, k8s gets both levers) → **39.39%** [27.3, 51.5] (n=66) — a 2026-08-11 eval-population audit (PR #81) hand-categorized misses in the 150-pair eval population and found ~56% structurally invalid as a content-similarity test: umbrella/tracking issues that reference many unrelated sub-issues at once, and citations where the target is background/precedent rather than the actual topic. A clean 66-pair subset was built the honest way — two exclusion criteria written down *before* any pair was scored against outcomes, applied blind to hit/miss by 5 independent reviewers, joined to results only afterward. This clean-subset number is triage-iq's own bolded/primary headline figure in both its README table and architecture diagram, not a caveated alternative to the unfiltered 24.67% | `triage-iq/README.md:100` @ `1433b287` (2026-08-11) |
+
+Both numbers are three-and-four corrections deep respectively from the figures originally sourced
+at Wave 12 (2026-07-18); full chain preserved in the `triageiq:retrieval` narrative entry above,
+not repeated here. Updated `content/case-studies/triageiq.ts` (both `results` row `value`/`detail`
+fields), `content/metrics.json` (`value`, `source_line`, `commit_sha`, `measured_at`, `note` — both
+entries re-pointed from the stale `4614dd1b`/2026-08-05 snapshot to `77bebccb`/2026-08-11, the SHA
+and date at which these specific lines were last touched in `triage-iq`), and this file.
+
+Separately: auditing `scripts/check-metric-freshness.mjs` while re-verifying this claim found the
+gap that let it stay stale through two whole-file re-scans — see that script's own
+`findChangelogTransitionRanges` comment for the mechanism and PR body for before/after checker
+output.
 
 ## Wave 15 pipeline proposals — 2026-07-31 (LLM-consensus, pending human review)
 

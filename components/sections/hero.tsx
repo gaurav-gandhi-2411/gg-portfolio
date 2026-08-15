@@ -98,12 +98,20 @@ export async function Hero() {
         </EmbeddingCloud>
       </div>
 
+      {/* BL-3a: this pill already carried the availability copy (site.status);
+          it now also carries the actual status signal, via --status-open
+          (app/globals.css) rather than the generic accent color, so it
+          reads as a live status dot and not just another link. Same
+          live-pulse class the "AI products live today" dateline uses
+          (globals.css .live-dot) — this is the same kind of "this is
+          current, not a stale fact" signal, so it gets the same motion
+          language rather than a bespoke one. */}
       <p className="text-sm">
         <a
           href="#contact"
-          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex items-center gap-2 rounded-full border px-4 py-1.5 transition-colors motion-reduce:transition-none"
+          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-1.5 transition-colors motion-reduce:transition-none"
         >
-          <span aria-hidden="true" className="bg-accent size-1.5 rounded-full" />
+          <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
           {site.status}
         </a>
       </p>

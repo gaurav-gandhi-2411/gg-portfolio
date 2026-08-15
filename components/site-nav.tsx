@@ -48,7 +48,7 @@ export function SiteNav() {
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-3 lg:max-w-5xl">
         <TransitionLink
           href="/"
-          className="focus-visible:outline-ring flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="focus-visible:outline-ring -m-2 flex min-h-11 min-w-11 items-center justify-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={`${site.name} — home`}
         >
           <Monogram className="size-7" />
@@ -66,7 +66,7 @@ export function SiteNav() {
               href={link.href}
               aria-current={link.active || (onCaseStudy && link.label === "Projects") ? "page" : undefined}
               className={cn(
-                "focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none",
+                "focus-visible:outline-ring -my-3 inline-flex min-h-11 min-w-11 items-center justify-center text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none",
                 link.active || (onCaseStudy && link.label === "Projects")
                   ? "text-foreground underline decoration-accent decoration-2 underline-offset-8"
                   : "text-muted-foreground hover:text-foreground"

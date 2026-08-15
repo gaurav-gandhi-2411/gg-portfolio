@@ -31,7 +31,7 @@ export function LinkButton({
       href={href}
       {...(sameTab ? {} : { target: "_blank", rel: "noreferrer" })}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium",
+        "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium",
         "transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out",
         "hover:-translate-y-0.5 active:translate-y-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",

@@ -1,0 +1,53 @@
+name: Live Link Body Markers
+
+# Asserts that every liveUrl in content/products.ts returns a body containing a
+# declared marker — not merely that it returned 200. See
+# scripts/check-live-link-markers.mjs's header: a soft-200 shell served at a
+# /docs path passes lychee and passes the latency gate, and is a worse defect
+# than a dead link because a wrong citation gets believed.
+#
+# Scheduled rather than per-PR, matching live-link-latency.yml: whether a
+# third-party site is up is not the PR author's problem, and gating merges on it
+# would make the check something people route around.
+#
+# Deliberately NOT continue-on-error. link-check.yml carries that flag with a
+# comment explaining why, and CHECKS.md instance 8 records what that cost: a
+# real outage arrived pre-labelled as ignorable noise and was nearly dismissed.
+# A scheduled run has no PR to annotate, so its only voice is the job status —
+# muting it would leave the check with no voice at all.
+
+on:
+  schedule:
+    # Daily, 07:30 UTC — 30 min after live-link-latency.yml, so a backend that
+    # is merely slow gets reported by the check that measures slowness, rather
+    # than surfacing here as a timeout with a less specific diagnosis.
+    - cron: "30 7 * * *"
+  pull_request:
+    branches: [main]
+    # On PRs, only when the inputs themselves change — editing a liveUrl or a
+    # marker is exactly when a human should be shown the body check's verdict,
+    # and that is a change the author controls.
+    paths:
+      - "content/products.ts"
+      - "scripts/live-link-markers.json"
+      - "scripts/check-live-link-markers.mjs"
+  workflow_dispatch: {}
+
+concurrency:
+  group: live-link-markers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check live-link body markers
+        run: node scripts/check-live-link-markers.mjs
