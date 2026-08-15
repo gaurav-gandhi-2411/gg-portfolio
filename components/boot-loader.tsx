@@ -26,8 +26,14 @@
  * same inline script (html[data-boot="1"]) — no JS or prefers-reduced-motion
  * means the overlay stays display:none forever, same as before.
  *
- * Geometry is the same hand-computed monogram as components/monogram.tsx;
- * pathLength=1 lets one dasharray rule drive every stroke's draw-in.
+ * Geometry is the same hand-computed monogram as components/monogram.tsx.
+ *
+ * fix/perf round 3: each stroke used to draw itself in via an animated
+ * `stroke-dashoffset` (which is why every path carried `pathLength={1}` —
+ * it normalized the dasharray driving that draw-in). PSI flagged all 4 as
+ * non-composited animations; app/globals.css's `.boot-path` now animates
+ * `opacity`/`transform` (scale) instead, so `pathLength` no longer does
+ * anything and was removed rather than left as a dead, misleading prop.
  */
 export function BootLoader() {
   return (
@@ -36,7 +42,6 @@ export function BootLoader() {
         <svg width="56" height="56" viewBox="0 0 64 64">
           <path
             d="M 35.37 41.96 A 15.50 15.50 0 1 1 35.37 22.04"
-            pathLength={1}
             className="boot-path"
             fill="none"
             stroke="var(--text-hi)"
@@ -45,7 +50,6 @@ export function BootLoader() {
           />
           <path
             d="M 39.00 32.00 L 30.48 32.00"
-            pathLength={1}
             className="boot-path boot-path-delay-2"
             fill="none"
             stroke="var(--text-hi)"
@@ -54,7 +58,6 @@ export function BootLoader() {
           />
           <path
             d="M 28.63 22.04 A 15.50 15.50 0 1 1 28.63 41.96"
-            pathLength={1}
             className="boot-path boot-path-delay-1"
             fill="none"
             stroke="var(--accent)"
@@ -63,7 +66,6 @@ export function BootLoader() {
           />
           <path
             d="M 25.00 32.00 L 33.52 32.00"
-            pathLength={1}
             className="boot-path boot-path-delay-3"
             fill="none"
             stroke="var(--accent)"

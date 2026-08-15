@@ -205,11 +205,13 @@
   justify-content: center;
   background: var(--background);
   pointer-events: none;
-  clip-path: inset(0 0 0 0);
+  /* Bottom-anchored so scaleY(0) below shrinks the box toward its bottom
+   * edge — the top edge recedes first, same wipe direction the old
+   * clip-path version produced (see boot-exit). */
+  transform-origin: bottom;
 }
 html[data-boot="1"] #boot-loader {
   display: flex;
-  /* Top inset grows → the page is revealed top-down, hero name first. */
   animation: boot-exit 0.38s cubic-bezier(0.83, 0, 0.17, 1) 0.62s forwards;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -217,10 +219,24 @@ html[data-boot="1"] #boot-loader {
     display: none;
   }
 }
+/*
+ * fix/perf round 3: was `clip-path: inset(100% 0 0 0)` + `visibility:
+ * hidden` — PSI flagged this as 1 of 5 non-composited animations on `/`
+ * (`clip-path`/`visibility` both run on the main thread, competing with
+ * hydration under CPU throttle instead of the compositor — the mechanism
+ * behind this route's high Speed Index relative to its fast FCP, see
+ * reports/lighthouse-perf-fix-round3-*.md). `scaleY(0)` with the
+ * bottom-anchored transform-origin above produces the identical visible
+ * reveal (top clips away first, page revealed top-down, hero name first)
+ * entirely via `transform`, a compositor-only property. `visibility` is
+ * dropped rather than replaced: the box is already zero-height and
+ * `pointer-events: none` unconditionally, and the node is removed from
+ * the DOM outright ~1.15s later by app/layout.tsx's inline script — belt
+ * and suspenders that never had a visual job to begin with.
+ */
 @keyframes boot-exit {
   to {
-    clip-path: inset(100% 0 0 0);
-    visibility: hidden;
+    transform: scaleY(0);
   }
 }
 .boot-inner {
@@ -235,11 +251,27 @@ html[data-boot="1"] #boot-loader {
     transform: translateY(-14px);
   }
 }
-/* Monogram strokes draw in (pathLength=1 normalizes every path). */
+/*
+ * Monogram strokes materialize in, staggered per path. fix/perf round 3:
+ * was a `stroke-dashoffset` draw-in (each stroke tracing its own path) —
+ * PSI flagged all 4 of these as non-composited animations on `/`
+ * (`stroke-dashoffset` has no compositor support at all, so every frame
+ * repainted on the main thread under CPU throttle for the animation's
+ * full duration, contributing to this route's high Speed Index despite a
+ * fast FCP — see reports/lighthouse-perf-fix-round3-*.md). Replaced with
+ * a scale+opacity reveal (both compositor-only properties): same
+ * staggered choreography and duration envelope, different mechanic
+ * (materialize vs. trace) — the two keyframes and the SSR'd path
+ * geometry are otherwise unchanged. `transform-box: fill-box` scales each
+ * path around its own bounding-box center rather than the SVG viewport
+ * origin.
+ */
 .boot-path {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: boot-draw 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  opacity: 0;
+  transform: scale(0.5);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: boot-draw 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 .boot-path-delay-1 {
   animation-delay: 0.08s;
@@ -252,7 +284,8 @@ html[data-boot="1"] #boot-loader {
 }
 @keyframes boot-draw {
   to {
-    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: scale(1);
   }
 }
 .boot-bar {
