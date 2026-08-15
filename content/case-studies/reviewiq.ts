@@ -98,7 +98,7 @@ export const reviewiq: CaseStudy = {
     "If your product has to catch safety-critical signals buried in ordinary-sounding text, this is the discipline worth copying: score on the signal, not the tone, and build CI so a real production bug can be diagnosed for free, from recordings, without spending a live API call to reproduce it.",
   ],
   links: [
-    { label: "Live API docs", href: "https://review-iq-ajjrytb3na-el.a.run.app/docs" },
+    { label: "Live API docs", href: "https://api.samidhareviews.xyz/docs" },
     { label: "Source on GitHub", href: "https://github.com/gaurav-gandhi-2411/review-iq" },
   ],
 };

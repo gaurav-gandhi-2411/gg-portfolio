@@ -152,7 +152,7 @@ export const products: Product[] = [
     tagline:
       "Turns customer reviews into structured insight across English, Hindi, and Hinglish — tiered LLM routing plus authenticity scoring.",
     // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
-    liveUrl: "https://review-iq-ajjrytb3na-el.a.run.app/docs",
+    liveUrl: "https://api.samidhareviews.xyz/docs",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",
     categories: ["llm-agents"],
     techChips: ["FastAPI", "Groq", "Tiered routing"],
