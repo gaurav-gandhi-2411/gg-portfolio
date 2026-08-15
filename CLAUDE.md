@@ -72,6 +72,28 @@ The reflex after a content edit is therefore three things, none of which
 typecheck or build will tell you about: **e2e suite, chatbot index, metric
 checks.**
 
+# Never run an unscoped process kill
+
+`taskkill //F //IM node.exe` (or any equivalent — `pkill -f node`, `killall node`)
+terminates **every** Node process on the machine, not just the one you started.
+GG runs multiple worktrees and parallel sessions in this repo by design — an
+unscoped kill can destroy another session's in-flight `npm ci`/build/dev-server
+mid-write with no warning. This is a real, standing candidate explanation for
+two previously-unexplained incidents: round 1's `npm ci` `EPERM` on a locked
+native SWC binary (13 concurrent `node.exe` processes at the time), and a
+near-full-disk event during a later round's worktree-heavy session. Neither was
+conclusively attributed, but an unscoped kill fits both and should not be
+risked again now that the mechanism is known.
+
+**Kill by PID, scoped to the exact process you started, or don't kill it at
+all.** Capture the PID when you launch a background server (`node ... &
+echo $!`, or read it back via `Get-NetTCPConnection -LocalPort <port> |
+Select OwningProcess` if the launcher's own PID doesn't own the socket — see
+round-1's note on this exact gotcha), then kill only that PID
+(`kill <pid>` / `taskkill /F /PID <pid>`). If you can't identify the specific
+PID with confidence, leave the process running and say so rather than
+reaching for a broad kill.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
