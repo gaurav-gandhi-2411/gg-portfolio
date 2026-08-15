@@ -95,6 +95,25 @@ test("axe: zero violations on a filtered /projects view", async ({ page }) => {
 });
 
 /**
+ * BL-9 — /projects' search box scanned OPEN, with a real ranked-results
+ * listbox showing (a combobox's expanded state, per CHECKS.md's own rule,
+ * is exactly where a missing accessible name or a bad focus-order bug
+ * would surface — the closed default state is already covered by the
+ * route-level scan above via ROUTES, which would never reach this markup).
+ * Round 5 removed this feature's client-side model tier entirely (see
+ * components/project-search.tsx's header) — keyword ranking is the only
+ * tier there is now, so there is no model network left to block.
+ */
+test("axe: zero violations on /projects with search results open", async ({ page }) => {
+  await gotoSettled(page, "/projects");
+  const input = page.getByRole("combobox", { name: /search projects/i });
+  await input.fill("reduces on-call issue triage time");
+  await expect(page.getByRole("listbox")).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
  * Wave 16 — deliberately drives the actual bug this wave fixed: a real
  * mouse hover on one card recedes every sibling (app/globals.css,
  * `.project-grid:has(article:hover) article:not(:hover)`). 0.55 passed
