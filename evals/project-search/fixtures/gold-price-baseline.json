@@ -1,0 +1,7 @@
+{
+  "id": "gold-price-baseline",
+  "query": "predicts gold prices better than a baseline",
+  "expectedSlug": "gold-rate-tracker",
+  "ambiguousWith": null,
+  "notes": "Task brief's own example query. Ironic against the project's actual claim (the ML model did NOT beat the baseline, and the card is honest about that) but the query is still clearly about gold-price prediction, so the label holds."
+}

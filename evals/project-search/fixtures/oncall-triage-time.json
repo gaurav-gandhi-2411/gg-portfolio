@@ -1,0 +1,7 @@
+{
+  "id": "oncall-triage-time",
+  "query": "something that reduces on-call issue triage time",
+  "expectedSlug": "triageiq",
+  "ambiguousWith": null,
+  "notes": "Task brief's own example query."
+}

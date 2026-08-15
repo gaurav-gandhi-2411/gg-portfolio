@@ -1,0 +1,7 @@
+{
+  "id": "windows-disk-cleanup",
+  "query": "cleans up disk space on Windows safely",
+  "expectedSlug": "reclaim",
+  "ambiguousWith": null,
+  "notes": null
+}

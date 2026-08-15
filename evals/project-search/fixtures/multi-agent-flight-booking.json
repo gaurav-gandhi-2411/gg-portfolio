@@ -1,0 +1,7 @@
+{
+  "id": "multi-agent-flight-booking",
+  "query": "books flights using multiple AI agents",
+  "expectedSlug": "dealhunter",
+  "ambiguousWith": null,
+  "notes": null
+}

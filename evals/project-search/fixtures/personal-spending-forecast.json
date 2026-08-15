@@ -1,0 +1,7 @@
+{
+  "id": "personal-spending-forecast",
+  "query": "tracks personal spending and predicts future expenses",
+  "expectedSlug": "expense-tracker",
+  "ambiguousWith": null,
+  "notes": null
+}
