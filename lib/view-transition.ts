@@ -19,16 +19,46 @@
 
 let settleNavigation: (() => void) | null = null;
 let viaViewTransition = false;
+let currentTransition: ViewTransition | null = null;
 
 export function beginViewTransition(navigate: () => void) {
   viaViewTransition = true;
-  document.startViewTransition(() => {
+  const transition = document.startViewTransition(() => {
     navigate();
     return new Promise<void>((resolve) => {
       settleNavigation = resolve;
       window.setTimeout(resolve, 1200);
     });
   });
+  currentTransition = transition;
+  transition.finished.finally(() => {
+    if (currentTransition === transition) currentTransition = null;
+  });
+}
+
+/**
+ * perf/lcp-final Task 4 — resolves once any in-flight View Transition (see
+ * beginViewTransition above) has fully FINISHED, including its animation —
+ * not just its DOM-update callback, which settleNavigation resolves earlier.
+ *
+ * Exists because a component that does an async, DOM-mutating mount effect
+ * on the destination page of a transition (a capability check that flips
+ * visible state, an IntersectionObserver's first callback firing on an
+ * already-intersecting target) can land inside the exact window where the
+ * browser is still mid-capture of the transition's "new" DOM snapshot —
+ * reproduced as a real, unrecoverable crash: Chromium throws "Failed to
+ * execute 'insertBefore'/'removeChild' on 'Node': ... is not a child of this
+ * node" when React commits a DOM mutation in that window, which the app's
+ * error boundary then shows as "This page couldn't load". A guessed fixed
+ * delay (requestAnimationFrame, even a macrotask) narrows the race but does
+ * not close it under real timing variance (still reproduced under
+ * `npx playwright test`'s full parallel load after a macrotask-only fix) —
+ * awaiting the transition's own `finished` promise is the actual signal,
+ * not a guess. Resolves immediately if no transition is in flight (every
+ * other navigation path: hard reload, reduced-motion, unsupported browser).
+ */
+export function waitForViewTransition(): Promise<void> {
+  return currentTransition ? currentTransition.finished.catch(() => undefined) : Promise.resolve();
 }
 
 /** Called by app/template.tsx after the new route's DOM has committed. */
