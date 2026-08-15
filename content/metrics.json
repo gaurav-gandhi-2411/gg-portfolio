@@ -85,24 +85,24 @@
       "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode coverage at README.md:98 (80% nominal target). Also re-pointed off 1ad094f. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
     },
     "triageiq:retrieval-recall5-k8s": {
-      "label": "Similar-issue retrieval Recall@5, related task (kubernetes)",
-      "value": "18.0%",
+      "label": "Similar-issue retrieval Recall@5, related task, clean eval subset (kubernetes)",
+      "value": "39.39%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
-      "source_line": 86,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes Recall@5 at README.md:86. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+      "source_line": 100,
+      "commit_sha": "77bebccbabf118a2487ba864c91ced36f890f0d8",
+      "measured_at": "2026-08-11",
+      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 18.0% -> 24.67% -> 39.39%, three corrections deep. ADR-0035 (2026-07-24) produced 18.0% by fixing a title-only-query harness bug. ADR-0040 (2026-08-10) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit and the query-instruction prefix was never applied; fixing both raised it to 24.67% [18.0, 31.3], measured over the full 150-pair eval population (README.md:101). A 2026-08-11 eval-population audit (commit 1433b287, PR #81) then found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues referencing many unrelated sub-issues; causal-only 'See #N' references) -- a hand-verified, outcome-blind clean subset (two exclusion criteria written down before any pair was scored, applied blind by 5 reviewers) landed at 39.39% [27.3, 51.5] (n=66), CI lower bound above the unfiltered point estimate. This clean-subset number is now triage-iq's own bolded/primary headline figure for this metric in both its README table and architecture diagram -- not a caveated alternative. Was split 2026-08-13 from a single entry that packed two numbers behind one line number (see vscode sibling entry's history)."
     },
     "triageiq:retrieval-recall5-vscode": {
       "label": "Similar-issue retrieval Recall@5, duplicate task (vscode)",
-      "value": "50.5%",
+      "value": "53.50%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
-      "source_line": 88,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode Recall@5 at README.md:88. Also re-pointed off 1ad094f. Corrected from 23.5% (k8s) / 'retired' (vscode) (site-vs-repo reconciliation, wave 18). Two corrections deep: ADR-0033 found the original vscode gold pairs were ~80% noise; ADR-0035 (2026-07-24, supersedes ADR-0031's lever numbers and ADR-0033's baselines) is the current canonical harness. vscode is no longer retired."
+      "source_line": 103,
+      "commit_sha": "77bebccbabf118a2487ba864c91ced36f890f0d8",
+      "measured_at": "2026-08-11",
+      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 50.5% -> 53.50%. ADR-0035 (2026-07-24) corrected the original ~80%-noise gold set to 50.5% via a harness fix (title-only queries against a title+body production index). ADR-0040 (2026-08-10, commit 6cb695ab) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit; Lever 1 (the truncation fix) shipped unconditionally for both repos and raised vscode's duplicate-task Recall@5 to 53.50% [46.5, 60.5] (README.md:103) -- vscode does not get Lever 2 (the query-instruction prefix), which tested directionally negative for its duplicate-matching task, so 53.50% remains current. Split 2026-08-13 from a single entry that packed two numbers (k8s + vscode) behind one line number, which the cited-line check flagged as unable to be correct for both."
     },
     "shelfsense:wrmsse": {
       "label": "WRMSSE, best private leaderboard",

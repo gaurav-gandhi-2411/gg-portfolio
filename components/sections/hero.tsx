@@ -109,7 +109,7 @@ export async function Hero() {
       <p className="text-sm">
         <a
           href="#contact"
-          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex items-center gap-2 rounded-full border px-4 py-1.5 transition-colors motion-reduce:transition-none"
+          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-1.5 transition-colors motion-reduce:transition-none"
         >
           <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
           {site.status}
