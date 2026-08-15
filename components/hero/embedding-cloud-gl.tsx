@@ -125,8 +125,19 @@ export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProp
       renderer.resize(rect.width, rect.height, cappedDevicePixelRatio());
       renderer.render(1, angleRef.current);
     };
-    sizeToBox();
 
+    // fix/perf round 4: no longer called eagerly here. This mount effect
+    // fires right after React swaps the SSR'd static SVG scatter for this
+    // canvas — a DOM change that invalidates style/layout — so an immediate,
+    // synchronous getBoundingClientRect() read forced the browser to run
+    // style recalc + layout right then instead of at its next natural
+    // opportunity (Lighthouse's forced-reflow-insight audit, PSI's own
+    // "forced reflow" diagnostic). ResizeObserver.observe() already delivers
+    // one initial callback with the target's current box shortly after
+    // observation starts, timed by the browser to land after layout is
+    // already fresh — that's the API's whole reason to exist over a raw
+    // getBoundingClientRect() poll, and it makes this eager call redundant,
+    // not just deferred.
     const resizeObserver = new ResizeObserver(sizeToBox);
     resizeObserver.observe(canvas);
 
