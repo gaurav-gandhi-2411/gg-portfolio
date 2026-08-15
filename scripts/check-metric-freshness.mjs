@@ -558,6 +558,45 @@ function findApproximateRanges(text) {
   return [...text.matchAll(APPROXIMATE_SPAN_PATTERN)].map((m) => [m.index, m.index + m[0].length]);
 }
 
+// A changelog/narrative transition span — "k8s R@5 18.0%→24.67%", "was 18.0%,
+// now 24.67%", "from 18.0% to 24.67%" — states that a number was ONCE true, not
+// that it still is. The old side's literal digits survive in the document
+// forever as historical narrative, even after a results table or diagram
+// elsewhere has moved on to the corrected figure. extractSourceNumbers (used by
+// both the per-metric whole-file loop and checkCaseStudyClaims) has no notion
+// of "this text describes change over time" and so treated an old number's
+// mere presence ANYWHERE in the file as current evidence — a superseded value
+// stayed reporting CURRENT through two more real corrections in triage-iq's own
+// README before this was caught (content/provenance.md's Wave 22 entry).
+//
+// Same span-exclusion shape as findApproximateRanges/APPROXIMATE_SPAN_PATTERN
+// above: find spans, exclude every number whose match index falls inside one,
+// rather than trying to classify which side of the span is "old" vs "new".
+// Deliberately conservative — the fix only needs the OLD number gone, and
+// excluding the NEW one too from THIS particular sentence costs nothing as
+// long as the current figure is also restated somewhere else untouched by
+// "→"/"was"/"from...to" framing, which every live-shipped metric checked
+// against this repo's real sources is: a headline number that only ever
+// appears inside its own changelog sentence, nowhere else in the document,
+// would report POSSIBLE_DRIFT under this fix even while correct — a real,
+// stated trade (same shape as this file's other documented tolerances), not
+// hidden.
+const CHANGELOG_TRANSITION_PATTERN = new RegExp(
+  [
+    // "18.0%→24.67%" / "18.0% -> 24.67%" — arrow-joined pair, optional %, comma-grouped
+    String.raw`\d[\d,]*(?:\.\d+)?%?\s*(?:→|->)\s*\d[\d,]*(?:\.\d+)?%?`,
+    // "was 18.0%, now 24.67%" / "was 18.0% (post-fix now 24.67%)"
+    String.raw`\bwas\s+\d[\d,]*(?:\.\d+)?%?\b[^.]{0,60}?\bnow\s+\d[\d,]*(?:\.\d+)?%?\b`,
+    // "from 18.0% to 24.67%"
+    String.raw`\bfrom\s+\d[\d,]*(?:\.\d+)?%?\s+to\s+\d[\d,]*(?:\.\d+)?%?\b`,
+  ].join("|"),
+  "gi"
+);
+
+function findChangelogTransitionRanges(text) {
+  return [...text.matchAll(CHANGELOG_TRANSITION_PATTERN)].map((m) => [m.index, m.index + m[0].length]);
+}
+
 // Extract numeric tokens worth checking for presence, as actual numbers —
 // not strings compared by substring. Two real false-positive/negative
 // classes this fixes (found 2026-08-07, auditing the 6 PARTIAL claims the
@@ -620,8 +659,16 @@ function extractTokens(value, minTokenLen = MIN_TOKEN_LEN) {
 // Same extraction, applied to a source file's full text — not deduped or
 // length-filtered, since a short number in the source is still valid
 // evidence for a token that itself passed extractTokens' length filter.
+// Numbers whose match falls inside a changelog transition span (see
+// findChangelogTransitionRanges above) are excluded — they document that a
+// value changed, not what it currently is, and so are not valid evidence
+// that a claim's number is still current.
 function extractSourceNumbers(text) {
-  return (text.match(NUMBER_PATTERN) ?? []).map(parseNumber);
+  const transitionRanges = findChangelogTransitionRanges(text);
+  const matches = [...text.matchAll(NUMBER_PATTERN)];
+  return matches
+    .filter((m) => !transitionRanges.some(([start, end]) => m.index >= start && m.index < end))
+    .map((m) => parseNumber(m[0]));
 }
 
 const NUMBER_EPSILON = 1e-9;
