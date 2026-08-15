@@ -370,14 +370,14 @@ export function AskPanel() {
               : "Ask about a project, the architecture, or what I'm looking for…"
           }
           autoComplete="off"
-          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring min-h-11 w-full rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
         />
         <button
           type="submit"
           disabled={
             status === "loading" || status === "unavailable" || question.trim().length === 0
           }
-          className="bg-accent text-accent-foreground focus-visible:outline-ring shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-accent text-accent-foreground focus-visible:outline-ring min-h-11 shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ask
         </button>
@@ -469,7 +469,7 @@ function ChipRow({
           // through the degraded-state test.
           data-testid="ask-suggestion"
           onClick={() => onPick(q)}
-          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           {q}
         </button>

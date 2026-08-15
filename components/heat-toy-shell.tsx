@@ -29,7 +29,7 @@ export function HeatToyShell() {
     <button
       type="button"
       onClick={() => setActivated(true)}
-      className="font-heading flex w-fit items-center gap-[var(--space-2)] text-left text-body-lg text-foreground italic underline decoration-border decoration-1 underline-offset-4 transition-colors hover:decoration-accent focus-visible:decoration-accent motion-reduce:transition-none"
+      className="font-heading -my-2 flex min-h-11 w-fit items-center gap-[var(--space-2)] text-left text-body-lg text-foreground italic underline decoration-border decoration-1 underline-offset-4 transition-colors hover:decoration-accent focus-visible:decoration-accent motion-reduce:transition-none"
     >
       <span aria-hidden className="not-italic">
         🔥

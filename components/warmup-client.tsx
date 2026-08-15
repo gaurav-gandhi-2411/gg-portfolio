@@ -172,13 +172,13 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
       <p className="mt-[var(--space-10)] flex gap-[var(--space-6)] text-sm">
         <Link
           href="/"
-          className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Home
         </Link>
         <Link
           href="/projects"
-          className="text-accent focus-visible:outline-ring font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           All projects →
         </Link>

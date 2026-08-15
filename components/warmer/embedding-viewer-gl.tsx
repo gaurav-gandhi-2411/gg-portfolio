@@ -238,7 +238,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
             onClick={() => onToggle(false)}
             className={`min-h-11 px-[var(--space-4)] text-sm transition-colors ${
               !showFinetuned
-                ? "bg-indigo/15 text-foreground"
+                ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -250,7 +250,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
             onClick={() => onToggle(true)}
             className={`border-border/40 min-h-11 border-l px-[var(--space-4)] text-sm transition-colors ${
               showFinetuned
-                ? "bg-indigo/15 text-foreground"
+                ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >

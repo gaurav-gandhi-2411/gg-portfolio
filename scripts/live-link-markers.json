@@ -1,0 +1,61 @@
+{
+  "$comment": [
+    "Declared body markers for every liveUrl in content/products.ts.",
+    "Read by scripts/check-live-link-markers.mjs. Declarations, not inferences:",
+    "CHECKS.md's rule is 'prefer declared links to inferred ones', and a marker",
+    "guessed from a URL's shape would re-create the failure this check exists to",
+    "catch. Every marker below was copied from that URL's actual response body on",
+    "2026-08-13, not written from memory.",
+    "",
+    "Pick markers that are specific to the page's IDENTITY and stable across",
+    "routine updates. A version string is a bad marker (it churns); a product name",
+    "or a framework's own UI signature is a good one."
+  ],
+  "links": [
+    {
+      "url": "https://triage-iq-orcin.vercel.app/",
+      "markers": ["TriageIQ"],
+      "why": "Product name in <title>. Present whenever the app shell renders."
+    },
+    {
+      "url": "https://playwarmer.vercel.app/",
+      "markers": ["daily semantic word game"],
+      "why": "Tagline in <title>. Distinguishes the real game from a Vercel error page."
+    },
+    {
+      "url": "https://huggingface.co/spaces/gauravgandhi2411/multimodal-fashion-recommender",
+      "markers": ["multimodal-fashion-recommender"],
+      "why": "Space slug. An HF 404 renders a generic shell without it."
+    },
+    {
+      "url": "https://gaurav-gandhi.vercel.app/warmup/style-maitri",
+      "markers": ["Waking Style Maitri"],
+      "why": "Bridge-page heading. Confirms the warmup route, not a Next.js 404."
+    },
+    {
+      "url": "https://gaurav-gandhi.vercel.app/warmup/aetherart",
+      "markers": ["Waking AetherArt"],
+      "why": "Bridge-page heading."
+    },
+    {
+      "url": "https://github.com/gaurav-gandhi-2411/reclaim/releases/latest",
+      "markers": ["gaurav-gandhi-2411/reclaim"],
+      "why": "Repo path in <title>. Deliberately NOT the version — /latest moves, and pinning v1.3.0 would fail on the next release for no real reason."
+    },
+    {
+      "url": "https://api.samidhareviews.xyz/docs",
+      "markers": ["Swagger UI"],
+      "why": "FastAPI's Swagger page signature, copied from this URL's actual 2026-08-15 response body (200), not carried over from the old entry. The citation was fixed in PR #93 (content/products.ts now points here instead of the decommissioned review-iq-prod Cloud Run URL, which 503s) — this entry follows that fix rather than tracking it as separately outstanding."
+    },
+    {
+      "url": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
+      "markers": ["Gold Rate Today"],
+      "why": "Page heading. A GitHub Pages 404 does not contain it."
+    },
+    {
+      "url": "https://gaurav-gandhi.vercel.app/warmup/dealhunter",
+      "markers": ["Waking DealHunter"],
+      "why": "Bridge-page heading."
+    }
+  ]
+}

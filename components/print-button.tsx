@@ -15,7 +15,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="print-hide border-border/60 bg-card/60 text-foreground inline-flex items-center gap-[var(--space-2)] rounded-lg border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-accent/60 hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="print-hide border-border/60 bg-card/60 text-foreground inline-flex min-h-11 items-center gap-[var(--space-2)] rounded-lg border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-accent/60 hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       Print / Save as PDF
     </button>

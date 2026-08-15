@@ -92,7 +92,6 @@ export function StepCurve({
         ref={svgRef}
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
         width="100%"
-        height="auto"
         role="img"
         aria-label={ariaLabel}
       >

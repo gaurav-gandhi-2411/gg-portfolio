@@ -36,20 +36,29 @@ export function Contact() {
             primary action. */}
         <a
           href={`mailto:${site.email}`}
-          className="font-heading w-fit text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"
+          className="font-heading inline-flex min-h-11 w-fit items-center text-lead font-semibold break-all text-foreground transition-colors hover:text-accent motion-reduce:transition-none sm:text-title lg:text-heading"
         >
           {site.email}
         </a>
 
         <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-[var(--space-2)] text-sm">
           <span>{site.location}</span>
-          <InlineLink href={site.githubUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.githubUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             GitHub
           </InlineLink>
-          <InlineLink href={site.linkedinUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.linkedinUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             LinkedIn
           </InlineLink>
-          <InlineLink href={site.huggingfaceUrl} className="text-muted-foreground">
+          <InlineLink
+            href={site.huggingfaceUrl}
+            className="text-muted-foreground -my-3 inline-flex min-h-11 items-center"
+          >
             Hugging Face
           </InlineLink>
         </p>
