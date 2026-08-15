@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ProjectGrid } from "@/components/project-grid";
+import { ProjectSearch } from "@/components/project-search";
+import { SearchMethodology } from "@/components/search-methodology";
 import { TransitionLink } from "@/components/transition-link";
 import { liveProductCount, products } from "@/content/products";
 
@@ -34,6 +36,16 @@ export default function ProjectsPage() {
           Each one has a case study explaining the problem, the architecture, and the honest
           numbers — including the ones that didn&apos;t flatter me.
         </p>
+      </div>
+
+      {/* BL-9 — /projects is the uncapped "see all 13" destination (the home
+          teaser only ever shows 4), so it's the one place a full re-rank
+          over all 13 is meaningful. See components/project-search.tsx's own
+          header for the two-tier design and why it lives here rather than
+          on home. */}
+      <div className="mt-8">
+        <ProjectSearch products={products} />
+        <SearchMethodology />
       </div>
 
       <div className="mt-10">

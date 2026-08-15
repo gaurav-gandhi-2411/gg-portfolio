@@ -974,6 +974,26 @@ gap that let it stay stale through two whole-file re-scans — see that script's
 `findChangelogTransitionRanges` comment for the mechanism and PR body for before/after checker
 output.
 
+## BL-9 round 5 (2026-08-15) — project search methodology section, `/projects`
+
+New sourceRefs backing the short "How this search was built" methodology section rendered on
+`/projects` (`components/search-methodology.tsx`), a non-product write-up (project search is a
+feature of this site, not one of the 13 `content/products.ts` entries it searches over, so it
+does not get a `/work/[slug]` case-study page — see that component's own header for the reasoning).
+All four cite `reports/BL-9-round5-static-embedding-and-decision.md`, this repo's own committed
+report — a same-repo citation, not an external one, so no `repo`/`commit_sha` structured entry in
+`content/metrics.json` applies; these are prose-tier rows, same as most of this file.
+
+| ID | Claim | Source |
+|---|---|---|
+| `search:decision-keyword` | Keyword-only (shipped): 0 additional bytes, 0ms cold start, Recall@1 85.7% [68.5%, 94.3%], Recall@3 96.4% [82.3%, 99.4%] | `reports/BL-9-round5-static-embedding-and-decision.md:282-288` (Task A5 comparison table) |
+| `search:decision-static-matrix` | Self-built static-embedding matrix (built, not shipped): 427,150 bytes (0.407 MiB), 9,570ms cold start, Recall@1 78.6% [60.5%, 89.8%], Recall@3 89.3% [72.8%, 96.3%] | `reports/BL-9-round5-static-embedding-and-decision.md:282-288` |
+| `search:decision-potion` | potion-base-8M (evaluated, not shipped): 30,920,426 bytes (29.5 MiB), 612,342ms cold start, Recall@1 89.3% [72.8%, 96.3%], Recall@3 92.9% [77.4%, 98.0%] | `reports/BL-9-round5-static-embedding-and-decision.md:282-288` |
+| `search:decision-minilm` | MiniLM (original tier, removed): 47,299,486 bytes (45.1 MiB), 570,121ms cold start, Recall@1 89.3% [72.8%, 96.3%], Recall@3 100.0% [87.9%, 100.0%] | `reports/BL-9-round5-static-embedding-and-decision.md:282-288` |
+| `search:ci-overlap` | Every tier's Wilson 95% CI overlaps every other tier's at both Recall@1 and Recall@3; McNemar's exact test on MiniLM vs. potion-base-8M returns p=1.0000 (Recall@1) and p=0.5000 (Recall@3) — statistically indistinguishable at n=28 | `reports/BL-9-round5-static-embedding-and-decision.md:71-96` (Task A1, McNemar's test + CI-overlap table + conclusion) |
+| `search:decision-rationale` | Decision rule applied mechanically: eliminate any tier with a multi-minute cold start (kills MiniLM and potion-base-8M), then ship the smallest option among what remains whose CI overlaps the best performer's — keyword-only (0 bytes) over the purpose-built static matrix (427,150 bytes), even though the matrix was built specifically to solve the cold-start problem and did (9.6s vs. MiniLM's 9.5min) | `reports/BL-9-round5-static-embedding-and-decision.md:275-321` (Task A5, decision rule + "surprising result" paragraph) |
+| `search:eval-limitations` | n=28 queries over 13 candidate projects; random 3-guess baseline Recall@3 ≈ 23.08%, every tier clears it by 60+ points (real signal) but near-100% scores don't by themselves prove sophisticated retrieval on a catalog this distinct; the 28 queries are LLM-generated, not sourced from real recruiters/search logs/usage | `evals/project-search/README.md` (both limitations stated in full, with the exact random-baseline arithmetic) |
+
 ## Wave 15 pipeline proposals — 2026-07-31 (LLM-consensus, pending human review)
 
 Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.

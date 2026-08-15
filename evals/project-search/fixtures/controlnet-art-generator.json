@@ -1,0 +1,7 @@
+{
+  "id": "controlnet-art-generator",
+  "query": "AI art generator using ControlNet",
+  "expectedSlug": "aetherart",
+  "ambiguousWith": null,
+  "notes": null
+}

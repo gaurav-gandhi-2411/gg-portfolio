@@ -42,3 +42,4 @@ repos:
         language: system
         files: ^content/(case-studies/.*\.ts|provenance\.md)$
         pass_filenames: false
+

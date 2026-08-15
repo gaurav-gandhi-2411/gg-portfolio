@@ -1,0 +1,7 @@
+{
+  "id": "mcp-ab-testing-harness",
+  "query": "statistical A/B testing harness for MCP servers",
+  "expectedSlug": "agentgauge",
+  "ambiguousWith": null,
+  "notes": null
+}

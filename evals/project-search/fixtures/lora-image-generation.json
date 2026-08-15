@@ -1,0 +1,7 @@
+{
+  "id": "lora-image-generation",
+  "query": "a LoRA fine-tuned image generation model",
+  "expectedSlug": "aetherart",
+  "ambiguousWith": null,
+  "notes": null
+}
