@@ -72,6 +72,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // F3 — canonical tag per case study.
+    alternates: { canonical: `/work/${slug}` },
     // Next's metadata merging replaces the whole openGraph/twitter object
     // per segment rather than merging individual fields — omitting
     // siteName/type/card here would silently drop them (they'd fall back to
