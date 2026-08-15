@@ -4,8 +4,21 @@
 timeout = 30
 retry_wait_time = 15
 max_retries = 3
-# Cloud Run demos (e.g. AetherArt) cold-start after idle (~5-7 min) — generous
-# timeout/retries above absorb that instead of flagging it as broken every run.
+# Retry semantics, verified in lychee's source (lychee-lib/src/retry.rs) rather
+# than assumed: `should_retry()` covers is_server_error() — every 5xx, so 502/503
+# included — plus 429 TOO_MANY_REQUESTS and 408 REQUEST_TIMEOUT. retry_wait_time
+# is the *initial* wait and doubles per attempt. So the settings above mean a URL
+# is tried 4 times with 15s/30s/60s between them: ~105s before anything fails.
+#
+# Read a failure accordingly. Cloud Run cold starts are ~5-10s and rate limiting
+# clears well inside 105s; neither survives this. **A 503 reported here has
+# already outlasted the entire retry budget, and is far more likely to be a real
+# outage of ours than an environmental blip.** An earlier version of this comment
+# said the opposite — that generous timeouts "absorb" Cloud Run 503s "instead of
+# flagging it as broken" — and on 2026-08-13 that framing nearly buried a true
+# positive: review-iq's backend was 503-ing because its GCP project had no
+# billing account linked. See CHECKS.md instance 8; do not reintroduce a comment
+# that pre-classifies a status code as noise.
 
 # LinkedIn returns 999 to non-browser requests (its anti-scraping response, not
 # a real break) — accept it alongside normal success/redirect codes.
