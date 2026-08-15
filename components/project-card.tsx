@@ -44,7 +44,7 @@ export function ProjectCard({
             <Heading className="font-heading text-lead font-semibold text-foreground">
               <TransitionLink
                 href={`/work/${product.slug}`}
-                className="focus-visible:outline-ring transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                className="focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 style={{ viewTransitionName: `vt-title-${product.slug}` }}
               >
                 {product.name}
@@ -94,12 +94,18 @@ export function ProjectCard({
               Case study →
             </TransitionLink>
             {product.liveUrl && (
-              <InlineLink href={product.liveUrl} className="-my-3 inline-flex min-h-11 items-center">
+              <InlineLink
+                href={product.liveUrl}
+                className="-my-3 inline-flex min-h-11 min-w-11 items-center justify-center"
+              >
                 Live ↗
               </InlineLink>
             )}
             {product.repoUrl && (
-              <InlineLink href={product.repoUrl} className="-my-3 inline-flex min-h-11 items-center">
+              <InlineLink
+                href={product.repoUrl}
+                className="-my-3 inline-flex min-h-11 min-w-11 items-center justify-center"
+              >
                 Source ↗
               </InlineLink>
             )}
