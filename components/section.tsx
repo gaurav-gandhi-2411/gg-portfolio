@@ -48,19 +48,19 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className={`mx-auto w-full px-6 py-16 md:py-24 ${WIDTHS[width]}`}>
+    <section id={id} className={`mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}>
       <div className="flex flex-col items-center text-center">
         <h2 className="font-heading text-title font-semibold text-foreground">{label}</h2>
         {labelNote ? (
-          <p className="text-muted-foreground mt-2 font-mono text-xs">{labelNote}</p>
+          <p className="text-muted-foreground mt-[var(--space-2)] font-mono text-caption">{labelNote}</p>
         ) : null}
         {lede ? (
-          <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
+          <p className="text-muted-foreground mt-[var(--space-5)] max-w-measure text-base leading-relaxed">
             {lede}
           </p>
         ) : null}
       </div>
-      <div className="mt-10 min-w-0 md:mt-12">{children}</div>
+      <div className="mt-[var(--space-10)] min-w-0 md:mt-[var(--space-12)]">{children}</div>
     </section>
   );
 }

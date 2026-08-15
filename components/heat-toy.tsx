@@ -240,7 +240,7 @@ export function HeatToy() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-start gap-2">
+      <div className="flex flex-col items-start gap-[var(--space-2)]">
         <p className="text-sm text-muted-foreground">
           Couldn&apos;t load the word list right now — or try{" "}
           <a href="https://playwarmer.vercel.app/" className="text-accent hover:underline">
@@ -254,7 +254,7 @@ export function HeatToy() {
             setError(false);
             setRetryNonce((n) => n + 1);
           }}
-          className="focus-visible:outline-ring rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:bg-card"
+          className="focus-visible:outline-ring rounded-md border border-border px-[var(--space-3)] py-[var(--space-1-5)] text-sm text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:bg-card"
         >
           Try again
         </button>
@@ -269,8 +269,8 @@ export function HeatToy() {
   // Intro copy lives once, in the Work section's annex — rendering it here
   // too duplicated the paragraph the moment the toy loaded (wave-6 audit bug).
   return (
-    <div className="flex flex-col gap-4">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+    <div className="flex flex-col gap-[var(--space-4)]">
+      <form onSubmit={handleSubmit} className="flex gap-[var(--space-2)]">
         <label htmlFor="heat-toy-input" className="sr-only">
           Guess today&apos;s word
         </label>
@@ -283,12 +283,12 @@ export function HeatToy() {
           disabled={won}
           placeholder="Your guess…"
           autoComplete="off"
-          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="w-full rounded-md border border-border bg-card px-[var(--space-3)] py-[var(--space-2)] text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
         <button
           type="submit"
           disabled={won}
-          className="focus-visible:outline-ring shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-[opacity,transform] focus-visible:outline-2 focus-visible:outline-offset-2 active:enabled:scale-95 motion-reduce:transition-none motion-reduce:active:enabled:scale-100 hover:opacity-80 disabled:opacity-50"
+          className="focus-visible:outline-ring shrink-0 rounded-md bg-primary px-[var(--space-4)] py-[var(--space-2)] text-sm font-medium text-primary-foreground transition-[opacity,transform] focus-visible:outline-2 focus-visible:outline-offset-2 active:enabled:scale-95 motion-reduce:transition-none motion-reduce:active:enabled:scale-100 hover:opacity-80 disabled:opacity-50"
         >
           Guess
         </button>
@@ -302,7 +302,7 @@ export function HeatToy() {
               <button
                 type="button"
                 onClick={() => submitWord(w)}
-                className="focus-visible:outline-ring rounded-md border border-border bg-card px-2.5 py-1 font-mono text-xs text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:border-ring"
+                className="focus-visible:outline-ring rounded-md border border-border bg-card px-2.5 py-[var(--space-1)] font-mono text-caption text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:border-ring"
               >
                 {w}
               </button>
@@ -370,8 +370,8 @@ export function HeatToy() {
         )}
       </svg>
 
-      <div aria-live="polite" className="flex flex-col gap-1.5">
-        {stage === "embedding" && <p className="text-muted-foreground text-xs animate-pulse">embedding…</p>}
+      <div aria-live="polite" className="flex flex-col gap-[var(--space-1-5)]">
+        {stage === "embedding" && <p className="text-muted-foreground text-caption animate-pulse">embedding…</p>}
         {won && (
           <p className="text-sm font-medium text-accent">
             🎉 That&apos;s it — you found today&apos;s word.
@@ -380,7 +380,7 @@ export function HeatToy() {
         {history.map((h, i) => {
           const feedback = guessFeedback(h);
           return (
-            <div key={`${h.word}-${i}`} className="flex items-center gap-3 text-xs">
+            <div key={`${h.word}-${i}`} className="flex items-center gap-[var(--space-3)] text-caption">
               <span className="w-24 shrink-0 truncate font-mono text-foreground">{h.word}</span>
               {/* The similarity, made visible — this row IS the demo. */}
               <span aria-hidden className="h-px flex-1 bg-border/40">
@@ -399,7 +399,7 @@ export function HeatToy() {
         })}
       </div>
 
-      <p className="text-muted-foreground max-w-[52ch] text-xs leading-relaxed">
+      <p className="text-muted-foreground max-w-[52ch] text-caption leading-relaxed">
         The plot uses only the real embedding space&apos;s 1st and 2nd principal components
         (of 72 total, 72.3% variance retained) — a genuine but simplified 2D view. The
         Cold/Warm/Hot feedback above uses all 72 dimensions, same as always.
