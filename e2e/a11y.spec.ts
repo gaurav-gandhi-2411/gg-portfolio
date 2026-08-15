@@ -114,6 +114,25 @@ test("axe: zero violations on /projects with search results open", async ({ page
 });
 
 /**
+ * BL-9 round 5 — the "How this search was built" methodology disclosure
+ * (components/search-methodology.tsx) is new markup on /projects that the
+ * route-level closed-state scan above (ROUTES) never expands past its own
+ * trigger button. Its expanded content nests several MetricProvenance
+ * disclosures (the same component the case-study provenance tests below
+ * already cover open) — scanned here specifically to catch a bad
+ * accessible name or focus-order bug in the combination that only exists
+ * on this route: a plain disclosure containing several nested disclosures.
+ */
+test("axe: zero violations on /projects with the search-methodology panel open", async ({ page }) => {
+  await gotoSettled(page, "/projects");
+  const trigger = page.getByRole("button", { name: /how this search was built/i });
+  await trigger.click();
+  await expect(page.getByText(/every tier's 95% wilson confidence interval/i)).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
  * Wave 16 — deliberately drives the actual bug this wave fixed: a real
  * mouse hover on one card recedes every sibling (app/globals.css,
  * `.project-grid:has(article:hover) article:not(:hover)`). 0.55 passed
