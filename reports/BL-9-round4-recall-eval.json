@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-08-15T12:33:11.590Z",
+  "nCases": 28,
+  "minilm": {
+    "model": "Xenova/all-MiniLM-L6-v2",
+    "recallAt1": 0.8928571428571429,
+    "recallAt3": 1,
+    "meanLatencyMs": 2.8080000000000007,
+    "misses": [
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "top3": [
+          "agentgauge",
+          "dealhunter",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "style-maitri",
+          "multimodal-fashion-recommender",
+          "aetherart"
+        ]
+      },
+      {
+        "id": "multi-store-fashion-search-guardrails",
+        "query": "multi-store fashion search assistant with price guardrails",
+        "expected": "style-maitri",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "shelfsense"
+        ]
+      }
+    ]
+  },
+  "potionBase8m": {
+    "model": "minishlab/potion-base-8M (via @yarflam/potion-base-8m npm package)",
+    "recallAt1": 0.8928571428571429,
+    "recallAt3": 0.9285714285714286,
+    "meanLatencyMs": 4.7194214285714144,
+    "misses": [
+      {
+        "id": "coding-agent-efficiency-score",
+        "query": "scores how efficient a coding agent's session was",
+        "expected": "tracegauge",
+        "top3": [
+          "agentgauge",
+          "tracegauge",
+          "reviewiq"
+        ]
+      },
+      {
+        "id": "fake-review-detection",
+        "query": "detects fake or low quality product reviews",
+        "expected": "reviewiq",
+        "top3": [
+          "agentgauge",
+          "gold-rate-tracker",
+          "tracegauge"
+        ]
+      },
+      {
+        "id": "japanese-woodblock-art",
+        "query": "generates Japanese woodblock print style artwork",
+        "expected": "aetherart",
+        "top3": [
+          "multimodal-fashion-recommender",
+          "style-maitri",
+          "tracegauge"
+        ]
+      }
+    ]
+  }
+}
