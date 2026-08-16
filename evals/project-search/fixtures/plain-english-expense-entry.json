@@ -1,0 +1,7 @@
+{
+  "id": "plain-english-expense-entry",
+  "query": "an app where you type expenses in plain English and it auto-categorizes them",
+  "expectedSlug": "expense-tracker",
+  "ambiguousWith": null,
+  "notes": null
+}

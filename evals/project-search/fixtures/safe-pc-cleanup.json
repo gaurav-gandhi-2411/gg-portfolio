@@ -1,0 +1,7 @@
+{
+  "id": "safe-pc-cleanup",
+  "query": "safe automated cleanup of unnecessary files on my PC",
+  "expectedSlug": "reclaim",
+  "ambiguousWith": null,
+  "notes": null
+}

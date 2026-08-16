@@ -1,0 +1,7 @@
+{
+  "id": "github-issue-resolution-time",
+  "query": "resolution time estimator for GitHub issues",
+  "expectedSlug": "triageiq",
+  "ambiguousWith": null,
+  "notes": null
+}

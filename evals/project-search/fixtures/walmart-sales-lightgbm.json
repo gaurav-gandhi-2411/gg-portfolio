@@ -1,0 +1,7 @@
+{
+  "id": "walmart-sales-lightgbm",
+  "query": "predicting Walmart sales with LightGBM",
+  "expectedSlug": "shelfsense",
+  "ambiguousWith": null,
+  "notes": null
+}

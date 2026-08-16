@@ -1,0 +1,7 @@
+{
+  "id": "clip-clothing-recommender",
+  "query": "clothing recommendation engine using CLIP embeddings",
+  "expectedSlug": "multimodal-fashion-recommender",
+  "ambiguousWith": "style-maitri",
+  "notes": "Genuinely ambiguous: both projects use CLIP and are clothing-related. Labeled multimodal-fashion-recommender as primary because its techChips literally include 'CLIP' and 'SBERT' for a two-tower recommender, which is the closer match to 'recommendation engine using CLIP embeddings' than style-maitri's guardrailed multi-catalogue search assistant."
+}

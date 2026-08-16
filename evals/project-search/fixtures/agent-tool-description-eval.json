@@ -1,0 +1,7 @@
+{
+  "id": "agent-tool-description-eval",
+  "query": "measures if changing an AI agent's tool descriptions actually helps",
+  "expectedSlug": "agentgauge",
+  "ambiguousWith": null,
+  "notes": null
+}

@@ -1,0 +1,7 @@
+{
+  "id": "claude-code-token-waste",
+  "query": "tool that evaluates Claude Code token usage waste",
+  "expectedSlug": "tracegauge",
+  "ambiguousWith": null,
+  "notes": null
+}
