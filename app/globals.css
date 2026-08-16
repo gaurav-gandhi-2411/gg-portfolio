@@ -1,12 +1,27 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Smooth-scroll support styles, shipped by the package so they cannot drift
+ * from what the runtime expects. */
+@import "lenis/dist/lenis.css";
+/* Hero surface + sitewide grain. Consumes the tokens below, defines none. */
+@import "./hero.css";
 
 /*
  * GG Portfolio design tokens (rule 15b).
  * Single theme by design (spec non-goal: no dark-mode toggle ceremony).
  * Dark, high-contrast: deep graphite base + one vivid accent (indigo,
- * ratified 2026-07-12). Depth via borders, no gradients.
+ * ratified 2026-07-12).
+ *
+ * This header used to end that sentence with "Depth via borders, no
+ * gradients." That rule is gone on purpose, and it should not come back.
+ * It was the single line most responsible for the site reading flat: with
+ * borders as the only depth cue, every surface on the page sat on one
+ * plane and the whole thing looked like a competent default template. GG's
+ * identity constraint was always palette, type and monogram, never the
+ * ban on gradients, so removing it costs nothing he asked to keep. The
+ * atmosphere tokens below are the replacement, and they are the deliberate
+ * successor to that rule rather than drift away from it.
  *
  * Contrast checked against WCAG 2.1 (rule: recheck contrast after any
  * palette remap — dark themes are where failures hide):
@@ -205,6 +220,96 @@
   --status-closed: var(--slate);
 
   --radius: 0.5rem;
+
+  /*
+   * ── Atmosphere ──────────────────────────────────────────────────────
+   * The replacement for "depth via borders, no gradients". Three named
+   * planes, so a component can say which distance it sits at instead of
+   * every surface painting the same --background and relying on a 1px
+   * line to imply depth.
+   *
+   * --plane-far   the point field and anything behind content
+   * --plane-mid   content surfaces (cards, panels)
+   * --plane-near  things that float over content (nav, launcher)
+   *
+   * Near is lighter than mid on purpose: on a dark base, closer reads as
+   * lifted toward the light, which is the opposite of the paper metaphor
+   * and the right one for a screen.
+   */
+  --plane-far: #06070a;
+  --plane-mid: var(--graphite-900);
+  --plane-near: color-mix(in oklab, var(--graphite-800) 82%, var(--indigo) 4%);
+
+  /* Accent broken into parts so hue can rotate per project later (the case
+   * study template needs thirteen distinguishable accents off one system)
+   * without anyone introducing a second palette to get there. The base
+   * triple is #818cf8 converted to oklch, to within about a just-noticeable
+   * difference; --accent-h is the only part a project overrides, so every
+   * derived accent keeps the base's lightness and chroma and can only
+   * differ in hue. --accent itself stays the literal hex, so nothing that
+   * already consumes it changes. */
+  --accent-l: 68%;
+  --accent-c: 0.158;
+  --accent-h: 277;
+  --accent-oklch: oklch(var(--accent-l) var(--accent-c) var(--accent-h));
+
+  /* Glow: the accent at the alphas the atmosphere layers actually use.
+   * Named rather than inlined so the halo behind the hero, the card hover
+   * bloom and the field's own bleed cannot drift apart. */
+  --glow-strong: color-mix(in oklab, var(--accent-oklch) 26%, transparent);
+  --glow-soft: color-mix(in oklab, var(--accent-oklch) 12%, transparent);
+  --glow-faint: color-mix(in oklab, var(--accent-oklch) 5%, transparent);
+
+  /*
+   * ── Pointer ─────────────────────────────────────────────────────────
+   * Written once per frame by components/pointer-field.tsx and read by any
+   * layer that wants to acknowledge the cursor. Normalized 0..1 across the
+   * viewport, with -0.5..0.5 offsets precomputed so a parallax layer is a
+   * one-line translate3d and never has to do its own arithmetic.
+   *
+   * Defaults are dead centre, so every layer that reads them renders in a
+   * sane resting state before the first pointer event and on touch devices
+   * that never send one.
+   */
+  --mx: 0.5;
+  --my: 0.5;
+  --mdx: 0;
+  --mdy: 0;
+  /* 0 while the pointer is away, eased to 1 while it is over the page.
+   * Layers multiply their effect by this so nothing pops on first move. */
+  --pointer-on: 0;
+
+  /*
+   * ── Motion ──────────────────────────────────────────────────────────
+   * Durations and curves as tokens, because the site had a dozen ad hoc
+   * ones doing the same job. --ease-spring is a real spring sampled into
+   * CSS linear(), so hover and press states get weight without any
+   * JavaScript; GSAP handles anything that needs to be interruptible or
+   * scroll-linked.
+   */
+  --dur-instant: 90ms;
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 620ms;
+  --dur-ambient: 1200ms;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Damped spring, ~0.62 damping ratio, sampled at 24 stops. Overshoots
+   * once and settles, which is what "has mass" means at this size. */
+  --ease-spring: linear(
+    0, 0.0088, 0.0344, 0.0748, 0.1288, 0.1952, 0.2724, 0.3588, 0.4524, 0.5512,
+    0.6532, 0.7564, 0.8588, 0.9584, 1.0532, 1.1416, 1.0968, 1.0604, 1.0332,
+    1.0148, 1.004, 0.999, 0.9982, 1
+  );
+
+  /*
+   * ── Chrome that floats over the page ────────────────────────────────
+   * The two overlays every scroll position has to account for: the sticky
+   * site nav along the top, and the chat launcher in the bottom right.
+   */
+  --nav-h: 3.75rem;
+  --floating-ui-h: 6rem;
 }
 
 @layer base {
@@ -235,6 +340,29 @@
    */
   html {
     overflow-x: clip;
+  }
+
+  /*
+   * Keep anything scrolled into view out from under the two fixed overlays.
+   *
+   * The site has a sticky nav pinned to the top and a floating chat launcher
+   * pinned to the bottom right, and nothing told the browser they were
+   * there. So any scroll-into-view, from an anchor link, from tabbing to a
+   * control below the fold, or from a script, could land its target exactly
+   * underneath one of them, where it is visible in the layout and
+   * unreachable with a pointer.
+   *
+   * The repo already knew about the top half of this and was patching it one
+   * element at a time: case-study headings carry a hand-placed scroll-mt-24
+   * for exactly this reason. This is that fix generalized to every element
+   * and to both edges, which is the version that also covers the elements
+   * nobody remembered to annotate. It surfaced on the project filter pills,
+   * where a pill could end up under the nav or under the launcher depending
+   * on which category had just been chosen.
+   */
+  html {
+    scroll-padding-top: calc(var(--nav-h) + var(--space-4));
+    scroll-padding-bottom: var(--floating-ui-h);
   }
 }
 
