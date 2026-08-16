@@ -8,8 +8,8 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes. None was a
-bug in the usual sense. Almost every one was green — one that was red had already
+days**, in fifteen different disguises, by fifteen unrelated routes, and twice
+more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
 a monitoring stack installed after an outage it could not have detected, and one was
@@ -24,7 +24,13 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-## The fifteen
+Instances 16 and 17 came later, from a design rebuild rather than an audit, and
+they extend the pattern rather than repeat it. Every earlier entry is a check
+that could not see its subject. Instance 16 is a check that saw its subject
+perfectly and had been told to look for the wrong thing. Instance 17 is a defect
+no check was looking for at all, which announced itself only as a slow test.
+
+## The seventeen
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -507,6 +513,58 @@ Two aggravating details worth carrying:
 Related in kind to instance 10 — a check running correctly against the wrong
 target — but the target here is not a URL or a project. It is *who you are*, and
 nothing in the output of a failing command mentions it.
+
+**16. A test that was green, specific, and defending the defect.** The header
+was rebuilt as a pill that contracts on scroll, and a test asserted the
+contraction: `expect(scrolled.height).toBeLessThan(atTop.height)`. It passed
+every run. It was also wrong, because the band is sticky *and still in flow*, so
+a band that changes height moves every element on the page below it — the whole
+document slid 16px as you scrolled through the contraction. The test had been
+written by reading the implementation and asserting what it did, so it locked in
+the behaviour instead of the intent. The intent was "the pill contracts"; what
+got written down was "the header gets shorter", and those are the same sentence
+right up until you ask what the header is sitting in. It now asserts both halves:
+the pill shrinks **and** the band does not.
+
+This is the failure mode this document keeps finding, moved one layer out. A
+check that cannot see part of its subject is instance 1 through 15. A check that
+sees its subject perfectly and was told to look for the wrong thing produces the
+same output — green, confident, specific — and is harder to catch, because
+nothing about it is broken. The tell is provenance: a test written *from* the
+implementation can only ever agree with it.
+
+**17. A negative margin that was invisible until the row wrapped.** The project
+filter pills carry `-my-[5px]` so a 44px tap target does not bulk out the row.
+On a single line that is correct and invisible. The moment the row wraps —
+which it does at every phone width — 10px of negative margin against an 8px row
+gap left pills in adjacent rows **overlapping by 2px**, and Chromium hit-tests an
+overlap to whichever element paints last. Seven overlapping pairs on a Pixel 7.
+A tap near the edge of one pill could apply a different filter, silently and
+correctly as far as any code was concerned.
+
+Nothing was watching for it. Every a11y check passed: the targets are 44px, the
+contrast is fine, the roles and `aria-pressed` are right. Tap-target *size* is a
+standard audit; tap-target *overlap* is not, and a wrapped flex row is exactly
+where the two diverge.
+
+The only reason it surfaced is that a Playwright click took 3.7 seconds and the
+test suite got slow. The log said `intercepts pointer events` on every retry —
+the harness describing the bug accurately, in plain words, for weeks. The
+available reading was "flaky test, raise the timeout", and that reading would
+have been comfortable, fast, and would have kept a real mobile defect in
+production. **Slowness is a symptom with a cause.** Before treating a test as
+flaky, get it to say what it is waiting for.
+
+Two rules fall out, both cheap:
+
+- A negative margin on a `flex-wrap` row is only safe while the row does not
+  wrap. If the gap is smaller than the margin it cancels, the boxes overlap the
+  moment it does. Set the cross-axis gap larger than the negative margin, or do
+  not use one.
+- Assert that interactive siblings do not overlap, and that each receives the
+  hit at its own centre. Both are two lines of `getBoundingClientRect` and
+  `elementFromPoint` (`e2e/project-grid.spec.ts`), and neither is covered by any
+  standard accessibility audit.
 
 ## What follows from it
 
