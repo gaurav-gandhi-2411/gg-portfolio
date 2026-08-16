@@ -140,15 +140,20 @@ test.describe("focused controls stay reachable", () => {
 
 test.describe("header height tokens", () => {
   /*
-   * The two clearance numbers everything else is positioned against are
-   * measured values written into globals.css by hand, not expressions
-   * derived from the pill's own padding. That is a deliberate trade (the
-   * derived version was unreadable) and this is the check that makes it
-   * safe: change the header's padding without updating the tokens and this
-   * fails, instead of the failure showing up later as a heading parked
-   * under the nav on some route nobody looked at.
+   * The clearance number everything else is positioned against is a measured
+   * value written into globals.css by hand, not an expression derived from
+   * the pill's own padding. This is the check that makes that safe.
+   *
+   * It now asserts a second, more important thing: that the band's height is
+   * the SAME whether the pill is expanded or contracted. The band is sticky
+   * but still in flow, so a band that changes height moves every element on
+   * the page below it, and the first version of this header did exactly
+   * that, sliding the whole document 16px as you scrolled through the
+   * contraction. That is a reader-visible defect, and it is also what made
+   * the mobile filter test spend seconds per click waiting for a box to stop
+   * moving. A test that only checked the token would have let it back in.
    */
-  test("--nav-h and --nav-h-rest match the header band the browser actually renders", async ({
+  test("the header band keeps one height through the contraction, and matches --nav-h", async ({
     page,
   }) => {
     await page.goto("/");
@@ -158,31 +163,37 @@ test.describe("header height tokens", () => {
       const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
       const nav = document.querySelector<HTMLElement>('nav[aria-label="Site"]')!;
       const root = getComputedStyle(document.documentElement);
-      const toPx = (v: string) => parseFloat(v) * 16;
 
       window.scrollTo(0, 0);
       await wait(900);
       const rest = nav.getBoundingClientRect().height;
+      const restShrink = Number(getComputedStyle(nav).getPropertyValue("--nav-shrink"));
 
       window.scrollTo(0, 600);
       await wait(1600);
       const contracted = nav.getBoundingClientRect().height;
+      const contractedShrink = Number(getComputedStyle(nav).getPropertyValue("--nav-shrink"));
 
       return {
         rest,
         contracted,
-        tokenRest: toPx(root.getPropertyValue("--nav-h-rest")),
-        tokenContracted: toPx(root.getPropertyValue("--nav-h")),
+        restShrink,
+        contractedShrink,
+        token: parseFloat(root.getPropertyValue("--nav-h")) * 16,
       };
     });
 
+    expect(measured.restShrink, "the pill really is expanded at the top").toBeLessThan(0.15);
+    expect(measured.contractedShrink, "and really is contracted after scrolling").toBeGreaterThan(
+      0.85
+    );
     expect(
-      Math.abs(measured.rest - measured.tokenRest),
-      `--nav-h-rest is ${measured.tokenRest}px, band at rest is ${measured.rest}px`
-    ).toBeLessThanOrEqual(3);
+      Math.abs(measured.rest - measured.contracted),
+      `band is ${measured.rest}px expanded and ${measured.contracted}px contracted; a band that changes height reflows the whole page below it`
+    ).toBeLessThanOrEqual(1);
     expect(
-      Math.abs(measured.contracted - measured.tokenContracted),
-      `--nav-h is ${measured.tokenContracted}px, contracted band is ${measured.contracted}px`
+      Math.abs(measured.rest - measured.token),
+      `--nav-h is ${measured.token}px, band is ${measured.rest}px`
     ).toBeLessThanOrEqual(3);
   });
 });

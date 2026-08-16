@@ -168,7 +168,7 @@ body::after {
   display: flex;
   width: 100%;
   max-width: 90rem;
-  min-height: calc(100svh - var(--nav-h-rest));
+  min-height: calc(100svh - var(--nav-h));
   flex-direction: column;
   justify-content: space-between;
   /* Phone spacing is tighter than a scaled-down desktop would give. The
@@ -482,8 +482,26 @@ body::after {
   top: 0;
   z-index: 50;
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: calc(var(--space-3) - var(--nav-shrink) * var(--space-1-5)) var(--space-4);
+  /*
+   * Fixed height, and this is not a detail. The band is sticky but still in
+   * flow, so anything that changes its height moves every element on the
+   * page below it. The first version let the band shrink with the pill, and
+   * the result was the whole document sliding up by 16px as you scrolled
+   * through the contraction: content moving under the reader's eyes for no
+   * reason they asked for.
+   *
+   * It also made the page never hold still while the contraction was
+   * scrubbing, which is how it surfaced. A Playwright click waits for its
+   * target's box to stop moving, and on a long mobile page every filter
+   * click was spending seconds waiting for a header two thousand pixels
+   * away to finish resizing the document.
+   *
+   * So the band keeps one height and the pill contracts inside it.
+   */
+  height: var(--nav-h);
+  padding-inline: var(--space-4);
   pointer-events: none;
 }
 
@@ -506,8 +524,8 @@ body::after {
    * column of every section below it, not so the pill's own box does. The
    * right side is a step smaller because each link carries its own padding,
    * which would otherwise double up against the pill's. */
-  padding: calc(var(--space-2) - var(--nav-shrink) * var(--space-0-5)) var(--space-3-5)
-    calc(var(--space-2) - var(--nav-shrink) * var(--space-0-5)) var(--space-6);
+  padding: calc(var(--space-2) - var(--nav-shrink) * var(--space-1)) var(--space-3-5)
+    calc(var(--space-2) - var(--nav-shrink) * var(--space-1)) var(--space-6);
   backdrop-filter: blur(calc(6px + var(--nav-shrink) * 10px)) saturate(140%);
   box-shadow: 0 calc(var(--nav-shrink) * 18px) calc(var(--nav-shrink) * 40px)
     calc(var(--nav-shrink) * -22px) color-mix(in oklab, #000 60%, transparent);

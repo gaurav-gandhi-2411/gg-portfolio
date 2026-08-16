@@ -310,17 +310,17 @@
    * The two overlays every scroll position has to account for: the sticky
    * site nav along the top, and the chat launcher in the bottom right.
    *
-   * The header band contracts as you scroll, so it has two heights. The
-   * contracted one is what scroll-padding needs, because by the time
-   * anything is being scrolled into view the header has already shrunk;
-   * the resting one is what the hero subtracts to put its stats exactly on
-   * the fold. Both are measured values rather than derived expressions,
-   * and e2e/scroll-reachability.spec.ts asserts them against the real
-   * rendered band so they cannot quietly drift when the pill's padding
-   * changes.
+   * The header band is one fixed height and the pill contracts inside it,
+   * so this is a single number rather than the pair it started as. That is
+   * deliberate: a sticky band that changes height is still in flow, so
+   * every element on the page moves when it resizes. Fixing the height is
+   * what stopped the document shifting under the reader mid-scroll.
+   *
+   * A measured value rather than a derived expression, so
+   * e2e/scroll-reachability.spec.ts asserts it against the real rendered
+   * band and it cannot quietly drift when the pill's padding changes.
    */
-  --nav-h: 4.3125rem;
-  --nav-h-rest: 5.3125rem;
+  --nav-h: 5.3125rem;
   --floating-ui-h: 6rem;
 }
 

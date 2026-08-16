@@ -69,9 +69,11 @@ test.describe("header pill", () => {
     const read = () =>
       page.evaluate(() => {
         const nav = document.querySelector<HTMLElement>('nav[aria-label="Site"]')!;
+        const pill = document.querySelector<HTMLElement>(".site-nav-pill")!;
         return {
           shrink: Number(getComputedStyle(nav).getPropertyValue("--nav-shrink")),
           height: Math.round(nav.getBoundingClientRect().height),
+          pillHeight: Math.round(pill.getBoundingClientRect().height),
         };
       });
 
@@ -85,9 +87,20 @@ test.describe("header pill", () => {
 
     expect(atTop.shrink, "pill starts expanded").toBeLessThan(0.15);
     expect(scrolled.shrink, "pill ends contracted").toBeGreaterThan(0.85);
-    expect(scrolled.height, "contracted band is shorter than the resting one").toBeLessThan(
-      atTop.height
-    );
+
+    /* The pill shrinks and the band does not, and both halves matter.
+     *
+     * This assertion used to be the opposite way round: the band was
+     * expected to shrink with the pill, because that is how it was first
+     * built. It was wrong. The band is sticky but still in flow, so a band
+     * that changes height moves every element on the page below it, and
+     * the whole document slid 16px as you scrolled through the
+     * contraction. The pill now contracts inside a fixed-height band. */
+    expect(scrolled.pillHeight, "the pill itself contracts").toBeLessThan(atTop.pillHeight);
+    expect(
+      Math.abs(scrolled.height - atTop.height),
+      `band was ${atTop.height}px and became ${scrolled.height}px; a band that resizes reflows the page below it`
+    ).toBeLessThanOrEqual(1);
   });
 
   test("the indicator follows the section being read, and clears at the top", async ({ page }) => {
