@@ -37,7 +37,7 @@
 //
 // Zero dependencies; Node 20+ (dynamic import).
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -105,11 +105,39 @@ function tokensFoundIn(tokens, haystack) {
   return missing;
 }
 
+// Same shape of hazard as loadProducts(): this regex wants exactly
+// `import { X } from "./y";`, so single quotes, a line break inside the
+// braces, or a trailing comment would drop a case study from the set without
+// a word. The directory listing is the independent second reading -- it knows
+// nothing about import syntax -- and the two have to name the same files.
 function discoverCaseStudyModules() {
   const indexSrc = readFileSync(CASE_STUDIES_INDEX_PATH, "utf8");
-  return [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)].map(
+  const imported = [...indexSrc.matchAll(/import \{ (\w+) \} from "\.\/([\w-]+)";/g)].map(
     ([, exportName, fileName]) => ({ exportName, fileName })
   );
+
+  const onDisk = readdirSync(CASE_STUDIES_DIR)
+    .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+    .map((f) => f.slice(0, -3));
+  const importedNames = new Set(imported.map((m) => m.fileName));
+  const missed = onDisk.filter((f) => !importedNames.has(f));
+  const phantom = imported.map((m) => m.fileName).filter((f) => !onDisk.includes(f));
+
+  if (missed.length > 0 || phantom.length > 0) {
+    const lines = [
+      `PARSE_ERROR in ${CASE_STUDIES_INDEX_PATH}: import parsing and the directory disagree.`,
+      `  ${onDisk.length} case-study file(s) on disk, ${imported.length} matched by import parsing`,
+    ];
+    if (missed.length > 0) {
+      lines.push(`  on disk, never loaded: ${missed.join(", ")}`);
+      lines.push("  Either the barrel does not import them, or the import is written in a form");
+      lines.push('  this regex does not match (it wants: import { X } from "./y";).');
+    }
+    if (phantom.length > 0) lines.push(`  imported, no such file: ${phantom.join(", ")}`);
+    throw new Error(lines.join("\n"));
+  }
+
+  return imported;
 }
 
 // Every sourceRef-carrying claim in a case study, paired with the exact
@@ -181,16 +209,31 @@ async function loadProducts() {
   // products.ts's own source text for each `slug`/`tagline`/`metric`/
   // `secondaryMetric`/`figure` field with targeted regexes — brittle to a
   // structural rewrite of products.ts, but avoids a build step or a
-  // duplicate module-resolution setup for a single CI check. A structural
-  // rewrite that breaks this parsing will make every product report
-  // PARSE_ERROR below, loudly, not silently skip.
+  // duplicate module-resolution setup for a single CI check.
+  //
+  // That comment used to claim a structural rewrite would make every product
+  // report PARSE_ERROR, loudly, not silently skip. True of a total rewrite,
+  // false of the partial one a formatter or a hand-edit actually produces:
+  // moving one product's opening brace onto the same line as its first field
+  // took this from 13 products to 12, printed "12 products" in its own
+  // summary, and exited 0. Nothing read that number.
+  //
+  // So the block split is checked against a second reading of the same file
+  // that shares none of its assumptions: a flat scan for `slug:` anywhere in
+  // the source, which does not care about indentation, brace placement, or
+  // where one product ends and the next begins. The two have to agree.
   const src = readFileSync(PRODUCTS_PATH, "utf8").replace(/\r\n/g, "\n");
+  const declaredSlugs = [...src.matchAll(/\bslug:\s*"([\w-]+)"/g)].map((m) => m[1]);
   const blocks = src.split(/\n  \{\n/).slice(1); // one string per product object literal
   const products = [];
+  const unparsed = [];
   for (const raw of blocks) {
     const block = "{\n" + raw.split(/\n  \},?\n/)[0] + "\n  }";
     const slugMatch = block.match(/slug:\s*"([\w-]+)"/);
-    if (!slugMatch) continue;
+    if (!slugMatch) {
+      unparsed.push(block.slice(0, 60).replace(/\n/g, " "));
+      continue;
+    }
     const slug = slugMatch[1];
     const taglineMatch = block.match(/tagline:\s*\n?\s*"((?:[^"\\]|\\.)*)"/);
     const metricMatch = block.match(/(?<!secondary)metric:\s*refreshableMetric\("([\w:-]+)"\)/);
@@ -204,6 +247,24 @@ async function loadProducts() {
       figureRaw: figureMatch ? figureMatch[1] : null,
     });
   }
+
+  const parsed = new Set(products.map((p) => p.slug));
+  const lost = declaredSlugs.filter((s) => !parsed.has(s));
+  if (lost.length > 0 || unparsed.length > 0) {
+    const lines = [
+      `PARSE_ERROR in ${PRODUCTS_PATH}: the block split and a flat slug scan disagree.`,
+      `  flat scan found ${declaredSlugs.length} product slug(s), block parsing produced ${products.length}`,
+    ];
+    if (lost.length > 0) {
+      lines.push(`  slugs the block parsing lost: ${lost.join(", ")}`);
+      lines.push("  These products were about to be skipped, and every check below would have");
+      lines.push("  passed without ever looking at them. Usually a reformat: this parsing needs");
+      lines.push("  each product to open with a brace alone on its own line, indented two spaces.");
+    }
+    if (unparsed.length > 0) lines.push(`  block(s) with no slug at all: ${unparsed.join(" | ")}`);
+    throw new Error(lines.join("\n"));
+  }
+
   return products;
 }
 
@@ -317,6 +378,10 @@ const other = findings.filter((f) => f.status !== "DRIFT" && f.status !== "SKIPP
 const uncovered = findings.filter((f) => f.status === "SKIPPED");
 
 console.log(`check-card-consistency: ${Object.keys(metrics).length} metrics, ${products.length} products, ${caseStudies.size} case studies checked.`);
+console.log(
+  `  Coverage: ${products.length} products agreed with a flat slug scan of the same file, ` +
+    `${caseStudies.size} case studies agreed with the directory listing.`
+);
 console.log(`  Check A (metrics.json vs. same-sourceRef case-study row): ${findings.filter((f) => f.check === "A" && f.status === "DRIFT").length} drift`);
 console.log(`  Check B (products.ts figure vs. its own metric):          ${findings.filter((f) => f.check === "B" && f.status === "DRIFT").length} drift`);
 console.log(`  Check C (products.ts tagline vs. its own case study):     ${findings.filter((f) => f.check === "C" && f.status === "DRIFT").length} drift`);
