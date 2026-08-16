@@ -126,7 +126,7 @@ test.describe("nav crash regression", () => {
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
         await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
-          name: `— home`,
+          name: `, home`,
         }).click();
         await expect(page).toHaveURL(/\/$/);
 
@@ -154,7 +154,7 @@ test.describe("nav crash regression", () => {
     const watcher = watchForCrashes(page);
     await page.goto("/projects", { waitUntil: "networkidle" });
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
-      name: `— home`,
+      name: `, home`,
     }).click();
     await expect(page).toHaveURL(/\/$/);
     await assertNoCrash(page, watcher);
@@ -181,7 +181,7 @@ test.describe("nav crash regression", () => {
     await firstCard.click();
     await expect(page).toHaveURL(/\/work\//);
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
-      name: `— home`,
+      name: `, home`,
     }).click();
     await expect(page).toHaveURL(/\/$/);
     await assertNoCrash(page, watcher);

@@ -138,6 +138,55 @@ test.describe("focused controls stay reachable", () => {
   });
 });
 
+test.describe("header height tokens", () => {
+  /*
+   * The two clearance numbers everything else is positioned against are
+   * measured values written into globals.css by hand, not expressions
+   * derived from the pill's own padding. That is a deliberate trade (the
+   * derived version was unreadable) and this is the check that makes it
+   * safe: change the header's padding without updating the tokens and this
+   * fails, instead of the failure showing up later as a heading parked
+   * under the nav on some route nobody looked at.
+   */
+  test("--nav-h and --nav-h-rest match the header band the browser actually renders", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1200);
+
+    const measured = await page.evaluate(async () => {
+      const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const nav = document.querySelector<HTMLElement>('nav[aria-label="Site"]')!;
+      const root = getComputedStyle(document.documentElement);
+      const toPx = (v: string) => parseFloat(v) * 16;
+
+      window.scrollTo(0, 0);
+      await wait(900);
+      const rest = nav.getBoundingClientRect().height;
+
+      window.scrollTo(0, 600);
+      await wait(1600);
+      const contracted = nav.getBoundingClientRect().height;
+
+      return {
+        rest,
+        contracted,
+        tokenRest: toPx(root.getPropertyValue("--nav-h-rest")),
+        tokenContracted: toPx(root.getPropertyValue("--nav-h")),
+      };
+    });
+
+    expect(
+      Math.abs(measured.rest - measured.tokenRest),
+      `--nav-h-rest is ${measured.tokenRest}px, band at rest is ${measured.rest}px`
+    ).toBeLessThanOrEqual(3);
+    expect(
+      Math.abs(measured.contracted - measured.tokenContracted),
+      `--nav-h is ${measured.tokenContracted}px, contracted band is ${measured.contracted}px`
+    ).toBeLessThanOrEqual(3);
+  });
+});
+
 test.describe("scroll ownership", () => {
   test("a scroll from outside wins over one the smooth-scroll driver is still animating", async ({
     page,
