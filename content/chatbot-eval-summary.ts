@@ -15,7 +15,7 @@
 // doesn't state as that exact fact (lib/chatbot/answer.ts buildSystemPrompt),
 // then re-measured live to confirm the fix, not just re-worded the story.
 
-/** Sentinel `value` meaning "not yet measured" — never a real metric. */
+/** Sentinel `value` meaning "not yet run" — never a real metric. */
 export const EVAL_PLACEHOLDER_VALUE = -1;
 
 export interface ChatbotEvalMetric {

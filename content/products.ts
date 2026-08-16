@@ -92,7 +92,7 @@ export const products: Product[] = [
     categories: ["forecasting"],
     techChips: ["LightGBM", "Dagster", "M5 dataset"],
     metric: refreshableMetric("shelfsense:wrmsse"),
-    figure: { kind: "dumbbell", from: 0.8956, to: 0.5693, scaleNote: "WRMSSE — lower is better" },
+    figure: { kind: "dumbbell", from: 0.8956, to: 0.5693, scaleNote: "WRMSSE, lower is better" },
   },
   {
     slug: "aetherart",

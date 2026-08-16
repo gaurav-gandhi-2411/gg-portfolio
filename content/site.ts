@@ -2,7 +2,7 @@ export const site = {
   name: "Gaurav Gandhi",
   role: "Senior Applied AI Scientist",
   tagline:
-    "I build and ship AI products under my own name — and the production systems and research behind them.",
+    "I build and ship AI products under my own name, and the production systems and research behind them.",
   status: "Open to Senior AI/ML roles",
   location: "Bengaluru, India",
   email: "gauravgandhi429@gmail.com",

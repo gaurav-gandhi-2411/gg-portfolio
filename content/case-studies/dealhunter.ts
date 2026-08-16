@@ -9,16 +9,16 @@ export const dealhunter: CaseStudy = {
   slug: "dealhunter",
   verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "DealHunter",
-  dek: "A flight-search agent that turns a plain-English trip request into two honestly-explained trade-offs — hardened by finding and closing a two-week silent production outage caused by two unrelated bugs hiding behind each other.",
+  dek: "A flight-search agent that turns a plain-English trip request into two honestly-explained trade-offs, hardened by finding and closing a two-week silent production outage caused by two unrelated bugs hiding behind each other.",
   depth: "full",
   problem: [
-    "Flight search sites usually dump a wall of prices sorted one way, and leave you to manually weigh cost against convenience — is the cheaper flight worth a 6am departure and a layover? DealHunter answers that question directly: you type a request like \"Delhi to Dubai in June,\" and instead of forty rows to compare, it hands back a small, explained set of trade-offs.",
-    "It's also a cost case study in its own right: the whole agentic search pipeline — language understanding, search, and ranking — runs on free-tier LLM infrastructure, which forces every design decision to account for what happens when a provider's free quota runs out mid-request.",
+    "Flight search sites usually dump a wall of prices sorted one way, and leave you to manually weigh cost against convenience, is the cheaper flight worth a 6am departure and a layover? DealHunter answers that question directly: you type a request like \"Delhi to Dubai in June,\" and instead of forty rows to compare, it hands back a small, explained set of trade-offs.",
+    "It's also a cost case study in its own right: the whole agentic search pipeline, language understanding, search, and ranking, runs on free-tier LLM infrastructure, which forces every design decision to account for what happens when a provider's free quota runs out mid-request.",
   ],
   approach: [
-    "A search starts as a POST request carrying a free-text trip description. A PlannerAgent — an LLM call — reads it and extracts a structured \"travel intent\" (origin, destination, date range, traveler count, preferences) from what was plain prose.",
-    "From there, a deterministic (non-LLM, rule-based) WindowSearcher explores candidate date windows within a hard budget on how many provider calls it's allowed to make, querying flight and hotel adapters — either the live Aviasales API or a synthetic provider used for testing and cost control.",
-    "An OptimizerAgent — another LLM call — takes the resulting candidates and computes a 2D Pareto frontier: a small set of options where none dominates the others (one is cheaper, one is more comfortable, and neither is simply worse than the other on both axes). It returns exactly two \"archetypes\" with a plain-language explanation of the trade-off, streamed to the browser as they're ready. If you ask a follow-up question, a ConversationManagerAgent re-scores the already-cached candidates instead of re-running the whole search.",
+    "A search starts as a POST request carrying a free-text trip description. A PlannerAgent, an LLM call, reads it and extracts a structured \"travel intent\" (origin, destination, date range, traveler count, preferences) from what was plain prose.",
+    "From there, a deterministic (non-LLM, rule-based) WindowSearcher explores candidate date windows within a hard budget on how many provider calls it's allowed to make, querying flight and hotel adapters, either the live Aviasales API or a synthetic provider used for testing and cost control.",
+    "An OptimizerAgent, another LLM call, takes the resulting candidates and computes a 2D Pareto frontier: a small set of options where none dominates the others (one is cheaper, one is more comfortable, and neither is simply worse than the other on both axes). It returns exactly two \"archetypes\" with a plain-language explanation of the trade-off, streamed to the browser as they're ready. If you ask a follow-up question, a ConversationManagerAgent re-scores the already-cached candidates instead of re-running the whole search.",
   ],
   architecture: {
     intro:
@@ -31,11 +31,11 @@ export const dealhunter: CaseStudy = {
       },
       {
         label: "PlannerAgent",
-        detail: "LLM — extracts a structured travel intent from free text",
+        detail: "LLM, extracts a structured travel intent from free text",
       },
       {
         label: "WindowSearcher",
-        detail: "deterministic, call-budgeted — explores date windows, no LLM",
+        detail: "deterministic, call-budgeted, explores date windows, no LLM",
       },
       {
         label: "Provider search",
@@ -46,7 +46,7 @@ export const dealhunter: CaseStudy = {
       },
       {
         label: "OptimizerAgent",
-        detail: "LLM — Pareto frontier → exactly 2 explained archetypes",
+        detail: "LLM, Pareto frontier → exactly 2 explained archetypes",
       },
       {
         label: "SSE stream to browser",
@@ -59,22 +59,22 @@ export const dealhunter: CaseStudy = {
   decisions: [
     {
       title: "A deterministic searcher, not another LLM agent, does the exploring",
-      body: "The WindowSearcher that walks candidate date windows is plain rule-based code, not an LLM call. That makes it fully testable and lets it enforce a hard budget on provider API calls — a guarantee an LLM agent, which can't be relied on to count precisely, can't give.",
+      body: "The WindowSearcher that walks candidate date windows is plain rule-based code, not an LLM call. That makes it fully testable and lets it enforce a hard budget on provider API calls, a guarantee an LLM agent, which can't be relied on to count precisely, can't give.",
       sourceRef: "dealhunter:window-searcher",
     },
     {
       title: "Exactly two Pareto archetypes, not a ranked list",
-      body: "Rather than ranking every candidate, the OptimizerAgent computes a Pareto frontier (the set of options where none is strictly better than another on every axis) and reports exactly two: one weighted toward value, one toward experience. That's a mathematical guarantee the two options are genuinely different trade-offs, not near-duplicates — and it's small enough to honestly explain in plain language.",
+      body: "Rather than ranking every candidate, the OptimizerAgent computes a Pareto frontier (the set of options where none is strictly better than another on every axis) and reports exactly two: one weighted toward value, one toward experience. That's a mathematical guarantee the two options are genuinely different trade-offs, not near-duplicates, and it's small enough to honestly explain in plain language.",
       sourceRef: "dealhunter:pareto-archetypes",
     },
     {
       title: "LLM-judge evals: one judge, cross-family, median of three",
-      body: "To score whether the OptimizerAgent's explanations are actually coherent, the eval harness uses a single LLM judge from a different model family than the agent being judged, and takes the median of three judge calls per case — reducing both self-preference bias and single-call noise.",
+      body: "To score whether the OptimizerAgent's explanations are actually coherent, the eval harness uses a single LLM judge from a different model family than the agent being judged, and takes the median of three judge calls per case, reducing both self-preference bias and single-call noise.",
       sourceRef: "dealhunter:llm-judge",
     },
     {
       title: "A two-hop production fallback chain (Groq → OpenRouter), built after outages, not in anticipation of them",
-      body: "The live-traffic fallback chain is two hops: Groq's llama-3.3-70b-versatile, falling back to OpenRouter's free Gemma tier if Groq's quota is exhausted. Five provider adapters exist in the codebase in total — Anthropic and NVIDIA NIM for eval and opt-in demo use, Ollama for local dev — but only the Groq→OpenRouter pair carries production requests; NIM was tried as a third production profile and abandoned. The fallback chain itself was added after Groq's free-tier daily quota was repeatedly exhausted in production, not as a theoretical resilience exercise — the more honest order.",
+      body: "The live-traffic fallback chain is two hops: Groq's llama-3.3-70b-versatile, falling back to OpenRouter's free Gemma tier if Groq's quota is exhausted. Five provider adapters exist in the codebase in total, Anthropic and NVIDIA NIM for eval and opt-in demo use, Ollama for local dev, but only the Groq→OpenRouter pair carries production requests; NIM was tried as a third production profile and abandoned. The fallback chain itself was added after Groq's free-tier daily quota was repeatedly exhausted in production, not as a theoretical resilience exercise, the more honest order.",
       sourceRef: "dealhunter:multi-provider",
     },
   ],
@@ -82,16 +82,16 @@ export const dealhunter: CaseStudy = {
     {
       label: "Test suite",
       value: "Deterministic replay suite, per-run cost accounting",
-      detail: "no committed, current whole-repo test count exists to cite — the live count has moved with no matching committed artifact at the new figure, so this page states what's actually verifiable instead of a number",
+      detail: "no committed, current whole-repo test count exists to cite, the live count has moved with no matching committed artifact at the new figure, so this page states what's actually verifiable instead of a number",
       sourceRef: "dealhunter:ci-gates",
     },
     {
-      label: "Planner baseline — correct archetype selection",
+      label: "Planner baseline, correct archetype selection",
       value: "31/31 (100%)",
       sourceRef: "dealhunter:planner-baseline",
     },
     {
-      label: "Optimizer baseline — completion and judged coherence",
+      label: "Optimizer baseline, completion and judged coherence",
       value: "demo-haiku: 24/24, coherence 5.0/5 · demo-llama: 21/24, coherence 4.881",
       detail: "the llama run's lower completion count is free-tier quota exhaustion, not a quality failure",
       sourceRef: "dealhunter:optimizer-baseline",
@@ -107,13 +107,13 @@ export const dealhunter: CaseStudy = {
     title: "Found two unrelated bugs hiding behind each other after two weeks of silent production failure",
     body: [
       "The Cloud Run backend was frozen at a stale image tag, missing three phases of work that had merged since. That alone would have been visible eventually, but it was compounded by a second, independent bug on the Vercel frontend: some required environment variables were set to an empty string rather than left unset.",
-      "The frontend's fallback logic used the nullish-coalescing operator (`??`), which only kicks in for `null` or `undefined` — not for an empty string, which JavaScript treats as a perfectly valid, present value. So the app quietly sent requests with blank fields instead of falling back to a default or failing loudly, and every real search since launch had failed silently before it ever reached the backend.",
-      "The fix was process, not just code: a two-gate canary/soak deploy sequence (a new deploy first serves a small slice of traffic and has to stay healthy before it gets the rest) plus a staleness cron job that alerts if the running image tag falls behind main. The lesson generalizes past this one bug — a fallback operator is not a substitute for validating that a value is actually meaningful, not just technically present.",
+      "The frontend's fallback logic used the nullish-coalescing operator (`??`), which only kicks in for `null` or `undefined`, not for an empty string, which JavaScript treats as a perfectly valid, present value. So the app quietly sent requests with blank fields instead of falling back to a default or failing loudly, and every real search since launch had failed silently before it ever reached the backend.",
+      "The fix was process, not just code: a two-gate canary/soak deploy sequence (a new deploy first serves a small slice of traffic and has to stay healthy before it gets the rest) plus a staleness cron job that alerts if the running image tag falls behind main. The lesson generalizes past this one bug, a fallback operator is not a substitute for validating that a value is actually meaningful, not just technically present.",
     ],
     sourceRef: "dealhunter:silent-outage",
   },
   closing: [
-    "If you're running an agentic pipeline on free-tier or multi-provider LLM infrastructure, this is the failure mode worth guarding against: two independent bugs can silently compound, and a fallback operator is not the same as validating that a value is actually meaningful — a canary/soak deploy and a staleness check catch what a single build-passing check won't.",
+    "If you're running an agentic pipeline on free-tier or multi-provider LLM infrastructure, this is the failure mode worth guarding against: two independent bugs can silently compound, and a fallback operator is not the same as validating that a value is actually meaningful, a canary/soak deploy and a staleness check catch what a single build-passing check won't.",
   ],
   links: [
     { label: "Try DealHunter", href: "https://gaurav-gandhi.vercel.app/warmup/dealhunter" },

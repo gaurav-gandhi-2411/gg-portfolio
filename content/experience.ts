@@ -3,7 +3,7 @@ import type { ExperienceEntry } from "./types";
 export const experience: ExperienceEntry[] = [
   {
     company: "Indium Software",
-    companyDetail: "Client: Uber Technologies — Uber AI",
+    companyDetail: "Client: Uber Technologies, Uber AI",
     dateRange: "Jun 2024 – Present",
     location: "Bengaluru, India",
     techChips: [
@@ -22,7 +22,7 @@ export const experience: ExperienceEntry[] = [
         dateRange: "May 2025 – Present",
         bullets: [
           {
-            text: "Lead and mentor a 5-person data-science team across GenAI document-intelligence and conversational-AI workstreams — owning modeling roadmap, evaluation strategy, and technical review.",
+            text: "Lead and mentor a 5-person data-science team across GenAI document-intelligence and conversational-AI workstreams, owning modeling roadmap, evaluation strategy, and technical review.",
             sourceRef: "resume:indium-senior-lead",
             featured: true,
           },
@@ -36,7 +36,7 @@ export const experience: ExperienceEntry[] = [
             sourceRef: "resume:indium-senior-vit",
           },
           {
-            text: "Cut analytics turnaround from hours to seconds for non-technical teams with a production multi-agent copilot combining Hybrid RAG (dense + sparse), NL2SQL, a schema knowledge graph, and LangChain tool orchestration — live across business units.",
+            text: "Cut analytics turnaround from hours to seconds for non-technical teams with a production multi-agent copilot combining Hybrid RAG (dense + sparse), NL2SQL, a schema knowledge graph, and LangChain tool orchestration, live across business units.",
             sourceRef: "resume:indium-senior-copilot",
             featured: true,
           },
@@ -47,7 +47,7 @@ export const experience: ExperienceEntry[] = [
         dateRange: "Jun 2024 – May 2025",
         bullets: [
           {
-            text: "Owned the multi-task training objective and extraction head for an encoder–decoder Transformer pretrained on 50M+ documents across 144 A100 GPUs (PyTorch, Ray Train, DeepSpeed ZeRO-3) — shipped to production at 95%+ field accuracy, displacing manual review for $10M+ in annual cost savings.",
+            text: "Owned the multi-task training objective and extraction head for an encoder–decoder Transformer pretrained on 50M+ documents across 144 A100 GPUs (PyTorch, Ray Train, DeepSpeed ZeRO-3), shipped to production at 95%+ field accuracy, displacing manual review for $10M+ in annual cost savings.",
             sourceRef: "resume:indium-ds-docunderstanding",
             featured: true,
           },
@@ -72,7 +72,7 @@ export const experience: ExperienceEntry[] = [
         dateRange: "Aug 2022 – Jun 2024",
         bullets: [
           {
-            text: "Recovered lost enterprise shipping volume — surfaced via Average-Daily-Volume decline — by deploying an ensemble of Bayesian change-point detection, probabilistic clustering, and profitability scoring, shaping regional supply strategy cross-functionally.",
+            text: "Recovered lost enterprise shipping volume, surfaced via Average-Daily-Volume decline, by deploying an ensemble of Bayesian change-point detection, probabilistic clustering, and profitability scoring, shaping regional supply strategy cross-functionally.",
             sourceRef: "resume:fedex-anomaly",
             featured: true,
           },
