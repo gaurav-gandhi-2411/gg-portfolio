@@ -1,0 +1,419 @@
+/*
+ * Hero surface styles, plus the sitewide grain.
+ *
+ * Split out of globals.css because the hero is now the largest single piece
+ * of design on the site and globals.css was already 600 lines of tokens plus
+ * a dozen unrelated surfaces. Tokens stay there; this file only consumes
+ * them and never defines a colour, size or duration of its own that isn't in
+ * the token layer.
+ */
+
+/*
+ * ── Grain ───────────────────────────────────────────────────────────────
+ * One fixed layer of fractal noise over the whole page at 3% opacity. It is
+ * the cheapest fix for the flat-digital feel there is: a flat fill of
+ * #0a0b0d is a mathematically perfect surface, and nothing in the physical
+ * world is, so the eye reads it as a rendering rather than as a space. Under
+ * 1KB, rasterized once into a 180px tile and repeated, and it never takes a
+ * pointer event.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+@media print {
+  body::after {
+    display: none;
+  }
+}
+
+/*
+ * ── Hero ────────────────────────────────────────────────────────────────
+ * Three planes, not one. The field is behind everything and full bleed, the
+ * copy sits inside it, and the nav floats over both. The old hero clipped
+ * the field into the same max-w-3xl box the copy sat in, which is how a
+ * background becomes a decorative panel.
+ */
+
+.hero-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  /* clip rather than hidden, with a margin, so the field can scale past the
+   * edges on scroll while a focus ring on a button near the boundary is
+   * still allowed to paint. */
+  overflow: clip;
+  overflow-clip-margin: 16px;
+}
+
+.hero-field {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  /* Anchored to the top so the parallax pushes it down out of frame rather
+   * than pulling it up through the copy. */
+  transform-origin: 50% 0%;
+}
+
+/*
+ * Squares the box the static SVG fits into.
+ *
+ * That layer uses preserveAspectRatio="xMidYMid meet", which fits the cloud
+ * inside its box and letterboxes the rest. In a full-bleed hero that would
+ * leave the reduced-motion composition as a small square blob in the middle
+ * of a wide frame, which is exactly the boxed look this rebuild removes.
+ * Sizing the SVG's own box to a square at least as large as the viewport
+ * makes "meet" fill the frame instead of fitting inside it, with no change
+ * to the SVG and no aspect-ratio maths living in two places. The GL layer
+ * ignores this and computes its own extent.
+ */
+.hero-field-fit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 100svh);
+  height: max(100%, 100svh);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+/*
+ * Light that follows the cursor. Reads --mx/--my, written once a frame by
+ * components/pointer-field.tsx, and scales by --pointer-on so it eases in on
+ * the first move instead of appearing. Resting position is dead centre, so
+ * touch devices and no-JS get a static bloom rather than a missing one.
+ */
+.hero-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: calc(0.35 + var(--pointer-on) * 0.65);
+  background: radial-gradient(
+    38rem 38rem at calc(var(--mx) * 100%) calc(var(--my) * 100%),
+    var(--glow-soft) 0%,
+    var(--glow-faint) 38%,
+    transparent 68%
+  );
+  transition: opacity var(--dur-slow) var(--ease-out-soft);
+}
+
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 85% at 50% 45%, transparent 42%, var(--plane-far) 100%),
+    linear-gradient(to bottom, transparent 72%, var(--background) 100%);
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 90rem;
+  min-height: calc(100svh - var(--nav-h));
+  flex-direction: column;
+  justify-content: space-between;
+  /* Phone spacing is tighter than a scaled-down desktop would give. The
+   * headline runs to five lines at this width, and at desktop's rhythm the
+   * block overran the viewport by about 70px, which pushed the stats under
+   * the floating chat launcher in the bottom right. The bottom padding is
+   * that launcher's clearance; the tighter gaps are what buy room for it. */
+  gap: var(--space-8);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-6) var(--space-24);
+}
+
+@media (min-width: 768px) {
+  .hero-inner {
+    gap: var(--space-16);
+    padding: var(--space-16) var(--space-12) var(--space-14);
+  }
+}
+
+.hero-copy {
+  display: flex;
+  max-width: 54rem;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/*
+ * Fraunces is loaded with opsz, SOFT and WONK, and until now nothing on the
+ * site set any of them, which meant the display face rendered at its default
+ * optical size on a headline several times larger than that default is cut
+ * for. opsz 144 is the display end of the range: thinner hairlines, sharper
+ * transitions, the cut this size is supposed to use. WONK 1 swaps in the
+ * alternate wonky forms, which is the whole reason to pick Fraunces over any
+ * other serif in the first place.
+ *
+ * These are static values rather than animated ones, which is a considered
+ * retreat from the plan. Animating a variable axis re-rasterizes glyphs and
+ * changes their advance widths, so on a headline that wraps it can move a
+ * line break, which is both a layout shift and a break of the standing rule
+ * that only transform and opacity animate. The axes doing real work at rest
+ * is worth more here than the axes doing a trick on hover.
+ */
+.hero-headline {
+  margin-top: var(--space-6);
+  max-width: 17ch;
+  font-family: var(--font-heading);
+  /* The floor is the phone size and the ceiling is the 1440 size; the vw
+   * term only governs the stretch between them. Both ends were chosen
+   * against a real viewport rather than derived from each other. */
+  font-size: clamp(2.35rem, 6.6vw, 5.2rem);
+  font-variation-settings: "wght" 600, "opsz" 144, "SOFT" 0, "WONK" 1;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  text-wrap: pretty;
+  color: var(--foreground);
+}
+
+/* The one phrase that matters gets the soft cut and the accent, so it is set
+ * differently rather than only coloured differently. */
+.hero-headline-accent {
+  font-variation-settings: "wght" 600, "opsz" 144, "SOFT" 100, "WONK" 1;
+  font-style: italic;
+  background: linear-gradient(102deg, var(--text-hi) 8%, var(--indigo) 92%);
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-status {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--plane-near) 70%, transparent);
+  padding-inline: var(--space-4);
+  backdrop-filter: blur(10px);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  transition:
+    border-color var(--dur-base) var(--ease-out-soft),
+    color var(--dur-base) var(--ease-out-soft),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.hero-status:hover {
+  border-color: color-mix(in oklab, var(--indigo) 60%, transparent);
+  color: var(--foreground);
+  transform: translateY(-2px);
+}
+
+.hero-status:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Stacks on a phone, runs as one rule-separated line from tablet up. The
+ * separators are drawn here rather than placed in the markup so they simply
+ * stop existing in the stacked layout, instead of dangling off the end of
+ * every line but the last. */
+.hero-byline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-top: var(--space-6);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-byline-name {
+  color: var(--foreground);
+}
+
+@media (min-width: 768px) {
+  .hero-byline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .hero-byline > span + span::before {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1px;
+    margin-right: var(--space-3);
+    background: color-mix(in oklab, var(--border) 80%, transparent);
+    vertical-align: middle;
+  }
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .hero-headline {
+    margin-top: var(--space-8);
+  }
+  .hero-actions {
+    margin-top: var(--space-10);
+  }
+}
+
+.hero-socials {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Quiet by default, lifting and lighting up on approach. Icon-only, so each
+ * one carries an aria-label; the 44px box is the tap target, not the glyph. */
+.hero-social {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  transition:
+    color var(--dur-fast) var(--ease-out-soft),
+    background-color var(--dur-fast) var(--ease-out-soft),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.hero-social:hover {
+  background: color-mix(in oklab, var(--plane-near) 80%, transparent);
+  color: var(--foreground);
+  transform: translateY(-3px);
+}
+
+.hero-social:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/*
+ * The numbers sit on the bottom edge of the first screen. They used to be a
+ * bordered strip directly under the copy, which is the shape of a table
+ * header and read like one. Here they are the floor of the composition and
+ * the reward for the first scroll pixel.
+ */
+.hero-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  border-top: 1px solid color-mix(in oklab, var(--border) 32%, transparent);
+  padding-top: var(--space-6);
+}
+
+.hero-stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.hero-stat-figure {
+  margin: 0;
+  min-width: 3.5ch;
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4.4vw, 3.25rem);
+  font-variation-settings: "wght" 500, "opsz" 144, "SOFT" 20, "WONK" 0;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--text-hi) 15%, var(--indigo) 95%);
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-stat-label {
+  max-width: 30ch;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+}
+
+/* 390px and 1440px are designed separately rather than one scaled into the
+ * other. On a phone the numbers read as a stacked list with the figure
+ * leading each row; from tablet up they become a three-column rail along the
+ * bottom edge with the label under its figure. */
+@media (min-width: 768px) {
+  .hero-stats {
+    flex-direction: row;
+    gap: var(--space-12);
+  }
+  .hero-stat {
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  .hero-stat-label {
+    max-width: 24ch;
+  }
+}
+
+/*
+ * Entrance. Transform only, and never on the headline.
+ *
+ * The headline is the LCP element and paints at full opacity on the first
+ * frame, no exceptions. Everything else rises into place from behind a clip
+ * edge at full opacity the whole way, because an axe pass that lands
+ * mid-animation has to compute contrast against the colour the text actually
+ * ends at. Fading text in is how that goes wrong, and it has gone wrong on
+ * this site before.
+ */
+.hero-mask,
+.hero-actions {
+  animation: hero-rise var(--dur-slow) var(--ease-out-soft) backwards;
+}
+
+.hero-mask {
+  overflow: clip;
+  overflow-clip-margin: 12px;
+}
+
+@keyframes hero-rise {
+  from {
+    transform: translate3d(0, 1.4rem, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mask,
+  .hero-actions {
+    animation: none;
+  }
+  .hero-spotlight,
+  .hero-status,
+  .hero-social {
+    transition: none;
+  }
+  .hero-status:hover,
+  .hero-social:hover {
+    transform: none;
+  }
+}

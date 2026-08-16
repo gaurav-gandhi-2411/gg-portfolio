@@ -7,75 +7,70 @@ import {
 } from "@/components/icons";
 import { EmbeddingCloud } from "@/components/hero/embedding-cloud";
 import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
+import { HeroMotion } from "@/components/hero/hero-motion";
 import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
 import { liveProductCount, products } from "@/content/products";
 import type { Stat } from "@/content/types";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
-import { getCurrentlyBuilding } from "@/lib/live-data";
 
 /**
- * Whole years since the first data-science role on the resume (TCS, Jul 2021
- * — content/experience.ts dateRange, resume p.1). Computed, not hand-typed,
- * so it can never silently go stale (same drift-proofing rationale as
- * liveProductCount — see provenance.md#derived:career-years).
+ * Whole years since the first data-science role on the resume (TCS, Jul 2021,
+ * per content/experience.ts dateRange and resume p.1). Computed, not
+ * hand-typed, so it can never silently go stale (same drift-proofing
+ * rationale as liveProductCount, see provenance.md#derived:career-years).
  */
 function careerYears(): number {
   const start = Date.UTC(2021, 6, 1); // Jul 2021
   return Math.floor((Date.now() - start) / (365.25 * 24 * 3600 * 1000));
 }
 
-/** Whole days since an ISO timestamp — matches lib/project-display.ts's freshness math. */
-function daysSince(iso: string): number {
-  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
-}
-
 /**
- * Wave 12 hero. The h1 is now the tagline (maninder's structural pattern:
- * the statement leads, the name sits in the byline and the nav); the
- * wave-10-approved warm voice carries over — this is that paragraph's
- * first sentence, tightened into a headline.
+ * The hero, rebuilt around the field instead of on top of it.
  *
- * Stats (wave-12 brief): "5 people I lead" is retired from the hero — it
- * contradicts the independent-builder positioning as a headline (it stays
- * in About/Experience where it's employment context). The third axis is
- * the resume-sourced Uber corpus scale, the one number of GG's that
- * honestly supports scale language (resume:indium-ds-docunderstanding).
+ * What changed and why, since the surface looks nothing like the version
+ * before it:
  *
- * Background is the real embedding-space hero (components/hero/embedding-cloud-static.tsx)
- * -- replaces the wave-11 gradient .hero-halo outright rather than running
- * alongside it: two independently-animated ambient background layers read
- * as busier than either alone, and the brief for this one was explicit
- * that noticing the animation before the text is a failure.
+ * The field is the page now, not a texture behind a boxed column. It was
+ * previously clipped to the same max-w-3xl the copy sat in, which made it a
+ * decorative panel roughly 488px wide; it is now full bleed and the copy
+ * sits inside it at a different depth. The field opens around the headline
+ * rather than running under it, which is both the composition and the
+ * contrast guard.
  *
- * The background now has an ambient WebGL layer, chosen per device by
- * components/hero/embedding-cloud.tsx; the static SVG above stays as the
- * server-rendered default and the fallback for everyone else.
+ * The column is left aligned. Centred copy at a 24ch measure over a centred
+ * background, with five equally weighted pills underneath, is the single
+ * most template-shaped arrangement on the web, and it was most of why a site
+ * with real work on it read as a starter kit.
  *
- * The earlier attempt at this was abandoned for two reasons, both since
- * addressed rather than argued with. It used @react-three/fiber, whose
- * Canvas/BufferGeometry/PointsMaterial chunk alone measured 233.6KB gzip —
- * irreducible, r3f's own baseline rather than anything that build added — so
- * this one is hand-rolled WebGL1 (lib/webgl/point-cloud.ts) with no new
- * dependencies. And it animated continuously from load, which is what put the
- * cost inside Lighthouse's Total Blocking Time window; this one defers its
- * first frame past the load rush, caps itself to 30fps, and stops outright
- * when the tab is hidden or the hero scrolls away.
+ * Five buttons of identical weight became one real button and a quiet icon
+ * row. If everything is emphasized then nothing is, and the resume is the
+ * thing a visitor is actually here to open.
  *
- * The TEXT is still deliberately not animated: every text node renders at
- * full opacity from first paint (wave-9 axe-race lesson), the entrance
- * feeling is the boot loader's curtain reveal, and the brief for the
- * background was explicit that noticing it before the text is a failure —
- * hence a ~5-minute revolution and no alpha lift on an already-faint ramp.
+ * The stats moved to the bottom edge of the first screen, so the opening
+ * frame is field and headline and the numbers are what the first scroll
+ * buys. They are also no longer a bordered strip, which read as a table row.
+ *
+ * The "Currently building: X, updated Nd ago" line is gone at GG's request.
+ * lib/live-data.ts still exports getCurrentlyBuilding and is still covered
+ * by its own tests; it is left in place rather than deleted with the caller,
+ * since the freshness signal is likely to come back somewhere on the Work
+ * grid where it has more to say.
+ *
+ * The headline is still not animated in any way, and this is deliberate on
+ * two counts. It is the LCP element, so it paints immediately regardless of
+ * what the field is doing. And it is text, which never gets held below full
+ * opacity here after an axe pass once landed mid-fade and read the contrast
+ * of a half-transparent heading. Everything that does animate on entrance
+ * moves on transform alone.
  */
-export async function Hero() {
-  const currentlyBuilding = await getCurrentlyBuilding();
+export function Hero() {
   const { points } = getEmbeddingProjection();
 
   const heroStats: Stat[] = [
     {
       value: String(careerYears()),
-      label: "years in data science & ML",
+      label: "years in data science and ML",
       sourceRef: "derived:career-years",
     },
     {
@@ -90,79 +85,87 @@ export async function Hero() {
     },
   ];
 
+  const socials = [
+    { href: site.githubUrl, label: "GitHub", icon: <GitHubIcon /> },
+    { href: site.linkedinUrl, label: "LinkedIn", icon: <LinkedInIcon /> },
+    { href: site.huggingfaceUrl, label: "Hugging Face", icon: <HuggingFaceIcon /> },
+    { href: `mailto:${site.email}`, label: "Email", icon: <MailIcon />, sameTab: true },
+  ];
+
   return (
-    <header className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-[var(--space-6)] pt-20 pb-16 text-center sm:pt-28 md:pb-[var(--space-20)]">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <EmbeddingCloud>
-          <EmbeddingCloudStatic points={points} />
-        </EmbeddingCloud>
+    <header data-hero className="hero-stage">
+      {/* Far plane. Full bleed, aria-hidden, never takes the pointer. */}
+      <div data-hero-plane="field" className="hero-field" aria-hidden="true">
+        <div className="hero-field-fit">
+          <EmbeddingCloud>
+            <EmbeddingCloudStatic points={points} />
+          </EmbeddingCloud>
+        </div>
       </div>
 
-      {/* BL-3a: this pill already carried the availability copy (site.status);
-          it now also carries the actual status signal, via --status-open
-          (app/globals.css) rather than the generic accent color, so it
-          reads as a live status dot and not just another link. Same
-          live-pulse class the "AI products live today" dateline uses
-          (globals.css .live-dot) — this is the same kind of "this is
-          current, not a stale fact" signal, so it gets the same motion
-          language rather than a bespoke one. */}
-      <p className="text-sm">
-        <a
-          href="#contact"
-          className="border-border/60 bg-card/60 text-muted-foreground hover:border-accent/60 hover:text-foreground inline-flex min-h-11 items-center gap-[var(--space-2)] rounded-full border px-[var(--space-4)] py-[var(--space-1-5)] transition-colors motion-reduce:transition-none"
-        >
-          <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
-          {site.status}
-        </a>
-      </p>
+      {/* Light that follows the cursor, and a vignette that keeps the field
+          off the page edges so the hero reads as a volume with an inside
+          rather than a texture that got cropped. Both read --mx/--my and
+          cost one paint each. */}
+      <div className="hero-spotlight" aria-hidden="true" />
+      <div className="hero-vignette" aria-hidden="true" />
 
-      <h1 className="font-heading text-display mt-[var(--space-8)] max-w-[24ch] font-semibold tracking-tight text-foreground">
-        I build <span className="stat-figure">AI products</span> and see them through — from
-        first experiment to real users.
-      </h1>
+      <div data-hero-plane="content" className="hero-inner">
+        <div className="hero-copy">
+          <p className="hero-mask" style={{ animationDelay: "0.05s" }}>
+            <a href="#contact" className="hero-status">
+              <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
+              {site.status}
+            </a>
+          </p>
 
-      {currentlyBuilding && (
-        <p className="text-muted-foreground mt-[var(--space-4)] text-sm">
-          Currently building:{" "}
-          <span className="font-medium text-foreground">{currentlyBuilding.name}</span> · updated{" "}
-          <span className="font-mono">{daysSince(currentlyBuilding.pushedAt)}d</span> ago
-        </p>
-      )}
+          <h1 data-hero-headline className="hero-headline">
+            I build <span className="hero-headline-accent">AI products</span> and see them
+            through, from the first experiment to real users.
+          </h1>
 
-      <p className="text-muted-foreground mt-[var(--space-6)] text-body-lg">
-        <span className="font-medium text-foreground">{site.name}</span> · Senior Data
-        Scientist — Applied AI · {site.location}
-      </p>
+          {/* The rules between these are drawn by CSS, not by markup. At
+              390px the byline stacks and the separators disappear with it;
+              hand-placed ones left dashes dangling off the end of two of the
+              three lines. */}
+          <p className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
+            <span className="hero-byline-name">{site.name}</span>
+            <span>Senior Data Scientist, Applied AI</span>
+            <span>{site.location}</span>
+          </p>
 
-      <p className="mt-[var(--space-8)] flex flex-wrap justify-center gap-[var(--space-3)]">
-        {/* Views the PDF in a new tab — never a forced download (wave 12). */}
-        <LinkButton href={site.resumeUrl} variant="primary" icon={<FileTextIcon />}>
-          View Resume
-        </LinkButton>
-        <LinkButton href={site.githubUrl} icon={<GitHubIcon />}>
-          GitHub
-        </LinkButton>
-        <LinkButton href={site.linkedinUrl} icon={<LinkedInIcon />}>
-          LinkedIn
-        </LinkButton>
-        <LinkButton href={site.huggingfaceUrl} icon={<HuggingFaceIcon />}>
-          Hugging Face
-        </LinkButton>
-        <LinkButton href={`mailto:${site.email}`} sameTab icon={<MailIcon />}>
-          Email
-        </LinkButton>
-      </p>
-
-      <dl className="border-border/40 mt-14 grid w-full max-w-2xl grid-cols-1 gap-x-8 gap-y-6 border-t pt-8 sm:grid-cols-3">
-        {heroStats.map((stat) => (
-          <div key={stat.sourceRef} className="flex flex-col items-center gap-[var(--space-1-5)]">
-            <dd className="stat-figure font-mono text-heading font-medium">{stat.value}</dd>
-            <dt className="text-muted-foreground max-w-[22ch] text-sm leading-snug">
-              {stat.label}
-            </dt>
+          <div className="hero-actions" style={{ animationDelay: "0.24s" }}>
+            <LinkButton href={site.resumeUrl} variant="primary" icon={<FileTextIcon />}>
+              View Resume
+            </LinkButton>
+            <ul className="hero-socials">
+              {socials.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    aria-label={social.label}
+                    {...(social.sameTab ? {} : { target: "_blank", rel: "noreferrer" })}
+                    className="hero-social"
+                  >
+                    {social.icon}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-        ))}
-      </dl>
+        </div>
+
+        <dl data-hero-plane="stats" className="hero-stats">
+          {heroStats.map((stat) => (
+            <div key={stat.sourceRef} className="hero-stat">
+              <dd className="hero-stat-figure">{stat.value}</dd>
+              <dt className="hero-stat-label">{stat.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <HeroMotion />
     </header>
   );
 }

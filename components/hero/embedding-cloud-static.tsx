@@ -6,23 +6,29 @@ interface EmbeddingCloudStaticProps {
 }
 
 /**
- * No WebGL, no <canvas>, no animation — the prefers-reduced-motion and
- * low-end-device fallback (components/hero/embedding-cloud.tsx decides
- * which one to render), and also the SSR/no-JS default before that decision
- * can run client-side. A flat SVG scatter of the same real projected
- * points, x/y only (z folds into point size for a cheap depth cue).
+ * The still composition: no WebGL, no canvas, no animation.
  *
- * Design-review fix (caught via an actual mobile screenshot, not eyeballed
- * in a desktop-sized preview): the first version used
- * preserveAspectRatio="xMidYMid slice" (cover-fill) — on a tall, narrow
- * mobile viewport that scales the small square viewBox by its LARGER
- * dimension ratio, blowing circle sizes up far past "faintly visible" and
- * scattering them directly over the headline text. "meet" (contain/
- * letterbox) bounds the scale to the smaller ratio instead — same
- * treatment as the .hero-halo it replaces, which was also a bounded blob,
- * not an edge-to-edge fill. Paired with much smaller radii, a much lower
- * opacity ceiling (was 0.28-0.88; the halo it replaces peaked at 0.26),
- * and a blur so points read as soft texture, not crisp competing shapes.
+ * This is what reduced-motion visitors and low-end devices get, and it is
+ * also the server-rendered default everybody sees before the capability
+ * check can run. The brief for the reduced-motion path was specific and
+ * worth restating: the answer to "this visitor asked for less motion" is a
+ * still design that looks composed, not the same page with the life removed.
+ * So this layer got the same density work the animated one did, and lands at
+ * roughly the same weight on screen.
+ *
+ * Density without inventing points. The same 419 real terms now cover a full
+ * bleed hero rather than a 488px panel, so at the old radii they read as
+ * dust. Rather than doubling the node count with a second circle per point,
+ * one filter does both jobs: a wide Gaussian blur merged twice for the bloom,
+ * with the crisp source drawn back over the top for the core. Same 419
+ * nodes in the HTML, roughly the same look as the two-pass GL field.
+ *
+ * Sizing note that cost a mobile screenshot to find the first time round.
+ * preserveAspectRatio stays "meet" (contain), never "slice" (cover): on a
+ * tall narrow viewport, cover scales the small square viewBox by the larger
+ * dimension ratio and blows the circles up over the headline. The frame is
+ * filled instead by squaring the SVG's own box in CSS (.hero-field-fit),
+ * which gets full bleed out of a contain fit with no scaling surprises.
  */
 export function EmbeddingCloudStatic({ points }: EmbeddingCloudStaticProps) {
   return (
@@ -33,14 +39,23 @@ export function EmbeddingCloudStatic({ points }: EmbeddingCloudStaticProps) {
       role="presentation"
     >
       <defs>
-        <filter id="embedding-cloud-blur" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="0.006" />
+        <filter id="embedding-cloud-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="0.022" result="bloom" />
+          <feMerge>
+            {/* Twice, because one pass of a blur this wide is too faint to
+                register once the field is spread across a whole viewport. */}
+            <feMergeNode in="bloom" />
+            <feMergeNode in="bloom" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
-      <g filter="url(#embedding-cloud-blur)">
+      <g filter="url(#embedding-cloud-glow)">
         {points.map((p) => {
           const [x, y, z] = p.finetuned;
-          const radius = 0.0035 + ((z + 1) / 2) * 0.004;
+          // z folds into radius as a cheap depth cue, the same way the GL
+          // layer folds it into point size.
+          const radius = 0.004 + ((z + 1) / 2) * 0.005;
           return (
             <circle
               key={p.term}
