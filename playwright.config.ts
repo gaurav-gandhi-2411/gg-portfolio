@@ -18,6 +18,16 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // Four, measured rather than guessed. Playwright's default is half the
+  // logical cores, which is 8 here, and 8 was slower as well as less
+  // reliable: the same 386 tests took 6.9 minutes at 8 workers with 15
+  // failures, and 4.3 minutes at 4 with none. The failures were 30-second
+  // navigation timeouts against a server answering in 5ms, which is what
+  // oversubscription looks like from inside a test and reads as flake from
+  // outside one. GG runs several worktrees at once by design, so the
+  // machine is rarely as free as a worker count derived from core count
+  // assumes. Raise this only with a measurement attached.
+  workers: 4,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {

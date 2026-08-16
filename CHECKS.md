@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and three
+days**, in fifteen different disguises, by fifteen unrelated routes, and four
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16, 17 and 18 came later, from a design rebuild rather than an audit,
+Instances 16 through 19 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -34,9 +34,11 @@ saw less of them than their names implied, because how much they covered was
 decided by a separator, an indent, a filename and an import spelling. It
 carries the one-line rule the rest of this document had been circling: a check
 is safe when it compares two independently-derived sets, or prints a
-denominator it would notice moving.
+denominator it would notice moving. Instance 19 is the same idea with timing
+in place of formatting: an assertion that passed only because it resolved
+before the thing it would have collided with.
 
-## The eighteen
+## The nineteen
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -635,6 +637,55 @@ the check is correct about everything it examines and simply examines less than
 its name implies, so reading the code closely tells you nothing. The scope
 lives in the data's shape, not in the check. The only thing that finds it is
 breaking the convention on purpose and watching whether the gate notices.
+
+**19. A test that passed because it was faster than the thing it raced.**
+`e2e/heat-toy.spec.ts` asserted `getByText(word, { exact: true })` with no
+scope. The Warmer demo renders the guessed word twice: once in the aria-live
+history row, and once as an SVG `<text>` label in the embedding plot, a beat
+later. Two matches is a strict-mode violation, so the assertion only ever
+passed by resolving before the plot caught up. It had been winning that race
+since the toy landed. It lost it the first time the machine was busy, and the
+failure arrived wearing the costume of a flake, in a batch of genuine
+contention failures, which is the worst possible company for a real defect.
+
+This is a fifth shape, and worth separating from the four in instance 18.
+Those checks were scoped by a formatting convention: a separator, an indent, a
+filename, an import spelling. This one is scoped by **timing**, which is worse
+in one specific way. A convention is at least visible in the file, so breaking
+it on purpose is a thing you can do deliberately. A race is visible nowhere at
+all, and the machine that would expose it is the machine you are least likely
+to be developing on. **A green test does not distinguish "the assertion was
+right" from "the assertion got there first."**
+
+The measurement lesson came with it, and it is the one from instance 13 again.
+Counting the matches right after the history row appeared returned one, which
+contradicted the strict-mode violation the failing run had reported. One of
+those two was wrong, and the tempting reading is that the failure was noise.
+Waiting for the plot to name the word first returns **two unscoped, one
+scoped**. The first count was not evidence of anything except that it was
+taken too early. *When a fresh measurement disagrees with a recorded failure,
+suspect the measurement before the failure* -- the failure at least happened.
+
+The fix is scope, not a wait: the assertion now runs against the aria-live
+region, which the plot sits outside, so there is no ordering left to depend on.
+Adding a wait would have made it pass reliably while leaving it ambiguous,
+which is the same bargain the original locator made.
+
+Two things fall out, and both were applied rather than just written down:
+
+- Worker count is a correctness setting, not a speed setting. The same 386
+  tests ran 6.9 minutes at 8 workers with 15 failures, and 4.3 minutes at 4
+  with none, on a machine that routinely has several worktrees live. Eight was
+  slower *and* wrong. `playwright.config.ts` pins 4, with the numbers in a
+  comment, because a worker count derived from core count assumes a machine
+  nobody here actually has.
+- A suite's exit code has to survive being read carelessly. That 15-failure
+  run was recorded as green because the shell chain around it ended in `tail`
+  and returned tail's status. `scripts/run-e2e.mjs` now prints the counts and
+  the real exit code as the **last** line, in a banner that says FAILED, and
+  fails closed on a run it cannot summarise or one that stopped early. It
+  cannot change what a pipeline returns, and does not pretend to. It makes the
+  status the thing you cannot help seeing.
 
 ## What follows from it
 
