@@ -232,24 +232,9 @@
    * body to the viewport when `html` itself doesn't set an explicit
    * overflow — https://www.w3.org/TR/css-overflow-3/#overflow-propagation
    * — so the guard has to live on `html`).
-   *
-   * `html` clipping conflicts with Chromium's View Transitions API: the
-   * ::view-transition pseudo-tree renders relative to the root element, so
-   * overflow-x:clip/hidden on `html` clipped that overlay too and every
-   * TransitionLink navigation (components/transition-link.tsx) hung with
-   * the URL never changing (caught by e2e/nav.spec.ts and
-   * route-transitions.spec.ts). Chromium sets `:active-view-transition` on
-   * the document element for the transition's duration
-   * (https://drafts.csswg.org/css-view-transitions-1/#pseudo-active) —
-   * lifting the clip only for that window keeps both fixed: verified by
-   * re-running the full e2e suite (mobile-viewport.spec.ts +
-   * nav/route-transitions/category-pages) green together.
    */
   html {
     overflow-x: clip;
-  }
-  html:active-view-transition {
-    overflow-x: visible;
   }
 }
 
@@ -499,26 +484,6 @@ p {
     }
   }
 
-}
-
-/* View transitions (components/transition-link.tsx). The default UA
- * cross-fade, tuned shorter to match the site's 240ms fallback feel; the
- * per-slug vt-title-* names (project card title ↔ case-study h1) get the
- * shared-element morph for free. Reduced-motion visitors never enter a
- * transition (the JS gate skips startViewTransition), but belt-and-
- * suspenders here too. */
-@supports (view-transition-name: none) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 260ms;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
 }
 
 .boot-bar-fill {

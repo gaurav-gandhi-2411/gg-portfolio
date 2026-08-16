@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { TransitionLink } from "@/components/transition-link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -426,12 +426,12 @@ function TurnAnswer({
           {turn.citations.map((c) => (
             <li key={c.sourceRef} className="font-mono text-caption">
               {c.url ? (
-                <TransitionLink
+                <Link
                   href={c.url}
                   className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 >
                   {c.label}
-                </TransitionLink>
+                </Link>
               ) : (
                 <span className="text-muted-foreground">{c.label}</span>
               )}

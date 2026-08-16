@@ -30,15 +30,12 @@ test.describe("route transitions", () => {
     await expect(page).toHaveURL(/\/projects$/);
   });
 
-  test("view-transition navigation completes without a stuck/blank page", async ({ page }) => {
+  test("a client-side nav completes without a stuck/blank page", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("link", { name: "Projects", exact: true }).click();
     await expect(page).toHaveURL(/\/projects$/);
-    // If the view-transition promise never settles (a regression in
-    // lib/view-transition.ts), the page would be visually correct but the
-    // browser's transition pseudo-elements could linger; the practical
-    // signal is that the page stays interactive — prove it by immediately
-    // driving another interaction.
+    // The destination page must stay interactive immediately after the nav
+    // commits — prove it by driving another interaction right away.
     const firstPill = page.getByRole("group", { name: "Filter projects by category" }).getByRole("button").first();
     await expect(firstPill).toBeVisible();
     await expect(firstPill).toBeEnabled();

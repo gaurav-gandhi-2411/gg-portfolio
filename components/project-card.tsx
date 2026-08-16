@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
-import { TransitionLink } from "@/components/transition-link";
 import type { Product } from "@/content/types";
 import type { TracegaugeDownloads } from "@/lib/live-data";
 import { cn } from "@/lib/utils";
@@ -15,9 +15,7 @@ import { cn } from "@/lib/utils";
  * components/project-filter.tsx). The card is a @container: on wide cards
  * (≥28rem — half the 5xl grid computes to ~478px, so the threshold sits
  * just under it) the eval figure sits in a right rail beside the text; on
- * narrow cards it stacks below. The title carries
- * a per-slug view-transition-name that pairs with the case-study h1, so
- * supporting browsers morph the title you clicked into the page heading.
+ * narrow cards it stacks below.
  */
 export function ProjectCard({
   product,
@@ -42,13 +40,12 @@ export function ProjectCard({
         <div className="flex min-w-0 flex-col">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <Heading className="font-heading text-lead font-semibold text-foreground">
-              <TransitionLink
+              <Link
                 href={`/work/${product.slug}`}
                 className="focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-                style={{ viewTransitionName: `vt-title-${product.slug}` }}
               >
                 {product.name}
-              </TransitionLink>
+              </Link>
             </Heading>
             {dateline && (
               <span className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption">
@@ -87,12 +84,12 @@ export function ProjectCard({
           )}
 
           <div className="mt-auto flex flex-wrap gap-x-5 gap-y-[var(--space-2)] pt-5 text-sm">
-            <TransitionLink
+            <Link
               href={`/work/${product.slug}`}
               className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               Case study →
-            </TransitionLink>
+            </Link>
             {product.liveUrl && (
               <InlineLink
                 href={product.liveUrl}

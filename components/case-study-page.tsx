@@ -1,10 +1,10 @@
+import Link from "next/link";
 import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
 import { MetricProvenance } from "@/components/metric-provenance";
 import { PrintButton } from "@/components/print-button";
 import { StepCurve } from "@/components/step-curve";
-import { TransitionLink } from "@/components/transition-link";
 import { availability } from "@/content/availability";
 import { site } from "@/content/site";
 import { CATEGORIES, type CaseStudy, type Product } from "@/content/types";
@@ -23,9 +23,7 @@ import type { RelatedProduct } from "@/lib/related-products";
  * anchors, the headline metric, project links) so the case study reads
  * like a documented spread instead of a strand in a void. Below lg the
  * wave-12 single column is unchanged (breakpoint moved from xl to lg in
- * the 2026-07-30 UI/UX wave — see section.tsx). The h1 carries the same
- * view-transition-name as its project-card title, so supporting browsers
- * morph the clicked title into the page heading; a scroll-driven reading
+ * the 2026-07-30 UI/UX wave — see section.tsx). A scroll-driven reading
  * progress bar (pure CSS, @supports-gated) sits above the nav.
  */
 
@@ -88,18 +86,15 @@ export function CaseStudyPage({
       <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_15rem] lg:justify-between lg:gap-x-12">
         <div className="min-w-0">
           <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
-            <TransitionLink
+            <Link
               href="/projects"
               className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← All projects
-            </TransitionLink>
+            </Link>
           </p>
 
-          <h1
-            className="font-heading text-display mt-[var(--space-6)] font-semibold tracking-tight text-foreground"
-            style={{ viewTransitionName: `vt-title-${study.slug}` }}
-          >
+          <h1 className="font-heading text-display mt-[var(--space-6)] font-semibold tracking-tight text-foreground">
             {study.title}
           </h1>
           <p className="text-muted-foreground mt-[var(--space-4)] text-body-lg leading-relaxed">{study.dek}</p>
@@ -326,12 +321,12 @@ export function CaseStudyPage({
                 </LinkButton>
               ))}
             </p>
-            <TransitionLink
+            <Link
               href="/projects"
               className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← Back to all projects
-            </TransitionLink>
+            </Link>
           </div>
         </div>
 
@@ -386,12 +381,12 @@ export function CaseStudyPage({
                 <ul className="mt-[var(--space-3)] flex flex-col gap-[var(--space-3)]">
                   {related.map(({ product: relatedProduct, sharedCategories }) => (
                     <li key={relatedProduct.slug}>
-                      <TransitionLink
+                      <Link
                         href={`/work/${relatedProduct.slug}`}
                         className="focus-visible:outline-ring text-foreground block text-sm font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                       >
                         {relatedProduct.name}
-                      </TransitionLink>
+                      </Link>
                       <p className="mt-[var(--space-1)] flex flex-wrap gap-[var(--space-1-5)]">
                         {sharedCategories.map((categoryId) => (
                           <span

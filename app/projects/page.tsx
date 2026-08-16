@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ProjectGrid } from "@/components/project-grid";
 import { ProjectSearch } from "@/components/project-search";
 import { SearchMethodology } from "@/components/search-methodology";
-import { TransitionLink } from "@/components/transition-link";
 import { liveProductCount, products } from "@/content/products";
 
 export const metadata: Metadata = {
@@ -54,12 +54,12 @@ export default function ProjectsPage() {
       </div>
 
       <p className="mt-12 text-center">
-        <TransitionLink
+        <Link
           href="/"
           className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Back to home
-        </TransitionLink>
+        </Link>
       </p>
     </main>
   );

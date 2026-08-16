@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AskPanel } from "@/components/chatbot/ask-panel";
-import { TransitionLink } from "@/components/transition-link";
 import {
   chatbotEvalSummary,
   EVAL_PLACEHOLDER_VALUE,
@@ -91,12 +91,12 @@ export default function AskPage() {
       </div>
 
       <p className="mt-12 text-center">
-        <TransitionLink
+        <Link
           href="/"
           className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Back to home
-        </TransitionLink>
+        </Link>
       </p>
     </main>
   );

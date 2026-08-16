@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Monogram } from "@/components/monogram";
-import { TransitionLink } from "@/components/transition-link";
 import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export function SiteNav() {
           from xl in the 2026-07-30 UI/UX wave, see section.tsx) so the
           nav's edges align with every widened section below. */}
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-[var(--space-6)] py-[var(--space-3)] lg:max-w-5xl">
-        <TransitionLink
+        <Link
           href="/"
           className="focus-visible:outline-ring -m-2 flex min-h-11 min-w-11 items-center justify-center gap-[var(--space-2-5)] focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={`${site.name} — home`}
@@ -55,13 +55,11 @@ export function SiteNav() {
           <span className="hidden text-sm font-medium text-foreground sm:inline">
             {site.name}
           </span>
-        </TransitionLink>
+        </Link>
 
         <div className="flex items-center gap-[var(--space-4)] sm:gap-[var(--space-6)]">
           {links.map((link) => (
-            // TransitionLink's own guards keep hash links (/#about etc.) on
-            // the plain Link path — only /projects is a clean route change.
-            <TransitionLink
+            <Link
               key={link.href}
               href={link.href}
               aria-current={link.active || (onCaseStudy && link.label === "Projects") ? "page" : undefined}
@@ -73,7 +71,7 @@ export function SiteNav() {
               )}
             >
               {link.label}
-            </TransitionLink>
+            </Link>
           ))}
         </div>
       </div>
