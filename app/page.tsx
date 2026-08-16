@@ -5,8 +5,16 @@ import { Hero } from "@/components/sections/hero";
 import { Research } from "@/components/sections/research";
 import { Work } from "@/components/sections/work";
 
-// Wave 12 order (GG's explicit sequence): hero → about → professional
-// experience FIRST → showcase projects → research → contact.
+/**
+ * Section order, at GG's direction: hero, about, professional experience,
+ * the projects, contact, and research last.
+ *
+ * Research moved below Contact in this pass. It sat between the work and
+ * the way to get in touch, which put a page of papers in front of the one
+ * thing a visitor who has just been convinced actually wants. It reads as a
+ * closing note now rather than an obstacle, and anyone who wants it will
+ * scroll for it.
+ */
 export default function Home() {
   return (
     <main id="main" className="flex flex-1 flex-col">
@@ -14,8 +22,8 @@ export default function Home() {
       <About />
       <Experience />
       <Work />
-      <Research />
       <Contact />
+      <Research />
       <Footer />
     </main>
   );
