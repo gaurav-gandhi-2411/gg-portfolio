@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CaseStudyRail } from "@/components/case-study-rail";
 import { FlowDiagram } from "@/components/flow-diagram";
 import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
@@ -6,9 +7,11 @@ import { MetricProvenance } from "@/components/metric-provenance";
 import { PrintButton } from "@/components/print-button";
 import { StepCurve } from "@/components/step-curve";
 import { availability } from "@/content/availability";
+import { products as allProducts } from "@/content/products";
 import { site } from "@/content/site";
 import { CATEGORIES, type CaseStudy, type Product } from "@/content/types";
 import { getCaseStudyLastUpdated } from "@/lib/last-updated";
+import { projectHue } from "@/lib/project-rhythm";
 import { getProvenance } from "@/lib/provenance";
 import { caseStudyReadingMinutes } from "@/lib/reading-time";
 import type { RelatedProduct } from "@/lib/related-products";
@@ -38,9 +41,16 @@ function SectionHeading({ index, title }: { index: number; title: string }) {
   return (
     <h2
       id={headingId(title)}
-      className="font-heading text-title mt-14 flex scroll-mt-24 items-baseline gap-[var(--space-4)] font-semibold text-foreground"
+      data-case-heading
+      /* Alternating rhythm. Odd sections hang their numeral out in the
+       * margin under a hue rule; even ones keep it inline. Walking down a
+       * page of identically stacked blocks is most of why these read as
+       * documents rather than as a piece of work, and the eye needs
+       * something to count by. */
+      data-rhythm={index % 2 === 0 ? "even" : "odd"}
+      className="case-heading"
     >
-      <span aria-hidden="true" className="text-accent font-mono text-sm font-medium">
+      <span aria-hidden="true" className="case-heading-index">
         {String(index).padStart(2, "0")}
       </span>
       {title}
@@ -79,12 +89,24 @@ export function CaseStudyPage({
   return (
     <main
       id="main"
-      className="mx-auto w-full max-w-2xl flex-1 px-[var(--space-6)] pt-[var(--space-12)] pb-[var(--space-20)] md:pt-[var(--space-16)] lg:max-w-5xl"
+      data-case-study
+      /* The project's own hue, the same one its card carried on the grid, so
+       * arriving here feels like following that card rather than landing on
+       * a generic page. Only surfaces read it; every piece of text stays on
+       * the neutral tokens, so no project's colour can move a contrast
+       * ratio. */
+      style={{ "--case-hue": String(projectHue(allProducts, study.slug)) } as React.CSSProperties}
+      className="case-study mx-auto w-full max-w-2xl flex-1 px-[var(--space-6)] pt-[var(--space-12)] pb-[var(--space-20)] md:pt-[var(--space-16)] lg:max-w-5xl"
     >
       <div aria-hidden="true" className="reading-progress" />
+      {/* Full bleed, breaking out of the column the article is set in. A case
+          study used to open with a back-link and a heading on the same flat
+          plane as its body copy, which is a document, not a piece of work
+          being presented. */}
+      <div aria-hidden="true" className="case-opening-wash" />
 
       <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_15rem] lg:justify-between lg:gap-x-12">
-        <div className="min-w-0">
+        <div data-case-article className="min-w-0">
           <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
             <Link
               href="/projects"
@@ -221,20 +243,20 @@ export function CaseStudyPage({
           {(study.results?.length ?? 0) > 0 && (
             <>
               <SectionHeading index={next()} title="Results — the honest numbers" />
-              <dl className="mt-[var(--space-4)] flex flex-col">
+              <dl className="case-results">
                 {study.results?.map((result) => {
                   const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
                   return (
                     <div
                       key={result.sourceRef + result.label}
-                      className="border-border/30 flex flex-col gap-[var(--space-1)] border-b py-4 first:pt-0 last:border-b-0"
+                      className="case-result"
                     >
-                      <dd className="font-mono text-base font-medium text-foreground">
+                      <dd className="case-result-value">
                         <MetricProvenance info={provenance} label={result.label}>
                           {result.value}
                         </MetricProvenance>
                       </dd>
-                      <dt className="text-muted-foreground text-sm leading-relaxed">
+                      <dt className="case-result-label">
                         {result.label}
                         {result.detail && (
                           <span className="text-muted-foreground/80"> — {result.detail}</span>
@@ -336,13 +358,14 @@ export function CaseStudyPage({
               <h2 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
                 On this page
               </h2>
-              <ol className="border-border/40 mt-[var(--space-3)] flex flex-col gap-[var(--space-1-5)] border-l">
+              {/* The rail. Server-rendered and complete before any script
+                  runs, so the section list is linkable with JavaScript off;
+                  components/case-study-rail.tsx only marks which entry you
+                  are currently inside and fills the track behind it. */}
+              <ol data-case-rail className="case-rail">
                 {tocSections.map((title) => (
-                  <li key={title}>
-                    <a
-                      href={`#${headingId(title)}`}
-                      className="text-muted-foreground focus-visible:outline-ring block py-[var(--space-0-5)] pl-4 text-sm leading-snug transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-                    >
+                  <li key={title} data-rail-item={headingId(title)} className="case-rail-item">
+                    <a href={`#${headingId(title)}`} className="case-rail-link">
                       {title}
                     </a>
                   </li>
@@ -405,6 +428,10 @@ export function CaseStudyPage({
           </div>
         </aside>
       </div>
+
+      {/* Renders nothing. Drives the rail by attribute so the markup
+          above stays server-rendered and complete. */}
+      <CaseStudyRail headingIds={tocSections.map(headingId)} />
     </main>
   );
 }

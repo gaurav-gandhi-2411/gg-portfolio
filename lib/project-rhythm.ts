@@ -66,3 +66,21 @@ export function projectRhythm(products: readonly Product[]): Map<string, Project
 
   return rhythm;
 }
+
+/** The base accent's own hue, which every project's tint is an offset from. */
+export const BASE_ACCENT_HUE = 277;
+
+/**
+ * The hue for one project, by slug.
+ *
+ * Exists so a case study opens in the same colour its card carried on the
+ * grid. That continuity is the reason the hue is derived from position in
+ * one shared list rather than picked per surface: two places computing
+ * "this project's colour" independently is two places to drift.
+ *
+ * Falls back to the base accent for anything not in the list, so a case
+ * study whose project has been removed still renders.
+ */
+export function projectHue(products: readonly Product[], slug: string): number {
+  return BASE_ACCENT_HUE + (projectRhythm(products).get(slug)?.hueShift ?? 0);
+}

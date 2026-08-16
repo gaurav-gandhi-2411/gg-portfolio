@@ -8,6 +8,8 @@
 @import "./hero.css";
 /* Project grid and cards. Same contract: consumes tokens, defines none. */
 @import "./work.css";
+/* Case study template. Same contract. */
+@import "./case-study.css";
 
 /*
  * GG Portfolio design tokens (rule 15b).
