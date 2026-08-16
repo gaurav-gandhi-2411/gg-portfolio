@@ -1,0 +1,166 @@
+/*
+ * The project grid.
+ *
+ * Consumes tokens from globals.css and defines none of its own, same
+ * contract as hero.css.
+ */
+
+/*
+ * Two card sizes, assigned by lib/project-rhythm.ts. A spread crosses both
+ * columns and is reserved for projects that have an eval figure to put in
+ * its right rail; everything else is a half card. Thirteen cards of
+ * identical weight is what made a body of work read as a database table.
+ *
+ * The spread rule is only applied from lg, which is where the grid becomes
+ * two columns at all. Below that every card is full width and the rhythm
+ * comes from the content instead.
+ */
+@media (min-width: 1024px) {
+  .project-grid > [data-size="spread"] {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * The card.
+ *
+ * display:flex is load-bearing, not styling: the category filter hides
+ * non-matching cards with display:none, and its no-JS override restores
+ * them with display:flex, so flex has to be the resting value or a no-JS
+ * visitor gets differently-laid-out cards.
+ */
+.project-card {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  border-radius: var(--radius-xl);
+  background: color-mix(in oklab, var(--card) 50%, transparent);
+  padding: var(--space-6);
+  transition:
+    transform var(--dur-base) var(--ease-out-soft),
+    border-color var(--dur-base) var(--ease-out-soft),
+    box-shadow var(--dur-base) var(--ease-out-soft);
+  /* The tilt is around the card's own centre, and the card sits in its own
+   * 3D context so one card leaning never disturbs its neighbours. */
+  transform-style: preserve-3d;
+}
+
+.project-card-body {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * The cursor light. A soft wash in the project's own hue that follows the
+ * pointer inside the card, sitting under the content and behind the text.
+ * --card-on is written by components/project-grid-motion.tsx and is absent
+ * until a pointer is actually over this card, so the resting state costs a
+ * transparent element and nothing else.
+ */
+.project-card-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: calc(var(--card-on, 0) * 1);
+  background: radial-gradient(
+    18rem 18rem at calc(var(--card-px, 0.5) * 100%) calc(var(--card-py, 0.5) * 100%),
+    oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.16) 0%,
+    oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.05) 42%,
+    transparent 72%
+  );
+  transition: opacity var(--dur-base) var(--ease-out-soft);
+}
+
+/*
+ * Tilt toward the cursor. Small on purpose: past about two degrees a card
+ * full of text starts to read as skewed rather than as leaning, and the
+ * type edges soften. The lift is what sells it; the rotation is the part
+ * that makes the lift feel like it is happening in a space.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    border-color: oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.55);
+    box-shadow: 0 22px 48px -26px
+      oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.45);
+    transform: perspective(900px) translateY(-4px)
+      rotateX(calc((var(--card-py, 0.5) - 0.5) * -2.4deg))
+      rotateY(calc((var(--card-px, 0.5) - 0.5) * 2.4deg));
+  }
+}
+
+/* Keyboard gets the same acknowledgement, without the pointer-driven parts:
+ * there is no cursor position to lean toward, so it lifts and lights its
+ * border and leaves the rotation alone. */
+.project-card:focus-within {
+  border-color: oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.55);
+  box-shadow: 0 22px 48px -26px oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.45);
+}
+
+/*
+ * The reveal slot.
+ *
+ * Its height is reserved permanently, so revealing the chips moves nothing
+ * on the page: they are translated down and hidden inside a slot that is
+ * always the same size. Hidden with `visibility`, never a partial opacity,
+ * so an accessibility scan that lands mid-transition measures either the
+ * final colour or nothing at all rather than a half-transparent one.
+ */
+.project-card-reveal {
+  overflow: clip;
+  margin-top: var(--space-3);
+  height: 1.75rem;
+}
+
+.project-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  transition:
+    transform var(--dur-base) var(--ease-out-soft),
+    visibility var(--dur-base) step-end;
+}
+
+.project-card:hover .project-card-chips,
+.project-card:focus-within .project-card-chips {
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    visibility 0s;
+}
+
+.project-card-chips li {
+  border: 1px solid oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.3);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--plane-near) 60%, transparent);
+  padding: 0.15rem var(--space-2-5);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card {
+    transition: border-color var(--dur-base) var(--ease-out-soft);
+  }
+  .project-card:hover {
+    transform: none;
+  }
+  .project-card-light {
+    transition: none;
+  }
+  .project-card-chips {
+    transform: none;
+    transition: none;
+  }
+}

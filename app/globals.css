@@ -6,6 +6,8 @@
 @import "lenis/dist/lenis.css";
 /* Hero surface + sitewide grain. Consumes the tokens below, defines none. */
 @import "./hero.css";
+/* Project grid and cards. Same contract: consumes tokens, defines none. */
+@import "./work.css";
 
 /*
  * GG Portfolio design tokens (rule 15b).
