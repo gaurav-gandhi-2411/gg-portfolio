@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Gaurav Gandhi — Senior Applied AI Scientist";
+export const alt = "Gaurav Gandhi, Lead Data Scientist, Applied AI";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -71,7 +71,7 @@ export default function OgImage() {
         </div>
         <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
           <div style={{ width: 10, height: 10, borderRadius: 999, backgroundColor: STATUS_OPEN }} />
-          <div style={{ fontSize: 24, color: TEXT_LO }}>Open to Senior AI/ML roles</div>
+          <div style={{ fontSize: 24, color: TEXT_LO }}>Open to Lead / Senior AI-ML roles</div>
         </div>
       </div>
     ),

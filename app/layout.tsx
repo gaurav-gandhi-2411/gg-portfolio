@@ -42,9 +42,9 @@ const siteUrl = "https://gaurav-gandhi.vercel.app";
 // ~60-char <title>/og:title budget. description trimmed under the ~155-char
 // meta-description/og:description budget (was 156 — one over) by dropping the
 // "(Indium/Uber AI)" parenthetical, not by cutting the sentence short.
-const homeTitle = "Gaurav Gandhi — Senior Data Scientist, Applied AI";
+const homeTitle = "Gaurav Gandhi, Lead Data Scientist, Applied AI";
 const homeDescription =
-  "Senior Data Scientist building production GenAI systems in Uber's AI org, plus independent AI products and research. Every number sourced.";
+  "Lead Data Scientist heading a five-person team in Uber's AI org, plus independent AI products and research. Every number sourced.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

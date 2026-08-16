@@ -142,7 +142,7 @@ export function Hero() {
               three lines. */}
           <p className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
             <span className="hero-byline-name">{site.name}</span>
-            <span>Senior Data Scientist, Applied AI</span>
+            <span>Lead Data Scientist, Applied AI</span>
             <span>{site.location}</span>
           </p>
 
