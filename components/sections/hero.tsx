@@ -109,6 +109,8 @@ export function Hero() {
           cost one paint each. */}
       <div className="hero-spotlight" aria-hidden="true" />
       <div className="hero-vignette" aria-hidden="true" />
+      {/* Quiet ground under the copy, on both field layers. See .hero-scrim. */}
+      <div className="hero-scrim" aria-hidden="true" />
 
       <div data-hero-plane="content" className="hero-inner">
         <div className="hero-copy">
@@ -119,7 +121,7 @@ export function Hero() {
             </a>
           </p>
 
-          <h1 data-hero-headline className="hero-headline">
+          <h1 data-hero-headline data-hero-quiet className="hero-headline">
             I build <span className="hero-headline-accent">AI products</span> and see them
             through, from the first experiment to real users.
           </h1>
@@ -128,7 +130,7 @@ export function Hero() {
               390px the byline stacks and the separators disappear with it;
               hand-placed ones left dashes dangling off the end of two of the
               three lines. */}
-          <p className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
+          <p data-hero-quiet className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
             <span className="hero-byline-name">{site.name}</span>
             <span>Senior Data Scientist, Applied AI</span>
             <span>{site.location}</span>

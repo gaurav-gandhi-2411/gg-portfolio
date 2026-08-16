@@ -23,7 +23,15 @@
  * and a crisp core pass on top that keeps each point legible as a point.
  * Overlapping halos build up in the dense parts of the projection, which is
  * the field looking dense exactly where the data is dense.
+ *
+ * Points alone still read as a generic starfield, so there is a third pass
+ * joining each term to its nearest neighbours (lib/embedding-neighbours.ts).
+ * That is the difference between a picture of space and a picture of an
+ * embedding: the strands are the local neighbourhood the projection actually
+ * has, so the eye gets structure to read rather than scatter.
  */
+
+import { nearestNeighbourPairs } from "@/lib/embedding-neighbours";
 
 const VERTEX_SHADER_SOURCE = `
   attribute vec3 aPos;
@@ -126,19 +134,30 @@ const FRAGMENT_SHADER_SOURCE = `
   uniform vec3 uColor;
   uniform float uEdgeInner;
   uniform float uEdgeExp;
+  uniform float uPointSprite;
 
   void main() {
-    vec2 fromCenter = gl_PointCoord - vec2(0.5);
-    float dist = length(fromCenter);
-    if (dist > 0.5) {
-      discard;
+    float edge = 1.0;
+
+    /* Branch on a uniform, so it is uniform control flow and every
+     * invocation in a draw takes the same side. The link pass draws LINES,
+     * where gl_PointCoord has no defined value, so the sprite maths has to
+     * be skipped rather than computed and multiplied away. */
+    if (uPointSprite > 0.5) {
+      vec2 fromCenter = gl_PointCoord - vec2(0.5);
+      float dist = length(fromCenter);
+      if (dist > 0.5) {
+        discard;
+      }
+      /* One expression for both point passes rather than a second branch.
+       * The core wants a nearly hard disc with a feathered rim (inner 0.30,
+       * exponent 1.0); the halo wants no disc at all, just falloff all the
+       * way from the centre (inner 0.0, exponent above 1, which pulls the
+       * curve in so the bloom stays wide but thin instead of reading as a
+       * grey blob). */
+      edge = pow(smoothstep(0.5, uEdgeInner, dist), uEdgeExp);
     }
-    /* One expression for both passes rather than a branch on a pass uniform.
-     * The core wants a nearly hard disc with a feathered rim (inner 0.30,
-     * exponent 1.0); the halo wants no disc at all, just falloff all the way
-     * from the centre (inner 0.0, exponent above 1, which pulls the curve in
-     * so the bloom stays wide but thin instead of reading as a grey blob). */
-    float edge = pow(smoothstep(0.5, uEdgeInner, dist), uEdgeExp);
+
     gl_FragColor = vec4(uColor, vAlpha * edge);
   }
 `;
@@ -163,6 +182,33 @@ interface PassConfig {
   edgeExp: number;
   additive: boolean;
 }
+
+/*
+ * The link pass. Faint on purpose: this is meant to read as structure the
+ * field has, not as a network diagram drawn over it, and the points stay the
+ * subject. Drawn before the halo so the bloom settles over the strands
+ * rather than the strands cutting across the glow.
+ *
+ * Line width is left alone deliberately. Most drivers, ANGLE included, cap
+ * gl.lineWidth at 1, so asking for more silently gets 1 anyway. A hairline
+ * is what this wants, and at a device pixel ratio of 2 it lands at half a
+ * CSS pixel, which is about right for something that should read as a thread.
+ */
+const LINKS: PassConfig = {
+  sizeBase: 0,
+  sizeDepth: 0,
+  /*
+   * Faint, and the number is a contrast budget rather than a taste call. At
+   * 0.42 the strands looked good and pushed the worst case behind the small
+   * byline copy to 3.95:1, under the 4.5:1 bar that size of text needs. A
+   * hairline crossing a glyph is a thin background, but "thin" is not a
+   * defence you get to make to a contrast checker.
+   */
+  alphaScale: 0.24,
+  edgeInner: 0,
+  edgeExp: 1,
+  additive: false,
+};
 
 /*
  * Halo sizes and alpha are tuned against a coverage reading rather than by
@@ -297,7 +343,37 @@ export function createHeroFieldRenderer(
     throw new Error("hero-field: gl.createBuffer returned null");
   }
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, buildBuffer(points, opacityRamp), gl.STATIC_DRAW);
+  const pointData = buildBuffer(points, opacityRamp);
+  gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.STATIC_DRAW);
+
+  /*
+   * The links get their own buffer holding two vertices per pair, each a
+   * verbatim copy of its endpoint's attributes. That is what lets both
+   * passes share one vertex shader: strand endpoints go through the same
+   * drift, rotation, perspective, pointer lens and headline parting as the
+   * dots, so a link cannot come unstuck from the points it joins. The
+   * duplicated seven floats per endpoint cost about 28KB on the GPU and
+   * remove an entire class of drift bug.
+   */
+  const pairs = nearestNeighbourPairs(points.map((p) => p.position));
+  const linkData = new Float32Array(pairs.length * 2 * FLOATS_PER_POINT);
+  pairs.forEach((pair, i) => {
+    const dst = i * 2 * FLOATS_PER_POINT;
+    for (let f = 0; f < FLOATS_PER_POINT; f++) {
+      linkData[dst + f] = pointData[pair.a * FLOATS_PER_POINT + f];
+      linkData[dst + FLOATS_PER_POINT + f] = pointData[pair.b * FLOATS_PER_POINT + f];
+    }
+  });
+
+  const linkBuffer = gl.createBuffer();
+  if (!linkBuffer) {
+    gl.deleteBuffer(buffer);
+    gl.deleteProgram(program);
+    throw new Error("hero-field: gl.createBuffer returned null for links");
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, linkBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, linkData, gl.STATIC_DRAW);
+  const linkVertexCount = pairs.length * 2;
 
   const aPos = gl.getAttribLocation(program, "aPos");
   const aOpacity = gl.getAttribLocation(program, "aOpacity");
@@ -319,6 +395,7 @@ export function createHeroFieldRenderer(
     color: gl.getUniformLocation(program, "uColor"),
     edgeInner: gl.getUniformLocation(program, "uEdgeInner"),
     edgeExp: gl.getUniformLocation(program, "uEdgeExp"),
+    pointSprite: gl.getUniformLocation(program, "uPointSprite"),
   };
 
   const FLOAT_BYTES = Float32Array.BYTES_PER_ELEMENT;
@@ -381,14 +458,38 @@ export function createHeroFieldRenderer(
     textZone = [cx, cy, rx, ry];
   }
 
-  function drawPass(pass: PassConfig): void {
+  /** Points the attribute pointers at whichever buffer the next pass draws. */
+  function bindAttributes(target: WebGLBuffer): void {
+    gl.bindBuffer(gl.ARRAY_BUFFER, target);
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(aOpacity);
+    gl.vertexAttribPointer(aOpacity, 1, gl.FLOAT, false, stride, 3 * FLOAT_BYTES);
+    gl.enableVertexAttribArray(aSeed);
+    gl.vertexAttribPointer(aSeed, 3, gl.FLOAT, false, stride, 4 * FLOAT_BYTES);
+  }
+
+  function applyPass(pass: PassConfig, isPointSprite: boolean): void {
     gl.blendFunc(gl.SRC_ALPHA, pass.additive ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
     gl.uniform1f(u.alphaScale, pass.alphaScale);
     gl.uniform1f(u.sizeBase, pass.sizeBase);
     gl.uniform1f(u.sizeDepth, pass.sizeDepth);
     gl.uniform1f(u.edgeInner, pass.edgeInner);
     gl.uniform1f(u.edgeExp, pass.edgeExp);
+    gl.uniform1f(u.pointSprite, isPointSprite ? 1 : 0);
+  }
+
+  function drawPoints(pass: PassConfig): void {
+    applyPass(pass, true);
     gl.drawArrays(gl.POINTS, 0, points.length);
+  }
+
+  function drawLinks(): void {
+    if (linkVertexCount === 0) return;
+    bindAttributes(linkBuffer);
+    applyPass(LINKS, false);
+    gl.drawArrays(gl.LINES, 0, linkVertexCount);
+    bindAttributes(buffer);
   }
 
   function render(state: {
@@ -401,14 +502,7 @@ export function createHeroFieldRenderer(
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
-    gl.enableVertexAttribArray(aOpacity);
-    gl.vertexAttribPointer(aOpacity, 1, gl.FLOAT, false, stride, 3 * FLOAT_BYTES);
-    gl.enableVertexAttribArray(aSeed);
-    gl.vertexAttribPointer(aSeed, 3, gl.FLOAT, false, stride, 4 * FLOAT_BYTES);
+    bindAttributes(buffer);
 
     gl.uniform1f(u.time, state.timeSeconds);
     gl.uniform1f(u.angle, state.angleRadians);
@@ -421,12 +515,15 @@ export function createHeroFieldRenderer(
     gl.uniform4f(u.textZone, textZone[0], textZone[1], textZone[2], textZone[3]);
     gl.uniform3f(u.color, ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
 
-    drawPass(HALO);
-    drawPass(CORE);
+    // Structure, then bloom over it, then the dots on top.
+    drawLinks();
+    drawPoints(HALO);
+    drawPoints(CORE);
   }
 
   function dispose(): void {
     gl.deleteBuffer(buffer);
+    gl.deleteBuffer(linkBuffer);
     gl.deleteProgram(program);
   }
 

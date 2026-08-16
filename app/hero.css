@@ -117,6 +117,49 @@ body::after {
     linear-gradient(to bottom, transparent 72%, var(--background) 100%);
 }
 
+/*
+ * A quiet ground under the copy column.
+ *
+ * The WebGL layer opens the field around the copy from inside the shader,
+ * which the still SVG layer has no way to do, so the two ended up with
+ * different contrast: with the neighbour strands in, the still layer's
+ * byline measured 4.26:1 against a 4.5:1 bar, and even the GL layer's
+ * headline sat at 3.09:1 against a 3:1 floor. Both are the kind of margin
+ * that disappears the next time the field gets a little denser.
+ *
+ * A scrim fixes both at once and needs no measurement of the DOM, so it
+ * cannot drift out of step with a layout change the way a shader zone
+ * computed from a bounding box can. It is also just the right way to set
+ * type over a busy image, which is what this is.
+ *
+ * Vertical on a phone and horizontal from tablet up, because that is where
+ * the copy actually is at each size: full width at the top on a phone, a
+ * left column on a desktop.
+ */
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--background) 0%,
+    color-mix(in oklab, var(--background) 72%, transparent) 46%,
+    transparent 82%
+  );
+}
+
+@media (min-width: 768px) {
+  .hero-scrim {
+    background: linear-gradient(
+      to right,
+      var(--background) 0%,
+      color-mix(in oklab, var(--background) 74%, transparent) 34%,
+      transparent 66%
+    );
+  }
+}
+
 .hero-inner {
   position: relative;
   z-index: 1;

@@ -1,8 +1,33 @@
 import { HERO_CLUSTER_OPACITY as CLUSTER_OPACITY } from "@/lib/embedding-cluster-opacity";
+import { nearestNeighbourPairs } from "@/lib/embedding-neighbours";
 import type { EmbeddingPoint } from "@/lib/embedding-projection";
 
 interface EmbeddingCloudStaticProps {
   points: EmbeddingPoint[];
+}
+
+/**
+ * The neighbour strands as one path rather than several hundred line
+ * elements. Same structure the GL layer draws, from the same function, so
+ * the two layers cannot disagree about the data.
+ *
+ * One path and three decimal places is a deliberate size choice: this SVG is
+ * in the server-rendered HTML of the site's most performance-sensitive
+ * route, and a line element per pair would be several hundred extra DOM
+ * nodes and roughly twice the bytes for an identical picture. Path data this
+ * repetitive also compresses well, which a pile of separate elements with
+ * their own attribute names does not.
+ */
+function linkPath(points: EmbeddingPoint[]): string {
+  const pairs = nearestNeighbourPairs(points.map((p) => p.finetuned));
+  const round = (n: number) => n.toFixed(3);
+  return pairs
+    .map(({ a, b }) => {
+      const [ax, ay] = points[a].finetuned;
+      const [bx, by] = points[b].finetuned;
+      return `M${round(ax)} ${round(ay)}L${round(bx)} ${round(by)}`;
+    })
+    .join("");
 }
 
 /**
@@ -50,6 +75,16 @@ export function EmbeddingCloudStatic({ points }: EmbeddingCloudStaticProps) {
           </feMerge>
         </filter>
       </defs>
+      {/* Structure first, dots over it, matching the GL layer's draw order.
+          Outside the glow filter on purpose: blurring hairlines this thin
+          erases them, and the strands want to stay legible as strands. */}
+      <path
+        d={linkPath(points)}
+        fill="none"
+        stroke="var(--indigo)"
+        strokeWidth="0.0018"
+        opacity="0.34"
+      />
       <g filter="url(#embedding-cloud-glow)">
         {points.map((p) => {
           const [x, y, z] = p.finetuned;

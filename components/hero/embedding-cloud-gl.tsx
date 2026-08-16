@@ -167,26 +167,42 @@ export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProp
     }
     rendererRef.current = renderer;
 
-    /* Where the headline actually is, so the field can open around it. Read
-     * from the DOM rather than hardcoded, because the block moves between
-     * 390px and 1440px and a hardcoded clearing would sit in the wrong place
-     * on one of them. Queried by attribute rather than passed by ref: this
-     * component is lazy and the headline is server-rendered in a different
-     * subtree, so there is no ref to hand down without threading one through
-     * the whole hero for a decorative layer's benefit. */
+    /* Where the copy that needs a quiet ground actually is, so the field can
+     * open around it. Read from the DOM rather than hardcoded, because the
+     * block moves between 390px and 1440px and a hardcoded clearing would sit
+     * in the wrong place on one of them. Queried by attribute rather than
+     * passed by ref: this component is lazy and the copy is server-rendered
+     * in a different subtree, so there is no ref to hand down without
+     * threading one through the whole hero for a decorative layer's benefit.
+     *
+     * It covers the union of everything marked quiet, not just the headline.
+     * The headline is 83px and only needs a 3:1 contrast ratio; the byline
+     * under it is caption-sized mono and needs 4.5:1, and it was sitting
+     * outside a clearing centred on the headline alone. The element that
+     * needs the most protection was the one not getting any. */
     const measureTextZone = () => {
-      const headline = document.querySelector<HTMLElement>("[data-hero-headline]");
+      const quiet = document.querySelectorAll<HTMLElement>("[data-hero-quiet]");
       const box = canvas.getBoundingClientRect();
-      if (!headline || box.width === 0) {
+      if (quiet.length === 0 || box.width === 0) {
         renderer.setTextZone(null);
         return;
       }
-      const rect = headline.getBoundingClientRect();
+      let left = Infinity;
+      let top = Infinity;
+      let right = -Infinity;
+      let bottom = -Infinity;
+      quiet.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        left = Math.min(left, rect.left);
+        top = Math.min(top, rect.top);
+        right = Math.max(right, rect.right);
+        bottom = Math.max(bottom, rect.bottom);
+      });
       renderer.setTextZone({
-        x: rect.left - box.left,
-        y: rect.top - box.top,
-        width: rect.width,
-        height: rect.height,
+        x: left - box.left,
+        y: top - box.top,
+        width: right - left,
+        height: bottom - top,
       });
     };
 
