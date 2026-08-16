@@ -1,0 +1,119 @@
+"use client";
+
+import { useEffect } from "react";
+
+import { setPointerState } from "@/lib/pointer";
+
+/**
+ * The single pointer listener on the site.
+ *
+ * Renders nothing. It attaches one passive listener, smooths the position,
+ * and writes it to the root element's custom properties once per frame.
+ * Every layer that acknowledges the cursor reads those properties, so the
+ * count of listeners does not grow with the count of effects.
+ *
+ * It writes inline styles on <html>, which React does not own the contents
+ * of. That is the whole reason this is a style write and not a DOM write:
+ * nothing here inserts, removes or reparents a node, which is the rule that
+ * came out of the round-nine crash. Setting a custom property on an element
+ * React rendered is invisible to the reconciler and always has been.
+ *
+ * Reduced-motion visitors never get a listener at all, and the tokens keep
+ * their centred defaults, so every layer downstream renders its resting
+ * composition rather than a broken one.
+ */
+
+/**
+ * Per-frame approach rate. At 0.12 the layer arrives within a pixel or two
+ * of the cursor in about a fifth of a second, which reads as weight rather
+ * than as lag. Tuned by feel, which is the only way this value can be
+ * chosen.
+ */
+const FOLLOW = 0.12;
+/** How fast --pointer-on fades the whole effect in and out. */
+const STRENGTH_FOLLOW = 0.06;
+
+export function PointerField() {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const root = document.documentElement;
+
+    let targetX = 0.5;
+    let targetY = 0.5;
+    let targetStrength = 0;
+    let x = 0.5;
+    let y = 0.5;
+    let strength = 0;
+    let frame: number | null = null;
+    let idleFrames = 0;
+
+    const write = () => {
+      root.style.setProperty("--mx", x.toFixed(4));
+      root.style.setProperty("--my", y.toFixed(4));
+      root.style.setProperty("--mdx", (x - 0.5).toFixed(4));
+      root.style.setProperty("--mdy", (y - 0.5).toFixed(4));
+      root.style.setProperty("--pointer-on", strength.toFixed(4));
+      setPointerState(x, y, x - 0.5, y - 0.5, strength);
+    };
+
+    const step = () => {
+      const dx = targetX - x;
+      const dy = targetY - y;
+      const ds = targetStrength - strength;
+      x += dx * FOLLOW;
+      y += dy * FOLLOW;
+      strength += ds * STRENGTH_FOLLOW;
+      write();
+
+      // Park the loop once we have settled, and let the next pointer event
+      // restart it. An always-on rAF for a value that is not changing is
+      // the cost this whole design is trying to avoid paying.
+      const settled = Math.abs(dx) < 0.0002 && Math.abs(dy) < 0.0002 && Math.abs(ds) < 0.0004;
+      idleFrames = settled ? idleFrames + 1 : 0;
+      if (idleFrames > 4) {
+        frame = null;
+        return;
+      }
+      frame = requestAnimationFrame(step);
+    };
+
+    const kick = () => {
+      if (frame === null) frame = requestAnimationFrame(step);
+    };
+
+    const onMove = (event: PointerEvent) => {
+      // Touch sends a pointermove on every tap, which would leave the field
+      // frozen wherever the last tap landed. Only devices with a cursor
+      // that actually hovers drive this.
+      if (event.pointerType === "touch") return;
+      targetX = event.clientX / window.innerWidth;
+      targetY = event.clientY / window.innerHeight;
+      targetStrength = 1;
+      kick();
+    };
+
+    const onLeave = () => {
+      targetStrength = 0;
+      kick();
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.addEventListener("pointerleave", onLeave);
+    window.addEventListener("blur", onLeave);
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("blur", onLeave);
+      if (frame !== null) cancelAnimationFrame(frame);
+      root.style.removeProperty("--mx");
+      root.style.removeProperty("--my");
+      root.style.removeProperty("--mdx");
+      root.style.removeProperty("--mdy");
+      root.style.removeProperty("--pointer-on");
+    };
+  }, []);
+
+  return null;
+}

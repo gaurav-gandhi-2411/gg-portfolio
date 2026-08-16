@@ -5,6 +5,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
 import { ChatLauncher } from "@/components/chatbot/chat-launcher";
 import { PersonJsonLd } from "@/components/json-ld";
+import { ScrollDriver } from "@/components/motion/scroll-driver";
+import { PointerField } from "@/components/pointer-field";
 import { SiteNav } from "@/components/site-nav";
 import "./globals.css";
 
@@ -135,6 +137,16 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
+        {/* Both render nothing and both no-op for reduced-motion visitors.
+            One writes the shared pointer position that every layer which
+            acknowledges the cursor reads; the other owns smooth scrolling
+            and the single clock that scroll-linked motion runs on. They sit
+            in the root layout rather than on the homepage because the header
+            and the case study pages will read from the same two sources, and
+            a second listener or a second clock added later is how a site
+            ends up fighting itself. */}
+        <PointerField />
+        <ScrollDriver />
         <SiteNav />
         {children}
         <ChatLauncher />
