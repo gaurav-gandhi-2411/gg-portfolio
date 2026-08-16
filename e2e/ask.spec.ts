@@ -17,7 +17,16 @@ import { expect, test } from "@playwright/test";
  * behavior nobody actually observed.
  */
 
-const LAST_CHIP = "Which project's evaluation numbers are the most interesting?";
+/**
+ * The last of the seeded openers, by its rendered text.
+ *
+ * Copy is a locator target on this site, and this constant is the proof: the
+ * opener set went from five questions to three, and four tests in this file
+ * broke on a string nobody thought of as code. Kept as one constant so the
+ * next copy change is one edit rather than seven, and named for its position
+ * rather than its wording so it stays honest when the wording moves again.
+ */
+const LAST_CHIP = "What roles is Gaurav looking for right now?";
 
 test.describe("/ask", () => {
   test("loads with the intro copy and the panel visible", async ({ page }) => {
