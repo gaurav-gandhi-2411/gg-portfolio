@@ -139,7 +139,10 @@ test.describe("project card reveal", () => {
     expect(lit, "the cursor light comes up").toBeGreaterThan(0.5);
   });
 
-  test("keyboard focus reveals the same thing a pointer does", async ({ page }) => {
+  test("keyboard focus reveals the same thing a pointer does", async ({ page }, testInfo) => {
+    // Where there is no hover, the chips are simply shown from the start
+    // (see the touch test below), so there is no reveal to trigger.
+    test.skip(testInfo.project.name === "mobile", "no hover, so the stack is already shown");
     await page.goto("/projects");
     await page.waitForTimeout(1200);
 
@@ -158,17 +161,107 @@ test.describe("project card reveal", () => {
     await expect(chips, "focus-within reveals the stack for keyboard users").toBeVisible();
   });
 
-  test("every card is fully readable without the reveal, which is what touch gets", async ({
+  test("touch gets the stack outright instead of a gesture it cannot perform", async ({
     page,
-  }) => {
-    // The reveal is additive: everything a card needs to be understood is
-    // readable without it, which is what makes it safe to gate on hover.
+  }, testInfo) => {
     await page.goto("/projects");
     await page.waitForTimeout(1200);
 
     const card = page.locator('[data-slug="aetherart"]');
+    // Whatever the pointer, the card is fully readable on its own: the
+    // reveal is additive and never holds anything a visitor needs.
     await expect(card.getByRole("heading")).toBeVisible();
     await expect(card.getByRole("link", { name: /Case study/ })).toBeVisible();
-    await expect(card.locator(".project-card-chips")).toBeHidden();
+
+    const chips = card.locator(".project-card-chips");
+    if (testInfo.project.name === "mobile") {
+      // A coarse pointer has no hover, so gating the stack behind one would
+      // mean phone visitors never see it. The honest equivalent is not a
+      // gesture to discover, it is showing the thing.
+      await expect(chips, "touch sees the stack without hovering").toBeVisible();
+    } else {
+      await expect(chips, "with a fine pointer it waits for hover").toBeHidden();
+    }
+  });
+});
+
+test.describe("filter pill tap targets", () => {
+  /*
+   * No two pills may overlap.
+   *
+   * The pills carry a negative vertical margin so a 44px tap target does not
+   * bulk out the row. On one line that is invisible. The moment the row
+   * wraps, which it does on any phone, it made adjacent rows overlap by 2px,
+   * and Chromium hit-tests an overlap to whichever element paints last, so a
+   * tap near the edge of one pill could apply a different filter.
+   *
+   * It surfaced as Playwright retrying a click for three and a half seconds
+   * and reporting that another pill "intercepts pointer events". That was
+   * the harness describing a real defect accurately, and the tempting read
+   * was that the test was slow.
+   */
+  test("no two filter pills overlap, so a tap always hits the one you aimed at", async ({
+    page,
+  }) => {
+    await page.goto("/projects");
+    await page.waitForTimeout(900);
+
+    const overlaps = await page.evaluate(() => {
+      const pills = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[aria-label="Filter projects by category"] button'
+        ),
+      ];
+      const boxes = pills.map((p) => ({
+        label: (p.textContent ?? "").trim().slice(0, 24),
+        r: p.getBoundingClientRect(),
+      }));
+      const hits: string[] = [];
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i].r;
+          const b = boxes[j].r;
+          const overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (overlapX > 0.5 && overlapY > 0.5) {
+            hits.push(
+              `"${boxes[i].label}" and "${boxes[j].label}" overlap by ${overlapX.toFixed(1)}x${overlapY.toFixed(1)}px`
+            );
+          }
+        }
+      }
+      return { pillCount: pills.length, hits };
+    });
+
+    expect(overlaps.pillCount, "pills are present").toBeGreaterThan(3);
+    expect(overlaps.hits, overlaps.hits.join("; ")).toEqual([]);
+  });
+
+  test("every pill is the one that receives a tap at its own centre", async ({ page }) => {
+    await page.goto("/projects");
+    await page.waitForTimeout(900);
+
+    const wrong = await page.evaluate(() => {
+      const pills = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[aria-label="Filter projects by category"] button'
+        ),
+      ];
+      const bad: string[] = [];
+      for (const pill of pills) {
+        const r = pill.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        if (!hit || !(hit === pill || pill.contains(hit))) {
+          bad.push(
+            `"${(pill.textContent ?? "").trim().slice(0, 24)}" is covered by ${
+              hit ? (hit.textContent ?? hit.tagName).trim().slice(0, 24) : "nothing"
+            }`
+          );
+        }
+      }
+      return bad;
+    });
+
+    expect(wrong, wrong.join("; ")).toEqual([]);
   });
 });

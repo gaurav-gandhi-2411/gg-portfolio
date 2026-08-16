@@ -164,3 +164,70 @@
     transition: none;
   }
 }
+
+/*
+ * ── The grid on a phone ──────────────────────────────────────────────────
+ * Below lg there is one column, so the desktop rhythm (spreads across two
+ * columns) has nothing to express itself with, and the result was thirteen
+ * identical stacked cards: the exact database-table problem the rhythm
+ * exists to solve, on the width where most first visits happen.
+ *
+ * So the phone gets its own composition rather than the desktop one
+ * stacked. The same two sizes are still there, they just say themselves
+ * differently: a spread gets a hue-lit top edge and a tinted ground, which
+ * makes it read as a landmark you scroll past, and the standard cards
+ * between them read as the run. Scanning the column now has a beat.
+ */
+@media (max-width: 1023px) {
+  .project-card[data-size="spread"] {
+    border-color: oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.4);
+    background:
+      linear-gradient(
+        to bottom,
+        oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.07) 0%,
+        transparent 38%
+      ),
+      color-mix(in oklab, var(--card) 62%, transparent);
+  }
+
+  /* A lit edge along the top of a landmark card, in its own hue. Sits on the
+   * card rather than inside it so it reads as part of the object. */
+  .project-card[data-size="spread"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.85) 0%,
+      oklch(var(--accent-l) var(--accent-c) var(--card-hue, 277) / 0.15) 62%,
+      transparent 100%
+    );
+  }
+}
+
+/*
+ * What touch gets instead of hover.
+ *
+ * A coarse pointer has no hover, so gating the stack behind one would mean
+ * phone visitors simply never see it. The honest equivalent is not a
+ * gesture to discover, it is showing the thing: the chips are visible from
+ * the start wherever hover does not exist, and the slot stops reserving a
+ * fixed height because there is no longer anything to reveal into it.
+ *
+ * Keyed on the absence of hover rather than on width, so a touchscreen
+ * laptop gets the right one either way.
+ */
+@media (hover: none) {
+  .project-card-reveal {
+    height: auto;
+    overflow: visible;
+  }
+  .project-card-chips {
+    visibility: visible;
+    transform: none;
+    transition: none;
+  }
+}
