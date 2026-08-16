@@ -49,7 +49,6 @@ const VERTEX_SHADER_SOURCE = `
   uniform float uSizeDepth;
   uniform vec2 uPointer;
   uniform float uPointerStrength;
-  uniform vec4 uTextZone;
 
   varying float vAlpha;
 
@@ -69,9 +68,6 @@ const VERTEX_SHADER_SOURCE = `
    * at the very centre of the lens gets pushed outward in clip space. */
   const float LENS_RADIUS = 0.55;
   const float LENS_PUSH = 0.055;
-
-  /* How far the field opens up around the headline block. */
-  const float PART_PUSH = 0.05;
 
   void main() {
     vec3 p = aPos;
@@ -104,25 +100,10 @@ const VERTEX_SHADER_SOURCE = `
     vec2 pushDir = normalize(clip - uPointer + vec2(1e-5));
     clip += pushDir * lens * LENS_PUSH;
 
-    /* The field opens around the headline. This is a design move and a
-     * contrast guard at the same time: the copy needs a quieter ground than
-     * the rest of the frame, and a field that parts around the words reads
-     * as the words having presence in the space rather than sitting on top
-     * of a picture of one. */
-    vec2 fromText = (clip - uTextZone.xy) / uTextZone.zw;
-    float inText = 1.0 - smoothstep(0.55, 1.25, length(fromText));
-    clip += normalize(clip - uTextZone.xy + vec2(1e-5)) * inText * PART_PUSH;
-
     gl_Position = vec4(clip, 0.0, 1.0);
 
     float depth = (r.z + 1.0) * 0.5;
-    /* Quieter behind the words, not absent. The first pass at this dimmed to
-     * 0.30 over a zone wide enough that the whole upper left of the frame
-     * went black, and a headline over a void is back to text on a flat plane,
-     * which is the thing this hero exists to stop doing. It has to stay
-     * legible as field behind the copy. */
-    float textDim = mix(1.0, 0.46, inText);
-    vAlpha = aOpacity * (0.55 + depth * 0.45) * uGain * uAlphaScale * (1.0 + lens * 1.9) * textDim;
+    vAlpha = aOpacity * (0.55 + depth * 0.45) * uGain * uAlphaScale * (1.0 + lens * 1.9);
     gl_PointSize = (uSizeBase + depth * uSizeDepth) * uDpr * persp * (1.0 + lens * 1.1);
   }
 `;
@@ -246,14 +227,6 @@ export interface HeroFieldPoint {
   cluster: number;
 }
 
-/** Where the headline sits, in CSS pixels relative to the canvas box. */
-export interface TextZoneRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface HeroFieldRenderer {
   render(state: {
     timeSeconds: number;
@@ -264,7 +237,6 @@ export interface HeroFieldRenderer {
     pointerStrength: number;
   }): void;
   resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void;
-  setTextZone(rect: TextZoneRect | null): void;
   dispose(): void;
 }
 
@@ -350,8 +322,8 @@ export function createHeroFieldRenderer(
    * The links get their own buffer holding two vertices per pair, each a
    * verbatim copy of its endpoint's attributes. That is what lets both
    * passes share one vertex shader: strand endpoints go through the same
-   * drift, rotation, perspective, pointer lens and headline parting as the
-   * dots, so a link cannot come unstuck from the points it joins. The
+   * drift, rotation, perspective and pointer lens as the dots, so a link
+   * cannot come unstuck from the points it joins. The
    * duplicated seven floats per endpoint cost about 28KB on the GPU and
    * remove an entire class of drift bug.
    */
@@ -391,7 +363,6 @@ export function createHeroFieldRenderer(
     sizeDepth: gl.getUniformLocation(program, "uSizeDepth"),
     pointer: gl.getUniformLocation(program, "uPointer"),
     pointerStrength: gl.getUniformLocation(program, "uPointerStrength"),
-    textZone: gl.getUniformLocation(program, "uTextZone"),
     color: gl.getUniformLocation(program, "uColor"),
     edgeInner: gl.getUniformLocation(program, "uEdgeInner"),
     edgeExp: gl.getUniformLocation(program, "uEdgeExp"),
@@ -406,12 +377,8 @@ export function createHeroFieldRenderer(
 
   let aspect = 1;
   let dpr = 1;
-  let cssW = 1;
-  let cssH = 1;
   let extentX = BASE_EXTENT;
   let extentY = BASE_EXTENT;
-  // Off-screen and inert until the component measures the headline.
-  let textZone: [number, number, number, number] = [0, 0, 0.0001, 0.0001];
 
   function recomputeExtent(): void {
     /* The field fills the frame rather than fitting inside it: this is full
@@ -428,8 +395,6 @@ export function createHeroFieldRenderer(
 
   function resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
     dpr = devicePixelRatio;
-    cssW = cssWidth;
-    cssH = cssHeight;
     const width = Math.max(1, Math.round(cssWidth * dpr));
     const height = Math.max(1, Math.round(cssHeight * dpr));
     if (canvas.width !== width || canvas.height !== height) {
@@ -441,22 +406,6 @@ export function createHeroFieldRenderer(
     recomputeExtent();
   }
 
-  function setTextZone(rect: TextZoneRect | null): void {
-    if (!rect || cssW <= 0 || cssH <= 0) {
-      textZone = [0, 0, 0.0001, 0.0001];
-      return;
-    }
-    // CSS pixels relative to the canvas box, into clip space.
-    const cx = ((rect.x + rect.width / 2) / cssW) * 2 - 1;
-    const cy = 1 - ((rect.y + rect.height / 2) / cssH) * 2;
-    // A little padding on the box, not a lot. The parting should feel like a
-    // soft clearing around the words, not like a rectangle cut out of the
-    // field, and at 1.25x horizontally it reached most of the way across a
-    // 1440px frame because the headline itself is most of a column wide.
-    const rx = Math.max(((rect.width / cssW) * 2) / 2, 0.05) * 0.95;
-    const ry = Math.max(((rect.height / cssH) * 2) / 2, 0.05) * 1.3;
-    textZone = [cx, cy, rx, ry];
-  }
 
   /** Points the attribute pointers at whichever buffer the next pass draws. */
   function bindAttributes(target: WebGLBuffer): void {
@@ -512,7 +461,6 @@ export function createHeroFieldRenderer(
     gl.uniform1f(u.gain, gain);
     gl.uniform2f(u.pointer, state.pointerX * 2 - 1, 1 - state.pointerY * 2);
     gl.uniform1f(u.pointerStrength, state.pointerStrength);
-    gl.uniform4f(u.textZone, textZone[0], textZone[1], textZone[2], textZone[3]);
     gl.uniform3f(u.color, ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
 
     // Structure, then bloom over it, then the dots on top.
@@ -527,5 +475,5 @@ export function createHeroFieldRenderer(
     gl.deleteProgram(program);
   }
 
-  return { render, resize, setTextZone, dispose };
+  return { render, resize, dispose };
 }

@@ -120,17 +120,19 @@ body::after {
 /*
  * A quiet ground under the copy column.
  *
- * The WebGL layer opens the field around the copy from inside the shader,
- * which the still SVG layer has no way to do, so the two ended up with
- * different contrast: with the neighbour strands in, the still layer's
- * byline measured 4.26:1 against a 4.5:1 bar, and even the GL layer's
- * headline sat at 3.09:1 against a 3:1 floor. Both are the kind of margin
- * that disappears the next time the field gets a little denser.
+ * With the neighbour strands in, the still SVG layer's byline measured
+ * 4.26:1 against a 4.5:1 bar and the WebGL layer's headline sat at 3.09:1
+ * against a 3:1 floor. Both are the kind of margin that disappears the next
+ * time the field gets a little denser.
  *
- * A scrim fixes both at once and needs no measurement of the DOM, so it
- * cannot drift out of step with a layout change the way a shader zone
- * computed from a bounding box can. It is also just the right way to set
- * type over a busy image, which is what this is.
+ * This is now the only thing protecting that copy. The WebGL layer used to
+ * also open the field around the headline from inside the shader, which the
+ * still layer had no way to match; measured against the scrim alone, that
+ * parting was worth 0.39 of a contrast point on the headline and no visible
+ * difference in composition, so it is gone. The scrim covers both layers,
+ * needs no measurement of the DOM, and therefore cannot drift out of step
+ * with a layout change the way a shader zone computed from a bounding box
+ * can. It is also just the right way to set type over a busy image.
  *
  * Vertical on a phone and horizontal from tablet up, because that is where
  * the copy actually is at each size: full width at the top on a phone, a
@@ -166,7 +168,7 @@ body::after {
   display: flex;
   width: 100%;
   max-width: 90rem;
-  min-height: calc(100svh - var(--nav-h));
+  min-height: calc(100svh - var(--nav-h-rest));
   flex-direction: column;
   justify-content: space-between;
   /* Phone spacing is tighter than a scaled-down desktop would give. The
@@ -458,5 +460,169 @@ body::after {
   .hero-status:hover,
   .hero-social:hover {
     transform: none;
+  }
+}
+
+/*
+ * ── Header ──────────────────────────────────────────────────────────────
+ * A floating pill, not a bordered band. The nav element itself is the
+ * sticky band and is completely transparent; everything visible is the
+ * pill inside it, so content scrolls behind the pill with the page showing
+ * around its edges. Keeping the band in flow means no other route had to
+ * change to accommodate a header that now overlays content.
+ *
+ * --nav-shrink is written by components/site-nav.tsx, scrubbed from 0 to 1
+ * across the first stretch of scroll. Everything that contracts reads from
+ * that one number, so the whole behaviour is legible in one place and there
+ * is no second class state to keep in sync.
+ */
+.site-nav {
+  --nav-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--space-3) - var(--nav-shrink) * var(--space-1-5)) var(--space-4);
+  pointer-events: none;
+}
+
+.site-nav-pill {
+  display: flex;
+  width: 100%;
+  max-width: 64rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  border: 1px solid
+    color-mix(in oklab, var(--border) calc(18% + var(--nav-shrink) * 34%), transparent);
+  border-radius: 999px;
+  background: color-mix(
+    in oklab,
+    var(--plane-near) calc(38% + var(--nav-shrink) * 44%),
+    transparent
+  );
+  /* Inline padding is set so the pill's CONTENT lines up with the content
+   * column of every section below it, not so the pill's own box does. The
+   * right side is a step smaller because each link carries its own padding,
+   * which would otherwise double up against the pill's. */
+  padding: calc(var(--space-2) - var(--nav-shrink) * var(--space-0-5)) var(--space-3-5)
+    calc(var(--space-2) - var(--nav-shrink) * var(--space-0-5)) var(--space-6);
+  backdrop-filter: blur(calc(6px + var(--nav-shrink) * 10px)) saturate(140%);
+  box-shadow: 0 calc(var(--nav-shrink) * 18px) calc(var(--nav-shrink) * 40px)
+    calc(var(--nav-shrink) * -22px) color-mix(in oklab, #000 60%, transparent);
+  pointer-events: auto;
+}
+
+.site-nav-skip {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  padding: var(--space-2) var(--space-4);
+  color: var(--accent-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  pointer-events: auto;
+  transform: translateY(-200%);
+}
+.site-nav-skip:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
+.site-nav-brand {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-2-5);
+  border-radius: 999px;
+  padding-right: var(--space-2);
+}
+.site-nav-brand:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.site-nav-mark {
+  width: calc(1.75rem - var(--nav-shrink) * 0.2rem);
+  height: calc(1.75rem - var(--nav-shrink) * 0.2rem);
+}
+
+.site-nav-name {
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* The name is the first thing to go when the pill has to earn its width
+ * back on a phone. The monogram carries the identity on its own, and the
+ * home link keeps its accessible name from aria-label either way. */
+@media (max-width: 559px) {
+  .site-nav-name {
+    display: none;
+  }
+}
+
+.site-nav-links {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/*
+ * One pixel wide at rest, scaled to the width of whichever item is active.
+ * Pure transform, so it never triggers layout and never distorts a corner
+ * radius, which is why it is an underline and not a filled chip.
+ */
+.site-nav-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 1px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: left center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.site-nav-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: var(--radius-md);
+  padding-inline: var(--space-2-5);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out-soft);
+}
+.site-nav-link:hover {
+  color: var(--foreground);
+}
+.site-nav-link-active {
+  color: var(--foreground);
+}
+.site-nav-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 419px) {
+  .site-nav-link {
+    padding-inline: var(--space-1-5);
+    font-size: var(--text-caption);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-link {
+    transition: none;
   }
 }

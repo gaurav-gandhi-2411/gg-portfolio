@@ -34,9 +34,19 @@ function careerYears(): number {
  * The field is the page now, not a texture behind a boxed column. It was
  * previously clipped to the same max-w-3xl the copy sat in, which made it a
  * decorative panel roughly 488px wide; it is now full bleed and the copy
- * sits inside it at a different depth. The field opens around the headline
- * rather than running under it, which is both the composition and the
- * contrast guard.
+ * sits inside it at a different depth, over a scrim that gives the words a
+ * quiet ground without taking the field away from them.
+ *
+ * An earlier version also had the field open around the headline from inside
+ * the shader, measuring the copy's bounding box and pushing points out of a
+ * zone around it. That is gone. Tested against the scrim alone it earned
+ * almost nothing: the headline's worst-case contrast moved from 4.31:1 to
+ * 4.70:1 against a 3:1 requirement, and the two compositions were near
+ * indistinguishable side by side, because the scrim had already quietened
+ * exactly the region the parting was quietening again. It was costing shader
+ * work and, worse, coupling a decorative layer to the copy's measured
+ * geometry, which is the kind of link that silently goes wrong the next time
+ * the layout moves. The scrim has no such coupling.
  *
  * The column is left aligned. Centred copy at a 24ch measure over a centred
  * background, with five equally weighted pills underneath, is the single
@@ -121,7 +131,7 @@ export function Hero() {
             </a>
           </p>
 
-          <h1 data-hero-headline data-hero-quiet className="hero-headline">
+          <h1 className="hero-headline">
             I build <span className="hero-headline-accent">AI products</span> and see them
             through, from the first experiment to real users.
           </h1>
@@ -130,7 +140,7 @@ export function Hero() {
               390px the byline stacks and the separators disappear with it;
               hand-placed ones left dashes dangling off the end of two of the
               three lines. */}
-          <p data-hero-quiet className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
+          <p className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
             <span className="hero-byline-name">{site.name}</span>
             <span>Senior Data Scientist, Applied AI</span>
             <span>{site.location}</span>
