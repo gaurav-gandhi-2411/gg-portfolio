@@ -1,0 +1,42 @@
+{
+  "note": "The set of fixtures the eval is expected to run. run-eval.mjs compares the fixtures directory against this list, and check-thresholds.mjs compares the report against it, so a fixture that is deleted, renamed out of the .json filter, or added shows up as a gate failure rather than as a smaller denominator. Changing a rate by changing the question set has to be a deliberate edit to this file, visible in the diff, and it invalidates the recorded baseline in check-thresholds.mjs.",
+  "expectedFixtureIds": [
+    "adversarial-cocktail-recipe",
+    "adversarial-dan-weather",
+    "adversarial-fake-context-address",
+    "adversarial-poem-injection",
+    "adversarial-system-prompt-leak",
+    "availability-consulting",
+    "availability-location-status",
+    "availability-role-types",
+    "background-fedex-forecasting",
+    "background-indium-copilot",
+    "background-indium-finetune",
+    "background-indium-lead",
+    "background-tcs-pipelines",
+    "project-aetherart-vram",
+    "project-agentgauge-icc",
+    "project-dealhunter-outage",
+    "project-gold-rate-tracker-baseline",
+    "project-mmfr-collapse",
+    "project-reclaim-safe-mode",
+    "project-reviewiq-cassette-bug",
+    "project-shelfsense-tweedie",
+    "project-style-maitri-audit",
+    "project-tracegauge-heuristic-pivot",
+    "project-triageiq-leakage",
+    "project-warmer-hinglish",
+    "unanswerable-mmfr-gpu",
+    "unanswerable-salary",
+    "unanswerable-triageiq-training-cost",
+    "unanswerable-university-gpa",
+    "unanswerable-years-experience"
+  ],
+  "countsByCategory": {
+    "adversarial": 5,
+    "availability": 3,
+    "background": 5,
+    "project-factual": 12,
+    "unanswerable": 5
+  }
+}
