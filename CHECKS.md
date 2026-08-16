@@ -8,8 +8,8 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and twice
-more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
+days**, in fifteen different disguises, by fifteen unrelated routes, and three
+times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
 a monitoring stack installed after an outage it could not have detected, and one was
@@ -24,13 +24,19 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 and 17 came later, from a design rebuild rather than an audit, and
-they extend the pattern rather than repeat it. Every earlier entry is a check
-that could not see its subject. Instance 16 is a check that saw its subject
-perfectly and had been told to look for the wrong thing. Instance 17 is a defect
-no check was looking for at all, which announced itself only as a slow test.
+Instances 16, 17 and 18 came later, from a design rebuild rather than an audit,
+and they extend the pattern rather than repeat it. Every earlier entry is a
+check that could not see its subject. Instance 16 is a check that saw its
+subject perfectly and had been told to look for the wrong thing. Instance 17 is
+a defect no check was looking for at all, which announced itself only as a slow
+test. Instance 18 is four checks that saw their subjects correctly and simply
+saw less of them than their names implied, because how much they covered was
+decided by a separator, an indent, a filename and an import spelling. It
+carries the one-line rule the rest of this document had been circling: a check
+is safe when it compares two independently-derived sets, or prints a
+denominator it would notice moving.
 
-## The seventeen
+## The eighteen
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -565,6 +571,70 @@ Two rules fall out, both cheap:
   hit at its own centre. Both are two lines of `getBoundingClientRect` and
   `elementFromPoint` (`e2e/project-grid.spec.ts`), and neither is covered by any
   standard accessibility audit.
+
+**18. Four checks whose coverage was computed from a formatting convention.**
+A separator, an indent, a filename, an import spelling. Each decided how much
+the check looked at, and each is the kind of thing an ordinary edit removes
+without anyone thinking about the gate at all. Every one of the four then
+reported success over the smaller set.
+
+The chatbot eval was the expensive one, because it stands behind a quality
+claim rather than a formatting one. `run-eval.mjs` collects fixtures with a
+`.json` filename filter and every threshold is a rate, so the question set is
+as much a part of the gate as the numbers. Recall@5 misses exactly one fixture.
+Rename that one file to `.json.bak` and the eval reports 100.0% instead of
+95.0%, and `check-thresholds.mjs` prints *All chatbot eval thresholds pass* and
+exits 0. The only n-related failure it had was n of zero, so a report claiming
+a perfect score on a single case passed all four checks. **A recall number that
+improves when you delete the questions is worse than no number**, because it
+looks like the good kind.
+
+The other three were quieter. `check-card-consistency.mjs` splits
+`content/products.ts` on a literal newline-brace-newline: move one product's
+brace onto its first field's line and it drops from 13 products to 12, prints
+`12 products`, exits 0. Its own comment claimed a structural rewrite would make
+every product report `PARSE_ERROR`, loudly, not silently skip. True of a total
+rewrite, false of the partial one a formatter actually produces, which is the
+only kind that happens. Its case-study loader had the same shape one function
+over, matching exactly one spelling of an import statement. And
+`check-resume-pdf-consistency.mjs` derives each project's anchor by splitting a
+heading on `" — "`; rewriting four entries in site style took coverage from
+five projects to one and turned the gate green **by making it stop looking**,
+which is the sentence worth remembering.
+
+In gh-profile the convention was a join nobody wrote. `check-svgs.mjs` walks
+`assets/` and validates what it finds, `check-readme-image-hosts.mjs` walks
+`README.md` and validates what it finds, and nothing compared the two sets.
+Renaming one asset left a broken image on the live profile with all three CI
+gates green.
+
+The general rule, and the one to apply while writing a check rather than while
+auditing one:
+
+> **A check is safe when it compares two independently-derived sets, or prints
+> a denominator it would notice moving.** Anything else is scoped by a
+> convention, and a convention is not a guarantee.
+
+"Independently derived" is the load-bearing half. Two readings that share an
+assumption both shrink together and agree with each other all the way down. The
+pairs that work here share nothing: a block split against a flat scan of the
+same file, an import regex against a directory listing, README references
+against files on disk, a computed set against a hand-maintained list. The
+hand-maintained list is not a lesser option: pinning the expected set is what
+makes shrinking it a deliberate act with a visible diff, which is the whole
+difference between updating a gate and quietly disabling it.
+
+The denominator half only counts if something reads it. All four of these
+printed one. `13 products`, `5 covered`, `n=20`, the numbers were right there
+in CI output the entire time, in a passing run nobody re-reads. **Printing a
+number is not the same as checking it.**
+
+This is a different failure from instance 16, and worth keeping separate. There
+the test agreed with the implementation because it was written from it. Here
+the check is correct about everything it examines and simply examines less than
+its name implies, so reading the code closely tells you nothing. The scope
+lives in the data's shape, not in the check. The only thing that finds it is
+breaking the convention on purpose and watching whether the gate notices.
 
 ## What follows from it
 
