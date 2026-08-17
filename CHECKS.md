@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and six
+days**, in fifteen different disguises, by fifteen unrelated routes, and seven
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 21 came later, from a design rebuild rather than an audit,
+Instances 16 through 22 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -40,9 +40,12 @@ before the thing it would have collided with. Instance 20 is the measuring
 tool itself: a Lighthouse runner that leaked a Chrome profile per run until the
 debris changed what it measured. Instance 21 is a style write whose cost had
 nothing to do with what read it, paired with a confident wrong explanation that
-only fell when the variable was removed rather than argued about.
+only fell when the variable was removed rather than argued about. Instance 22
+is the one that produced no output at all: a gate that never fired on the branch
+it existed to guard, which is the opening rule turned on a control rather than on
+the code.
 
-## The twenty-one
+## The twenty-two
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -789,6 +792,68 @@ directions: *an argument that a variable cannot matter is not a measurement that
 it does not.* Neutralise the variable and look. It cost one flag,
 `BLOCKED_URL_PATTERNS_OVERRIDE`, and the runner records it in the artifact so a
 comparison can never quietly exclude something without saying so.
+
+**22. A gate that was correct, complete, and never ran.** Every other entry in
+this document is about a control that produced output nobody could rely on.
+This one produced no output at all, and that is worse in a way worth being
+precise about.
+
+`ci.yml` fired on `pull_request` and on pushes to `main`. A long-lived feature
+branch with no PR open matched neither trigger. `feat/hero-rebuild` grew to 31
+commits that way, and the bundle-size gate, which exists specifically to stop
+exactly this, was structurally unable to see a single one of them. The wave
+carried **52,795 bytes of eager gzip JS** past a ceiling of 220,160, and it was
+discovered only because the branch was later split into PRs, which is to say by
+accident of process rather than by any control.
+
+Compare the two nearest shapes. Instance 16 is a check asserting the wrong
+thing: it ran, it reported, and its report was misleading. Instance 18 is four
+checks whose coverage narrowed silently: they ran, they reported, and the
+denominator quietly shrank. **Both were at least running, so both leave
+evidence.** A green run with a wrong assertion is a lead; a shrinking
+denominator is a number in a log. This left nothing. There is no run to
+re-read, no output to check, no denominator to compare, and the absence looks
+exactly like a branch that has not been pushed yet.
+
+> **A gate that does not run is not a weak gate. It is no gate, and nothing in
+> the output distinguishes the two, because there is no output.**
+
+Which is a special case of this document's opening rule turned on the gate
+itself. "I looked and it was fine" and "I never looked" must not produce the
+same output, and here they produced the same nothing.
+
+Four gates shared the trigger and were equally blind: `ci.yml` (build, e2e,
+bundle size, card consistency, resume consistency, index freshness),
+`eval.yml`, `link-check.yml` and `live-link-markers.yml`. The three that run
+only on a schedule (`chat-canary.yml`, `live-link-latency.yml`,
+`metrics-refresh.yml`) target production rather than a branch and were never in
+scope. `ci.yml` and `eval.yml` now fire on pushes to rule 35's branch
+vocabulary. The other two are deliberately left as they were, because both make
+external network requests and neither gates code; that is a stated choice, and
+naming it here is the point, since an unstated exemption is how the next version
+of this entry gets written.
+
+What would have failed inside that window, kept separate from what is merely
+suspected:
+
+- **The bundle gate, from the third commit of thirty-one.** Measured: 244,075
+  bytes at `4566285`, the commit that first imports GSAP and Lenis, and 245,355
+  at the branch head. So 29 commits sat over ceiling, unseen.
+- **The chatbot index was never stale.** A coarse heuristic flagged one commit
+  that touched `content/site.ts` without rebuilding the index; running
+  `check-index-fresh` at that commit reports it up to date, because the field
+  added there does not feed the index. Recorded as a false positive rather than
+  left as an insinuation.
+- **Everything else is unaudited, not clean.** Establishing whether e2e or the
+  content gates were red at any point across 31 commits means building and
+  running each commit, which has not been done. Two near-misses in that window
+  were caught locally before landing, which is evidence that the window
+  contained real breakage, not evidence that it contained none.
+
+The habit that falls out is cheap and general: **for any gate, ask not only what
+it checks but when it fires, and whether the code you care about is inside that
+window.** A trigger is part of a control's surface, and it is the part least
+likely to be read, because it sits in a file nobody opens once it works.
 
 ## What follows from it
 
