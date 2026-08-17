@@ -19,6 +19,23 @@
 name: Eval
 
 on:
+  # Same blindness as ci.yml had, same fix, same reasoning (CHECKS.md instance
+  # 22): a long-lived branch with no PR open fired neither trigger, so the
+  # chatbot's own quality gate could not see a change to the chatbot. Still
+  # path-filtered, so it only runs when something it actually gates moved.
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'refactor/**'
+      - 'perf/**'
+      - 'wave-*'
+      - 'phase-*'
+    paths:
+      - "app/api/chat/**"
+      - "lib/chatbot/**"
+      - "evals/chatbot/**"
   pull_request:
     branches: [main]
     paths:
