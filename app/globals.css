@@ -727,6 +727,33 @@ p {
 }
 
 /*
+ * The shared section mark. One rule, one accent, under every section
+ * heading on the page.
+ *
+ * Sized against the heading rather than chosen: 4.5rem is roughly the
+ * x-height run of the shortest section label ("Work"), so it reads as
+ * belonging to the word above it at every viewport instead of as a divider
+ * that happens to sit nearby.
+ *
+ * Fades at both ends so it reads as a mark rather than a border. A hard
+ * 72px bar centered under a serif title looked like a rule the layout had
+ * failed to stretch; the fade removes the question of where it should end.
+ */
+.section-rule {
+  display: block;
+  width: 4.5rem;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--accent) 35%,
+    var(--accent) 65%,
+    transparent 100%
+  );
+}
+
+/*
  * ── Wave 16: printable case-study view ──────────────────────────────────
  * Case studies are the one content type worth saving/handing off as a PDF.
  * The site is dark-mode-only (no toggle by design), so printing verbatim

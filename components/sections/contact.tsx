@@ -25,8 +25,8 @@ export function Contact() {
         <div className="flex max-w-measure flex-col gap-[var(--space-2)]">
           <p className="text-base leading-relaxed text-foreground">{availability.summary}</p>
           <p className="text-muted-foreground text-base leading-relaxed">
-            If my work fits what you&apos;re building, email is the fastest way to reach me — I
-            read everything and reply promptly.
+            If my work fits what you&apos;re building, email is the fastest way to reach me. I read
+            everything and reply promptly.
           </p>
         </div>
 

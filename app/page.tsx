@@ -7,13 +7,16 @@ import { Work } from "@/components/sections/work";
 
 /**
  * Section order, at GG's direction: hero, about, professional experience,
- * the projects, contact, and research last.
+ * the projects, research, contact.
  *
- * Research moved below Contact in this pass. It sat between the work and
- * the way to get in touch, which put a page of papers in front of the one
- * thing a visitor who has just been convinced actually wants. It reads as a
- * closing note now rather than an obstacle, and anyone who wants it will
- * scroll for it.
+ * Research moves back above Contact, reversing the previous pass. That pass
+ * argued papers should not stand between the work and the way to get in
+ * touch, and put Research after Contact so it read as a closing note. What it
+ * actually produced was a page that asks for the reply before it has finished
+ * making the case, and then keeps going afterwards, so Contact stopped being
+ * the end of anything. Research is part of the argument, not an appendix to
+ * it, and Contact is the last thing on the page because that is what a last
+ * thing is for.
  */
 export default function Home() {
   return (
@@ -22,8 +25,8 @@ export default function Home() {
       <About />
       <Experience />
       <Work />
-      <Contact />
       <Research />
+      <Contact />
       <Footer />
     </main>
   );
