@@ -113,6 +113,10 @@ const BLOCKED_URL_PATTERNS = (process.env.BLOCKED_URL_PATTERNS_OVERRIDE ?? "")
   .split(",")
   .map((pattern) => pattern.trim())
   .filter(Boolean);
+const CHROME_EXTRA_FLAGS = (process.env.CHROME_EXTRA_FLAGS_OVERRIDE ?? "")
+  .split(",")
+  .map((flag) => flag.trim())
+  .filter(Boolean);
 // Windows-repo wart avoided on purpose (rule from this script's own kickoff
 // instruction): os.tmpdir() resolves to the real per-user temp dir on
 // whatever OS this runs on, never a hardcoded POSIX /tmp default.
@@ -348,7 +352,19 @@ async function runOnce(url, chromePath, runIndex) {
   const chrome = await launchChrome({
     chromePath,
     userDataDir: profileDir,
-    chromeFlags: ["--headless=new", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+    chromeFlags: [
+      "--headless=new",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      // Extra flags exist for attribution runs, not for baselines. The one
+      // this was added for is --force-prefers-reduced-motion, which makes the
+      // capability gate decline WebGL and the scrubs sit still, so a run with
+      // it and a run without it bracket exactly what the animated hero costs.
+      // Recorded in the artifact so a flagged run can never be mistaken for a
+      // comparable one.
+      ...CHROME_EXTRA_FLAGS,
+    ],
   });
   let result;
   try {
@@ -451,6 +467,7 @@ async function measureRoute(route, chromePath) {
     n: RUNS,
     throttlingMethod: THROTTLING_METHOD,
     blockedUrlPatterns: BLOCKED_URL_PATTERNS,
+    chromeExtraFlags: CHROME_EXTRA_FLAGS,
     lighthouseVersion: results[0].lighthouseVersion,
     chromeVersion: results[0].chromeVersion,
     host: `${hostname()} (${platform()} ${release()})`,
