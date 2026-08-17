@@ -15,8 +15,8 @@ export async function generateMetadata({
   const { service } = await params;
   const config = getWarmupConfig(service);
   if (!config) return {};
-  const title = `Waking ${config.name} — Gaurav Gandhi`;
-  const description = `${config.name} scales to zero to keep idle cost at $0 — this page wakes it and takes you there once it's ready.`;
+  const title = `Waking ${config.name} · Gaurav Gandhi`;
+  const description = `${config.name} scales to zero to keep idle cost at $0. This page wakes it and takes you there once it's ready.`;
   return {
     title,
     description,

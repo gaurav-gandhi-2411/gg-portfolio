@@ -8,11 +8,11 @@ import {
 } from "@/content/chatbot-eval-summary";
 
 export const metadata: Metadata = {
-  title: "Ask about my work — Gaurav Gandhi",
+  title: "Ask about my work · Gaurav Gandhi",
   // F3 — trimmed under the ~155-160 char SERP budget (was 188 chars);
   // same claim, shorter clause structure, nothing new invented.
   description:
-    "A retrieval-grounded chatbot over my real AI/ML case studies — ask about a project or my background, and it will honestly decline what it can't ground.",
+    "A retrieval-grounded chatbot over my real AI/ML case studies. Ask about a project or my background, and it will honestly decline what it can't ground.",
   alternates: { canonical: "/ask" },
 };
 
@@ -56,7 +56,7 @@ export default function AskPage() {
         </h1>
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
           A retrieval-grounded chatbot over my actual case studies, architecture write-ups, and
-          background — not a general-purpose assistant. It only answers from what it retrieves
+          background, not a general-purpose assistant. It only answers from what it retrieves
           here, and it will honestly say so and decline rather than guess when the question is
           out of scope or the corpus doesn&apos;t support an answer.
         </p>
@@ -70,7 +70,7 @@ export default function AskPage() {
         <h2 className="text-foreground text-sm font-semibold">Eval results</h2>
         {evalPending ? (
           <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-            Eval results pending — this chatbot has an eval harness in progress
+            Eval results pending. This chatbot has an eval harness in progress
             (evals/chatbot/); published numbers will replace this block once it has run.
           </p>
         ) : (

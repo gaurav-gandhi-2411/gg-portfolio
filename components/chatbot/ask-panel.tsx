@@ -82,8 +82,8 @@ const ERROR_MESSAGES: Record<"offline" | "timeout" | "server" | "network", strin
   offline: "You appear to be offline. Check your connection and try again.",
   timeout: "The assistant is taking longer than expected. Please try again in a moment.",
   server:
-    "Something went wrong on our end reaching the assistant. It's been logged — please try again shortly.",
-  network: "Couldn't reach the assistant — there may be a network issue. Please try again.",
+    "Something went wrong on our end reaching the assistant. It's been logged. Please try again shortly.",
+  network: "Couldn't reach the assistant. There may be a network issue. Please try again.",
 };
 
 // Three openers, so nobody faces a blank box: one for who GG is, one for a
@@ -371,7 +371,7 @@ export function AskPanel() {
           specifically. Muted, factual, and it points at what IS available. */}
       {status === "unavailable" ? (
         <p role="status" data-testid="ask-unavailable" className="text-muted-foreground text-sm">
-          Ask is temporarily unavailable — the local search model didn&apos;t load. Everything it
+          Ask is temporarily unavailable. The local search model didn&apos;t load. Everything it
           can tell you is on this page and in the case studies.
         </p>
       ) : null}

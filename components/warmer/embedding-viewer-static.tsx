@@ -89,7 +89,7 @@ export function EmbeddingViewerStatic({ points }: EmbeddingViewerStaticProps) {
           <Scatter points={points} coordKey="base" />
         </div>
         <figcaption className="text-muted-foreground border-border/40 border-t px-[var(--space-3)] py-[var(--space-2)] text-caption">
-          <span className="font-medium text-foreground">Before</span> — base model
+          <span className="font-medium text-foreground">Before</span>, base model
           (paraphrase-multilingual-MiniLM-L12-v2), Hinglish terms scattered
         </figcaption>
       </figure>
@@ -98,7 +98,7 @@ export function EmbeddingViewerStatic({ points }: EmbeddingViewerStaticProps) {
           <Scatter points={points} coordKey="finetuned" />
         </div>
         <figcaption className="text-muted-foreground border-border/40 border-t px-[var(--space-3)] py-[var(--space-2)] text-caption">
-          <span className="font-medium text-foreground">After</span> — fine-tuned model
+          <span className="font-medium text-foreground">After</span>, fine-tuned model
           (hinglish-relatedness-sbert), the same terms now cluster by meaning
         </figcaption>
       </figure>

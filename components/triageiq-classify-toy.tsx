@@ -165,7 +165,7 @@ export function TriageiqClassifyToy() {
       <p className="text-muted-foreground max-w-[52ch] text-caption leading-relaxed">
         Illustrative reproduction only: real TF-IDF + cosine similarity, computed live in
         your browser over 12 real, sourced GitHub issue titles above (hover a button for
-        its URL) — not TriageIQ&apos;s production model (no BGE+FAISS retrieval, no LightGBM,
+        its URL), not TriageIQ&apos;s production model (no BGE+FAISS retrieval, no LightGBM,
         no Groq synthesis, and 12 docs vs. its real gold-labeled eval set). Production
         TriageIQ&apos;s real top-3 accuracy on these repos: 82.5% (k8s) / 90.4% (vscode).
       </p>

@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
 
-export const alt = "Gaurav Gandhi — case study";
+export const alt = "Gaurav Gandhi · case study";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -75,7 +75,7 @@ export default async function CaseStudyOgImage({
               strokeLinecap="round"
             />
           </svg>
-          <div style={{ fontSize: 26, color: TEXT_LO }}>Gaurav Gandhi — case study</div>
+          <div style={{ fontSize: 26, color: TEXT_LO }}>Gaurav Gandhi · case study</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
