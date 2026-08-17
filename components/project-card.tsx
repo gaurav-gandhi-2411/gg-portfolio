@@ -3,6 +3,7 @@ import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
 import type { Product } from "@/content/types";
 import type { TracegaugeDownloads } from "@/lib/live-data";
+import type { ProjectRhythm } from "@/lib/project-rhythm";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,21 +23,35 @@ export function ProjectCard({
   dateline,
   downloads,
   headingLevel = "h3",
+  rhythm,
 }: {
   product: Product;
   dateline?: string;
   downloads?: TracegaugeDownloads | null;
   /** h3 under the home section's h2; h2 on /projects, whose h1 is the page title (heading order, axe). */
   headingLevel?: "h2" | "h3";
+  /** Size and tint for this card, from lib/project-rhythm.ts. */
+  rhythm?: ProjectRhythm;
 }) {
   const Heading = headingLevel;
+  const size = rhythm?.size ?? "standard";
   return (
     <article
       data-cats={product.categories.join(" ")}
       data-slug={product.slug}
-      className="border-border/40 bg-card/50 hover:border-accent/50 hover:shadow-card-hover @container flex h-full flex-col rounded-xl border p-6 transition-[transform,box-shadow,border-color,opacity] duration-300 ease-out hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      data-size={size}
+      /* Per-project hue, consumed by the border, the hover wash and the
+       * cursor light. Text never reads it, so no hue can move a contrast
+       * ratio. */
+      style={{ "--card-hue": `${(rhythm?.hueShift ?? 0) + 277}` } as React.CSSProperties}
+      className="project-card @container"
     >
-      <div className="grid gap-x-8 gap-y-6 @[28rem]:grid-cols-[minmax(0,1fr)_13rem]">
+      {/* The light that follows the cursor inside this card. Painted under
+          the content, aria-hidden, and inert until the card is hovered or
+          holds focus. */}
+      <span className="project-card-light" aria-hidden="true" />
+
+      <div className="project-card-body grid gap-x-8 gap-y-6 @[28rem]:grid-cols-[minmax(0,1fr)_13rem]">
         <div className="flex min-w-0 flex-col">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <Heading className="font-heading text-lead font-semibold text-foreground">
@@ -80,6 +95,34 @@ export function ProjectCard({
                   {downloads.lastWeek.toLocaleString()} downloads last week
                 </span>
               )}
+            </div>
+          )}
+
+          {/* What the card shows rather than tells, on hover or focus.
+              The stack is real data that was sitting unused in
+              content/products.ts, and it is the detail a visitor who is
+              already interested wants next.
+
+              The slot is always the same height, so revealing it never
+              moves anything: the chips sit inside it translated down and
+              hidden, and come up on hover. `visibility` rather than a
+              partial opacity, because an axe pass that lands mid-animation
+              has to compute contrast against the colour the text really
+              ends at, and hidden text is simply not measured.
+
+              Deliberately not aria-hidden. `visibility: hidden` already
+              takes it out of the accessibility tree, so it appears to
+              assistive tech at exactly the moment it appears on screen,
+              which for a keyboard user is when the card takes focus.
+              Marking it aria-hidden as well would mean sighted visitors get
+              the stack and screen reader users never do. */}
+          {product.techChips && product.techChips.length > 0 && (
+            <div className="project-card-reveal">
+              <ul className="project-card-chips">
+                {product.techChips.map((chip) => (
+                  <li key={chip}>{chip}</li>
+                ))}
+              </ul>
             </div>
           )}
 

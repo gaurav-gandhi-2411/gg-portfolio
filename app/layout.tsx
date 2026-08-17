@@ -5,7 +5,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
 import { ChatLauncher } from "@/components/chatbot/chat-launcher";
 import { PersonJsonLd } from "@/components/json-ld";
+import { ScrollDriver } from "@/components/motion/scroll-driver";
+import { PointerField } from "@/components/pointer-field";
 import { SiteNav } from "@/components/site-nav";
+import { site } from "@/content/site";
 import "./globals.css";
 
 // Wave 4: editorial system. Space Grotesk replaces Inter as the body/UI
@@ -32,7 +35,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const siteUrl = "https://gaurav-gandhi.vercel.app";
+const siteUrl = site.url;
 
 // Wave 20 — SEO/social metadata audit. Title shortened from the tagline-style
 // "Senior Applied AI Scientist" to the literal role pairing search and hiring
@@ -40,9 +43,9 @@ const siteUrl = "https://gaurav-gandhi.vercel.app";
 // ~60-char <title>/og:title budget. description trimmed under the ~155-char
 // meta-description/og:description budget (was 156 — one over) by dropping the
 // "(Indium/Uber AI)" parenthetical, not by cutting the sentence short.
-const homeTitle = "Gaurav Gandhi — Senior Data Scientist, Applied AI";
+const homeTitle = "Gaurav Gandhi, Lead Data Scientist, Applied AI";
 const homeDescription =
-  "Senior Data Scientist building production GenAI systems in Uber's AI org, plus independent AI products and research. Every number sourced.";
+  "Lead Data Scientist heading a five-person team in Uber's AI org, plus independent AI products and research. Every number sourced.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -135,6 +138,16 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
+        {/* Both render nothing and both no-op for reduced-motion visitors.
+            One writes the shared pointer position that every layer which
+            acknowledges the cursor reads; the other owns smooth scrolling
+            and the single clock that scroll-linked motion runs on. They sit
+            in the root layout rather than on the homepage because the header
+            and the case study pages will read from the same two sources, and
+            a second listener or a second clock added later is how a site
+            ends up fighting itself. */}
+        <PointerField />
+        <ScrollDriver />
         <SiteNav />
         {children}
         <ChatLauncher />

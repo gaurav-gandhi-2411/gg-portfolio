@@ -1,0 +1,117 @@
+{
+  "route": "/projects",
+  "url": "https://gaurav-gandhi.vercel.app/projects",
+  "branch": "prod-projects-notoolbar",
+  "date": "2026-08-17",
+  "n": 5,
+  "throttlingMethod": "simulate",
+  "blockedUrlPatterns": [
+    "*vercel.live*",
+    "*_next-live*"
+  ],
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 2,
+  "aggregate": {
+    "performance": {
+      "mean": 92.2,
+      "stddev": 3.03,
+      "values": [
+        96,
+        90,
+        90,
+        95,
+        90
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 1108.7,
+      "stddev": 41.77,
+      "values": [
+        1153.31,
+        1147.629,
+        1062.271,
+        1072.405,
+        1107.863
+      ]
+    },
+    "lcp-ms": {
+      "mean": 3124.1,
+      "stddev": 296.56,
+      "values": [
+        2737.31,
+        3341.629,
+        3344.2709999999997,
+        2869.4049999999997,
+        3327.8630000000003
+      ]
+    },
+    "tbt-ms": {
+      "mean": 93.8,
+      "stddev": 5.81,
+      "values": [
+        91,
+        92,
+        102,
+        87,
+        97
+      ]
+    },
+    "cls": {
+      "mean": 0,
+      "stddev": 0,
+      "values": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "si-ms": {
+      "mean": 2869.14,
+      "stddev": 1089.87,
+      "values": [
+        1263.2460719599724,
+        3631.3594755059416,
+        3617.624745176506,
+        2200.272324025989,
+        3633.2151823702607
+      ]
+    }
+  }
+}

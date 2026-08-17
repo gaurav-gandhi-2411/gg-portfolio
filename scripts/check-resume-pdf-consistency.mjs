@@ -136,13 +136,28 @@ const projects = resumeData.entries.filter((e) => e.section === "project" && e.t
 
 const pdfText = await extractPdfText(RESUME_PDF_PATH);
 
+// Which projects this resume writes up as full bullets. Everything above
+// derives that from formatting: the anchor comes from splitting a heading on
+// " — ", and the full-bullet test looks for an em dash after the name in the
+// PDF. So an edit that reflows a heading changes what gets checked, and the
+// only signal was a count nobody read. Rewriting the four project entries in
+// site style, commas instead of the separator, took coverage from five to one
+// and turned the gate green by making it stop looking.
+//
+// This is the second, hand-maintained reading of the same fact. A project
+// that stops being detected fails here by name instead of vanishing from a
+// denominator. When the resume itself changes, edit this list in the same
+// commit: that is a deliberate act with a visible diff, which is the whole
+// difference between updating a gate and quietly disabling it.
+const EXPECTED_PDF_COVERAGE = ["agentgauge", "reviewiq", "style-maitri", "tracegauge", "triageiq"];
+
 const findings = [];
-let coveredCount = 0;
+const covered = [];
 
 for (const entry of projects) {
   const anchor = projectAnchor(entry);
   if (!anchor || !isCoveredByFullBullet(anchor, pdfText)) continue; // not in this resume as a full entry — nothing to check
-  coveredCount++;
+  covered.push(entry.project ?? anchor);
 
   const fullText = entry.text_runs.map((r) => r.text).join("");
   const tokens = extractTokens(fullText);
@@ -156,9 +171,32 @@ for (const entry of projects) {
   }
 }
 
+const coveredSet = new Set(covered);
+const dropped = EXPECTED_PDF_COVERAGE.filter((p) => !coveredSet.has(p)).sort();
+const gained = covered.filter((p) => !EXPECTED_PDF_COVERAGE.includes(p)).sort();
+
 console.log(
-  `check-resume-pdf-consistency: ${projects.length} projects in resume-data.json, ${coveredCount} covered by public/resume.pdf, checked.`
+  `check-resume-pdf-consistency: ${projects.length} projects in resume-data.json, ` +
+    `${covered.length} covered by public/resume.pdf and checked (expected ${EXPECTED_PDF_COVERAGE.length}).`
 );
+console.log(`  checked: ${covered.slice().sort().join(", ") || "(none)"}`);
+
+if (dropped.length > 0 || gained.length > 0) {
+  console.log("\nFAIL — the set of projects this check can see has moved:\n");
+  if (dropped.length > 0) {
+    console.log(`  no longer detected: ${dropped.join(", ")}`);
+    console.log("    Their numbers are no longer compared against the PDF at all. Usually a");
+    console.log('    heading in resume-data.json that lost its " — " separator, which is what');
+    console.log("    the anchor is split on. Restore the separator, or update EXPECTED_PDF_COVERAGE");
+    console.log("    in this file if the resume genuinely stopped covering the project.");
+  }
+  if (gained.length > 0) {
+    console.log(`  newly detected: ${gained.join(", ")}`);
+    console.log("    Add them to EXPECTED_PDF_COVERAGE so the next drop is visible.");
+  }
+  console.log("");
+  process.exit(1);
+}
 
 if (findings.length > 0) {
   console.log(`\nFAIL — ${findings.length} project(s) where public/resume.pdf contradicts content/resume-data.json:\n`);

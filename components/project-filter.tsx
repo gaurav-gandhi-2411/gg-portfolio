@@ -113,6 +113,18 @@ export function ProjectFilter({
     active === "all"
       ? `See all ${totalMatching} →`
       : `See all ${totalMatching} in ${CATEGORIES.find((c) => c.id === active)?.label ?? ""} →`;
+/*
+ * The -my-[5px] keeps a 44px tap target from bulking out the row visually.
+ * It also makes each pill's box overlap its neighbours' by 5px top and
+ * bottom, which is invisible on one line and a real bug the moment the row
+ * wraps: with only 8px of row gap, pills in adjacent rows overlapped by 2px
+ * and one could swallow a tap meant for the other. Chromium hit-tests the
+ * overlap to whichever pill paints last, so on a phone the wrong filter
+ * could apply. The row gap is now wide enough that the negative margins
+ * cannot close it. Found because Playwright kept retrying a click and
+ * reporting that another pill "intercepts pointer events", which was the
+ * harness describing the bug accurately rather than being flaky.
+ */
 
   const pillBase =
     "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
@@ -138,7 +150,7 @@ export function ProjectFilter({
       <div
         role="group"
         aria-label="Filter projects by category"
-        className="flex flex-wrap justify-start gap-[var(--space-2)] sm:justify-center"
+        className="flex flex-wrap justify-start gap-x-[var(--space-2)] gap-y-[var(--space-4)] sm:justify-center"
       >
         <button
           type="button"

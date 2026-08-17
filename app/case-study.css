@@ -1,0 +1,221 @@
+/*
+ * The case study template.
+ *
+ * Thirteen of these carry most of the reading time on the site and had zero
+ * design attention across twelve rounds: a back-link, a heading, and a stack
+ * of identical prose blocks. They read as documents. Consumes tokens from
+ * globals.css and defines none, same contract as the other surface files.
+ *
+ * --case-hue is written per page by components/case-study-page.tsx and is
+ * the same hue the project's card carried on the grid, so following a card
+ * here feels like following that card. Only surfaces read it; every piece of
+ * text stays on the neutral tokens, so no project's colour can move a
+ * contrast ratio.
+ */
+
+.case-study {
+  position: relative;
+}
+
+/*
+ * The full-bleed opening.
+ *
+ * Breaks out of the column the article is set in, using the viewport width
+ * rather than a fixed inset so it stays flush at every size. It is a wash
+ * rather than a block: the copy sits on it, not inside a box drawn around
+ * the copy, which is the difference between a page that opens and a page
+ * with a banner stuck on top.
+ */
+.case-opening-wash {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: -1;
+  width: 100vw;
+  height: 34rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 100% at 18% 0%,
+      oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.16) 0%,
+      transparent 68%
+    ),
+    linear-gradient(to bottom, var(--plane-far) 0%, transparent 82%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
+}
+
+/*
+ * Section headings, alternating.
+ *
+ * Odd sections hang their numeral in the margin under a hue rule; even ones
+ * keep it inline. On a page of a dozen sections that alternation is what
+ * stops the eye walking down identical stacked blocks, and it costs no
+ * additional markup, only which side of a modulo the index falls on.
+ *
+ * The hanging numeral only hangs where there is a margin to hang into. Below
+ * lg the column is the full width, so both variants sit inline and the
+ * rhythm comes from the rule instead.
+ */
+.case-heading {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-top: var(--space-14);
+  scroll-margin-top: 6rem;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: var(--text-title);
+  font-variation-settings: "wght" 600, "opsz" 72, "SOFT" 0, "WONK" 1;
+  line-height: var(--text-title--line-height);
+}
+
+.case-heading-index {
+  color: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277));
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.case-heading[data-rhythm="odd"] {
+  margin-top: var(--space-16);
+  border-top: 1px solid oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.28);
+  padding-top: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .case-heading[data-rhythm="odd"] .case-heading-index {
+    position: absolute;
+    top: var(--space-6);
+    left: -3.5rem;
+  }
+}
+
+/*
+ * Results, set as display type.
+ *
+ * These were body copy in a monospace face on a bordered list: the numbers a
+ * case study exists to report, typeset exactly like the sentence next to
+ * them. They are the payload, so they get display sizing and the label goes
+ * underneath as the caption it always was.
+ */
+.case-results {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+@media (min-width: 640px) {
+  .case-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8) var(--space-10);
+  }
+}
+
+.case-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.22);
+  padding-top: var(--space-4);
+}
+
+.case-result-value {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  /* Large, but it has to survive a value like "~48GB to 23.09GB to 4.26GB",
+   * so it wraps rather than being cut and the floor is low enough to fit. */
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-variation-settings: "wght" 500, "opsz" 144, "SOFT" 20, "WONK" 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: pretty;
+}
+
+.case-result-label {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/*
+ * The rail.
+ *
+ * Sticky positioning, never a ScrollTrigger pin: a pin wraps its target in a
+ * spacer div ScrollTrigger creates and owns, which is a structural change to
+ * a subtree React rendered. The sticky wrapper is in the markup already.
+ *
+ * The track fills as you move through the article, driven by one number
+ * written by components/case-study-rail.tsx, and the entry you are inside is
+ * marked with aria-current so it reads as position and not just colour.
+ */
+.case-rail {
+  --rail-progress: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin-top: var(--space-3);
+  padding-left: var(--space-4);
+  list-style: none;
+}
+
+.case-rail::before,
+.case-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
+}
+
+/* The track, and the fill over it. */
+.case-rail::before {
+  height: 100%;
+  background: color-mix(in oklab, var(--border) 40%, transparent);
+}
+
+.case-rail::after {
+  height: calc(var(--rail-progress) * 100%);
+  background: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.9);
+}
+
+.case-rail-link {
+  display: block;
+  padding-block: var(--space-0-5);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  transition: color var(--dur-fast) var(--ease-out-soft);
+}
+
+.case-rail-link:hover {
+  color: var(--foreground);
+}
+
+.case-rail-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* The section you are currently inside. Colour plus weight, so it does not
+ * depend on colour alone to say which one it is. */
+.case-rail-item[aria-current="true"] .case-rail-link {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-rail-link {
+    transition: none;
+  }
+}
+
+@media print {
+  .case-opening-wash {
+    display: none;
+  }
+}

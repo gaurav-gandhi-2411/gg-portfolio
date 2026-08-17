@@ -37,7 +37,11 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
 const FIXTURES_DIR = join(HERE, "fixtures");
+const MANIFEST_PATH = join(HERE, "fixtures.manifest.json");
 const CASSETTES_DIR = join(HERE, "cassettes");
+
+/** Paths in errors read better relative to the repo root than as absolutes. */
+const relativeToRoot = (p) => p.slice(ROOT.length + 1).replace(/\\/g, "/");
 const REPORTS_DIR = join(ROOT, "reports");
 
 const args = process.argv.slice(2);
@@ -60,12 +64,45 @@ register(pathToFileURL(join(HERE, "alias-loader.mjs")).href, import.meta.url);
  * }} Fixture
  */
 
-/** @returns {Fixture[]} every *.json fixture file, sorted by id for a stable report order. */
+/**
+ * @returns {Fixture[]} every *.json fixture file, sorted by id for a stable report order.
+ *
+ * The `.endsWith(".json")` filter is the whole scope of this eval, which means
+ * renaming one fixture to `.json.bak` quietly removes a question from the set.
+ * Every rate here is a proportion, so removing a case the system gets wrong
+ * raises the number and the gate applauds. The manifest is the second,
+ * independently-maintained copy of what the set is supposed to be: disk and
+ * manifest have to agree or nothing runs, so shrinking the eval takes a
+ * deliberate edit that shows up in the diff.
+ */
 function loadFixtures() {
-  return readdirSync(FIXTURES_DIR)
+  const fixtures = readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith(".json"))
     .map((f) => JSON.parse(readFileSync(join(FIXTURES_DIR, f), "utf8")))
     .sort((a, b) => a.id.localeCompare(b.id));
+
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
+  const expected = new Set(manifest.expectedFixtureIds);
+  const found = new Set(fixtures.map((f) => f.id));
+  const missing = [...expected].filter((id) => !found.has(id)).sort();
+  const unlisted = [...found].filter((id) => !expected.has(id)).sort();
+
+  if (missing.length > 0 || unlisted.length > 0) {
+    const lines = [
+      `Fixture set does not match ${relativeToRoot(MANIFEST_PATH)}.`,
+      `  manifest expects ${expected.size}, found ${found.size} in ${relativeToRoot(FIXTURES_DIR)}/`,
+    ];
+    if (missing.length > 0) {
+      lines.push(`  MISSING (in manifest, not on disk): ${missing.join(", ")}`);
+      lines.push("    A missing fixture is a question the eval stopped asking. Every metric here");
+      lines.push("    is a rate, so dropping a case the system fails raises the score.");
+    }
+    if (unlisted.length > 0) lines.push(`  UNLISTED (on disk, not in manifest): ${unlisted.join(", ")}`);
+    lines.push("  Fix the fixture, or add/remove the id in the manifest if the change is intended.");
+    throw new Error(lines.join("\n"));
+  }
+
+  return fixtures;
 }
 
 function cassettePathFor(id) {

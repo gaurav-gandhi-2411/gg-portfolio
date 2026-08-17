@@ -27,7 +27,7 @@ export const products: Product[] = [
     slug: "triageiq",
     name: "TriageIQ",
     tagline:
-      "A four-stage ML service that triages GitHub issues — classifies the component, retrieves similar solved issues, estimates resolution time, and drafts a grounded summary.",
+      "Reads a new GitHub issue and tells you which component it belongs to, which already-solved issues look like it, and roughly how long it will take to close.",
     liveUrl: "https://triage-iq-orcin.vercel.app/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/triage-iq",
     categories: ["llm-agents", "retrieval", "forecasting"],
@@ -48,7 +48,7 @@ export const products: Product[] = [
     slug: "warmer",
     name: "Warmer",
     tagline:
-      "Daily semantic word game — guess the secret word and an embedding model tells you how close you are.",
+      "A word game you play once a day, where your only clue is how close each guess comes in meaning to the secret word.",
     liveUrl: "https://playwarmer.vercel.app/",
     // Repo (mindmeld) is private — no public repo link until that changes. See provenance.md.
     categories: ["retrieval"],
@@ -60,7 +60,7 @@ export const products: Product[] = [
     slug: "multimodal-fashion-recommender",
     name: "Multimodal Fashion Recommender",
     tagline:
-      "Fashion recommendations from a photo or a description — a two-tower model I trained to align CLIP image embeddings with SBERT text embeddings.",
+      "Recommends clothing from a photo of an outfit or a sentence describing one, and finds the same things either way.",
     liveUrl: "https://huggingface.co/spaces/gauravgandhi2411/multimodal-fashion-recommender",
     repoUrl: "https://github.com/gaurav-gandhi-2411/multimodal-fashion-recommender",
     categories: ["vision", "retrieval"],
@@ -71,7 +71,7 @@ export const products: Product[] = [
     slug: "style-maitri",
     name: "Style Maitri",
     tagline:
-      "AI stylist for Indian weddings and occasions — searches 8 store catalogues at once, with guardrails that keep it from inventing prices or sizes.",
+      "An AI shopping assistant for Indian weddings that searches eight store catalogues at once and will not invent a price or a size to make the sale.",
     // Backend (asa-stylist-api) runs min-instances=0 with no keep-warm traffic
     // and a measured cold start of 60s+ (see content/warmup.ts) — routed
     // through the warming bridge instead of straight to the frontend.
@@ -87,18 +87,18 @@ export const products: Product[] = [
     slug: "shelfsense",
     name: "ShelfSense",
     tagline:
-      "Demand forecasting for retail inventory — LightGBM models across all 30,490 series of the M5 Walmart dataset, orchestrated with Dagster.",
+      "Forecasts retail demand a week out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/shelfsense-m5",
     categories: ["forecasting"],
     techChips: ["LightGBM", "Dagster", "M5 dataset"],
     metric: refreshableMetric("shelfsense:wrmsse"),
-    figure: { kind: "dumbbell", from: 0.8956, to: 0.5693, scaleNote: "WRMSSE — lower is better" },
+    figure: { kind: "dumbbell", from: 0.8956, to: 0.5693, scaleNote: "WRMSSE, lower is better" },
   },
   {
     slug: "aetherart",
     name: "AetherArt",
     tagline:
-      "Ukiyo-e-style AI art — a custom rank-8 SDXL LoRA I trained, composed with Hyper-SD and ControlNet, served on Cloud Run.",
+      "Turns a prompt or a photo into a Japanese woodblock print, on a LoRA I fine-tuned to hold that style.",
     // GPU-backed (L4), min-instances=0 — a bare min-instances=1 would run
     // ~$759/mo (see content/warmup.ts). Routed through the warming bridge
     // instead of the raw Cloud Run URL; also drops the GCP project number
@@ -113,7 +113,7 @@ export const products: Product[] = [
     slug: "agentgauge",
     name: "AgentGauge",
     tagline:
-      "Measures whether a change to an MCP server's tool descriptions actually changed agent task success — a statistical A/B harness that rebuilt itself after falsifying its own v1 quality score. The research program behind my tool-description paper.",
+      "Answers whether rewriting an AI agent's tool descriptions actually made it better at its job, with an A/B harness for MCP servers. The research behind my tool-description paper.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
     categories: ["evals-research", "llm-agents"],
     techChips: ["MCP", "Causal measurement", "Python"],
@@ -139,7 +139,7 @@ export const products: Product[] = [
     slug: "reclaim",
     name: "Reclaim",
     tagline:
-      "Rules-first Windows disk-cleanup tool — a deterministic safety gate decides what's safe to remove, and the reclaimable-space estimate got corrected downward four times as real bugs were found, never once upward.",
+      "Cleans up disk space on Windows and shows you exactly what it will remove before it removes anything, so a safe cleanup stays safe.",
     liveUrl: "https://github.com/gaurav-gandhi-2411/reclaim/releases/latest",
     repoUrl: "https://github.com/gaurav-gandhi-2411/reclaim",
     categories: ["tooling", "vision", "retrieval"],
@@ -150,7 +150,7 @@ export const products: Product[] = [
     slug: "reviewiq",
     name: "Samidha Reviews",
     tagline:
-      "Turns customer reviews into structured insight across English, Hindi, and Hinglish — tiered LLM routing plus authenticity scoring.",
+      "Turns a pile of customer reviews in English, Hindi and Hinglish into what people actually keep saying, and flags the ones that look fake.",
     // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
     liveUrl: "https://api.samidhareviews.xyz/docs",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",
@@ -163,7 +163,7 @@ export const products: Product[] = [
     slug: "gold-rate-tracker",
     name: "Gold Rate Tracker",
     tagline:
-      "Zero-cost PWA tracking Indian 22K gold prices — it ships the honest baseline forecast, because the ML model couldn't beat it.",
+      "A PWA that tracks 22K gold rates in India and predicts tomorrow's, shipping the plain baseline because the model I trained never beat it.",
     liveUrl: "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/gold-rate-tracker",
     categories: ["forecasting", "evals-research"],
@@ -174,7 +174,7 @@ export const products: Product[] = [
     slug: "dealhunter",
     name: "DealHunter",
     tagline:
-      "Multi-agent flight search — describe a trip in plain language and get two genuinely different best itineraries, not a wall of results.",
+      "Describe a trip in a sentence and get two genuinely different itineraries, put together by a team of agents, instead of a page of near-identical flights.",
     // Backend (agentic-travel-booking-api-prod) runs min-instances=0 with no
     // keep-warm traffic; measured cold start 19.4s (content/warmup.ts).
     // Routed through the warming bridge instead of straight to the frontend.
@@ -190,7 +190,7 @@ export const products: Product[] = [
     slug: "tracegauge",
     name: "tracegauge",
     tagline:
-      "Scores Claude Code sessions on efficiency across three axes — token economy, trajectory quality, and deterministic waste detection.",
+      "Scores a Claude Code session on how efficient it was, and shows you where the tokens went to waste.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/token-efficiency-scorer",
     categories: ["tooling", "evals-research"],
     techChips: ["Python", "PyPI"],
@@ -204,7 +204,7 @@ export const products: Product[] = [
     slug: "expense-tracker",
     name: "Expense Tracker",
     tagline:
-      "Multi-user expense tracker that parses entries written in plain language, auto-categorizes them with embeddings, and forecasts spending — built production-shaped, with real auth and migrations.",
+      "Type what you spent the way you would say it out loud. It files the expense, categorizes it, and predicts where your spending is heading.",
     // Wave 19 (2026-07-31): liveUrl removed. Wave 16 verified this URL live
     // (2026-07-26); it now 404s with DEPLOYMENT_NOT_FOUND — a second,
     // distinct frontend outage since that check. A dead link on the live

@@ -19,15 +19,15 @@ export const triageiq: CaseStudy = {
   slug: "triageiq",
   verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
   title: "TriageIQ",
-  dek: "An ML issue-triage assistant for busy open-source maintainers — caught a target-leakage bug that had inflated its own error estimate 8×, then found two more leaks nobody was looking for.",
+  dek: "An ML issue-triage assistant for busy open-source maintainers, caught a target-leakage bug that had inflated its own error estimate 8×, then found two more leaks nobody was looking for.",
   depth: "full",
   problem: [
     "On a busy open-source repository, a maintainer has to work out, for every new issue that lands: which subsystem does this touch, has someone already reported this, how long will this realistically take to fix, and what should happen next. Doing that by hand doesn't scale past a small team.",
-    "TriageIQ automates the first pass. Give it an issue's title and body and it returns a structured triage decision — predicted component, similar past issues, an expected resolution-time range, a priority, and next steps — in under 4 seconds. It's trained on roughly 20,000 real issues from two very different repos, microsoft/vscode and kubernetes/kubernetes, so its numbers reflect what real, messy open-source data looks like rather than a clean lab set.",
+    "TriageIQ automates the first pass. Give it an issue's title and body and it returns a structured triage decision, predicted component, similar past issues, an expected resolution-time range, a priority, and next steps, in under 4 seconds. It's trained on roughly 20,000 real issues from two very different repos, microsoft/vscode and kubernetes/kubernetes, so its numbers reflect what real, messy open-source data looks like rather than a clean lab set.",
   ],
   approach: [
-    "Rather than asking one big model to do everything, TriageIQ runs four independent ML and AI systems in sequence, each doing one job well: (1) a TF-IDF + logistic regression classifier picks the likely component in about 5ms — TF-IDF turns text into weighted word-frequency vectors, a cheap and fast representation; (2) BGE sentence embeddings plus a FAISS index retrieve similar past issues in about 27ms; (3) a LightGBM quantile-regression model estimates a resolution-time range with conformal calibration (a statistical technique that gives the range an honest, guaranteed coverage probability) in about 4ms; (4) a Groq-hosted LLM takes all of that structured output and writes it up as a readable plan, in about 3 seconds.",
-    "The LLM's job is deliberately narrow: it only writes narrative on top of facts the first three stages already computed — it's not asked to invent the component, the similar issues, or the time estimate itself. A grounding checker then verifies that the LLM's write-up didn't quietly claim something the earlier stages never actually produced.",
+    "Rather than asking one big model to do everything, TriageIQ runs four independent ML and AI systems in sequence, each doing one job well: (1) a TF-IDF + logistic regression classifier picks the likely component in about 5ms, TF-IDF turns text into weighted word-frequency vectors, a cheap and fast representation; (2) BGE sentence embeddings plus a FAISS index retrieve similar past issues in about 27ms; (3) a LightGBM quantile-regression model estimates a resolution-time range with conformal calibration (a statistical technique that gives the range an honest, guaranteed coverage probability) in about 4ms; (4) a Groq-hosted LLM takes all of that structured output and writes it up as a readable plan, in about 3 seconds.",
+    "The LLM's job is deliberately narrow: it only writes narrative on top of facts the first three stages already computed, it's not asked to invent the component, the similar issues, or the time estimate itself. A grounding checker then verifies that the LLM's write-up didn't quietly claim something the earlier stages never actually produced.",
   ],
   architecture: {
     intro:
@@ -39,20 +39,20 @@ export const triageiq: CaseStudy = {
         detail: "POST /triage { repo, title, body }",
       },
       {
-        label: "Stage 1 — Component classifier",
+        label: "Stage 1, Component classifier",
         detail: "TF-IDF (1–2gram) + per-repo logistic regression, 28–35 classes, ~5ms",
       },
       {
-        label: "Stage 2 — Similar-issue retrieval",
+        label: "Stage 2, Similar-issue retrieval",
         detail: "BGE-base-en-v1.5 embeddings + FAISS cosine search, top-5, ~27ms",
       },
       {
-        label: "Stage 3 — Resolution-time estimate",
+        label: "Stage 3, Resolution-time estimate",
         detail:
           "LightGBM quantile regression (79 features) + Conformal Quantile Regression, ~4ms",
       },
       {
-        label: "Stage 4 — LLM synthesis",
+        label: "Stage 4, LLM synthesis",
         detail: "Groq llama-3.1-8b-instant, 4-shot, JSON-schema retry + fallback, ~3s",
       },
       {
@@ -70,22 +70,22 @@ export const triageiq: CaseStudy = {
   decisions: [
     {
       title: "TF-IDF + logistic regression over a transformer, for the classifier",
-      body: "A three-way bake-off tested TF-IDF against DistilBERT and an LLM, before the later multi-label supervision fix (ADR-0036) that raised the shipped model's own headline accuracy. DistilBERT beat TF-IDF on vscode by only 1.2 percentage points of macro-F1 — nowhere near the 11-point margin needed to justify 20x the latency — and actually lost on kubernetes by 5.1 points at 35x the latency. At the ~1,500–2,300 training examples per repo this system has, TF-IDF's simpler inductive bias (its built-in assumptions about how text maps to labels) generalizes better than a transformer does with that little data.",
+      body: "A three-way bake-off tested TF-IDF against DistilBERT and an LLM, before the later multi-label supervision fix (ADR-0036) that raised the shipped model's own headline accuracy. DistilBERT beat TF-IDF on vscode by only 1.2 percentage points of macro-F1, nowhere near the 11-point margin needed to justify 20x the latency, and actually lost on kubernetes by 5.1 points at 35x the latency. At the ~1,500–2,300 training examples per repo this system has, TF-IDF's simpler inductive bias (its built-in assumptions about how text maps to labels) generalizes better than a transformer does with that little data.",
       sourceRef: "triageiq:classifier-bakeoff",
     },
     {
       title: "Conformal Quantile Regression, not the model's raw quantile outputs",
-      body: "LightGBM can output a Q10–Q90 prediction interval directly, but its raw coverage (how often the true answer actually fell inside the stated range) was unreliable — 74.4% on kubernetes and just 38.2% on vscode, against a nominal 80% target. Conformal Quantile Regression is a distribution-free, post-hoc calibration step that recalibrates those raw quantiles and comes with a guaranteed marginal coverage rate, which the raw model output simply didn't have.",
+      body: "LightGBM can output a Q10–Q90 prediction interval directly, but its raw coverage (how often the true answer actually fell inside the stated range) was unreliable, 74.4% on kubernetes and just 38.2% on vscode, against a nominal 80% target. Conformal Quantile Regression is a distribution-free, post-hoc calibration step that recalibrates those raw quantiles and comes with a guaranteed marginal coverage rate, which the raw model output simply didn't have.",
       sourceRef: "triageiq:cqr",
     },
     {
       title: "Split the data by created_at, not closed_at",
-      body: "The original train/test split used each issue's closed_at date, which quietly guaranteed that every issue still open at the cutoff date landed in the test set — meaning test was structurally full of slow, unresolved issues while train was full of fast, already-closed ones. Re-splitting by created_at (when the issue was filed, not when it was closed) dropped mean absolute error from 693 days to 87 days — an 8x improvement that came entirely from fixing a methodology bug, not from improving the model.",
+      body: "The original train/test split used each issue's closed_at date, which quietly guaranteed that every issue still open at the cutoff date landed in the test set, meaning test was structurally full of slow, unresolved issues while train was full of fast, already-closed ones. Re-splitting by created_at (when the issue was filed, not when it was closed) dropped mean absolute error from 693 days to 87 days, an 8x improvement that came entirely from fixing a methodology bug, not from improving the model.",
       sourceRef: "triageiq:split-fix",
     },
     {
       title: "Report top-3 accuracy as the headline classifier metric",
-      body: "The product surfaces three candidate components to the maintainer, not one, so top-1 accuracy alone understates how useful the classifier actually is in the workflow it's built for. Reporting top-3 instead of top-1 is a 13–27 percentage-point difference — using the metric that matches what the product actually shows is more honest than picking whichever number looks best.",
+      body: "The product surfaces three candidate components to the maintainer, not one, so top-1 accuracy alone understates how useful the classifier actually is in the workflow it's built for. Reporting top-3 instead of top-1 is a 13–27 percentage-point difference, using the metric that matches what the product actually shows is more honest than picking whichever number looks best.",
       // Points at the kubernetes figure deliberately: it is the lower of the
       // two top-3 numbers, so it is the more conservative evidence for a
       // decision that argues top-3 should be the headline metric.
@@ -93,7 +93,7 @@ export const triageiq: CaseStudy = {
     },
     {
       title: "Leave the fabrication-rate gate informational, not blocking, for now",
-      body: "The grounding verifier's fabrication-rate numbers (1.9% on kubernetes, 9.1% on vscode) are tracked and reported, but deliberately not wired up as a hard CI gate yet — the team wants an observation window to understand the metric's stability before it can block a deploy. Shipping a gate before trusting the number it's built on would be premature.",
+      body: "The grounding verifier's fabrication-rate numbers (1.9% on kubernetes, 9.1% on vscode) are tracked and reported, but deliberately not wired up as a hard CI gate yet, the team wants an observation window to understand the metric's stability before it can block a deploy. Shipping a gate before trusting the number it's built on would be premature.",
       sourceRef: "triageiq:contamination-adr0018",
     },
   ],
@@ -106,19 +106,19 @@ export const triageiq: CaseStudy = {
     {
       label: "Component classifier top-3 accuracy (vscode), p50 4.9ms",
       value: "89.8%",
-      detail: "top-1 76.5% — multi-label supervision fix, ADR-0036, shipped model as of 2026-07-24",
+      detail: "top-1 76.5%, multi-label supervision fix, ADR-0036, shipped model as of 2026-07-24",
       sourceRef: "triageiq:classifier-top3-vscode",
     },
     {
       label: "Component classifier top-3 accuracy (kubernetes)",
       value: "87.1%",
-      detail: "top-1 60.5% — same shipped model, the harder of the two eval corpora",
+      detail: "top-1 60.5%, same shipped model, the harder of the two eval corpora",
       sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
       label: "Resolution-time CQR interval coverage (kubernetes)",
       value: "76.2%",
-      detail: "vs. an 80% nominal target — post-calibration, and what's actually loaded in the live-serving artifact; see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
+      detail: "vs. an 80% nominal target, post-calibration, and what's actually loaded in the live-serving artifact; see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
       sourceRef: "triageiq:cqr-coverage-k8s",
     },
     {
@@ -136,7 +136,7 @@ export const triageiq: CaseStudy = {
       label: "Similar-issue retrieval, Recall@5 (kubernetes, related task, clean eval subset)",
       value: "39.39%",
       detail:
-        "the ADR-0035 harness fix (title-only queries against a title+body production index) produced 18.0%, later superseded by ADR-0040's truncation/query-instruction fixes at 24.67% measured over the full 150-pair eval population — but a 2026-08-11 audit found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues, causal-only references). 39.39% [27.3, 51.5] (n=66) is the hand-verified, outcome-blind clean subset and is now the project's own headline number for this metric. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar earlier in this chain; reranking made it worse at 190–330x the latency",
+        "the ADR-0035 harness fix (title-only queries against a title+body production index) produced 18.0%, later superseded by ADR-0040's truncation/query-instruction fixes at 24.67% measured over the full 150-pair eval population, but a 2026-08-11 audit found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues, causal-only references). 39.39% [27.3, 51.5] (n=66) is the hand-verified, outcome-blind clean subset and is now the project's own headline number for this metric. Three zero-training retrieval-improvement techniques (BM25 fusion, cross-encoder reranking, a stronger embedder) still failed to clear the bar earlier in this chain; reranking made it worse at 190–330x the latency",
       sourceRef: "triageiq:retrieval-recall5-k8s",
     },
     {
@@ -149,7 +149,7 @@ export const triageiq: CaseStudy = {
     {
       label: "Resolution-time predictor MAE vs. naive baseline",
       value: "k8s: 104.05d vs. 106.29d naive (+2.1% better)",
-      detail: "vscode: 6.02d vs. 3.53d naive — 70.5% worse; served as-is with a transparency badge",
+      detail: "vscode: 6.02d vs. 3.53d naive, 70.5% worse; served as-is with a transparency badge",
       sourceRef: "triageiq:resolution",
     },
     {
@@ -161,14 +161,14 @@ export const triageiq: CaseStudy = {
   story: {
     title: "Caught a target-leakage bug that inflated error 8×, then found two more leaks nobody was looking for",
     body: [
-      "An early version of the resolution-time predictor reported a mean absolute error of roughly 682 days — flagged immediately as suspicious rather than accepted at face value. The investigation found the root cause was the train/test split itself: it divided issues by closed_at, the date an issue was closed. That guarantees, by construction, that any issue still open at the cutoff date lands in the test set and every already-resolved issue lands in train. The train set's median resolution time came out to 1.0 day; the test set's came out to 677 days. The model wasn't failing to learn — it had never seen anything like its test set during training.",
+      "An early version of the resolution-time predictor reported a mean absolute error of roughly 682 days, flagged immediately as suspicious rather than accepted at face value. The investigation found the root cause was the train/test split itself: it divided issues by closed_at, the date an issue was closed. That guarantees, by construction, that any issue still open at the cutoff date lands in the test set and every already-resolved issue lands in train. The train set's median resolution time came out to 1.0 day; the test set's came out to 677 days. The model wasn't failing to learn, it had never seen anything like its test set during training.",
       "Re-splitting by created_at (when an issue was filed, which doesn't leak information about how long it took to close) collapsed the MAE from 693 days down to 87 days. That 8x jump was entirely a bug fix, not a modeling improvement, and the team documented it as exactly that rather than presenting it as a win.",
-      "The same investigation surfaced a second, subtler leak: the model's top feature by importance, has_priority (correlation 0.595), turned out to be a label that gets applied during the triage process itself — meaning it wasn't actually available at the moment a real prediction would need to be made. Separately, a routine disjointness-guard build (checking that train and eval data never overlap) turned up a third finding: the judge-eval gold set had been silently contaminated with training data for about three months, affecting 54 of 60 evaluation cases. The team disclosed the contamination at the membership level honestly, rather than trying to compute and publish a \"corrected\" score for numbers they could no longer fully trust.",
+      "The same investigation surfaced a second, subtler leak: the model's top feature by importance, has_priority (correlation 0.595), turned out to be a label that gets applied during the triage process itself, meaning it wasn't actually available at the moment a real prediction would need to be made. Separately, a routine disjointness-guard build (checking that train and eval data never overlap) turned up a third finding: the judge-eval gold set had been silently contaminated with training data for about three months, affecting 54 of 60 evaluation cases. The team disclosed the contamination at the membership level honestly, rather than trying to compute and publish a \"corrected\" score for numbers they could no longer fully trust.",
     ],
     sourceRef: "triageiq:split-fix",
   },
   closing: [
-    "If your model's metrics look implausibly bad — or implausibly good — this is the instinct that catches it before it ships: treat a suspicious number as a bug report on your own pipeline first, not a verdict on the model, and keep auditing once you find the first leak.",
+    "If your model's metrics look implausibly bad, or implausibly good, this is the instinct that catches it before it ships: treat a suspicious number as a bug report on your own pipeline first, not a verdict on the model, and keep auditing once you find the first leak.",
   ],
   links: [
     { label: "Try TriageIQ", href: "https://triage-iq-orcin.vercel.app/" },

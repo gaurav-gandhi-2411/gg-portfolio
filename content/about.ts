@@ -13,9 +13,9 @@
  * (gold-rate-tracker:headline, triageiq:retrieval — see provenance.md).
  */
 export const aboutParagraphs: string[] = [
-  "I'm Gaurav — a data scientist in Bengaluru. Over the past five years I've gone from building ETL pipelines at TCS, to forecasting and anomaly detection at FedEx, to my current role inside Uber's AI org (via Indium Software), where I lead a five-person data-science team shipping GenAI document intelligence into production.",
-  "Outside work, I build my own AI products — a daily word game, a fashion stylist, an issue-triage service, and more. Each one exists because I wanted to see an idea all the way through: not a model in a notebook, but something deployed, evaluated, and used by real people.",
-  "The through-line is honest measurement. Every project ships with an evaluation harness, and the numbers I publish include the unflattering ones — the naive baseline that beat my forecasting model, the retrieval score that stayed weak after three attempted fixes. I'd rather show a real 83% than claim a vague \"high accuracy.\"",
+  "I'm Gaurav, a data scientist in Bengaluru. Over the past five years I've gone from building ETL pipelines at TCS, to forecasting and anomaly detection at FedEx, to my current role inside Uber's AI org (via Indium Software), where I lead a five-person data-science team shipping GenAI document intelligence into production.",
+  "Outside work, I build my own AI products, a daily word game, a fashion stylist, an issue-triage service, and more. Each one exists because I wanted to see an idea all the way through: not a model in a notebook, but something deployed, evaluated, and used by real people.",
+  "The through-line is honest measurement. Every project ships with an evaluation harness, and the numbers I publish include the unflattering ones, the naive baseline that beat my forecasting model, the retrieval score that stayed weak after three attempted fixes. I'd rather show a real 83% than claim a vague \"high accuracy.\"",
 ];
 
 /** Work lede — sentences 2–3 of the same approved paragraph. The closing

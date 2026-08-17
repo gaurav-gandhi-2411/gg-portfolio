@@ -41,7 +41,7 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
     expectedWakeSeconds: 23,
     gpuBacked: true,
     sourceNote:
-      "Measured 2026-08-11: 22.8s cold (confirmed genuinely idle via Cloud Logging — no prior request in the preceding 40 minutes), 0.43s warm repeat.",
+      "Checked 2026-08-11: 22.8s cold (confirmed genuinely idle via Cloud Logging, no prior request in the preceding 40 minutes), 0.43s warm repeat.",
   },
   "style-maitri": {
     slug: "style-maitri",
@@ -52,7 +52,7 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
     expectedWakeSeconds: 56,
     gpuBacked: false,
     sourceNote:
-      "Measured 2026-08-11: 55.7s cold (confirmed genuinely idle via Cloud Logging — 18m17s since the prior request, no traffic in between), 0.11s warm repeat. An initial attempt the same session exceeded a 60s probe ceiling with 24h prior idle — this is the clean re-measurement.",
+      "Checked 2026-08-11: 55.7s cold (confirmed genuinely idle via Cloud Logging, 18m17s since the prior request, no traffic in between), 0.11s warm repeat. An initial attempt the same session exceeded a 60s probe ceiling with 24h prior idle, this is the clean re-measurement.",
   },
   dealhunter: {
     slug: "dealhunter",
@@ -63,7 +63,7 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
     expectedWakeSeconds: 20,
     gpuBacked: false,
     sourceNote:
-      "Measured 2026-08-11: 19.4s cold (confirmed genuinely idle via Cloud Logging — no prior request in the preceding 16 hours), 0.12s warm repeat.",
+      "Checked 2026-08-11: 19.4s cold (confirmed genuinely idle via Cloud Logging, no prior request in the preceding 16 hours), 0.12s warm repeat.",
   },
 };
 

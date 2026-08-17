@@ -41,7 +41,12 @@ export function Contact() {
           {site.email}
         </a>
 
-        <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-[var(--space-2)] text-sm">
+        {/* gap-y has to clear the -my-3 these links carry for their 44px tap
+            target, or the rows overlap the moment this wraps, which it does at
+            375px. 24px of negative margin against an 8px row gap left them
+            overlapping by 16px and one link swallowing taps meant for another.
+            See CHECKS.md instance 17. */}
+        <p className="text-muted-foreground flex flex-wrap justify-center gap-x-6 gap-y-[var(--space-8)] text-sm">
           <span>{site.location}</span>
           <InlineLink
             href={site.githubUrl}

@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
 const REPORTS_DIR = join(ROOT, "reports");
+const MANIFEST_PATH = join(HERE, "fixtures.manifest.json");
 
 /**
  * @typedef {{ min?: number, max?: number, label: string }} Threshold
@@ -52,13 +53,48 @@ function resolveReportPath() {
   );
 }
 
+/**
+ * Every threshold below is a rate, so the set of questions is as much a part
+ * of the gate as the numbers are: drop the cases the system gets wrong and
+ * each rate rises on its own. Nothing here used to look at the denominator,
+ * and a report claiming 100% on a single fixture passed all four checks.
+ *
+ * So the fixture set is pinned in a manifest, and this reads it independently
+ * of the eval run rather than trusting whatever the report happens to contain.
+ * A fixture deleted, renamed out of run-eval's `.json` filter, or added
+ * without a manifest entry fails here even if every rate is perfect.
+ *
+ * @param {{ results?: {id: string}[] }} report
+ * @returns {boolean} true if the report covered exactly the expected fixtures.
+ */
+function checkCoverage(report) {
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
+  const expected = new Set(manifest.expectedFixtureIds);
+  const covered = new Set((report.results ?? []).map((r) => r.id));
+  const missing = [...expected].filter((id) => !covered.has(id)).sort();
+  const extra = [...covered].filter((id) => !expected.has(id)).sort();
+
+  if (missing.length === 0 && extra.length === 0) {
+    console.log(`pass  Fixture coverage: ${covered.size}/${expected.size} expected fixtures ran`);
+    return true;
+  }
+
+  console.error(`FAIL  Fixture coverage: report covers ${covered.size}, manifest expects ${expected.size}`);
+  if (missing.length > 0) {
+    console.error(`      never ran: ${missing.join(", ")}`);
+    console.error("      A rate computed without these is not comparable to the recorded baseline.");
+  }
+  if (extra.length > 0) console.error(`      ran but unlisted: ${extra.join(", ")}`);
+  return false;
+}
+
 function main() {
   const reportPath = resolveReportPath();
   const report = JSON.parse(readFileSync(reportPath, "utf8"));
 
   console.log(`Checking thresholds against ${reportPath} (mode: ${report.mode})`);
 
-  let failed = false;
+  let failed = !checkCoverage(report);
   for (const [key, threshold] of Object.entries(THRESHOLDS)) {
     const metric = report.summary[key];
     if (!metric || metric.value === null) {
@@ -86,7 +122,7 @@ function main() {
   }
 
   if (failed) {
-    console.error("\nOne or more chatbot eval metrics regressed below threshold.");
+    console.error("\nThe chatbot eval gate failed: a metric regressed, or the question set moved.");
     process.exit(1);
   }
   console.log("\nAll chatbot eval thresholds pass.");

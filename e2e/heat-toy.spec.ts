@@ -26,9 +26,15 @@ test.describe("Warmer heat-toy demo", () => {
     const guessedWord = (await starterChip.textContent())?.trim();
     await starterChip.click();
 
-    // A history row with the guessed word and a heat-label appears.
-    await expect(page.getByText(guessedWord ?? "", { exact: true })).toBeVisible();
-    const feedback = page.getByText(/Scorching|Hot|Warm|Cool|Cold|Not in the word list/);
+    // A history row with the guessed word and a heat-label appears. Scoped to
+    // the aria-live history list, because the embedding plot labels the same
+    // word as an SVG <text> node: an unscoped getByText matches both, and
+    // which one exists first is a render-order race. It passed on a quiet
+    // machine and failed under load, reading as flake rather than as the
+    // locator collision it is.
+    const history = page.locator('[aria-live="polite"]');
+    await expect(history.getByText(guessedWord ?? "", { exact: true })).toBeVisible();
+    const feedback = history.getByText(/Scorching|Hot|Warm|Cool|Cold|Not in the word list/);
     await expect(feedback.first()).toBeVisible();
   });
 

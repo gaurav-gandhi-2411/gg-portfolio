@@ -1,7 +1,7 @@
 import { site } from "@/content/site";
 import type { CaseStudy, Product } from "@/content/types";
 
-const siteUrl = "https://gaurav-gandhi.vercel.app";
+const siteUrl = site.url;
 
 export function PersonJsonLd() {
   const data = {

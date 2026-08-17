@@ -40,6 +40,7 @@ interface ChatResponseBody {
   answer: string;
   citations: Citation[];
   refused: boolean;
+  followUps: string[];
 }
 
 interface ConversationTurn {
@@ -47,6 +48,8 @@ interface ConversationTurn {
   answer: string;
   citations: Citation[];
   refused: boolean;
+  /** Grounded next questions, already validated server-side. */
+  followUps: string[];
 }
 
 /**
@@ -83,17 +86,19 @@ const ERROR_MESSAGES: Record<"offline" | "timeout" | "server" | "network", strin
   network: "Couldn't reach the assistant — there may be a network issue. Please try again.",
 };
 
-// 4-5 starter questions spanning project depth, the debugging-story angle,
-// and the two things a recruiter/hiring manager actually wants to know
-// (background, availability) — sourced from content/case-studies/warmer.ts,
-// content/case-studies/triageiq.ts, and content/availability.ts so every
-// chip is genuinely answerable from the corpus, not a guess.
+// Three openers, so nobody faces a blank box: one for who GG is, one for a
+// project that went wrong and got fixed, one for what he is looking for.
+// Sourced from content/case-studies/warmer.ts and content/availability.ts,
+// so every chip is genuinely answerable from the corpus rather than a guess.
+//
+// Three rather than the five this used to carry. Five chips is a menu to
+// read before you can ask anything, which is its own small barrier; three
+// is a nudge. Everything past the first turn comes from the follow-ups the
+// answer itself generates, which are better targeted than any fixed list.
 const SUGGESTED_QUESTIONS = [
   "What is Gaurav's current role and background?",
-  "How does TriageIQ's four-stage pipeline work?",
   "What went wrong with Warmer's Hinglish model, and how was it fixed?",
   "What roles is Gaurav looking for right now?",
-  "Which project's evaluation numbers are the most interesting?",
 ] as const;
 
 // Characters revealed per tick and the tick interval — tuned for a natural
@@ -169,7 +174,17 @@ async function parseChatResponse(res: Response): Promise<ChatResponseBody | null
     return null;
   }
   const body = raw as ChatResponseBody;
-  return { answer: body.answer, citations: body.citations, refused: Boolean(body.refused) };
+  // followUps is optional on the wire on purpose: an older recorded response
+  // or a model that returned none is a normal outcome, not a parse failure.
+  const followUps = Array.isArray(body.followUps)
+    ? body.followUps.filter((q): q is string => typeof q === "string" && q.trim().length > 0)
+    : [];
+  return {
+    answer: body.answer,
+    citations: body.citations,
+    refused: Boolean(body.refused),
+    followUps,
+  };
 }
 
 export function AskPanel() {
@@ -266,6 +281,22 @@ export function AskPanel() {
     inputRef.current?.focus();
   }
 
+  /**
+   * A follow-up chip asks its question outright rather than loading it into
+   * the composer.
+   *
+   * Different from the opener chips on purpose. An opener is a starting
+   * point a visitor may well want to edit before sending; a follow-up is
+   * the question they just chose, having read the answer above it, and
+   * making them press Enter afterwards is a second action for something
+   * they already decided. The composer still holds the text, so a slip is
+   * visible and repeatable.
+   */
+  function handleFollowUp(q: string): void {
+    setQuestion(q);
+    void ask(q);
+  }
+
   const isEmpty = turns.length === 0 && status !== "loading";
 
   // Follow-ups (below) exclude anything already asked so the same chip
@@ -308,7 +339,11 @@ export function AskPanel() {
                 <p className="text-foreground self-end rounded-xl rounded-br-sm bg-secondary px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium">
                   {turn.question}
                 </p>
-                <TurnAnswer turn={turn} shouldAnimate={i === turns.length - 1} />
+                <TurnAnswer
+                  turn={turn}
+                  shouldAnimate={i === turns.length - 1}
+                  onFollowUp={handleFollowUp}
+                />
               </li>
             ))}
             {status === "loading" ? (
@@ -397,9 +432,11 @@ export function AskPanel() {
 function TurnAnswer({
   turn,
   shouldAnimate,
+  onFollowUp,
 }: {
   turn: ConversationTurn;
   shouldAnimate: boolean;
+  onFollowUp: (question: string) => void;
 }) {
   const revealed = useAnswerReveal(turn.answer, shouldAnimate);
   const isFullyRevealed = revealed.length === turn.answer.length;
@@ -438,6 +475,23 @@ function TurnAnswer({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {/*
+        Where to go next. Three at most, and each one was checked server-side
+        against the chunks this very answer was built from, so tapping one
+        cannot land on "I don't have that information".
+
+        Held back until the answer has finished revealing, for the same
+        reason the citations are: offering somewhere to go while the sentence
+        in front of the reader is still arriving is an interruption rather
+        than an invitation.
+      */}
+      {turn.followUps.length > 0 && isFullyRevealed ? (
+        <div className="message-in mt-[var(--space-2)] flex flex-col gap-[var(--space-2)] border-t border-border/40 pt-[var(--space-3)]">
+          <p className="text-muted-foreground font-mono text-caption">Keep digging</p>
+          <ChipRow questions={turn.followUps} onPick={onFollowUp} compact />
+        </div>
       ) : null}
     </div>
   );

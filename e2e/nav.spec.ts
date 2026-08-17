@@ -8,7 +8,7 @@ test.describe("site navigation", () => {
     await expect(page).toHaveURL(/\/projects$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("All projects");
 
-    await page.getByRole("link", { name: "Gaurav Gandhi — home" }).click();
+    await page.getByRole("link", { name: "Gaurav Gandhi, home" }).click();
     await expect(page).toHaveURL(/\/$/);
 
     await page.getByRole("link", { name: "About", exact: true }).click();

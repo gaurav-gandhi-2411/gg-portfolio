@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { caseStudies } from "@/content/case-studies";
+import { site } from "@/content/site";
 import { CATEGORIES } from "@/content/types";
 
-const siteUrl = "https://gaurav-gandhi.vercel.app";
+const siteUrl = site.url;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

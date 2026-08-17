@@ -1,0 +1,113 @@
+{
+  "route": "/",
+  "url": "https://gaurav-gandhi-git-feat-hero-20a773-gaurav-gandhi-2411s-projects.vercel.app/",
+  "branch": "preview-after-pointer-fix",
+  "date": "2026-08-17",
+  "n": 5,
+  "throttlingMethod": "simulate",
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 4,
+  "aggregate": {
+    "performance": {
+      "mean": 58.6,
+      "stddev": 3.65,
+      "values": [
+        57,
+        56,
+        65,
+        58,
+        57
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "seo": {
+      "mean": 66,
+      "stddev": 0,
+      "values": [
+        66,
+        66,
+        66,
+        66,
+        66
+      ]
+    },
+    "fcp-ms": {
+      "mean": 1324.9,
+      "stddev": 314.67,
+      "values": [
+        1882.6519999999998,
+        1217.647,
+        1112.5,
+        1208.4379999999999,
+        1203.238
+      ]
+    },
+    "lcp-ms": {
+      "mean": 4007.61,
+      "stddev": 202.99,
+      "values": [
+        3917.7295,
+        4240.647,
+        3707.4880000000003,
+        4080.931999999999,
+        4091.2380000000003
+      ]
+    },
+    "tbt-ms": {
+      "mean": 1516.21,
+      "stddev": 205.18,
+      "values": [
+        1583.3345,
+        1666,
+        1172.5,
+        1492.2139999999995,
+        1667.0000000000005
+      ]
+    },
+    "cls": {
+      "mean": 0,
+      "stddev": 0,
+      "values": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "si-ms": {
+      "mean": 4430.36,
+      "stddev": 568.25,
+      "values": [
+        4823.86367014686,
+        4614.931320078731,
+        3425.9500758082595,
+        4604.875104580979,
+        4682.1792739683515
+      ]
+    }
+  }
+}

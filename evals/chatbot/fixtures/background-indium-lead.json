@@ -1,8 +1,8 @@
 {
   "id": "background-indium-lead",
-  "question": "What team does GG lead at Indium Software, and what's the team size?",
+  "question": "What team does GG lead at Uber AI, and what's the team size?",
   "category": "background",
   "expectedSourceRefs": ["resume:indium-senior-lead"],
   "expectedBehavior": "answer",
-  "notes": "Direct recall from content/experience.ts's Senior Data Scientist bullet at Indium (client: Uber AI) — leads and mentors a 5-person data-science team, sourceRef resume:indium-senior-lead."
+  "notes": "Direct recall from content/experience.ts's Lead Data Scientist bullet at Uber AI (via Indium Software): leads a 5-person data-science team, sourceRef resume:indium-senior-lead. The question said 'at Indium Software' until the resume moved the attribution to client-first; the sourceRef is unchanged because it is the same claim, now under a different role in the ladder."
 }

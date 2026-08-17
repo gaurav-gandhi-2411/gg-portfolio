@@ -8,8 +8,8 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes. None was a
-bug in the usual sense. Almost every one was green — one that was red had already
+days**, in fifteen different disguises, by fifteen unrelated routes, and thirteen
+times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
 a monitoring stack installed after an outage it could not have detected, and one was
@@ -24,7 +24,42 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-## The fifteen
+Instances 16 through 28 came later, from a design rebuild rather than an audit,
+and they extend the pattern rather than repeat it. Every earlier entry is a
+check that could not see its subject. Instance 16 is a check that saw its
+subject perfectly and had been told to look for the wrong thing. Instance 17 is
+a defect no check was looking for at all, which announced itself only as a slow
+test. Instance 18 is four checks that saw their subjects correctly and simply
+saw less of them than their names implied, because how much they covered was
+decided by a separator, an indent, a filename and an import spelling. It
+carries the one-line rule the rest of this document had been circling: a check
+is safe when it compares two independently-derived sets, or prints a
+denominator it would notice moving. Instance 19 is the same idea with timing
+in place of formatting: an assertion that passed only because it resolved
+before the thing it would have collided with. Instance 20 is the measuring
+tool itself: a Lighthouse runner that leaked a Chrome profile per run until the
+debris changed what it measured. Instance 21 is a style write whose cost had
+nothing to do with what read it, paired with a confident wrong explanation that
+only fell when the variable was removed rather than argued about. Instance 22
+is the one that produced no output at all: a gate that never fired on the branch
+it existed to guard, which is the opening rule turned on a control rather than on
+the code. Instance 23 is a new shape and the one to watch for: an exemption that
+was correct when written and became wrong by outliving its reason, without
+anything about it ever changing. Instance 24 is instance 18 pointing the other
+way, two checks that rejected a correct disclosure because their scope was set by
+word spacing. Instance 25 is the smallest and the most repeated: a rule's prose
+and its implementation drift, and only the committed implementation is the
+authority. Instance 26 is that same authority question while enforcing rather than
+while reading: a hook resolves its gate by filesystem adjacency, so a shared
+checkout's uncommitted edits are the live policy and a merged fix never reaches
+it. Instance 27 is the first one where the check was working and the *metric*
+moved for the wrong reason: work deferred past the point the measurement stops
+looking improves the number without improving what it stands for. Instance 28
+closes the set where instance 26 opened it, on addressing rather than coverage:
+a suite that named its target by a port shared with every other checkout, and
+so spent a full green run grading a different branch's build.
+
+## The twenty-eight
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -507,6 +542,541 @@ Two aggravating details worth carrying:
 Related in kind to instance 10 — a check running correctly against the wrong
 target — but the target here is not a URL or a project. It is *who you are*, and
 nothing in the output of a failing command mentions it.
+
+**16. A test that was green, specific, and defending the defect.** The header
+was rebuilt as a pill that contracts on scroll, and a test asserted the
+contraction: `expect(scrolled.height).toBeLessThan(atTop.height)`. It passed
+every run. It was also wrong, because the band is sticky *and still in flow*, so
+a band that changes height moves every element on the page below it — the whole
+document slid 16px as you scrolled through the contraction. The test had been
+written by reading the implementation and asserting what it did, so it locked in
+the behaviour instead of the intent. The intent was "the pill contracts"; what
+got written down was "the header gets shorter", and those are the same sentence
+right up until you ask what the header is sitting in. It now asserts both halves:
+the pill shrinks **and** the band does not.
+
+This is the failure mode this document keeps finding, moved one layer out. A
+check that cannot see part of its subject is instance 1 through 15. A check that
+sees its subject perfectly and was told to look for the wrong thing produces the
+same output — green, confident, specific — and is harder to catch, because
+nothing about it is broken. The tell is provenance: a test written *from* the
+implementation can only ever agree with it.
+
+**17. A negative margin that was invisible until the row wrapped.** The project
+filter pills carry `-my-[5px]` so a 44px tap target does not bulk out the row.
+On a single line that is correct and invisible. The moment the row wraps —
+which it does at every phone width — 10px of negative margin against an 8px row
+gap left pills in adjacent rows **overlapping by 2px**, and Chromium hit-tests an
+overlap to whichever element paints last. Seven overlapping pairs on a Pixel 7.
+A tap near the edge of one pill could apply a different filter, silently and
+correctly as far as any code was concerned.
+
+Nothing was watching for it. Every a11y check passed: the targets are 44px, the
+contrast is fine, the roles and `aria-pressed` are right. Tap-target *size* is a
+standard audit; tap-target *overlap* is not, and a wrapped flex row is exactly
+where the two diverge.
+
+The only reason it surfaced is that a Playwright click took 3.7 seconds and the
+test suite got slow. The log said `intercepts pointer events` on every retry —
+the harness describing the bug accurately, in plain words, for weeks. The
+available reading was "flaky test, raise the timeout", and that reading would
+have been comfortable, fast, and would have kept a real mobile defect in
+production. **Slowness is a symptom with a cause.** Before treating a test as
+flaky, get it to say what it is waiting for.
+
+Two rules fall out, both cheap:
+
+- A negative margin on a `flex-wrap` row is only safe while the row does not
+  wrap. If the gap is smaller than the margin it cancels, the boxes overlap the
+  moment it does. Set the cross-axis gap larger than the negative margin, or do
+  not use one.
+- Assert that interactive siblings do not overlap, and that each receives the
+  hit at its own centre. Both are two lines of `getBoundingClientRect` and
+  `elementFromPoint` (`e2e/project-grid.spec.ts`), and neither is covered by any
+  standard accessibility audit.
+
+**18. Four checks whose coverage was computed from a formatting convention.**
+A separator, an indent, a filename, an import spelling. Each decided how much
+the check looked at, and each is the kind of thing an ordinary edit removes
+without anyone thinking about the gate at all. Every one of the four then
+reported success over the smaller set.
+
+The chatbot eval was the expensive one, because it stands behind a quality
+claim rather than a formatting one. `run-eval.mjs` collects fixtures with a
+`.json` filename filter and every threshold is a rate, so the question set is
+as much a part of the gate as the numbers. Recall@5 misses exactly one fixture.
+Rename that one file to `.json.bak` and the eval reports 100.0% instead of
+95.0%, and `check-thresholds.mjs` prints *All chatbot eval thresholds pass* and
+exits 0. The only n-related failure it had was n of zero, so a report claiming
+a perfect score on a single case passed all four checks. **A recall number that
+improves when you delete the questions is worse than no number**, because it
+looks like the good kind.
+
+The other three were quieter. `check-card-consistency.mjs` splits
+`content/products.ts` on a literal newline-brace-newline: move one product's
+brace onto its first field's line and it drops from 13 products to 12, prints
+`12 products`, exits 0. Its own comment claimed a structural rewrite would make
+every product report `PARSE_ERROR`, loudly, not silently skip. True of a total
+rewrite, false of the partial one a formatter actually produces, which is the
+only kind that happens. Its case-study loader had the same shape one function
+over, matching exactly one spelling of an import statement. And
+`check-resume-pdf-consistency.mjs` derives each project's anchor by splitting a
+heading on `" — "`; rewriting four entries in site style took coverage from
+five projects to one and turned the gate green **by making it stop looking**,
+which is the sentence worth remembering.
+
+In gh-profile the convention was a join nobody wrote. `check-svgs.mjs` walks
+`assets/` and validates what it finds, `check-readme-image-hosts.mjs` walks
+`README.md` and validates what it finds, and nothing compared the two sets.
+Renaming one asset left a broken image on the live profile with all three CI
+gates green.
+
+The general rule, and the one to apply while writing a check rather than while
+auditing one:
+
+> **A check is safe when it compares two independently-derived sets, or prints
+> a denominator it would notice moving.** Anything else is scoped by a
+> convention, and a convention is not a guarantee.
+
+"Independently derived" is the load-bearing half. Two readings that share an
+assumption both shrink together and agree with each other all the way down. The
+pairs that work here share nothing: a block split against a flat scan of the
+same file, an import regex against a directory listing, README references
+against files on disk, a computed set against a hand-maintained list. The
+hand-maintained list is not a lesser option: pinning the expected set is what
+makes shrinking it a deliberate act with a visible diff, which is the whole
+difference between updating a gate and quietly disabling it.
+
+The denominator half only counts if something reads it. All four of these
+printed one. `13 products`, `5 covered`, `n=20`, the numbers were right there
+in CI output the entire time, in a passing run nobody re-reads. **Printing a
+number is not the same as checking it.**
+
+This is a different failure from instance 16, and worth keeping separate. There
+the test agreed with the implementation because it was written from it. Here
+the check is correct about everything it examines and simply examines less than
+its name implies, so reading the code closely tells you nothing. The scope
+lives in the data's shape, not in the check. The only thing that finds it is
+breaking the convention on purpose and watching whether the gate notices.
+
+**19. A test that passed because it was faster than the thing it raced.**
+`e2e/heat-toy.spec.ts` asserted `getByText(word, { exact: true })` with no
+scope. The Warmer demo renders the guessed word twice: once in the aria-live
+history row, and once as an SVG `<text>` label in the embedding plot, a beat
+later. Two matches is a strict-mode violation, so the assertion only ever
+passed by resolving before the plot caught up. It had been winning that race
+since the toy landed. It lost it the first time the machine was busy, and the
+failure arrived wearing the costume of a flake, in a batch of genuine
+contention failures, which is the worst possible company for a real defect.
+
+This is a fifth shape, and worth separating from the four in instance 18.
+Those checks were scoped by a formatting convention: a separator, an indent, a
+filename, an import spelling. This one is scoped by **timing**, which is worse
+in one specific way. A convention is at least visible in the file, so breaking
+it on purpose is a thing you can do deliberately. A race is visible nowhere at
+all, and the machine that would expose it is the machine you are least likely
+to be developing on. **A green test does not distinguish "the assertion was
+right" from "the assertion got there first."**
+
+The measurement lesson came with it, and it is the one from instance 13 again.
+Counting the matches right after the history row appeared returned one, which
+contradicted the strict-mode violation the failing run had reported. One of
+those two was wrong, and the tempting reading is that the failure was noise.
+Waiting for the plot to name the word first returns **two unscoped, one
+scoped**. The first count was not evidence of anything except that it was
+taken too early. *When a fresh measurement disagrees with a recorded failure,
+suspect the measurement before the failure* -- the failure at least happened.
+
+The fix is scope, not a wait: the assertion now runs against the aria-live
+region, which the plot sits outside, so there is no ordering left to depend on.
+Adding a wait would have made it pass reliably while leaving it ambiguous,
+which is the same bargain the original locator made.
+
+Two things fall out, and both were applied rather than just written down:
+
+- Worker count is a correctness setting, not a speed setting. The same 386
+  tests ran 6.9 minutes at 8 workers with 15 failures, and 4.3 minutes at 4
+  with none, on a machine that routinely has several worktrees live. Eight was
+  slower *and* wrong. `playwright.config.ts` pins 4, with the numbers in a
+  comment, because a worker count derived from core count assumes a machine
+  nobody here actually has.
+- A suite's exit code has to survive being read carelessly. That 15-failure
+  run was recorded as green because the shell chain around it ended in `tail`
+  and returned tail's status. `scripts/run-e2e.mjs` now prints the counts and
+  the real exit code as the **last** line, in a banner that says FAILED, and
+  fails closed on a run it cannot summarise or one that stopped early. It
+  cannot change what a pipeline returns, and does not pretend to. It makes the
+  status the thing you cannot help seeing.
+
+**20. A tool that leaked into the machine it was measuring.**
+`scripts/lighthouse.mjs` creates a throwaway Chrome profile per run and removes
+it in a `finally`. The removal fails on Windows, because `chrome.kill()` resolves
+when the process is signalled rather than when the OS has released its handles,
+so `rmSync` hits a locked directory. The script caught that, printed *temp
+profile cleanup failed, ignoring*, and carried on. The comment beside it said a
+leftover profile under tmpdir is cosmetic and the OS reclaims it eventually.
+
+It does not. **265 directories holding 3.2 GB**, one per run since the script
+was written, each one announced by a warning that said ignoring. They are the
+most plausible explanation for the near-full-disk event this repo saw twice and
+dismissed twice.
+
+Then they corrupted a measurement, which is the part that makes this an entry
+rather than a chore. A Lighthouse run on the wave preview returned 73, 69, 66,
+59, 60, declining monotonically while TBT nearly tripled, on a machine carrying
+that debris plus nine orphaned Chrome processes the same script had left behind.
+The recorded baseline's own values scatter around a mean with no trend, and that
+shape difference is the only reason the run was thrown away rather than reported.
+**A measuring tool with a side effect on the thing it measures will eventually
+measure its own side effect.**
+
+Three things fall out, all applied:
+
+- The dismissal was the defect, not the EPERM. *Cosmetic* and *the OS will
+  handle it* are both claims about the future, and neither was ever checked.
+  Backoff to about 7.8s clears the lock; what still cannot be removed is
+  recorded and reported by count at the end of the run, so the first leak is as
+  visible as the 265th.
+- A control that only cleans up after itself cannot heal a past leak. The runner
+  now sweeps profiles older than 15 minutes at startup, so the debris of every
+  previous run goes with the next one. The grace period is what keeps a
+  concurrent session's live Chrome safe, which matters here because several
+  worktrees run at once by design.
+- **Before trusting a measurement, ask what the measuring ran on.** The machine
+  is part of the apparatus. This session also found nine orphaned Chrome
+  processes from earlier runs, killed by PID rather than by name, and re-measured
+  production first in the same session as a control precisely because the
+  absolute numbers had drifted: 91, then 88.4, then 83, then 89.8 for the same
+  unchanged production page across one evening. Without that control the wave
+  would have looked five points worse than it was on one round and five points
+  better on another.
+
+**21. A one-line style write that restyled the whole document, and a wrong
+explanation that survived because it was never tested.** Two findings from the
+same investigation, kept together because the second is what nearly buried the
+first.
+
+**Custom properties inherit, so writing one on the root invalidates everything
+under it.** `PointerField` set five of them on `<html>` once a frame. Measured on
+the deployed page, same element and same frame:
+
+| write | cost |
+|---|---|
+| one custom property on `<html>` | 17.3ms |
+| five custom properties on `<html>` | 19.8ms |
+| a regular property on `<html>` | 0.2ms |
+| one custom property on a leaf | 0.0ms |
+
+Eighty-six times the cost of a normal property on the same node, for the
+property *type* alone. The trap is that it reads as a cheap write: one string
+onto one element, no DOM change, no layout thrash. What it actually triggers is
+a re-resolve of every element that could inherit it, and an unregistered custom
+property gives the engine nothing to narrow that down with. **The cost scales
+with the element count of the subtree, not with the number of things that read
+the property.** There was exactly one consumer here, `.hero-spotlight`, with no
+descendants, and the write was costing a full-document restyle on its behalf:
+2918ms of style recalculation across 72,422 styled elements in a 6.3s trace,
+which is the main thread roughly 88 percent occupied for over three seconds.
+Moving the write to the one element that reads it took it to zero.
+
+Worth knowing before reaching for `@property`: registering with `inherits: false`
+would also fix the invalidation, but then descendants cannot read the value at
+all, which is usually the reason it was on the root. Scoping the write to the
+consumer keeps both.
+
+**The retraction.** Asked whether measuring a preview against production was a
+fair comparison, this session argued it could not explain a main-thread number,
+on the reasoning that "the same JavaScript blocks the same thread whichever host
+served it." That is wrong, and it is wrong in a way that sounds airtight.
+**Preview deployments serve extra JavaScript**: Vercel's Live toolbar is injected
+on previews and absent on production. A CPU profile put it at 1319ms of self
+time, the largest single entry on the page, well ahead of react-dom, GSAP or the
+WebGL field.
+
+The claim survived several rounds of measurement because every one of them
+compared the two hosts and none of them removed the difference. It only fell
+when the script was actually blocked. And the outcome is the uncomfortable part:
+**blocking it moved both sides about five points and left the gap where it was,
+so the conclusion was right and the argument for it was rubbish.** A correct
+conclusion reached by bad reasoning is the hardest kind of error to find, because
+nothing downstream of it looks wrong.
+
+The rule that falls out is the one this document keeps arriving at from new
+directions: *an argument that a variable cannot matter is not a measurement that
+it does not.* Neutralise the variable and look. It cost one flag,
+`BLOCKED_URL_PATTERNS_OVERRIDE`, and the runner records it in the artifact so a
+comparison can never quietly exclude something without saying so.
+
+**22. A gate that was correct, complete, and never ran.** Every other entry in
+this document is about a control that produced output nobody could rely on.
+This one produced no output at all, and that is worse in a way worth being
+precise about.
+
+`ci.yml` fired on `pull_request` and on pushes to `main`. A long-lived feature
+branch with no PR open matched neither trigger. `feat/hero-rebuild` grew to 31
+commits that way, and the bundle-size gate, which exists specifically to stop
+exactly this, was structurally unable to see a single one of them. The wave
+carried **52,795 bytes of eager gzip JS** past a ceiling of 220,160, and it was
+discovered only because the branch was later split into PRs, which is to say by
+accident of process rather than by any control.
+
+Compare the two nearest shapes. Instance 16 is a check asserting the wrong
+thing: it ran, it reported, and its report was misleading. Instance 18 is four
+checks whose coverage narrowed silently: they ran, they reported, and the
+denominator quietly shrank. **Both were at least running, so both leave
+evidence.** A green run with a wrong assertion is a lead; a shrinking
+denominator is a number in a log. This left nothing. There is no run to
+re-read, no output to check, no denominator to compare, and the absence looks
+exactly like a branch that has not been pushed yet.
+
+> **A gate that does not run is not a weak gate. It is no gate, and nothing in
+> the output distinguishes the two, because there is no output.**
+
+Which is a special case of this document's opening rule turned on the gate
+itself. "I looked and it was fine" and "I never looked" must not produce the
+same output, and here they produced the same nothing.
+
+Four gates shared the trigger and were equally blind: `ci.yml` (build, e2e,
+bundle size, card consistency, resume consistency, index freshness),
+`eval.yml`, `link-check.yml` and `live-link-markers.yml`. The three that run
+only on a schedule (`chat-canary.yml`, `live-link-latency.yml`,
+`metrics-refresh.yml`) target production rather than a branch and were never in
+scope. `ci.yml` and `eval.yml` now fire on pushes to rule 35's branch
+vocabulary. The other two are deliberately left as they were, because both make
+external network requests and neither gates code; that is a stated choice, and
+naming it here is the point, since an unstated exemption is how the next version
+of this entry gets written.
+
+What would have failed inside that window, kept separate from what is merely
+suspected:
+
+- **The bundle gate, from the third commit of thirty-one.** Measured: 244,075
+  bytes at `4566285`, the commit that first imports GSAP and Lenis, and 245,355
+  at the branch head. So 29 commits sat over ceiling, unseen.
+- **The chatbot index was never stale.** A coarse heuristic flagged one commit
+  that touched `content/site.ts` without rebuilding the index; running
+  `check-index-fresh` at that commit reports it up to date, because the field
+  added there does not feed the index. Recorded as a false positive rather than
+  left as an insinuation.
+- **Everything else is unaudited, not clean.** Establishing whether e2e or the
+  content gates were red at any point across 31 commits means building and
+  running each commit, which has not been done. Two near-misses in that window
+  were caught locally before landing, which is evidence that the window
+  contained real breakage, not evidence that it contained none.
+
+The habit that falls out is cheap and general: **for any gate, ask not only what
+it checks but when it fires, and whether the code you care about is inside that
+window.** A trigger is part of a control's surface, and it is the part least
+likely to be read, because it sits in a file nobody opens once it works.
+
+**23. An exemption that was correct when written and became wrong by outliving
+its reason.** A new shape, and the one worth watching for, because nothing about
+it ever changes. Every other entry here is a control that was wrong from the
+start, or that quietly narrowed. This one was right, stayed exactly as written,
+and became wrong because the world moved past it.
+
+Rule 70a's gate 3 lets a PR record an override for a file that genuinely cannot
+be split: name the file, record the line count, write the rationale, link the
+review that accepted it. That is a good mechanism. The entry was keyed on the
+**bare path**.
+
+So gg-portfolio PR #119, a P0 crash fix, recorded overrides for the twenty files
+it touched, with a rationale and a verifier link. #119 merged on 2026-08-16.
+Months later, an unrelated motion PR touched `app/layout.tsx` for twelve lines,
+and the gate applied #119's exemption to it: **twelve lines silently discounted
+from a diff, on the strength of a review of a different change.** The rationale
+in the entry describes a crash fix. The verifier link points at a closed PR. Both
+were still being cited as authority for a diff neither had ever seen.
+
+An audit found that on `main` **2 of 2 entries were live on a justification that
+had already merged**, and a further 20 in another workstream's uncommitted work
+were in the same state. Not one had expired, because nothing in the design could
+expire.
+
+The fix is not a cleanup sweep, and that distinction is the useful part.
+**Scoping beats scheduling.** An entry now records the PR whose review justified
+it and applies only when that PR is the one being evaluated, so it is inert the
+moment it is no longer relevant. There is no cron, no audit job, no list to
+prune, and no way for a stale entry to be applied by accident, because staleness
+and inapplicability are now the same condition. An unscoped entry is refused
+rather than applied, and a caller that does not say which PR it is evaluating
+gets no overrides at all, because granting an exemption is the permissive branch.
+
+The general form, which applies well beyond this gate:
+
+> **An exemption needs an expiry condition built into how it is looked up, not a
+> promise that someone will remove it.** Anything granted "for this case" and
+> stored keyed on something more durable than the case will be applied to cases
+> nobody reviewed.
+
+Worth asking of every allowlist, ignore file, `eslint-disable`, suppression, and
+carve-out in this repository: what is it keyed on, and is that narrower or wider
+than the thing that justified it? A `// eslint-disable-next-line` is scoped to
+the line and is fine. A path in an ignore list is scoped to the path and is not.
+
+**24. Two disclosure checks that could not match their own subject.**
+Found while writing the disclosure instance 23's fix required, which is the only
+reason it was found at all. Gate 3c asks whether a PR body discloses a gate
+override, and matched on `gate.?override`. Gate 4b asks the same about the
+sensitive-path allowlist, and matched on `gate.?4.?allowlist`.
+
+`.?` is one optional character. So a heading written the way anyone would write
+it, **`## Gate 3 override disclosure`**, failed a check asking about gate 3's
+override, because `" 3 "` is three characters and not one. `gate 4 allowlist`
+failed gate 4b for the same reason. The only phrasings that satisfied these
+checks were ones nobody writes: `gate override`, `gate4allowlist`.
+
+Same family as instance 18, a control scoped by an incidental formatting
+convention, with the failure pointing the other way. Instance 18's checks passed
+while covering too little. These **failed while their subject was correctly
+disclosed**, which is the safe direction to be wrong in, and still wrong: a gate
+that rejects compliance teaches people to write for the regex instead of for the
+reader, and the next author's fix is a worse disclosure that happens to match.
+
+Both are named compiled patterns now, accepting either word order and an
+optional gate number, with cases for the phrasings that used to fail and for a
+body that discloses nothing. The lesson is small and repeats often: **when a
+check reads prose, test it against how the sentence is actually written**, not
+against the shortest string that satisfies the author of the regex.
+
+**25. A rule's prose and its implementation drift, and only one of them is the
+authority.** Small, and it happened three times in one wave, which is what makes
+it worth its own entry rather than a footnote on the others.
+
+Each time the shape was identical: read a rule's description, report a
+conclusion from it, and be wrong because the code had moved.
+
+- Rule 70a's gate-3 text lists four designated globs, so `package-lock.json`
+  was reported as counting against the 400-line ceiling. The implementation had
+  matched it explicitly since 2026-08-11. The gate was already correct and the
+  sentence describing it was not.
+- The override allowlist was reported as 22 entries with 20 citing PR #119. On
+  `main` there are two. The other twenty were **uncommitted working-copy
+  changes** in a shared checkout sitting on another workstream's branch, read as
+  though they were the live mechanism.
+- The multi-file `gg_approval` requirement was cited as an existing constraint
+  while designing around it. It is on that same unlanded branch. The incident
+  behind it is real; the code enforcing it is not on `main`.
+
+Three wrong reports, none of which a careful reading of the prose would have
+prevented, because the prose was the problem. And the third is the sharpest,
+because a working copy looks exactly like the truth: same path, same file,
+opens in the same editor.
+
+> **A rule's description, a comment, and a working copy are all secondary. The
+> committed implementation on the default branch is the only authority, and the
+> cost of checking it is one command.**
+
+The practical form: before reporting what a gate does, run it or read it at
+`origin/main`, not at `HEAD`, and never from a checkout someone else may be
+editing. `git show origin/main:path` is the whole discipline. This is also why
+the local approval check in the whole-PR waiver is deliberately self-contained
+rather than calling a shared helper: a validator that depends on code which may
+or may not be present is a validator that can silently stop validating.
+
+**26. A guard that can only ever read the copy of itself sitting next to it.**
+A design constraint rather than a defect, worth writing down because it is
+invisible until it bites and it has now bitten twice in one day.
+
+`hook_guard_merge.py` locates the gate it runs with one line:
+
+```python
+MERGE_GATE = str(Path(__file__).with_name("merge_gate.py"))
+```
+
+A hard-coded sibling. **No environment variable, no config key, and nothing in
+`settings.json` parameterises it** beyond the absolute path to the hook itself.
+So the gate that decides whether a merge may proceed is always the copy in
+whatever checkout the hook happens to live in, including that checkout's
+*uncommitted working-tree edits*.
+
+Which means a fix landing on `main` does not reach the hook. Two merges were
+blocked by this on the same afternoon, both by a gate whose fix was already
+merged: one on a line-count rule that a whole-PR waiver had been built and landed
+specifically to satisfy, and one on a sensitive-path false positive whose
+allowlist entry was sitting on `main` at the time. Neither gate was wrong about
+the code it was reading. Both were reading code from before the fix.
+
+The trap has three edges, and the third is the one to remember:
+
+- **A merged fix is not a deployed fix** when the consumer resolves its
+  dependency by filesystem adjacency rather than by version.
+- **The hook cannot be redirected without writing into that checkout**, which
+  makes "just point it at main" unavailable exactly when the checkout belongs to
+  another session with work in progress.
+- **The working tree wins over the committed tree.** The hook reads the file, not
+  the ref, so uncommitted edits in a shared checkout silently become the live
+  policy for every session on the machine. This is instance 25's contaminated
+  authority one layer up: there, a working copy was mistaken for the truth while
+  reading; here, a working copy *is* the truth while enforcing.
+
+No fix attempted, on purpose. Every available route writes into a checkout that
+another session has uncommitted work in, and the merge itself can be done through
+the GitHub web UI where no hook fires at all, so the hazard buys nothing. Recorded
+so the next person who wonders why a landed gate fix changed nothing does not have
+to rediscover the one line that explains it.
+
+**27. A metric that improved because the measurement window closed early.** The
+hero's WebGL field was the largest contributor to a Total Blocking Time
+regression, so its work was deferred until after first paint. Lighthouse then
+reported home's TBT at 118ms against roughly 870ms before. The number was real
+and the conclusion drawn from it was not.
+
+Home's score turned out to be bimodal across runs: 63, 89, 90, 90, 90, with TBT
+of 907, 180, 118, 143, 118. The first instinct, a cold first run, was wrong.
+`/ask` measured alone shows no such spike, every run gets its own fresh Chrome
+and profile, and the pattern reproduced on a fully warm server.
+
+The raw traces gave it up. On the 907ms run: 20 long tasks reaching 5150ms, TTI
+6046ms, and the GSAP and ScrollTrigger chunk at 2739ms of bootup. On the 118ms
+run: 2 long tasks, TTI 3462ms, that same chunk at 264ms. The field arrives about
+3.4 seconds in, so it lands inside the trace only when the trace happens to run
+long enough. The fast runs were not observing cheaper work. They were stopping
+before the work happened.
+
+So the deferral relocated the cost rather than removing it. Observed TBT is
+907ms against roughly 870ms before, which is no material improvement on the
+runs that actually watch. What did improve is real but narrower than the
+headline: the first three seconds are clear, and TTI is 3462ms instead of
+6046ms when the field does not intrude.
+
+The shape to remember is not "Lighthouse is noisy". It is that **an
+optimisation which moves work later, past the point a measurement stops
+looking, produces a genuine improvement in the metric and no improvement in the
+thing the metric stands for.** Deferral and removal are indistinguishable to any
+instrument with a closing window, and deferral is the far easier of the two to
+achieve by accident. Before believing a large improvement from a change that
+moved when work happens, find the run where the work is still in frame and read
+that one. A mean with a wide spread is the tell: it is two populations, not one
+noisy measurement, and averaging them hides the case you needed to see.
+
+**28. A suite that graded a different worktree's build for a full run.**
+`playwright.config.ts` pinned `baseURL` to `http://localhost:3000` with
+`reuseExistingServer: !process.env.CI`. Port 3000 was already held by a
+`next start` belonging to `gg-portfolio-wt-verify-119`, running since the
+previous day. Playwright adopted it. Every test then reported on a different
+branch's build while naming this one.
+
+It passed. 381 passed, 5 skipped, exit 0, and that result was reported as a
+merge gate. Nothing in the run was wrong-looking, because a green suite against
+the wrong target looks exactly like a green suite.
+
+It only surfaced hours later, and by luck: the foreign server had gone stale and
+begun answering 500, so axe scanned an error page and reported 24 accessibility
+violations of the `document-title` and `html-has-lang` kind. Those were absurd
+enough to chase. Had that server stayed healthy, the mistake would have merged
+with a full gate set behind it.
+
+The config even carried a comment noting that GG runs several worktrees at once,
+as justification for its worker count. The same fact makes a fixed port unsafe,
+and that connection went unmade for as long as the file existed.
+
+Fixed by deriving the port from the checkout's own path, so anything listening
+on it can only be this worktree's server. The general form: **a control that
+addresses its subject by a name shared with other subjects is not addressing its
+subject.** A fixed port, a bare `git status` with no directory, a hard-coded
+sibling path (instance 26) are all the same error, and all of them answer
+confidently about the wrong thing rather than failing.
 
 ## What follows from it
 

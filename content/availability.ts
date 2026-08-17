@@ -23,8 +23,8 @@ export interface Availability {
 
 export const availability: Availability = {
   status: "Open to Senior AI/ML roles",
-  roleTypes: ["Senior Applied AI Scientist", "Principal Applied AI Scientist"],
+  roleTypes: ["Lead Applied AI Scientist", "Senior Applied AI Scientist"],
   engagementTypes: ["Full-time roles", "Select AI/ML consulting engagements"],
   summary:
-    "I'm looking for Senior or Principal Applied AI roles, and I take on select AI/ML consulting engagements.",
+    "I'm looking for Lead or Senior Applied AI roles, and I take on select AI/ML consulting engagements.",
 };

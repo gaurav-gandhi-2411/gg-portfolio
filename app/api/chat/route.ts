@@ -113,6 +113,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
         answer: `Please ask a non-empty question under ${MAX_QUESTION_LENGTH} characters.`,
         citations: [],
         refused: true,
+        followUps: [],
       },
       { status: 400 }
     );
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
         answer: "You've hit the question limit for this demo — please try again in a few minutes.",
         citations: [],
         refused: true,
+        followUps: [],
       },
       { status: 429 }
     );

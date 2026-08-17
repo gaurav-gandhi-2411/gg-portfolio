@@ -81,11 +81,12 @@ Experience" section.
 
 | ID | Company / role |
 |---|---|
-| `resume:indium-senior-lead` | Indium — Senior Data Scientist, team-lead bullet |
-| `resume:indium-senior-finetune` | Indium — Senior Data Scientist, LoRA/QLoRA fine-tuning bullet |
-| `resume:indium-senior-vit` | Indium — Senior Data Scientist, ViT document-quality-gate bullet |
-| `resume:indium-senior-copilot` | Indium — Senior Data Scientist, multi-agent RAG+NL2SQL copilot bullet |
-| `resume:indium-ds-docunderstanding` | Indium — Data Scientist, document-understanding transformer bullet |
+| `resume:indium-senior-lead` | Uber AI via Indium, Lead Data Scientist, team and hiring bullet |
+| `resume:uber-lead-platform` | Uber AI via Indium, Lead Data Scientist, document-verification platform bullet |
+| `resume:indium-senior-finetune` | Uber AI via Indium, Senior Data Scientist, Qwen LoRA/QLoRA fine-tuning bullet |
+| `resume:indium-senior-vit` | Uber AI via Indium, Senior Data Scientist, ViT dual-threshold verification bullet |
+| `resume:indium-senior-copilot` | Uber AI via Indium, Data Scientist, multi-agent RAG and NL2SQL copilot bullet |
+| `resume:indium-ds-docunderstanding` | Uber AI via Indium, Senior Data Scientist, document-understanding transformer bullet |
 | `resume:indium-ds-recommender` | Indium — Data Scientist, session-aware recommender bullet |
 | `resume:fedex-anomaly` | FedEx — Decision Scientist, anomaly-detection bullet |
 | `resume:fedex-forecasting` | FedEx — Decision Scientist, SARIMA forecasting bullet |

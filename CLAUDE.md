@@ -103,3 +103,32 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Write the assertion before you read the implementation
+
+A test written after reading the code can only agree with it. That is not a
+tendency, it is the whole available outcome: you have just loaded what the
+thing does into your head, and "what it does" is the only sentence available
+to write down.
+
+This cost a real defect. The header pill was rebuilt to contract on scroll,
+and a test asserted `expect(scrolled.height).toBeLessThan(atTop.height)` —
+green every run, specific, and defending a bug. The band is sticky and still
+in flow, so a band that shrinks moves every element on the page below it, and
+the whole document slid 16px on every scroll. The intent was "the pill
+contracts". What got written down was "the header gets shorter". Those are
+the same sentence right up until you ask what the header is sitting in. See
+CHECKS.md instance 16.
+
+So the ordering is the guard:
+
+1. State what the thing is supposed to do, in a sentence, before opening the
+   implementation.
+2. Write the assertion from that sentence.
+3. Then read the code, and if the assertion now looks wrong, work out which
+   of the two is wrong before changing either.
+
+The cheap confirmation is the one already standing: run the new test against
+a build with its own fix reverted. A test that passes both ways is not a test.
+That check has caught something real in five consecutive rounds, including
+three tests of mine that were entirely useless and looked thorough.

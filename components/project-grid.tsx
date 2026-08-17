@@ -1,8 +1,10 @@
 import { ProjectCard } from "@/components/project-card";
 import { ProjectFilter } from "@/components/project-filter";
+import { ProjectGridMotion } from "@/components/project-grid-motion";
 import { RevealGroup } from "@/components/reveal-group";
 import { products } from "@/content/products";
 import { getProjectDisplayData } from "@/lib/project-display";
+import { projectRhythm } from "@/lib/project-rhythm";
 
 /**
  * Wave 13 — the one project grid (all 13 projects, AI/ML-depth order from
@@ -25,6 +27,7 @@ export async function ProjectGrid({
   capAllAt4?: boolean;
 } = {}) {
   const { datelineFor, downloads } = await getProjectDisplayData(products);
+  const rhythm = projectRhythm(products);
 
   return (
     <ProjectFilter
@@ -50,9 +53,13 @@ export async function ProjectGrid({
             dateline={datelineFor(product)}
             downloads={product.pypi ? downloads : undefined}
             headingLevel={cardHeadingLevel}
+            rhythm={rhythm.get(product.slug)}
           />
         ))}
       </RevealGroup>
+      {/* Renders nothing. One delegated pointer listener for the whole grid,
+          so the tilt and the per-card light do not cost thirteen listeners. */}
+      <ProjectGridMotion />
     </ProjectFilter>
   );
 }
