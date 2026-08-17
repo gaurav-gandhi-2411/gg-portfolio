@@ -74,9 +74,9 @@ export function CaseStudyPage({
     "The problem",
     "How it works",
     ...(study.architecture ? ["Architecture"] : []),
-    ...((study.decisions?.length ?? 0) > 0 ? ["Key decisions — and why"] : []),
+    ...((study.decisions?.length ?? 0) > 0 ? ["Key decisions, and why"] : []),
     ...(study.diagram ? [study.diagram.title] : []),
-    ...((study.results?.length ?? 0) > 0 ? ["Results — the honest numbers"] : []),
+    ...((study.results?.length ?? 0) > 0 ? ["Results, the honest numbers"] : []),
     ...(study.story ? [study.story.title] : []),
     ...((study.closing?.length ?? 0) > 0 ? ["What this means if you need something similar"] : []),
   ];
@@ -210,7 +210,7 @@ export function CaseStudyPage({
 
           {(study.decisions?.length ?? 0) > 0 && (
             <>
-              <SectionHeading index={next()} title="Key decisions — and why" />
+              <SectionHeading index={next()} title="Key decisions, and why" />
               <ol className="mt-[var(--space-4)] flex flex-col gap-[var(--space-6)]">
                 {study.decisions?.map((decision) => (
                   <li key={decision.sourceRef} className="border-border/40 border-l-2 pl-5">
@@ -242,7 +242,7 @@ export function CaseStudyPage({
 
           {(study.results?.length ?? 0) > 0 && (
             <>
-              <SectionHeading index={next()} title="Results — the honest numbers" />
+              <SectionHeading index={next()} title="Results, the honest numbers" />
               <dl className="case-results">
                 {study.results?.map((result) => {
                   const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
@@ -259,7 +259,7 @@ export function CaseStudyPage({
                       <dt className="case-result-label">
                         {result.label}
                         {result.detail && (
-                          <span className="text-muted-foreground/80"> — {result.detail}</span>
+                          <span className="text-muted-foreground/80"> · {result.detail}</span>
                         )}
                       </dt>
                     </div>

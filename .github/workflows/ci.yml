@@ -120,6 +120,13 @@ jobs:
       - name: Headline stats trace to the role ladder
         run: node scripts/check-stats-attribution.mjs
 
+      # A standing copy rule that cannot be held by intention: an em dash
+      # arrives one sentence at a time, months later, in a file nobody is
+      # looking at. The script's header states its own scope and the one gap
+      # it deliberately does not cover.
+      - name: No em dash in rendered copy
+        run: node scripts/check-no-em-dash.mjs
+
       - name: Build
         run: npm run build
 

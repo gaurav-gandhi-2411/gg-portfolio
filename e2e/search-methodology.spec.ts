@@ -28,15 +28,15 @@ test.describe("/projects search-methodology disclosure", () => {
     // MetricProvenance trigger's sr-only "show source for {label}" text,
     // so the default substring match is ambiguous (found by running this
     // test: a real strict-mode violation, not a hypothetical one).
-    await expect(page.getByText("Keyword-only — shipped", { exact: true })).toBeVisible();
+    await expect(page.getByText("Keyword-only, shipped", { exact: true })).toBeVisible();
     await expect(
-      page.getByText("Self-built static-embedding matrix — built, not shipped", { exact: true })
+      page.getByText("Self-built static-embedding matrix, built but not shipped", { exact: true })
     ).toBeVisible();
     await expect(
-      page.getByText("potion-base-8M (third-party) — evaluated, not shipped", { exact: true })
+      page.getByText("potion-base-8M (third-party), evaluated but not shipped", { exact: true })
     ).toBeVisible();
     await expect(
-      page.getByText("MiniLM — original tier, removed", { exact: true })
+      page.getByText("MiniLM, the original tier, removed", { exact: true })
     ).toBeVisible();
 
     await trigger.click();
@@ -71,9 +71,9 @@ test.describe("/projects search-methodology disclosure", () => {
     // all four claims' panels at once (found by running this test).
     await page.goto("/projects");
     await page.getByRole("button", { name: /how this search was built/i }).click();
-    const claim = page.getByRole("button", { name: /show source for keyword-only — shipped/i });
+    const claim = page.getByRole("button", { name: /show source for keyword-only, shipped/i });
     await claim.click();
-    const group = page.getByRole("group", { name: "Source for Keyword-only — shipped" });
+    const group = page.getByRole("group", { name: "Source for Keyword-only, shipped" });
     await expect(group.getByText(/BL-9-round5-static-embedding-and-decision\.md/i)).toBeVisible();
     await expect(group.getByRole("link", { name: /View in content\/provenance\.md/i })).toBeVisible();
   });

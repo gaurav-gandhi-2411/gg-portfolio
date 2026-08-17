@@ -113,7 +113,7 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
       {phase === "idle" && (
         <>
           <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
-            This demo scales to zero when nobody&apos;s using it — $0 idle cost instead of paying
+            This demo scales to zero when nobody&apos;s using it, so $0 idle cost instead of paying
             for {config.gpuBacked ? "a GPU" : "a server"} to sit around 24/7. The tradeoff is a
             cold start: the first visit after a quiet stretch has to wait for it to spin back up,
             usually around {config.expectedWakeSeconds}s.
@@ -139,21 +139,21 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
             </span>
           </p>
           <p className="text-muted-foreground mt-[var(--space-2)] font-mono text-caption">
-            {elapsedSeconds}s elapsed — usually ready around {config.expectedWakeSeconds}s
+            {elapsedSeconds}s elapsed, usually ready around {config.expectedWakeSeconds}s
           </p>
         </>
       )}
 
       {phase === "success" && (
         <p className="mt-[var(--space-4)] max-w-measure text-base leading-relaxed text-foreground">
-          Ready — taking you there now.
+          Ready. Taking you there now.
         </p>
       )}
 
       {phase === "failed" && (
         <>
           <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
-            Still no response after {Math.floor(failAfterMs / 1000)}s — longer than a cold start
+            Still no response after {Math.floor(failAfterMs / 1000)}s, longer than a cold start
             should take, so it&apos;s more likely down than just asleep.
           </p>
           <div className="mt-[var(--space-8)] flex flex-wrap items-center justify-center gap-[var(--space-4)]">

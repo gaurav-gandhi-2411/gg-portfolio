@@ -161,7 +161,7 @@ export function ProjectCard({
         {!product.figure && product.metric && (
           <p className="text-sm @[28rem]:max-w-[13rem] @[28rem]:self-center @[28rem]:justify-self-end @[28rem]:text-right">
             <span className="font-mono font-medium text-foreground">{product.metric.value}</span>{" "}
-            <span className="text-muted-foreground">— {product.metric.label}</span>
+            <span className="text-muted-foreground">· {product.metric.label}</span>
           </p>
         )}
       </div>
