@@ -1,4 +1,27 @@
+import { createHash } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * A port owned by this checkout, not a fixed one shared with every other.
+ *
+ * `reuseExistingServer` adopts whatever is already listening, and a fixed
+ * 3000 means that can be a different worktree's `next start`. GG runs several
+ * worktrees of this repo at once by design, so this is the normal case rather
+ * than an unlucky one. On 2026-08-17 the whole suite ran green against
+ * gg-portfolio-wt-verify-119's build instead of this branch's, and the only
+ * reason it surfaced at all is that the other server had gone stale and started
+ * answering 500, so axe scanned an error page and reported 24 accessibility
+ * violations that were nothing of the kind. A suite that silently grades the
+ * wrong build is worse than one that fails.
+ *
+ * Deriving the port from this checkout's own path means anything listening on
+ * it can only be this worktree's server, so reuse stays safe and fast. CI is
+ * unaffected: its bundle-size gate deliberately runs its own `npm run start` on
+ * 3000 after this suite finishes, and that no longer contends with anything.
+ */
+const PORT =
+  Number(process.env.PLAYWRIGHT_PORT) ||
+  3100 + (createHash("sha256").update(__dirname).digest().readUInt16BE(0) % 800);
 
 /**
  * Wave 14 — the verification-gap fix. Wave 13's report claimed the category
@@ -35,7 +58,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -46,8 +69,8 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: "npm run start",
-        url: "http://localhost:3000",
+        command: `npm run start -- --port ${PORT}`,
+        url: `http://localhost:${PORT}`,
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,
       },
