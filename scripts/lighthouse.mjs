@@ -83,7 +83,7 @@
 
 import { launch as launchChrome } from "chrome-launcher";
 import lighthouse from "lighthouse";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { hostname, platform, release, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -230,6 +230,86 @@ function extractChromeVersion(lhr) {
   return match ? match[1] : "unknown";
 }
 
+const PROFILE_PREFIX = "gg-lh-profile-";
+/** Directories this process could not remove, reported at the end rather than swallowed. */
+const leakedProfiles = [];
+
+/**
+ * Removes a profile directory, waiting for Windows to let go of it.
+ *
+ * Backoff rather than rmSync's own maxRetries, which retries far too fast to
+ * outlast a handle release and gives up inside a single event-loop turn.
+ */
+async function removeProfileWithRetry(dir, runIndex) {
+  const delays = [0, 100, 250, 500, 1000, 2000, 4000];
+  for (const wait of delays) {
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    try {
+      rmSync(dir, { recursive: true, force: true });
+      return true;
+    } catch {
+      /* still locked, try again */
+    }
+  }
+  leakedProfiles.push(dir);
+  console.warn(
+    `  (run ${runIndex}: could not remove ${dir} after ~7.8s of retries — recorded as a leak, not ignored)`
+  );
+  return false;
+}
+
+/**
+ * Removes profile directories left by earlier runs, so a past leak heals
+ * itself instead of accumulating. Only touches directories older than the
+ * grace period, which keeps a concurrent run's live profile safe: GG runs
+ * several worktrees at once and this script must not delete another
+ * session's Chrome out from under it.
+ */
+function sweepStaleProfiles() {
+  const graceMs = 15 * 60 * 1000;
+  const now = Date.now();
+  let removed = 0;
+  let bytes = 0;
+  let skippedRecent = 0;
+  for (const name of readdirSync(tmpdir())) {
+    if (!name.startsWith(PROFILE_PREFIX)) continue;
+    const dir = join(tmpdir(), name);
+    try {
+      const st = statSync(dir);
+      if (!st.isDirectory()) continue;
+      if (now - st.mtimeMs < graceMs) {
+        skippedRecent++;
+        continue;
+      }
+      bytes += dirSize(dir);
+      rmSync(dir, { recursive: true, force: true });
+      removed++;
+    } catch {
+      /* someone else's, or already gone */
+    }
+  }
+  if (removed > 0 || skippedRecent > 0) {
+    console.log(
+      `Swept ${removed} stale Chrome profile(s) from ${tmpdir()}` +
+        (bytes ? ` (${(bytes / 1024 / 1024).toFixed(0)} MB)` : "") +
+        (skippedRecent ? `, left ${skippedRecent} newer than 15min alone` : "")
+    );
+  }
+}
+
+function dirSize(dir) {
+  let total = 0;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    try {
+      total += entry.isDirectory() ? dirSize(p) : statSync(p).size;
+    } catch {
+      /* raced */
+    }
+  }
+  return total;
+}
+
 async function runOnce(url, chromePath, runIndex) {
   // chrome-launcher's own kill() deletes ITS OWN auto-created temp profile
   // dir TWICE — once synchronously inside kill() itself, and again later
@@ -266,16 +346,19 @@ async function runOnce(url, chromePath, runIndex) {
     );
   } finally {
     await chrome.kill();
-    // Best-effort: a leftover profile dir under os.tmpdir() is cosmetic
-    // (the OS reclaims it eventually) and must never invalidate an
-    // otherwise-successful run — only a genuine measurement failure
-    // (thrown out of the `lighthouse()` call above) counts toward
-    // RUN_FAILED.
-    try {
-      rmSync(profileDir, { recursive: true, force: true, maxRetries: 5 });
-    } catch (cleanupErr) {
-      console.warn(`  (run ${runIndex}: temp profile cleanup failed, ignoring — ${cleanupErr.message})`);
-    }
+    // This used to call rmSync once and shrug the EPERM off as cosmetic, on
+    // the grounds that the OS reclaims tmpdir eventually. It does not, at any
+    // rate not before the next run: 265 of these directories were found here
+    // holding 3.2 GB, one per run since the script was written, every one of
+    // them announced by a warning that said "ignoring". They are also the
+    // most plausible explanation for the near-full-disk event this repo saw
+    // and dismissed twice.
+    //
+    // The EPERM is a race rather than a permissions problem. chrome.kill()
+    // resolves when the process is signalled, not when Windows has released
+    // its handles on the profile, so a removal issued immediately afterwards
+    // hits a locked directory. Waiting a moment and trying again clears it.
+    await removeProfileWithRetry(profileDir, runIndex);
   }
   if (!result?.lhr) throw new Error("lighthouse() returned no lhr");
   const { lhr } = result;
@@ -388,6 +471,7 @@ async function main() {
   const routes = process.argv.slice(2).length > 0 ? process.argv.slice(2) : DEFAULT_ROUTES;
 
   console.log(`scripts/lighthouse.mjs: ${routes.length} route(s), n=${RUNS}, base=${BASE_URL}`);
+  sweepStaleProfiles();
 
   let chromePath;
   try {
@@ -416,6 +500,15 @@ async function main() {
       console.error(`\n  FAIL — ${err.state ?? "ERROR"}: ${err.message}`);
       failures.push({ route, state: err.state ?? "ERROR", detail: err.message });
     }
+  }
+
+  if (leakedProfiles.length > 0) {
+    // Named, not swallowed. This is the line that would have made 265
+    // directories and 3.2 GB visible on the first run rather than the 265th.
+    console.warn(
+      `\nWARN — ${leakedProfiles.length} Chrome profile dir(s) could not be removed and are still on disk. ` +
+        "The next run's startup sweep clears them once Windows releases the handles."
+    );
   }
 
   console.log(`\nSummary: ${outcomes.length}/${routes.length} route(s) measured, ${failures.length} failed.`);
