@@ -16,11 +16,24 @@ import { researchPapers } from "@/content/research";
 export function Research() {
   return (
     <Section id="research" label="Research" width="wide">
-      <RevealGroup mode="onview" className="flex flex-col gap-10">
+      {/*
+       * The papers sit in the same card as an Experience entry: same border,
+       * same surface, same radius, same padding step. Before this they were
+       * bare articles on the page background, so the one section made of
+       * long-form claims was also the only one with nothing holding it, and
+       * the ragged column gap between a five-line title and a three-line
+       * thesis read as a layout that had come apart rather than as two
+       * columns. The card gives the gap an edge to be measured against.
+       *
+       * gap-6 rather than gap-10 for the same reason it is gap-6 in
+       * Experience: once each item has a border, the border is doing the
+       * separating and the old whitespace is just distance.
+       */}
+      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
-            className="flex flex-col gap-[var(--space-3)] lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
+            className="border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
           >
             <div className="contents lg:flex lg:flex-col lg:gap-[var(--space-3)]">
               <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
@@ -29,11 +42,23 @@ export function Research() {
 
               <p className="text-muted-foreground text-sm">
                 {paper.status === "preprint-pending"
-                  ? "Preprint — pending arXiv; the link lands here the moment an ID is assigned."
+                  ? "Preprint, pending arXiv. The link lands here the moment an ID is assigned."
                   : "Published and citable."}
               </p>
 
-              <p className="order-last flex flex-wrap gap-[var(--space-5)] text-sm lg:order-none lg:mt-auto">
+              {/*
+               * gap-y has to clear the -my-3 these links carry for their 44px
+               * tap target, exactly as Contact's link row does. Each link's
+               * box extends 12px above and below its text, so a 20px row gap
+               * leaves 4px of overlap the moment the row wraps, and the tap
+               * lands on whichever link is painted last.
+               *
+               * This did not wrap before the card arrived: p-6 took ~48px out
+               * of the row at 375px and pushed the second link onto its own
+               * line. The overlap was always latent, the padding just found
+               * it. See CHECKS.md instance 17 for the same defect in Contact.
+               */}
+              <p className="order-last flex flex-wrap gap-x-[var(--space-5)] gap-y-[var(--space-8)] text-sm lg:order-none lg:mt-auto">
                 {paper.arxivUrl && (
                   <InlineLink href={paper.arxivUrl} className="-my-3 inline-flex min-h-11 items-center">
                     arXiv ↗

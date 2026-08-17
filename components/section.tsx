@@ -51,8 +51,26 @@ export function Section({
     <section id={id} className={`mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}>
       <div className="flex flex-col items-center text-center">
         <h2 className="font-heading text-title font-semibold text-foreground">{label}</h2>
+        {/*
+         * The one mark every section shares. Before this, a section was a
+         * centered serif line and then content, so five sections down the page
+         * read as five paragraphs of different lengths rather than five
+         * sections: nothing said "a new thing starts here" except whitespace,
+         * which the long ones (Experience at 1700px tall) swallowed.
+         *
+         * Deliberately the page's own accent and nothing else. A per-section
+         * colour would compete with the case-study template, which already
+         * spends thirteen derived hues off this token (see globals.css's
+         * --accent-h note), and the point here is that the sections are one
+         * system rather than thirteen.
+         *
+         * Static, not animated. It is small enough that a draw-in would be
+         * motion nobody asked for, and it means reduced-motion visitors get
+         * the identical composition rather than a flattened one.
+         */}
+        <span aria-hidden className="section-rule mt-[var(--space-4)]" />
         {labelNote ? (
-          <p className="text-muted-foreground mt-[var(--space-2)] font-mono text-caption">{labelNote}</p>
+          <p className="text-muted-foreground mt-[var(--space-4)] font-mono text-caption">{labelNote}</p>
         ) : null}
         {lede ? (
           <p className="text-muted-foreground mt-[var(--space-5)] max-w-measure text-base leading-relaxed">
