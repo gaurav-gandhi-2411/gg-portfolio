@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import Lenis from "lenis";
 
-import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
+import { onPresenceOrIdle } from "@/lib/motion/after-first-paint";
+import { loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
 
 /**
  * Weighted scrolling, and the single clock everything scroll-linked runs on.
@@ -33,8 +33,48 @@ import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
  */
 export function ScrollDriver() {
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Before any import, not inside the work. This check used to sit here with
+    // gsap and Lenis already statically imported above, so a reduced-motion
+    // visitor downloaded 51,697 bytes of gzip to run a `return`. A no-op that
+    // costs 51 KB is not a no-op.
+    if (prefersReducedMotion()) return;
 
+    let teardownDriver: (() => void) | null = null;
+
+    /**
+     * Smoothed scrolling is an enhancement, and the page scrolls natively until
+     * it arrives. 1200ms because there is no reason for it to compete with
+     * first paint, and because a visitor who scrolls gets it immediately
+     * anyway: the scroll that triggers this is itself a presence event.
+     */
+    const cancel = onPresenceOrIdle(() => {
+      void start();
+    }, 1200);
+
+    async function start() {
+      const [{ gsap }, { default: Lenis }] = await Promise.all([loadMotion(), import("lenis")]);
+      teardownDriver = attach(gsap, Lenis);
+    }
+
+    return () => {
+      cancel();
+      teardownDriver?.();
+    };
+  }, []);
+
+  return null;
+}
+
+/**
+ * Everything that was previously the body of the effect, unchanged in behaviour
+ * and now taking its two libraries as arguments because they arrive later than
+ * the component does.
+ */
+function attach(
+  gsap: Awaited<ReturnType<typeof loadMotion>>["gsap"],
+  Lenis: typeof import("lenis").default
+): () => void {
+  {
     const lenis = new Lenis({
       // ~0.9s to settle. Long enough to read as mass, short enough that a
       // long flick to the footer does not feel like waiting for an elevator.
@@ -48,7 +88,9 @@ export function ScrollDriver() {
       syncTouch: false,
     });
 
-    lenis.on("scroll", ScrollTrigger.update);
+    // ScrollTrigger.update comes off the same load, so it is guaranteed
+    // registered by the time this runs.
+    lenis.on("scroll", () => void loadMotion().then(({ ScrollTrigger }) => ScrollTrigger.update()));
 
     /*
      * Let an outside scroll win over one Lenis is still animating.
@@ -100,7 +142,5 @@ export function ScrollDriver() {
       gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();
     };
-  }, []);
-
-  return null;
+  }
 }
