@@ -175,10 +175,24 @@ test.describe("Tap target overlap (375px)", () => {
         const controls = [...document.querySelectorAll<HTMLElement>("a[href], button")].filter(
           (el) => {
             const b = el.getBoundingClientRect();
+            const cs = getComputedStyle(el);
             return (
               b.width > 0 &&
               b.height > 0 &&
-              getComputedStyle(el).visibility !== "hidden" &&
+              cs.visibility !== "hidden" &&
+              // A closed MetricProvenance panel is absolutely positioned,
+              // opacity-0 and pointer-events-none, so its citation links keep
+              // real boxes that sit over whatever follows the trigger. They
+              // cannot receive a tap, so they are not tap targets and an
+              // overlap with one is not a defect. pointer-events is an
+              // inherited property, so reading it on the link itself is
+              // enough; when the panel opens, the same links report "auto"
+              // and are judged normally. The unreachable check below already
+              // ignored them, because elementFromPoint never returns a
+              // pointer-events-none element. Without this, the pair that
+              // collides depends on where prose happens to wrap, which
+              // differs between this machine and CI (PR #133).
+              cs.pointerEvents !== "none" &&
               !isFloatingOverlay(el)
             );
           }
