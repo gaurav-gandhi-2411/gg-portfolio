@@ -63,7 +63,7 @@ export default function OgImage() {
             Gaurav Gandhi
           </div>
           <div style={{ fontSize: 32, color: TEXT_LO, fontWeight: 400 }}>
-            I build and ship AI products under my own name —
+            I build and ship AI products under my own name.
           </div>
           <div style={{ fontSize: 32, color: TEXT_LO, fontWeight: 400 }}>
             and the production systems and research behind them.

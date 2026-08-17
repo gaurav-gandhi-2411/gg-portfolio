@@ -60,7 +60,7 @@ function guessFeedback(entry: { word: string; sim: number; found: boolean }): {
   label: string;
   className: string;
 } {
-  if (!entry.found) return { label: "Not in the word list — try another", className: "text-muted-foreground" };
+  if (!entry.found) return { label: "Not in the word list, try another", className: "text-muted-foreground" };
   return heatLabel(entry.sim);
 }
 
@@ -242,7 +242,7 @@ export function HeatToy() {
     return (
       <div className="flex flex-col items-start gap-[var(--space-2)]">
         <p className="text-sm text-muted-foreground">
-          Couldn&apos;t load the word list right now — or try{" "}
+          Couldn&apos;t load the word list right now. Or try{" "}
           <a href="https://playwarmer.vercel.app/" className="text-accent hover:underline">
             the real Warmer
           </a>{" "}
@@ -309,7 +309,7 @@ export function HeatToy() {
               {i < starterWords.length - 1 ? " or " : ""}
             </span>
           ))}
-          {" — the plot shows how close you land."}
+          {". The plot shows how close you land."}
         </p>
       )}
 
@@ -374,7 +374,7 @@ export function HeatToy() {
         {stage === "embedding" && <p className="text-muted-foreground text-caption animate-pulse">embedding…</p>}
         {won && (
           <p className="text-sm font-medium text-accent">
-            🎉 That&apos;s it — you found today&apos;s word.
+            🎉 That&apos;s it. You found today&apos;s word.
           </p>
         )}
         {history.map((h, i) => {
@@ -401,7 +401,7 @@ export function HeatToy() {
 
       <p className="text-muted-foreground max-w-[52ch] text-caption leading-relaxed">
         The plot uses only the real embedding space&apos;s 1st and 2nd principal components
-        (of 72 total, 72.3% variance retained) — a genuine but simplified 2D view. The
+        (of 72 total, 72.3% variance retained), a genuine but simplified 2D view. The
         Cold/Warm/Hot feedback above uses all 72 dimensions, same as always.
       </p>
     </div>

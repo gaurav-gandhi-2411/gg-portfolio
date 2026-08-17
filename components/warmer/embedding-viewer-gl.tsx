@@ -273,8 +273,8 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
         */}
         <p aria-live="polite" className="text-muted-foreground text-caption">
           {showFinetuned
-            ? "Fine-tuned — the same terms, after fine-tuning."
-            : "Base model — the same terms, before fine-tuning."}
+            ? "Fine-tuned: the same terms, after fine-tuning."
+            : "Base model: the same terms, before fine-tuning."}
         </p>
       </div>
     </div>

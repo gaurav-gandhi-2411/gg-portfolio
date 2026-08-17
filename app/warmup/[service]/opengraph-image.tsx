@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getWarmupConfig, warmupConfigs } from "@/content/warmup";
 
-export const alt = "Gaurav Gandhi — waking a project";
+export const alt = "Gaurav Gandhi · waking a project";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -89,7 +89,7 @@ export default async function WarmupOgImage({
           </div>
           <div style={{ display: "flex", fontSize: 28, color: TEXT_LO, maxWidth: "980px" }}>
             {config
-              ? `${config.name} scales to zero to keep idle cost at $0 — this page wakes it and takes you there once it's ready.`
+              ? `${config.name} scales to zero to keep idle cost at $0. This page wakes it and takes you there once it's ready.`
               : "Cold-start bridge page."}
           </div>
         </div>

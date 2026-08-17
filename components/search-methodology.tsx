@@ -36,20 +36,20 @@ interface MethodologyRow {
 }
 
 const ROWS: MethodologyRow[] = [
-  { sourceRef: "search:decision-keyword", label: "Keyword-only — shipped", value: "0 B, 0ms" },
+  { sourceRef: "search:decision-keyword", label: "Keyword-only, shipped", value: "0 B, 0ms" },
   {
     sourceRef: "search:decision-static-matrix",
-    label: "Self-built static-embedding matrix — built, not shipped",
+    label: "Self-built static-embedding matrix, built but not shipped",
     value: "427,150 B, 9,570ms",
   },
   {
     sourceRef: "search:decision-potion",
-    label: "potion-base-8M (third-party) — evaluated, not shipped",
+    label: "potion-base-8M (third-party), evaluated but not shipped",
     value: "30,920,426 B, 612,342ms",
   },
   {
     sourceRef: "search:decision-minilm",
-    label: "MiniLM — original tier, removed",
+    label: "MiniLM, the original tier, removed",
     value: "47,299,486 B, 570,121ms",
   },
 ];
@@ -59,7 +59,7 @@ const VERIFIED_AT = "2026-08-15";
 export function SearchMethodology() {
   return (
     <SearchMethodologyDisclosure
-      summary="How this search was built — the fancier option lost (show the numbers)"
+      summary="How this search was built, and the fancier option lost (show the numbers)"
       panelId="search-methodology-panel"
     >
       <div className="max-w-measure text-left">
@@ -100,7 +100,7 @@ export function SearchMethodology() {
             Every tier&apos;s 95% Wilson confidence interval overlaps every other tier&apos;s, at
             both Recall@1 and Recall@3
           </MetricProvenance>{" "}
-          — McNemar&apos;s exact test on the two nominal &quot;leaders&quot; (MiniLM vs.
+          McNemar&apos;s exact test on the two nominal &quot;leaders&quot; (MiniLM vs.
           potion-base-8M) returns p=1.0 at Recall@1 and p=0.5 at Recall@3. At this sample size,
           none of the four approaches is distinguishable from any other on retrieval quality. The
           only variable that did separate them was size and cold-start latency.
@@ -111,12 +111,12 @@ export function SearchMethodology() {
             info={getProvenance("search:decision-rationale", undefined, VERIFIED_AT)}
             label="the decision rule applied"
           >
-            The decision rule — eliminate anything with a multi-minute cold start, then ship the
+            The decision rule: eliminate anything with a multi-minute cold start, then ship the
             smallest option among what&apos;s statistically tied for best
           </MetricProvenance>{" "}
           killed both real models outright (MiniLM: 9.5 minutes to a first result on a throttled
           connection; potion-base-8M: 10.2 minutes) and then picked keyword-only over the
-          purpose-built static matrix — even though that matrix was built in the same round
+          purpose-built static matrix, even though that matrix was built in the same round
           specifically to solve the cold-start problem, and solved it completely (9.6 seconds).
           It still lost, on the mechanical tie-break, to an option that cost nothing because it
           already existed. That&apos;s the point of measuring instead of guessing: the
@@ -130,7 +130,7 @@ export function SearchMethodology() {
             info={getProvenance("search:eval-limitations", undefined, VERIFIED_AT)}
             label="the eval's own limitations"
           >
-            This comparison runs on 28 queries against 13 candidate projects — a random 3-guess
+            This comparison runs on 28 queries against 13 candidate projects, a random 3-guess
             baseline would already clear about 23% Recall@3 by chance, so every tier&apos;s
             85–100% is a genuine signal, but scores this close to 100% don&apos;t by themselves
             prove sophisticated retrieval on a catalog this distinct; and the 28 queries are

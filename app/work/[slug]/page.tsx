@@ -38,18 +38,18 @@ function wordTrunc(text: string, maxLen: number): string {
 
 function truncateAtBoundary(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
-  const clauses = text.split(" — ");
+  const clauses = text.split(" · ");
   let result = clauses[0];
   if (result.length > maxLen) return wordTrunc(result, maxLen);
   for (const clause of clauses.slice(1)) {
-    const candidate = `${result} — ${clause}`;
+    const candidate = `${result} · ${clause}`;
     if (candidate.length <= maxLen) {
       result = candidate;
       continue;
     }
     const remaining = maxLen - result.length - 3;
     if (remaining > 20) {
-      result = `${result} — ${wordTrunc(clause, remaining)}`;
+      result = `${result} · ${wordTrunc(clause, remaining)}`;
     }
     break;
   }
@@ -67,7 +67,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const study = caseStudies[slug];
   if (!study) return {};
-  const title = wordTrunc(`${study.title} — case study — Gaurav Gandhi`, TITLE_MAX);
+  const title = wordTrunc(`${study.title} · case study · Gaurav Gandhi`, TITLE_MAX);
   const description = truncateAtBoundary(study.dek, META_DESCRIPTION_MAX);
   return {
     title,
@@ -122,13 +122,13 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           */}
           <p className="max-w-measure text-sm leading-relaxed text-muted-foreground">
             <span className="font-medium text-foreground">What this does and does not show.</span>{" "}
-            The fine-tune&apos;s result is the eval metric above — that measures the task it was
+            The fine-tune&apos;s result is the eval metric above, which measures the task it was
             trained for. Cluster separation is a weaker claim, and it does not survive checking:
             mean silhouette on the raw embeddings is 9.3× better for the fine-tune only when both
             models are scored on the fine-tune&apos;s own clusters. Give each model its own
             clusters and the base model scores higher (0.037 vs 0.025). Both numbers sit near
             zero. So the tighter base-model cloud you see here is largely t-SNE&apos;s layout, not
-            a property of the embedding space — fine-tuning reorganised that space rather than
+            a property of the embedding space. Fine-tuning reorganised that space rather than
             sharpening it.
           </p>
           <EmbeddingViewerFrame>
@@ -144,12 +144,12 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
             {puzzle ? (
               <span className="font-mono normal-case tracking-normal">
                 {" "}
-                — puzzle #{puzzle.number} today
+                · puzzle #{puzzle.number} today
               </span>
             ) : null}
           </p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
-            I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are —
+            I&apos;ve hidden one word. Type a guess and I&apos;ll tell you how close you are.
             this is the exact matching engine described above, shown as an actual
             embedding-space plot.
           </p>

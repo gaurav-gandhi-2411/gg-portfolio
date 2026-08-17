@@ -23,7 +23,7 @@ test.describe("Warmer embedding viewer — WebGL layer", () => {
     await expect(page.getByTestId("warmer-embedding-gl").locator("canvas")).toBeVisible();
 
     // The static before/after figures are replaced, not stacked underneath.
-    await expect(page.getByText("— base model (paraphrase-multilingual")).toHaveCount(0);
+    await expect(page.getByText(", base model (paraphrase-multilingual")).toHaveCount(0);
   });
 
   test("the toggle switches models and reports the change to assistive tech", async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe("Warmer embedding viewer — static fallback", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/work/warmer");
-    await expect(page.getByText("— base model (paraphrase-multilingual")).toBeVisible();
+    await expect(page.getByText(", base model (paraphrase-multilingual")).toBeVisible();
     await expect(page.getByText("the same terms now cluster by meaning")).toBeVisible();
     // No GL context is created at all for these visitors — not created-then-idled.
     await expect(page.getByTestId("warmer-embedding-gl")).toHaveCount(0);
@@ -112,7 +112,7 @@ test.describe("Warmer embedding viewer — low-end device gate", () => {
     await page.goto("/work/warmer");
     await page.getByRole("region", { name: "The fix, made visible" }).scrollIntoViewIfNeeded();
 
-    await expect(page.getByText("— base model (paraphrase-multilingual")).toBeVisible();
+    await expect(page.getByText(", base model (paraphrase-multilingual")).toBeVisible();
     await expect(page.getByTestId("warmer-embedding-gl")).toHaveCount(0);
   });
 
@@ -152,7 +152,7 @@ test.describe("Warmer embedding viewer — no JavaScript", () => {
     page,
   }) => {
     await page.goto("/work/warmer");
-    await expect(page.getByText("— base model (paraphrase-multilingual")).toBeVisible();
+    await expect(page.getByText(", base model (paraphrase-multilingual")).toBeVisible();
     await expect(page.getByText("the same terms now cluster by meaning")).toBeVisible();
     // Both scatters are real SSR'd SVG content, not an empty shell.
     const circles = page.locator("section[aria-label='The fix, made visible'] circle");

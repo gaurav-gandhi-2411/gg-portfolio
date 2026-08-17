@@ -136,9 +136,18 @@ for (const r of results) {
   if (!r.ok || ms > BUDGET_MS) overBudget.push({ ...r, ms });
 }
 
+// Collected rather than exited on, so the live-count reconciliation below
+// still runs and still reports. The first cut exited here, which meant the
+// count check could only ever run on a build where every link already passed,
+// so the one thing it exists to notice was unreachable in exactly the
+// situation that produces it. Both sections report; the exit code at the end
+// reflects either failing.
+let failed = false;
+
 if (overBudget.length > 0) {
+  failed = true;
   console.error(
-    `\nFAIL — ${overBudget.length} link(s) failed on status or exceeded the ${BUDGET_MS}ms budget:\n`
+    `\nFAIL: ${overBudget.length} link(s) failed on status or exceeded the ${BUDGET_MS}ms budget:\n`
   );
   for (const r of overBudget) {
     console.error(`  - ${r.url} (${r.ms}ms, status=${r.status}) ${sourceLabel(r.sources)}`);
@@ -151,7 +160,107 @@ if (overBudget.length > 0) {
       "public/resume.pdf is a hand-built export from a private, gitignored .docx master " +
       "(see check-resume-pdf-consistency.mjs's header); it needs a manual re-export."
   );
+} else {
+  console.log(`\nOK: all ${entries.length} unique link(s) responded within ${BUDGET_MS}ms.`);
+}
+
+// ---------------------------------------------------------------- live count
+//
+// The homepage renders "N projects · M live" straight from
+// liveProductCount(), which returns `liveUrl || pypi` — a count of what the
+// content file DECLARES, never of what is actually up. Nothing re-derived it,
+// so the number could only ever have been wrong in the direction that
+// flatters: a dead demo keeps its liveUrl and keeps being counted, and the
+// site goes on claiming it.
+//
+// This script already pays the cost of reaching every one of those URLs, so
+// it is the one place that can answer the question from evidence. It now
+// recomputes the same count from the responses it just measured, plus a
+// resolve check per PyPI package, and fails when the two disagree.
+//
+// It compares against the rule liveProductCount() implements rather than
+// against a hardcoded number, so adding a product cannot silently drift the
+// two apart. A divergence means one of two things and the message says both:
+// either a link died, or the declaration is wrong.
+// \r?\n, not \n: content/products.ts is CRLF on this machine, and a splitter
+// that assumes LF returns one giant block and then zero parsed products. It
+// failed closed the first time it ran, which is the only reason this is a
+// footnote rather than a silent "0 live" that would have looked like a real
+// finding.
+const productBlocks = productsSrc.split(/\r?\n {2}\{\r?\n/).slice(1);
+const declared = productBlocks
+  .map((b) => ({
+    slug: b.match(/slug:\s*"([\w-]+)"/)?.[1],
+    liveUrl: b.match(/liveUrl:\s*"([^"]+)"/)?.[1],
+    pypiPackage: b.match(/packageName:\s*"([^"]+)"/)?.[1],
+  }))
+  .filter((p) => p.slug);
+
+if (declared.length === 0) {
+  console.error("check-live-link-latency: parsed 0 product blocks — the block splitter is broken.");
   process.exit(1);
 }
 
-console.log(`\nOK — all ${entries.length} unique link(s) responded within ${BUDGET_MS}ms.`);
+const declaredLive = declared.filter((p) => p.liveUrl || p.pypiPackage);
+const byUrl = new Map(results.map((r) => [r.url, r]));
+
+// A package is live if PyPI serves its JSON metadata. 404 means it was never
+// published or was removed, which is exactly the case a declaration cannot
+// notice on its own.
+const pypiChecks = await Promise.all(
+  declaredLive
+    .filter((p) => p.pypiPackage)
+    .map(async (p) => {
+      try {
+        const res = await fetch(`https://pypi.org/pypi/${p.pypiPackage}/json`, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+        return { slug: p.slug, package: p.pypiPackage, ok: res.ok, status: res.status };
+      } catch (err) {
+        return { slug: p.slug, package: p.pypiPackage, ok: false, status: String(err?.name ?? err) };
+      }
+    })
+);
+const pypiOk = new Map(pypiChecks.map((c) => [c.slug, c]));
+
+const observed = declaredLive.filter((p) => {
+  if (p.liveUrl) {
+    const r = byUrl.get(p.liveUrl);
+    return Boolean(r?.ok) && Math.round(r.ttfbMs) <= BUDGET_MS;
+  }
+  return Boolean(pypiOk.get(p.slug)?.ok);
+});
+
+console.log(
+  `\ncheck-live-link-latency: live count — ${declared.length} products, ` +
+    `${declaredLive.length} declared live, ${observed.length} confirmed live by this run` +
+    (pypiChecks.length > 0
+      ? ` (${pypiChecks.map((c) => `${c.package}=${c.ok ? "ok" : c.status}`).join(", ")})`
+      : "")
+);
+
+if (observed.length !== declaredLive.length) {
+  failed = true;
+  const missing = declaredLive.filter((p) => !observed.includes(p));
+  console.error(
+    `\nFAIL: the homepage renders "${declared.length} projects · ${declaredLive.length} live", ` +
+      `but only ${observed.length} of those are actually reachable right now.\n`
+  );
+  for (const p of missing) {
+    const r = p.liveUrl ? byUrl.get(p.liveUrl) : null;
+    console.error(
+      `  - ${p.slug}: ${p.liveUrl ?? `pypi:${p.pypiPackage}`} ` +
+        (r ? `status=${r.status} ttfb=${Math.round(r.ttfbMs)}ms` : `pypi status=${pypiOk.get(p.slug)?.status}`)
+    );
+  }
+  console.error(
+    "\nEither the service is down, or it is gone and content/products.ts still declares it. " +
+      "Fix the service or drop the declaration. Do not leave the site counting it."
+  );
+} else {
+  console.log(
+    `OK: the rendered live count (${declaredLive.length}) matches what responded (${observed.length}).`
+  );
+}
+
+process.exit(failed ? 1 : 0);

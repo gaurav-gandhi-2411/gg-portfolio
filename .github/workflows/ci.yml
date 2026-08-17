@@ -90,6 +90,16 @@ jobs:
       - name: Verify chatbot index is up to date
         run: node scripts/chatbot/check-index-fresh.mjs
 
+      # Both are content checks rather than build checks, and both are here
+      # because the thing they guard is invisible in a diff: a headline number
+      # that stopped matching the bullet it cites, and a punctuation mark that
+      # only ever arrives one sentence at a time.
+      - name: Headline stats trace to the role ladder
+        run: node scripts/check-stats-attribution.mjs
+
+      - name: No em dash in rendered copy
+        run: node scripts/check-no-em-dash.mjs
+
       - name: Lint
         run: npm run lint
 

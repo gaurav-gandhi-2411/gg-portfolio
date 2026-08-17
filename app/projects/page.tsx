@@ -6,9 +6,9 @@ import { SearchMethodology } from "@/components/search-methodology";
 import { liveProductCount, products } from "@/content/products";
 
 export const metadata: Metadata = {
-  title: "All projects — Gaurav Gandhi",
+  title: "All projects · Gaurav Gandhi",
   description:
-    "Every AI product and research tool I've built and shipped — each with an honest, sourced case study.",
+    "Every AI product and research tool I've built and shipped. Each one with an honest, sourced case study.",
   alternates: { canonical: "/projects" },
 };
 
@@ -35,7 +35,7 @@ export default function ProjectsPage() {
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
           Everything I&apos;ve built and shipped, from daily-use products to research tools.
           Each one has a case study explaining the problem, the architecture, and the honest
-          numbers — including the ones that didn&apos;t flatter me.
+          numbers, including the ones that didn&apos;t flatter me.
         </p>
       </div>
 

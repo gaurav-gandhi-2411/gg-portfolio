@@ -10,7 +10,7 @@ export default function NotFound() {
         Nothing lives here
       </h1>
       <p className="text-muted-foreground mt-[var(--space-4)] max-w-measure text-base leading-relaxed">
-        The page you&apos;re after doesn&apos;t exist — it may have moved when the site went
+        The page you&apos;re after doesn&apos;t exist. It may have moved when the site went
         multi-page.
       </p>
       <p className="mt-[var(--space-8)] flex gap-[var(--space-6)] text-sm">

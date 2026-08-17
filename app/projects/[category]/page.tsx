@@ -32,8 +32,8 @@ export async function generateMetadata({
   const cat = findCategory(category);
   if (!cat) return {};
   return {
-    title: `${cat.label} projects — Gaurav Gandhi`,
-    description: `Every AI product and research tool I've built and shipped in ${cat.label} — each with an honest, sourced case study.`,
+    title: `${cat.label} projects · Gaurav Gandhi`,
+    description: `Every AI product and research tool I've built and shipped in ${cat.label}. Each one with an honest, sourced case study.`,
     alternates: { canonical: `/projects/${cat.id}` },
   };
 }
