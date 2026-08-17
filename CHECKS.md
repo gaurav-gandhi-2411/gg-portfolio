@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and seven
+days**, in fifteen different disguises, by fifteen unrelated routes, and nine
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 22 came later, from a design rebuild rather than an audit,
+Instances 16 through 24 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -43,9 +43,13 @@ nothing to do with what read it, paired with a confident wrong explanation that
 only fell when the variable was removed rather than argued about. Instance 22
 is the one that produced no output at all: a gate that never fired on the branch
 it existed to guard, which is the opening rule turned on a control rather than on
-the code.
+the code. Instance 23 is a new shape and the one to watch for: an exemption that
+was correct when written and became wrong by outliving its reason, without
+anything about it ever changing. Instance 24 is instance 18 pointing the other
+way, two checks that rejected a correct disclosure because their scope was set by
+word spacing.
 
-## The twenty-two
+## The twenty-four
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -854,6 +858,76 @@ The habit that falls out is cheap and general: **for any gate, ask not only what
 it checks but when it fires, and whether the code you care about is inside that
 window.** A trigger is part of a control's surface, and it is the part least
 likely to be read, because it sits in a file nobody opens once it works.
+
+**23. An exemption that was correct when written and became wrong by outliving
+its reason.** A new shape, and the one worth watching for, because nothing about
+it ever changes. Every other entry here is a control that was wrong from the
+start, or that quietly narrowed. This one was right, stayed exactly as written,
+and became wrong because the world moved past it.
+
+Rule 70a's gate 3 lets a PR record an override for a file that genuinely cannot
+be split: name the file, record the line count, write the rationale, link the
+review that accepted it. That is a good mechanism. The entry was keyed on the
+**bare path**.
+
+So gg-portfolio PR #119, a P0 crash fix, recorded overrides for the twenty files
+it touched, with a rationale and a verifier link. #119 merged on 2026-08-16.
+Months later, an unrelated motion PR touched `app/layout.tsx` for twelve lines,
+and the gate applied #119's exemption to it: **twelve lines silently discounted
+from a diff, on the strength of a review of a different change.** The rationale
+in the entry describes a crash fix. The verifier link points at a closed PR. Both
+were still being cited as authority for a diff neither had ever seen.
+
+An audit found that on `main` **2 of 2 entries were live on a justification that
+had already merged**, and a further 20 in another workstream's uncommitted work
+were in the same state. Not one had expired, because nothing in the design could
+expire.
+
+The fix is not a cleanup sweep, and that distinction is the useful part.
+**Scoping beats scheduling.** An entry now records the PR whose review justified
+it and applies only when that PR is the one being evaluated, so it is inert the
+moment it is no longer relevant. There is no cron, no audit job, no list to
+prune, and no way for a stale entry to be applied by accident, because staleness
+and inapplicability are now the same condition. An unscoped entry is refused
+rather than applied, and a caller that does not say which PR it is evaluating
+gets no overrides at all, because granting an exemption is the permissive branch.
+
+The general form, which applies well beyond this gate:
+
+> **An exemption needs an expiry condition built into how it is looked up, not a
+> promise that someone will remove it.** Anything granted "for this case" and
+> stored keyed on something more durable than the case will be applied to cases
+> nobody reviewed.
+
+Worth asking of every allowlist, ignore file, `eslint-disable`, suppression, and
+carve-out in this repository: what is it keyed on, and is that narrower or wider
+than the thing that justified it? A `// eslint-disable-next-line` is scoped to
+the line and is fine. A path in an ignore list is scoped to the path and is not.
+
+**24. Two disclosure checks that could not match their own subject.**
+Found while writing the disclosure instance 23's fix required, which is the only
+reason it was found at all. Gate 3c asks whether a PR body discloses a gate
+override, and matched on `gate.?override`. Gate 4b asks the same about the
+sensitive-path allowlist, and matched on `gate.?4.?allowlist`.
+
+`.?` is one optional character. So a heading written the way anyone would write
+it, **`## Gate 3 override disclosure`**, failed a check asking about gate 3's
+override, because `" 3 "` is three characters and not one. `gate 4 allowlist`
+failed gate 4b for the same reason. The only phrasings that satisfied these
+checks were ones nobody writes: `gate override`, `gate4allowlist`.
+
+Same family as instance 18, a control scoped by an incidental formatting
+convention, with the failure pointing the other way. Instance 18's checks passed
+while covering too little. These **failed while their subject was correctly
+disclosed**, which is the safe direction to be wrong in, and still wrong: a gate
+that rejects compliance teaches people to write for the regex instead of for the
+reader, and the next author's fix is a worse disclosure that happens to match.
+
+Both are named compiled patterns now, accepting either word order and an
+optional gate number, with cases for the phrasings that used to fail and for a
+body that discloses nothing. The lesson is small and repeats often: **when a
+check reads prose, test it against how the sentence is actually written**, not
+against the shortest string that satisfies the author of the regex.
 
 ## What follows from it
 
