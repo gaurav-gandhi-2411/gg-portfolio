@@ -4,9 +4,6 @@
 /* Smooth-scroll support styles, shipped by the package so they cannot drift
  * from what the runtime expects. */
 @import "lenis/dist/lenis.css";
-/* Hero surface + sitewide grain. Consumes the tokens below, defines none. */
-@import "./hero.css";
-
 /*
  * GG Portfolio design tokens (rule 15b).
  * Single theme by design (spec non-goal: no dark-mode toggle ceremony).
