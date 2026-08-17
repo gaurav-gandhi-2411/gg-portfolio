@@ -1044,3 +1044,20 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+
+## Wave 15 pipeline proposals — 2026-08-17 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — This fact demonstrates a measured result with a specific trade-off, is verifiable from the source text, is current, and is not redundant with the existing case-study copy.; verifier: The draft accurately reflects all numerical values, context, and the tradeoff framing from the source without introducing unsupported claims or tone drift.)
+  Source: `README.md:115`
+  Draft: "Achieved a mean score of 10.26/15 (68.4%) on LLM synthesis with Kubernetes, representing a deliberate tradeoff from the previous baseline of 10.51/15."
+  Suggested provenance ID: `triage-iq:llm-synthesis-score`
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — This fact proves a skill by demonstrating a measured result of the LLM synthesis judge, is verifiable as it contains a specific claim with a source line, and is current with a new committed baseline.; verifier: The draft accurately reflects all numerical values and contextual claims from the source without introducing unsupported assertions or tone shifts.)
+  Source: `README.md:116`
+  Draft: "Achieved a mean score of 8.64/15 (57.6%) on LLM synthesis tasks using vscode, establishing a new committed baseline that is within the noise band of the previous score of 8.36/15."
+  Suggested provenance ID: `triage-iq:llm-synthesis-score`
+- **gaurav-gandhi-2411/triage-iq** (curator 5/5 — This fact proves a skill by demonstrating a measured result with a specific metric, is verifiable as it is present in the README, is current as there is no date mentioned to suggest otherwise, and is not redundant as it provides new information not reflected in the current case-study copy.; verifier: The draft accurately reflects all numerical data and contextual references from the source table without adding unsupported claims or introducing tone drift.)
+  Source: `README.md:119`
+  Draft: "Achieved a fabrication rate of 0.0% (0/53) in LLM synthesis on Kubernetes, meeting the zero-tolerance gate standard as defined in ADR-0044."
+  Suggested provenance ID: `triage-iq:llm-synthesis-fabrication-rate`
