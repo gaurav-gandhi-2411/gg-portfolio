@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and five
+days**, in fifteen different disguises, by fifteen unrelated routes, and six
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 20 came later, from a design rebuild rather than an audit,
+Instances 16 through 21 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -38,9 +38,11 @@ denominator it would notice moving. Instance 19 is the same idea with timing
 in place of formatting: an assertion that passed only because it resolved
 before the thing it would have collided with. Instance 20 is the measuring
 tool itself: a Lighthouse runner that leaked a Chrome profile per run until the
-debris changed what it measured.
+debris changed what it measured. Instance 21 is a style write whose cost had
+nothing to do with what read it, paired with a confident wrong explanation that
+only fell when the variable was removed rather than argued about.
 
-## The twenty
+## The twenty-one
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -731,6 +733,62 @@ Three things fall out, all applied:
   unchanged production page across one evening. Without that control the wave
   would have looked five points worse than it was on one round and five points
   better on another.
+
+**21. A one-line style write that restyled the whole document, and a wrong
+explanation that survived because it was never tested.** Two findings from the
+same investigation, kept together because the second is what nearly buried the
+first.
+
+**Custom properties inherit, so writing one on the root invalidates everything
+under it.** `PointerField` set five of them on `<html>` once a frame. Measured on
+the deployed page, same element and same frame:
+
+| write | cost |
+|---|---|
+| one custom property on `<html>` | 17.3ms |
+| five custom properties on `<html>` | 19.8ms |
+| a regular property on `<html>` | 0.2ms |
+| one custom property on a leaf | 0.0ms |
+
+Eighty-six times the cost of a normal property on the same node, for the
+property *type* alone. The trap is that it reads as a cheap write: one string
+onto one element, no DOM change, no layout thrash. What it actually triggers is
+a re-resolve of every element that could inherit it, and an unregistered custom
+property gives the engine nothing to narrow that down with. **The cost scales
+with the element count of the subtree, not with the number of things that read
+the property.** There was exactly one consumer here, `.hero-spotlight`, with no
+descendants, and the write was costing a full-document restyle on its behalf:
+2918ms of style recalculation across 72,422 styled elements in a 6.3s trace,
+which is the main thread roughly 88 percent occupied for over three seconds.
+Moving the write to the one element that reads it took it to zero.
+
+Worth knowing before reaching for `@property`: registering with `inherits: false`
+would also fix the invalidation, but then descendants cannot read the value at
+all, which is usually the reason it was on the root. Scoping the write to the
+consumer keeps both.
+
+**The retraction.** Asked whether measuring a preview against production was a
+fair comparison, this session argued it could not explain a main-thread number,
+on the reasoning that "the same JavaScript blocks the same thread whichever host
+served it." That is wrong, and it is wrong in a way that sounds airtight.
+**Preview deployments serve extra JavaScript**: Vercel's Live toolbar is injected
+on previews and absent on production. A CPU profile put it at 1319ms of self
+time, the largest single entry on the page, well ahead of react-dom, GSAP or the
+WebGL field.
+
+The claim survived several rounds of measurement because every one of them
+compared the two hosts and none of them removed the difference. It only fell
+when the script was actually blocked. And the outcome is the uncomfortable part:
+**blocking it moved both sides about five points and left the gap where it was,
+so the conclusion was right and the argument for it was rubbish.** A correct
+conclusion reached by bad reasoning is the hardest kind of error to find, because
+nothing downstream of it looks wrong.
+
+The rule that falls out is the one this document keeps arriving at from new
+directions: *an argument that a variable cannot matter is not a measurement that
+it does not.* Neutralise the variable and look. It cost one flag,
+`BLOCKED_URL_PATTERNS_OVERRIDE`, and the runner records it in the artifact so a
+comparison can never quietly exclude something without saying so.
 
 ## What follows from it
 

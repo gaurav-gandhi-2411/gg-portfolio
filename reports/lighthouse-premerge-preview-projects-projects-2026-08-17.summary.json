@@ -1,0 +1,118 @@
+{
+  "route": "/projects",
+  "url": "https://gaurav-gandhi-git-feat-hero-20a773-gaurav-gandhi-2411s-projects.vercel.app/projects",
+  "branch": "premerge-preview-projects",
+  "date": "2026-08-17",
+  "n": 5,
+  "throttlingMethod": "simulate",
+  "blockedUrlPatterns": [
+    "*vercel.live*",
+    "*_next-live*"
+  ],
+  "chromeExtraFlags": [],
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 2,
+  "aggregate": {
+    "performance": {
+      "mean": 87.6,
+      "stddev": 2.97,
+      "values": [
+        91,
+        89,
+        84,
+        89,
+        85
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "seo": {
+      "mean": 66,
+      "stddev": 0,
+      "values": [
+        66,
+        66,
+        66,
+        66,
+        66
+      ]
+    },
+    "fcp-ms": {
+      "mean": 1148.49,
+      "stddev": 40.11,
+      "values": [
+        1211.063,
+        1121.508,
+        1160.774,
+        1140.325,
+        1108.804
+      ]
+    },
+    "lcp-ms": {
+      "mean": 3700.89,
+      "stddev": 304.11,
+      "values": [
+        3326.063,
+        3579.508,
+        4079.7739999999994,
+        3580.325,
+        3938.804
+      ]
+    },
+    "tbt-ms": {
+      "mean": 107.4,
+      "stddev": 17.24,
+      "values": [
+        111,
+        119,
+        77,
+        116,
+        114
+      ]
+    },
+    "cls": {
+      "mean": 0.01,
+      "stddev": 0.02,
+      "values": [
+        0.04630572432518955,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "si-ms": {
+      "mean": 3007.06,
+      "stddev": 946.75,
+      "values": [
+        1916.1515866527875,
+        2468.718811368131,
+        3965.2170162770954,
+        2648.98177533995,
+        4036.207257152395
+      ]
+    }
+  }
+}
