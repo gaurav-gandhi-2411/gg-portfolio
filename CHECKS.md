@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and nine
+days**, in fifteen different disguises, by fifteen unrelated routes, and ten
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 24 came later, from a design rebuild rather than an audit,
+Instances 16 through 25 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -47,9 +47,11 @@ the code. Instance 23 is a new shape and the one to watch for: an exemption that
 was correct when written and became wrong by outliving its reason, without
 anything about it ever changing. Instance 24 is instance 18 pointing the other
 way, two checks that rejected a correct disclosure because their scope was set by
-word spacing.
+word spacing. Instance 25 is the smallest and the most repeated: a rule's prose
+and its implementation drift, and only the committed implementation is the
+authority.
 
-## The twenty-four
+## The twenty-five
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -928,6 +930,41 @@ optional gate number, with cases for the phrasings that used to fail and for a
 body that discloses nothing. The lesson is small and repeats often: **when a
 check reads prose, test it against how the sentence is actually written**, not
 against the shortest string that satisfies the author of the regex.
+
+**25. A rule's prose and its implementation drift, and only one of them is the
+authority.** Small, and it happened three times in one wave, which is what makes
+it worth its own entry rather than a footnote on the others.
+
+Each time the shape was identical: read a rule's description, report a
+conclusion from it, and be wrong because the code had moved.
+
+- Rule 70a's gate-3 text lists four designated globs, so `package-lock.json`
+  was reported as counting against the 400-line ceiling. The implementation had
+  matched it explicitly since 2026-08-11. The gate was already correct and the
+  sentence describing it was not.
+- The override allowlist was reported as 22 entries with 20 citing PR #119. On
+  `main` there are two. The other twenty were **uncommitted working-copy
+  changes** in a shared checkout sitting on another workstream's branch, read as
+  though they were the live mechanism.
+- The multi-file `gg_approval` requirement was cited as an existing constraint
+  while designing around it. It is on that same unlanded branch. The incident
+  behind it is real; the code enforcing it is not on `main`.
+
+Three wrong reports, none of which a careful reading of the prose would have
+prevented, because the prose was the problem. And the third is the sharpest,
+because a working copy looks exactly like the truth: same path, same file,
+opens in the same editor.
+
+> **A rule's description, a comment, and a working copy are all secondary. The
+> committed implementation on the default branch is the only authority, and the
+> cost of checking it is one command.**
+
+The practical form: before reporting what a gate does, run it or read it at
+`origin/main`, not at `HEAD`, and never from a checkout someone else may be
+editing. `git show origin/main:path` is the whole discipline. This is also why
+the local approval check in the whole-PR waiver is deliberately self-contained
+rather than calling a shared helper: a validator that depends on code which may
+or may not be present is a validator that can silently stop validating.
 
 ## What follows from it
 
