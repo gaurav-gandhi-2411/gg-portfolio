@@ -16,6 +16,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // Runs after webServer is up and before any test. Pays the chatbot's ONNX
+  // cold start once so no submit-flow test is the one that pays it inside its
+  // own timeout; see e2e/global-setup.ts for the measurements.
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   // Four, measured rather than guessed. Playwright's default is half the
