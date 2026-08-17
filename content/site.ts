@@ -1,4 +1,18 @@
 export const site = {
+  /**
+   * The canonical origin, and the only place it is written down.
+   *
+   * It used to be declared three times independently, in app/layout.tsx,
+   * app/sitemap.ts and components/json-ld.tsx, with a fourth copy hardcoded
+   * into app/robots.ts. Four places computing the same thing is four places
+   * to drift, and nothing compared them: a change to one would have shipped a
+   * sitemap or a JSON-LD url pointing somewhere the canonical tags did not,
+   * and every gate would have stayed green. Same shape as the two-places-
+   * computing-a-hue problem the project grid avoided by sharing one function.
+   *
+   * No trailing slash. Callers build paths as `${site.url}/thing`.
+   */
+  url: "https://gaurav-gandhi.vercel.app",
   name: "Gaurav Gandhi",
   role: "Lead Data Scientist, Applied AI",
   tagline:

@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and four
+days**, in fifteen different disguises, by fifteen unrelated routes, and five
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 19 came later, from a design rebuild rather than an audit,
+Instances 16 through 20 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -36,9 +36,11 @@ carries the one-line rule the rest of this document had been circling: a check
 is safe when it compares two independently-derived sets, or prints a
 denominator it would notice moving. Instance 19 is the same idea with timing
 in place of formatting: an assertion that passed only because it resolved
-before the thing it would have collided with.
+before the thing it would have collided with. Instance 20 is the measuring
+tool itself: a Lighthouse runner that leaked a Chrome profile per run until the
+debris changed what it measured.
 
-## The nineteen
+## The twenty
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -686,6 +688,49 @@ Two things fall out, and both were applied rather than just written down:
   fails closed on a run it cannot summarise or one that stopped early. It
   cannot change what a pipeline returns, and does not pretend to. It makes the
   status the thing you cannot help seeing.
+
+**20. A tool that leaked into the machine it was measuring.**
+`scripts/lighthouse.mjs` creates a throwaway Chrome profile per run and removes
+it in a `finally`. The removal fails on Windows, because `chrome.kill()` resolves
+when the process is signalled rather than when the OS has released its handles,
+so `rmSync` hits a locked directory. The script caught that, printed *temp
+profile cleanup failed, ignoring*, and carried on. The comment beside it said a
+leftover profile under tmpdir is cosmetic and the OS reclaims it eventually.
+
+It does not. **265 directories holding 3.2 GB**, one per run since the script
+was written, each one announced by a warning that said ignoring. They are the
+most plausible explanation for the near-full-disk event this repo saw twice and
+dismissed twice.
+
+Then they corrupted a measurement, which is the part that makes this an entry
+rather than a chore. A Lighthouse run on the wave preview returned 73, 69, 66,
+59, 60, declining monotonically while TBT nearly tripled, on a machine carrying
+that debris plus nine orphaned Chrome processes the same script had left behind.
+The recorded baseline's own values scatter around a mean with no trend, and that
+shape difference is the only reason the run was thrown away rather than reported.
+**A measuring tool with a side effect on the thing it measures will eventually
+measure its own side effect.**
+
+Three things fall out, all applied:
+
+- The dismissal was the defect, not the EPERM. *Cosmetic* and *the OS will
+  handle it* are both claims about the future, and neither was ever checked.
+  Backoff to about 7.8s clears the lock; what still cannot be removed is
+  recorded and reported by count at the end of the run, so the first leak is as
+  visible as the 265th.
+- A control that only cleans up after itself cannot heal a past leak. The runner
+  now sweeps profiles older than 15 minutes at startup, so the debris of every
+  previous run goes with the next one. The grace period is what keeps a
+  concurrent session's live Chrome safe, which matters here because several
+  worktrees run at once by design.
+- **Before trusting a measurement, ask what the measuring ran on.** The machine
+  is part of the apparatus. This session also found nine orphaned Chrome
+  processes from earlier runs, killed by PID rather than by name, and re-measured
+  production first in the same session as a control precisely because the
+  absolute numbers had drifted: 91, then 88.4, then 83, then 89.8 for the same
+  unchanged production page across one evening. Without that control the wave
+  would have looked five points worse than it was on one round and five points
+  better on another.
 
 ## What follows from it
 

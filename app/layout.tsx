@@ -8,6 +8,7 @@ import { PersonJsonLd } from "@/components/json-ld";
 import { ScrollDriver } from "@/components/motion/scroll-driver";
 import { PointerField } from "@/components/pointer-field";
 import { SiteNav } from "@/components/site-nav";
+import { site } from "@/content/site";
 import "./globals.css";
 
 // Wave 4: editorial system. Space Grotesk replaces Inter as the body/UI
@@ -34,7 +35,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const siteUrl = "https://gaurav-gandhi.vercel.app";
+const siteUrl = site.url;
 
 // Wave 20 — SEO/social metadata audit. Title shortened from the tagline-style
 // "Senior Applied AI Scientist" to the literal role pairing search and hiring
