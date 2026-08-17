@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and eleven
+days**, in fifteen different disguises, by fifteen unrelated routes, and thirteen
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 26 came later, from a design rebuild rather than an audit,
+Instances 16 through 28 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -52,9 +52,14 @@ and its implementation drift, and only the committed implementation is the
 authority. Instance 26 is that same authority question while enforcing rather than
 while reading: a hook resolves its gate by filesystem adjacency, so a shared
 checkout's uncommitted edits are the live policy and a merged fix never reaches
-it.
+it. Instance 27 is the first one where the check was working and the *metric*
+moved for the wrong reason: work deferred past the point the measurement stops
+looking improves the number without improving what it stands for. Instance 28
+closes the set where instance 26 opened it, on addressing rather than coverage:
+a suite that named its target by a port shared with every other checkout, and
+so spent a full green run grading a different branch's build.
 
-## The twenty-six
+## The twenty-eight
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -1010,6 +1015,68 @@ another session has uncommitted work in, and the merge itself can be done throug
 the GitHub web UI where no hook fires at all, so the hazard buys nothing. Recorded
 so the next person who wonders why a landed gate fix changed nothing does not have
 to rediscover the one line that explains it.
+
+**27. A metric that improved because the measurement window closed early.** The
+hero's WebGL field was the largest contributor to a Total Blocking Time
+regression, so its work was deferred until after first paint. Lighthouse then
+reported home's TBT at 118ms against roughly 870ms before. The number was real
+and the conclusion drawn from it was not.
+
+Home's score turned out to be bimodal across runs: 63, 89, 90, 90, 90, with TBT
+of 907, 180, 118, 143, 118. The first instinct, a cold first run, was wrong.
+`/ask` measured alone shows no such spike, every run gets its own fresh Chrome
+and profile, and the pattern reproduced on a fully warm server.
+
+The raw traces gave it up. On the 907ms run: 20 long tasks reaching 5150ms, TTI
+6046ms, and the GSAP and ScrollTrigger chunk at 2739ms of bootup. On the 118ms
+run: 2 long tasks, TTI 3462ms, that same chunk at 264ms. The field arrives about
+3.4 seconds in, so it lands inside the trace only when the trace happens to run
+long enough. The fast runs were not observing cheaper work. They were stopping
+before the work happened.
+
+So the deferral relocated the cost rather than removing it. Observed TBT is
+907ms against roughly 870ms before, which is no material improvement on the
+runs that actually watch. What did improve is real but narrower than the
+headline: the first three seconds are clear, and TTI is 3462ms instead of
+6046ms when the field does not intrude.
+
+The shape to remember is not "Lighthouse is noisy". It is that **an
+optimisation which moves work later, past the point a measurement stops
+looking, produces a genuine improvement in the metric and no improvement in the
+thing the metric stands for.** Deferral and removal are indistinguishable to any
+instrument with a closing window, and deferral is the far easier of the two to
+achieve by accident. Before believing a large improvement from a change that
+moved when work happens, find the run where the work is still in frame and read
+that one. A mean with a wide spread is the tell: it is two populations, not one
+noisy measurement, and averaging them hides the case you needed to see.
+
+**28. A suite that graded a different worktree's build for a full run.**
+`playwright.config.ts` pinned `baseURL` to `http://localhost:3000` with
+`reuseExistingServer: !process.env.CI`. Port 3000 was already held by a
+`next start` belonging to `gg-portfolio-wt-verify-119`, running since the
+previous day. Playwright adopted it. Every test then reported on a different
+branch's build while naming this one.
+
+It passed. 381 passed, 5 skipped, exit 0, and that result was reported as a
+merge gate. Nothing in the run was wrong-looking, because a green suite against
+the wrong target looks exactly like a green suite.
+
+It only surfaced hours later, and by luck: the foreign server had gone stale and
+begun answering 500, so axe scanned an error page and reported 24 accessibility
+violations of the `document-title` and `html-has-lang` kind. Those were absurd
+enough to chase. Had that server stayed healthy, the mistake would have merged
+with a full gate set behind it.
+
+The config even carried a comment noting that GG runs several worktrees at once,
+as justification for its worker count. The same fact makes a fixed port unsafe,
+and that connection went unmade for as long as the file existed.
+
+Fixed by deriving the port from the checkout's own path, so anything listening
+on it can only be this worktree's server. The general form: **a control that
+addresses its subject by a name shared with other subjects is not addressing its
+subject.** A fixed port, a bare `git status` with no directory, a hard-coded
+sibling path (instance 26) are all the same error, and all of them answer
+confidently about the wrong thing rather than failing.
 
 ## What follows from it
 
