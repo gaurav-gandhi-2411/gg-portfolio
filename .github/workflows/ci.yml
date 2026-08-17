@@ -113,6 +113,13 @@ jobs:
       - name: Resume PDF vs. resume-data.json consistency
         run: node scripts/check-resume-pdf-consistency.mjs
 
+      # The homepage's three headline figures come from paid work, so they are
+      # the only numbers on the site a reader cannot check by clicking
+      # something. This ties each to the role-ladder bullet it was taken from
+      # and fails if they drift, which ordinary editing of either file does.
+      - name: Headline stats trace to the role ladder
+        run: node scripts/check-stats-attribution.mjs
+
       - name: Build
         run: npm run build
 
