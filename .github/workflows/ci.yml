@@ -103,6 +103,16 @@ jobs:
       - name: Card/metrics/case-study consistency
         run: node scripts/check-card-consistency.mjs
 
+      # eval.yml gates chatbot answer quality but triggered only on the chatbot's
+      # own code paths, while the index it retrieves from is built from content/.
+      # A copy change altered retrieval and fired no eval: the filter was
+      # narrower than its subject. Adding content/** fixed that once; this
+      # compares the filter against what build-index.mjs actually reads, so the
+      # next source added cannot drift out of it silently. Prints coverage as a
+      # fraction and fails naming any source that would go ungated.
+      - name: Eval trigger covers every chatbot-index source
+        run: node scripts/check-eval-trigger-covers-index-sources.mjs
+
       # 2026-08-10 — public/resume.pdf is a hand-built docx export, the one
       # artifact on the site outside every other gate; it went stale
       # unnoticed for weeks (see scripts/check-resume-pdf-consistency.mjs's
