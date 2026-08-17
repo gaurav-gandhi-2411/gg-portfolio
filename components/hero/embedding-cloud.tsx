@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 
+import { onPresenceOrIdle } from "@/lib/motion/after-first-paint";
 import { mayUseWebGL } from "@/lib/webgl/capability";
 
 const EmbeddingCloudGL = dynamic(() => import("./embedding-cloud-gl"), {
@@ -53,27 +54,15 @@ interface EmbeddingCloudProps {
  */
 
 /**
- * Anything that means a person is present. `scroll` is on the list because it
- * is the first thing that happens on a phone, where there is no cursor to
- * move, and a visitor who only ever scrolls must still get the field.
- */
-const PRESENCE_EVENTS = ["pointerdown", "pointermove", "wheel", "touchstart", "keydown", "scroll"] as const;
-
-/**
  * The earliest the field may arrive on its own, measured from `load`.
  *
- * A minimum, not a timeout, and the distinction is the whole point. The first
- * version of this passed 2500 to requestIdleCallback and read it as "wait up to
- * 2.5s". requestIdleCallback's timeout is a ceiling: it fires at the first idle
- * moment, and on an unthrottled machine the first idle moment after load is
- * immediate. Instrumented on a local production build, the field mounted 105ms
- * after load, which is squarely inside the window blocking time is measured in.
- * That would have moved the work without moving the number and looked like a
- * fix that was not one.
+ * A minimum, not a timeout. See lib/motion/after-first-paint.ts for why that
+ * distinction is the whole point and what it cost to learn; the mechanism is
+ * shared with the rest of the deferred motion stack now.
  *
- * So: wait this long after load, and only then ask for idle. The visitor who
- * never touches the page still gets the field, a beat after the page is theirs
- * to use.
+ * Three seconds rather than the 1200ms the motion stack uses, because the field
+ * is the most expensive thing on the page and the least load-bearing: it was
+ * 18.8 Lighthouse points on its own.
  */
 const UNPROMPTED_ARRIVAL_MS = 3000;
 
@@ -112,41 +101,11 @@ export function EmbeddingCloud({ children }: EmbeddingCloudProps) {
     // useState initializer would desync hydration.
     if (!mayUseWebGL()) return;
 
-    let armed = false;
-    let idleHandle: number | null = null;
-    let waitTimer: number | null = null;
-
-    const arm = () => {
-      if (armed) return;
-      armed = true;
-      teardown();
-      setPhase("arriving");
-    };
-
-    const onLoadSettled = () => {
-      waitTimer = window.setTimeout(() => {
-        // Idle after the minimum, so the field slips into a gap rather than
-        // competing with whatever the page is still finishing.
-        const ric = window.requestIdleCallback;
-        if (ric) idleHandle = ric(arm, { timeout: 1000 });
-        else arm();
-      }, UNPROMPTED_ARRIVAL_MS);
-    };
-
-    function teardown() {
-      for (const type of PRESENCE_EVENTS) window.removeEventListener(type, arm);
-      window.removeEventListener("load", onLoadSettled);
-      if (idleHandle !== null) window.cancelIdleCallback?.(idleHandle);
-      if (waitTimer !== null) window.clearTimeout(waitTimer);
-    }
-
-    for (const type of PRESENCE_EVENTS) {
-      window.addEventListener(type, arm, { passive: true, once: true });
-    }
-    if (document.readyState === "complete") onLoadSettled();
-    else window.addEventListener("load", onLoadSettled, { once: true });
-
-    return teardown;
+    // The trigger, and the reason it is a minimum rather than a timeout, now
+    // live in lib/motion/after-first-paint.ts, shared with the rest of the
+    // motion stack. Two copies of a subtle timing rule is two chances to get
+    // it wrong.
+    return onPresenceOrIdle(() => setPhase("arriving"), UNPROMPTED_ARRIVAL_MS);
   }, []);
 
   return (

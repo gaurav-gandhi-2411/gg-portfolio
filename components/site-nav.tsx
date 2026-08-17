@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { Monogram } from "@/components/monogram";
 import { site } from "@/content/site";
-import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
+import { prefersReducedMotion } from "@/lib/motion/gsap";
+import { useDeferredMotion } from "@/lib/motion/use-deferred-motion";
 import { cn } from "@/lib/utils";
 
 /**
@@ -93,44 +94,68 @@ export function SiteNav() {
 
   // Scroll spy, homepage only. One trigger per section, reporting which one
   // currently owns the middle of the viewport.
+  /*
+   * Which section is being read, on the home route.
+   *
+   * An IntersectionObserver rather than ScrollTrigger, and the reason is not
+   * bytes. Once the motion stack became a deferred import, reduced-motion
+   * visitors stopped loading it entirely, and this was the one thing in the nav
+   * that stopped working as a result: no active section, so no `aria-current`,
+   * so no indicator, on a path whose whole rule is a composed still rather than
+   * a flattened page. The e2e test written for exactly that rule caught it.
+   *
+   * Which was the right question to ask of it anyway. Where you are in a
+   * document is information, not motion, and a visitor who asked for less
+   * animation did not ask to be told less. So it belongs in a primitive every
+   * visitor gets rather than behind an animation library.
+   *
+   * rootMargin makes a zero-height band at 55% of the viewport, which is the
+   * same line ScrollTrigger's "top 55%" / "bottom 55%" pair described. When two
+   * sections cross it during a fast scroll the lower one wins, which reads
+   * top-down and matches the rail's own rule.
+   */
   useEffect(() => {
     if (!onHome) return;
 
-    const ctx = gsap.context(() => {
-      LINKS.forEach((link, index) => {
-        if (!link.sectionId) return;
-        const section = document.getElementById(link.sectionId);
-        if (!section) return;
+    const sections = LINKS.map((link, index) =>
+      link.sectionId ? { index, el: document.getElementById(link.sectionId) } : null
+    ).filter((s): s is { index: number; el: HTMLElement } => Boolean(s && s.el));
+    if (sections.length === 0) return;
 
-        ScrollTrigger.create({
-          trigger: section,
-          start: "top 55%",
-          end: "bottom 55%",
-          onToggle: (self) => {
-            if (self.isActive) setReadingIndex(index);
-          },
-          // Leaving the last section upward should clear the indicator
-          // rather than leave it stranded on whatever was last lit.
-          onLeaveBack: () => {
-            if (index === 0) setReadingIndex(-1);
-          },
-        });
-      });
-    });
+    const crossing = new Set<number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const hit = sections.find((s) => s.el === entry.target);
+          if (!hit) continue;
+          if (entry.isIntersecting) crossing.add(hit.index);
+          else crossing.delete(hit.index);
+        }
+        setReadingIndex(crossing.size > 0 ? Math.max(...crossing) : -1);
+      },
+      { rootMargin: "-55% 0px -45% 0px", threshold: 0 }
+    );
 
-    return () => ctx.revert();
+    for (const s of sections) observer.observe(s.el);
+    return () => observer.disconnect();
   }, [onHome]);
 
-  // The pill's contraction, scrubbed against the first stretch of scroll.
+  // Reduced motion still needs its resting state set, and that must not wait on a
+  // library it will never load, so it stays in a plain effect of its own.
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (prefersReducedMotion()) {
       // Composed, not flattened: reduced-motion visitors get the contracted
       // pill as their resting state rather than the expanded one frozen.
       nav.style.setProperty("--nav-shrink", "1");
-      return;
     }
+  }, []);
+
+  // The pill's contraction, scrubbed against the first stretch of scroll.
+  useDeferredMotion(({ gsap }) => {
+    const nav = navRef.current;
+    if (!nav) return;
 
     const ctx = gsap.context(() => {
       gsap.to(nav, {
@@ -143,32 +168,41 @@ export function SiteNav() {
     return () => ctx.revert();
   }, []);
 
-  // Slide the indicator to the active item.
+  // Place the indicator on the active item. No library: transform and opacity
+  // are compositor-only, so .site-nav-indicator's own transition does the slide
+  // and this only has to write where it goes. That matters because the motion
+  // stack is a deferred import and reduced-motion visitors never load it at
+  // all: when this was a gsap.to, that visitor got no indicator rather than a
+  // placed one.
   useEffect(() => {
     const list = listRef.current;
     const indicator = indicatorRef.current;
     if (!list || !indicator) return;
 
     const place = (animate: boolean) => {
+      // The first placement must not travel from x=0, and a re-place after a
+      // resize or font swap must not ease toward a stale width, so both suppress
+      // the transition for one frame rather than relying on duration 0.
+      if (animate) indicator.removeAttribute("data-instant");
+      else indicator.setAttribute("data-instant", "");
+
       const active = activeIndex >= 0 ? list.querySelector<HTMLElement>(`[data-nav-item="${activeIndex}"]`) : null;
       if (!active) {
-        gsap.to(indicator, { autoAlpha: 0, duration: animate ? 0.2 : 0 });
+        indicator.style.opacity = "0";
+        indicator.style.visibility = "hidden";
         return;
       }
       const listBox = list.getBoundingClientRect();
       const box = active.getBoundingClientRect();
       const x = box.left - listBox.left;
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      gsap.to(indicator, {
-        x,
-        scaleX: box.width,
-        autoAlpha: 1,
-        duration: animate && !reduce ? 0.42 : 0,
-        ease: "power3.out",
-      });
+      indicator.style.transform = `translateX(${x}px) scaleX(${box.width})`;
+      indicator.style.opacity = "1";
+      indicator.style.visibility = "visible";
     };
 
-    place(true);
+    // Instant on mount, animated on every later change.
+    place(false);
+    indicator.removeAttribute("data-instant");
 
     /*
      * Re-place, without animating, when the row's own geometry changes. A

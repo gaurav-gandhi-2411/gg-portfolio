@@ -626,6 +626,20 @@ body::after {
  * Pure transform, so it never triggers layout and never distorts a corner
  * radius, which is why it is an underline and not a filled chip.
  */
+/*
+ * The indicator's slide, in CSS rather than in GSAP.
+ *
+ * It was a gsap.to on transform and opacity, which meant the indicator could
+ * not be placed at all until the animation system had loaded. Once the motion
+ * stack became a deferred import that broke the reduced-motion path outright:
+ * that visitor never loads GSAP, so the indicator was never positioned, and
+ * "reduced motion gets a composed still" turned into "reduced motion gets no
+ * indicator". Caught by the test written for exactly that rule.
+ *
+ * Both properties are compositor-only, so a transition does the whole job and
+ * placement becomes a plain style write that works from first render, before
+ * and without any library. One fewer consumer of GSAP as a side effect.
+ */
 .site-nav-indicator {
   position: absolute;
   bottom: -1px;
@@ -637,6 +651,19 @@ body::after {
   transform-origin: left center;
   opacity: 0;
   pointer-events: none;
+  transition:
+    transform 420ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    opacity 200ms linear;
+}
+/* Placed, not animated. The position is still correct; only the travel goes. */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-indicator {
+    transition: none;
+  }
+}
+/* Applied for the first placement so it does not slide in from x=0 on load. */
+.site-nav-indicator[data-instant] {
+  transition: none;
 }
 
 .site-nav-link {

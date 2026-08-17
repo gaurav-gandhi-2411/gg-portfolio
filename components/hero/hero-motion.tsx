@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
+import { useDeferredMotion } from "@/lib/motion/use-deferred-motion";
 
 /**
  * Scroll behaviour for the hero's three planes.
@@ -27,7 +27,10 @@ import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
  * an element it was handed.
  */
 export function HeroMotion() {
-  useEffect(() => {
+  // Deferred with the rest of the motion stack. The hero is composed and
+  // readable before these scrubs exist; they add response to scroll, not
+  // content.
+  useDeferredMotion(({ gsap, ScrollTrigger }) => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const stage = document.querySelector<HTMLElement>("[data-hero]");

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-// Importing from the shared module rather than gsap directly is what
-// registers ScrollTrigger; the plugin is used through the tween's
-// scrollTrigger config below rather than by name.
-import { gsap } from "@/lib/motion/gsap";
+// The shared loader registers ScrollTrigger; the plugin is used through the
+// tween's scrollTrigger config below rather than by name. Loaded on demand
+// rather than imported, so a case study does not pay for the animation system
+// before it has been read.
+import { useDeferredMotion } from "@/lib/motion/use-deferred-motion";
 
 /**
  * Marks where you are in a case study.
@@ -39,7 +40,9 @@ const READING_LINE = 0.4;
 export function CaseStudyRail({ headingIds }: { headingIds: string[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Deferred. Until it arrives the rail is present and the page is fully
+  // readable; what waits is the progress fill and the active-section tracking.
+  useDeferredMotion(({ gsap }) => {
     const rail = document.querySelector<HTMLElement>("[data-case-rail]");
     const article = document.querySelector<HTMLElement>("[data-case-article]");
     if (!rail || !article) return;
