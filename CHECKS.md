@@ -8,7 +8,7 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and ten
+days**, in fifteen different disguises, by fifteen unrelated routes, and eleven
 times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
@@ -24,7 +24,7 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 25 came later, from a design rebuild rather than an audit,
+Instances 16 through 26 came later, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -49,9 +49,12 @@ anything about it ever changing. Instance 24 is instance 18 pointing the other
 way, two checks that rejected a correct disclosure because their scope was set by
 word spacing. Instance 25 is the smallest and the most repeated: a rule's prose
 and its implementation drift, and only the committed implementation is the
-authority.
+authority. Instance 26 is that same authority question while enforcing rather than
+while reading: a hook resolves its gate by filesystem adjacency, so a shared
+checkout's uncommitted edits are the live policy and a merged fix never reaches
+it.
 
-## The twenty-five
+## The twenty-six
 
 **1. `source_line` was read by nothing.** Every layer of
 `check-metric-freshness.mjs` fetched the whole source file and searched it for
@@ -965,6 +968,48 @@ editing. `git show origin/main:path` is the whole discipline. This is also why
 the local approval check in the whole-PR waiver is deliberately self-contained
 rather than calling a shared helper: a validator that depends on code which may
 or may not be present is a validator that can silently stop validating.
+
+**26. A guard that can only ever read the copy of itself sitting next to it.**
+A design constraint rather than a defect, worth writing down because it is
+invisible until it bites and it has now bitten twice in one day.
+
+`hook_guard_merge.py` locates the gate it runs with one line:
+
+```python
+MERGE_GATE = str(Path(__file__).with_name("merge_gate.py"))
+```
+
+A hard-coded sibling. **No environment variable, no config key, and nothing in
+`settings.json` parameterises it** beyond the absolute path to the hook itself.
+So the gate that decides whether a merge may proceed is always the copy in
+whatever checkout the hook happens to live in, including that checkout's
+*uncommitted working-tree edits*.
+
+Which means a fix landing on `main` does not reach the hook. Two merges were
+blocked by this on the same afternoon, both by a gate whose fix was already
+merged: one on a line-count rule that a whole-PR waiver had been built and landed
+specifically to satisfy, and one on a sensitive-path false positive whose
+allowlist entry was sitting on `main` at the time. Neither gate was wrong about
+the code it was reading. Both were reading code from before the fix.
+
+The trap has three edges, and the third is the one to remember:
+
+- **A merged fix is not a deployed fix** when the consumer resolves its
+  dependency by filesystem adjacency rather than by version.
+- **The hook cannot be redirected without writing into that checkout**, which
+  makes "just point it at main" unavailable exactly when the checkout belongs to
+  another session with work in progress.
+- **The working tree wins over the committed tree.** The hook reads the file, not
+  the ref, so uncommitted edits in a shared checkout silently become the live
+  policy for every session on the machine. This is instance 25's contaminated
+  authority one layer up: there, a working copy was mistaken for the truth while
+  reading; here, a working copy *is* the truth while enforcing.
+
+No fix attempted, on purpose. Every available route writes into a checkout that
+another session has uncommitted work in, and the merge itself can be done through
+the GitHub web UI where no hook fires at all, so the hazard buys nothing. Recorded
+so the next person who wonders why a landed gate fix changed nothing does not have
+to rediscover the one line that explains it.
 
 ## What follows from it
 
