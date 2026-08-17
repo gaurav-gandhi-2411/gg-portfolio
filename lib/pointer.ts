@@ -3,10 +3,11 @@
  *
  * Two consumers with different needs, so this exposes both forms:
  *
- *   CSS layers (spotlight, parallax planes) read --mx/--my/--mdx/--mdy off
- *   the root element and never touch JavaScript. Writing custom properties
- *   once per frame and letting the compositor do the rest is the cheapest
- *   version of this effect that exists.
+ *   The spotlight layer reads --mx/--my/--pointer-on off its own element and
+ *   never touches JavaScript. Those writes go to .hero-spotlight rather than
+ *   the root: a custom property on <html> inherits, so writing one there
+ *   restyles the whole document, measured at 17.3ms a frame against 0 on a
+ *   leaf (see components/pointer-field.tsx).
  *
  *   The WebGL field reads getPointer() directly. It could read the same
  *   custom properties, but that would mean a getComputedStyle call inside

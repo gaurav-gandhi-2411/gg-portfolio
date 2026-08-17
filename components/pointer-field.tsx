@@ -8,15 +8,28 @@ import { setPointerState } from "@/lib/pointer";
  * The single pointer listener on the site.
  *
  * Renders nothing. It attaches one passive listener, smooths the position,
- * and writes it to the root element's custom properties once per frame.
- * Every layer that acknowledges the cursor reads those properties, so the
- * count of listeners does not grow with the count of effects.
+ * and writes it once per frame to the element that actually reads it.
  *
- * It writes inline styles on <html>, which React does not own the contents
- * of. That is the whole reason this is a style write and not a DOM write:
- * nothing here inserts, removes or reparents a node, which is the rule that
- * came out of the round-nine crash. Setting a custom property on an element
- * React rendered is invisible to the reconciler and always has been.
+ * It used to write five custom properties to <html> every frame, and that was
+ * the single largest cost on the page. Custom properties inherit, so setting
+ * one on the root invalidates the computed style of the whole document, and
+ * an unregistered one gives the engine no way to narrow that down. Measured
+ * on the deployed page, same element, same frame: a regular property on
+ * <html> costs 0.2ms, one custom property costs 17.3ms, and the same custom
+ * property on a leaf costs nothing. During the first three seconds, while the
+ * hero's SSR'd point cloud is still in the DOM and the tree is more than twice
+ * this size, that per-frame cost was consuming most of the main thread.
+ *
+ * There is exactly one CSS consumer, .hero-spotlight, and it has no
+ * descendants, so the write goes there instead. --mdx/--mdy are not written
+ * as CSS at all any more: nothing in any stylesheet reads them, only the GL
+ * layer does, and it reads them from setPointerState.
+ *
+ * It writes inline styles on a node React rendered, which React does not own
+ * the contents of. That is the whole reason this is a style write and not a
+ * DOM write: nothing here inserts, removes or reparents a node, which is the
+ * rule that came out of the round-nine crash. Setting a custom property on an
+ * element React rendered is invisible to the reconciler and always has been.
  *
  * Reduced-motion visitors never get a listener at all, and the tokens keep
  * their centred defaults, so every layer downstream renders its resting
@@ -37,7 +50,10 @@ export function PointerField() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const root = document.documentElement;
+    // The one element whose CSS reads --mx/--my/--pointer-on. Looked up once;
+    // if the route has no hero the JS side still runs, because the GL layer
+    // reads the same values through setPointerState rather than through CSS.
+    const spotlight = document.querySelector<HTMLElement>(".hero-spotlight");
 
     let targetX = 0.5;
     let targetY = 0.5;
@@ -49,11 +65,11 @@ export function PointerField() {
     let idleFrames = 0;
 
     const write = () => {
-      root.style.setProperty("--mx", x.toFixed(4));
-      root.style.setProperty("--my", y.toFixed(4));
-      root.style.setProperty("--mdx", (x - 0.5).toFixed(4));
-      root.style.setProperty("--mdy", (y - 0.5).toFixed(4));
-      root.style.setProperty("--pointer-on", strength.toFixed(4));
+      if (spotlight) {
+        spotlight.style.setProperty("--mx", x.toFixed(4));
+        spotlight.style.setProperty("--my", y.toFixed(4));
+        spotlight.style.setProperty("--pointer-on", strength.toFixed(4));
+      }
       setPointerState(x, y, x - 0.5, y - 0.5, strength);
     };
 
@@ -107,11 +123,9 @@ export function PointerField() {
       document.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("blur", onLeave);
       if (frame !== null) cancelAnimationFrame(frame);
-      root.style.removeProperty("--mx");
-      root.style.removeProperty("--my");
-      root.style.removeProperty("--mdx");
-      root.style.removeProperty("--mdy");
-      root.style.removeProperty("--pointer-on");
+      spotlight?.style.removeProperty("--mx");
+      spotlight?.style.removeProperty("--my");
+      spotlight?.style.removeProperty("--pointer-on");
     };
   }, []);
 

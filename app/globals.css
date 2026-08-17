@@ -273,12 +273,16 @@
    *
    * Defaults are dead centre, so every layer that reads them renders in a
    * sane resting state before the first pointer event and on touch devices
-   * that never send one.
+   * that never send one. They live here rather than on .hero-spotlight so
+   * the resting composition is right before hydration; the per-frame writes
+   * land on that element directly, because setting these on the root costs a
+   * whole-document style recalculation (see components/pointer-field.tsx).
+   *
+   * --mdx/--mdy used to sit here too. No stylesheet ever read them, only the
+   * GL layer did, and it reads them from lib/pointer.ts instead.
    */
   --mx: 0.5;
   --my: 0.5;
-  --mdx: 0;
-  --mdy: 0;
   /* 0 while the pointer is away, eased to 1 while it is over the page.
    * Layers multiply their effect by this so nothing pops on first move. */
   --pointer-on: 0;
