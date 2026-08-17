@@ -2,7 +2,34 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # `main` alone left every long-lived feature branch completely ungated.
+    # ci.yml fires on pull_request and on pushes to main, so a branch with no
+    # PR open gets neither: not a weaker gate, no gate, and the output looks
+    # identical because there is no output. feat/hero-rebuild accumulated 31
+    # commits and 52 KB of eager JS that way, with the bundle gate structurally
+    # unable to see any of it, and only splitting the branch into PRs surfaced
+    # it (CHECKS.md instance 22).
+    #
+    # The prefixes are rule 35's own branch vocabulary. Explicit rather than
+    # `branches-ignore: []` so a scratch branch does not burn a runner, and
+    # broad enough that anything following the convention is gated as it grows.
+    #
+    # Cost is one extra run per push on a branch that also has a PR open, since
+    # push and pull_request are different concurrency groups. That is the same
+    # trade the pull_request comment below already accepted, for the same
+    # reason: cheap next to merging something whose tests never ran.
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'docs/**'
+      - 'refactor/**'
+      - 'perf/**'
+      - 'style/**'
+      - 'test/**'
+      - 'wave-*'
+      - 'phase-*'
   # Deliberately NOT filtered to `branches: [main]`. With that filter, a PR
   # stacked on another feature branch fires no CI at all — `build` and `e2e`
   # come back ABSENT rather than pending, and rule 70a treats an absent
