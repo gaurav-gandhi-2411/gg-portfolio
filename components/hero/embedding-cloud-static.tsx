@@ -77,32 +77,50 @@ export function EmbeddingCloudStatic({ points }: EmbeddingCloudStaticProps) {
       </defs>
       {/* Structure first, dots over it, matching the GL layer's draw order.
           Outside the glow filter on purpose: blurring hairlines this thin
-          erases them, and the strands want to stay legible as strands. */}
-      <path
-        d={linkPath(points)}
-        fill="none"
-        stroke="var(--indigo)"
-        strokeWidth="0.0018"
-        opacity="0.34"
-      />
-      <g filter="url(#embedding-cloud-glow)">
-        {points.map((p) => {
-          const [x, y, z] = p.finetuned;
-          // z folds into radius as a cheap depth cue, the same way the GL
-          // layer folds it into point size.
-          const radius = 0.004 + ((z + 1) / 2) * 0.005;
-          return (
-            <circle
-              key={p.term}
-              cx={x}
-              cy={y}
-              r={radius}
-              fill="var(--indigo)"
-              opacity={CLUSTER_OPACITY[p.cluster % CLUSTER_OPACITY.length]}
-            />
-          );
-        })}
-      </g>
+          erases them, and the strands want to stay legible as strands.
+
+          One string rather than 420 elements, and the reason is measured. This
+          used to map points to <circle> elements, which made 419 of them 39
+          percent of the entire server-rendered document: React created a fiber
+          for each, hydration walked all of them, and when the WebGL layer took
+          over React removed them one at a time (removeChild was 367ms of self
+          time in a CPU profile). None of that bought anything, because not one
+          of these nodes is interactive, stateful, or ever re-rendered.
+
+          As innerHTML the whole scatter is opaque to React: one fiber, nothing
+          to hydrate inside it, one node to remove. The markup is byte-identical
+          to what the element version emitted, so the picture does not change.
+          Safe by construction rather than by promise, which is the only reason
+          dangerouslySetInnerHTML belongs anywhere near this repo: every value
+          interpolated below is a number this module computed from a committed
+          projection, or a literal written here. No user input, no content from
+          disk, nothing a visitor can reach. */}
+      <g dangerouslySetInnerHTML={{ __html: scatterMarkup(points) }} />
     </svg>
+  );
+}
+
+/**
+ * The link path and every point, as SVG source.
+ *
+ * Numbers only: coordinates and radii from lib/embedding-projection's committed
+ * values, opacities from a fixed table. Nothing here is interpolated from
+ * anything a visitor controls.
+ */
+function scatterMarkup(points: EmbeddingPoint[]): string {
+  const circles = points
+    .map((p) => {
+      const [x, y, z] = p.finetuned;
+      // z folds into radius as a cheap depth cue, the same way the GL layer
+      // folds it into point size.
+      const radius = 0.004 + ((z + 1) / 2) * 0.005;
+      const opacity = CLUSTER_OPACITY[p.cluster % CLUSTER_OPACITY.length];
+      return `<circle cx="${x}" cy="${y}" r="${radius}" fill="var(--indigo)" opacity="${opacity}"/>`;
+    })
+    .join("");
+
+  return (
+    `<path d="${linkPath(points)}" fill="none" stroke="var(--indigo)" stroke-width="0.0018" opacity="0.34"/>` +
+    `<g filter="url(#embedding-cloud-glow)">${circles}</g>`
   );
 }

@@ -100,6 +100,19 @@ const RUNS = Number(process.env.RUNS_OVERRIDE ?? 6);
 // elementRenderDelay) is measuring something that really happened, not a
 // model's guess at what would happen.
 const THROTTLING_METHOD = process.env.THROTTLING_METHOD_OVERRIDE ?? "simulate";
+// Preview deployments carry Vercel's Live toolbar and production does not, so
+// comparing the two measures the toolbar as if it were the site. It is not a
+// small difference: a CPU profile of a preview home page put
+// vercel.live/_next-live/feedback at 1319ms of self time, the largest single
+// contributor on the page, ahead of react-dom, GSAP and the WebGL field.
+// Blocking it is what makes preview-against-production a comparison of the
+// same thing. The patterns are recorded in the summary artifact, because a
+// measurement that quietly excluded something is worse than one that did not
+// exclude it at all.
+const BLOCKED_URL_PATTERNS = (process.env.BLOCKED_URL_PATTERNS_OVERRIDE ?? "")
+  .split(",")
+  .map((pattern) => pattern.trim())
+  .filter(Boolean);
 // Windows-repo wart avoided on purpose (rule from this script's own kickoff
 // instruction): os.tmpdir() resolves to the real per-user temp dir on
 // whatever OS this runs on, never a hardcoded POSIX /tmp default.
@@ -341,7 +354,7 @@ async function runOnce(url, chromePath, runIndex) {
   try {
     result = await lighthouse(
       url,
-      { port: chrome.port, onlyCategories: CATEGORIES, output: "json" },
+      { port: chrome.port, onlyCategories: CATEGORIES, output: "json", blockedUrlPatterns: BLOCKED_URL_PATTERNS },
       { extends: "lighthouse:default", settings: { throttlingMethod: THROTTLING_METHOD } }
     );
   } finally {
@@ -437,6 +450,7 @@ async function measureRoute(route, chromePath) {
     date: today,
     n: RUNS,
     throttlingMethod: THROTTLING_METHOD,
+    blockedUrlPatterns: BLOCKED_URL_PATTERNS,
     lighthouseVersion: results[0].lighthouseVersion,
     chromeVersion: results[0].chromeVersion,
     host: `${hostname()} (${platform()} ${release()})`,
