@@ -11,6 +11,13 @@ import type { EmbeddingProjection } from "@/lib/embedding-projection";
 
 interface EmbeddingCloudGLProps {
   onUnsupported: () => void;
+  /**
+   * Fired once the field has actually put frames on the canvas, so the still
+   * on top of it can hand over. Deliberately not fired on mount: a context
+   * that exists is not a field that draws, and the cross-fade should reveal
+   * something rather than reveal something starting.
+   */
+  onFirstFrames: () => void;
 }
 
 /** Imported inside the lazy chunk, not passed as a prop. */
@@ -56,6 +63,12 @@ const START_DELAY_MS = 700;
 
 /** How long the field takes to reach full strength once it starts. */
 const FADE_IN_MS = 1400;
+/**
+ * Frames the field must have drawn before the still hands over. Small on
+ * purpose: this is a check that the GL pipeline is producing real output, not
+ * a duration. The visible timing belongs to the still's CSS fade.
+ */
+const HANDOVER_AFTER_FRAMES = 3;
 
 interface HeroStatsWindow extends Window {
   /**
@@ -66,13 +79,14 @@ interface HeroStatsWindow extends Window {
   __ggHeroStats?: { frames: number; totalMs: number; lastMs: number; fps: number };
 }
 
-export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProps) {
+export default function EmbeddingCloudGL({ onUnsupported, onFirstFrames }: EmbeddingCloudGLProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<HeroFieldRenderer | null>(null);
   const frameRef = useRef<number | null>(null);
   const angleRef = useRef(0);
   const lastFrameRef = useRef(0);
   const startedAtRef = useRef(0);
+  const handedOverRef = useRef(false);
   const runningRef = useRef(false);
 
   const points: HeroFieldPoint[] = projection.points.map((p) => ({
@@ -131,10 +145,20 @@ export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProp
         stats.lastMs = cost;
         stats.fps = elapsed > 0 ? 1000 / elapsed : 0;
 
-        if (canvasRef.current && fade < 1) {
-          canvasRef.current.style.opacity = String(fade);
-        } else if (canvasRef.current && canvasRef.current.style.opacity !== "1") {
-          canvasRef.current.style.opacity = "1";
+        // The canvas no longer fades its own opacity. It used to, and that
+        // made sense when it was swapped in over nothing, but the still now
+        // sits fully opaque on top of it until the handover, so the fade was
+        // invisible and pure delay: waiting for it pushed the visible
+        // transition out to nearly six seconds. The still's own fade is the
+        // whole transition now. `fade` above still eases pointer strength, so
+        // the lens cannot be at full power the instant the field appears.
+        if (!handedOverRef.current && stats.frames >= HANDOVER_AFTER_FRAMES) {
+          handedOverRef.current = true;
+          // Enough frames to know the pipeline is really producing output, not
+          // just that a context was created. The visitor has been looking at a
+          // finished still the whole time; it now dissolves into a field that
+          // is already drawing at full strength.
+          onFirstFrames();
         }
 
         lastFrameRef.current = now;
@@ -144,7 +168,11 @@ export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProp
     };
 
     frameRef.current = requestAnimationFrame(step);
-  }, []);
+    // onFirstFrames is stable (useCallback with no deps in the parent), so
+    // listing it does not recreate the loop or, through `start`, the GL
+    // context. Listed anyway rather than silenced: the day it stops being
+    // stable, this should break loudly instead of capturing a stale callback.
+  }, [onFirstFrames]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -222,5 +250,7 @@ export default function EmbeddingCloudGL({ onUnsupported }: EmbeddingCloudGLProp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onUnsupported, start, stop]);
 
-  return <canvas ref={canvasRef} className="h-full w-full opacity-0" aria-hidden="true" />;
+  // Full opacity from the first frame: it mounts underneath an opaque still
+  // and is never the only thing on screen, so there is nothing to fade up from.
+  return <canvas ref={canvasRef} className="h-full w-full" aria-hidden="true" />;
 }

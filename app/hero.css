@@ -87,6 +87,35 @@ body::after {
 }
 
 /*
+ * The still and the live field occupy the same square so they can cross-fade
+ * rather than swap. The still is on top and hands over once the field is
+ * actually drawing: opacity only, so the handover is compositor work and adds
+ * nothing to the main thread at the moment the field is busiest starting up.
+ * Unmounted after the transition, never during it.
+ */
+.hero-field-still,
+.hero-field-live {
+  position: absolute;
+  inset: 0;
+}
+.hero-field-still {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 700ms var(--ease-out, ease-out);
+}
+.hero-field-still[data-handed-over] {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* No field arrives here, so there is nothing to hand over to. Belt and
+     braces: if one ever did, it should appear without a fade rather than
+     animate. */
+  .hero-field-still {
+    transition: none;
+  }
+}
+
+/*
  * Light that follows the cursor. Reads --mx/--my, written once a frame by
  * components/pointer-field.tsx, and scales by --pointer-on so it eases in on
  * the first move instead of appearing. Resting position is dead centre, so
