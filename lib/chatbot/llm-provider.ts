@@ -9,7 +9,23 @@
 import { estimateCost } from "@/lib/chatbot/pricing";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+/**
+ * Groq retired llama-3.3-70b-versatile on 2026-08-16 (its own deprecations
+ * table's shutdown date, and it is gone from the production models list).
+ * Every completion call failed from then on, and because this adapter fails
+ * soft, production /ask refused every question for two days while the canary
+ * went red every six hours saying only "refused".
+ *
+ * openai/gpt-oss-120b is Groq's own named replacement for this exact model.
+ *
+ * The lesson worth keeping is not the swap. A pinned model id is a dependency
+ * with an expiry date that nothing in this repo watches, and the next one will
+ * expire too. What changed structurally is that a failure here is now
+ * reported as `provider_unavailable` rather than as a refusal indistinguishable
+ * from an off-topic question, so the canary names the cause the first time
+ * instead of the third day.
+ */
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
 export interface ChatCompletionResult {
   /** Raw JSON-mode string from the model (caller parses it). */

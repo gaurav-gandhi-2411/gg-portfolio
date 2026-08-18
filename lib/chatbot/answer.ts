@@ -14,10 +14,42 @@ import type { RetrievedChunk } from "@/lib/chatbot/retrieve";
 import { site } from "@/content/site";
 
 export const REFUSAL_MESSAGE =
-  "I don't have grounded information to answer that. I can only answer questions about GG's AI/ML project portfolio, case studies, and experience — try asking about one of those.";
+  "I don't have grounded information to answer that. I can only answer questions about GG's AI/ML project portfolio, case studies, and experience, so try asking about one of those.";
 
 export const SERVER_ERROR_MESSAGE =
-  "Something went wrong on our end handling that question. It's been logged — please try again in a moment.";
+  "Something went wrong on our end handling that question. It has been logged, so please try again in a moment.";
+
+/**
+ * Why a refusal happened. Machine-readable, never rendered.
+ *
+ * This exists because three unrelated failures used to produce one
+ * byte-identical response, and the one that took production down was
+ * indistinguishable from the one that means "you asked something off-topic":
+ * Groq retired llama-3.3-70b-versatile on 2026-08-16, every completion call
+ * started failing, the provider failed soft to null as designed, and the
+ * route turned that null into the same refusal it uses for a question the
+ * corpus cannot answer. The canary went red on schedule and said "refused",
+ * which is true of a healthy day too.
+ *
+ * The route already logged enough to tell them apart; the response did not,
+ * so nothing outside Vercel's log viewer could. Naming the reason in the
+ * body is what lets the canary say which runbook to open instead of leaving
+ * it to whoever reads the issue (CHECKS.md 12: failing closed is the exit
+ * code, being useful is the message).
+ */
+export type RefusalReason =
+  /** Nothing retrieved, or the best match scored below the threshold. */
+  | "no_grounding"
+  /** The completion call did not come back. Wrong or retired model, a bad
+   *  key, a quota, an outage: all of them are "the provider, not you". */
+  | "provider_unavailable"
+  /** The model answered, and cited nothing that validates against the chunks
+   *  actually retrieved for this request. */
+  | "unvalidated_citations"
+  /** The pipeline threw. Served with HTTP 500. */
+  | "server_error"
+  /** The local embedding dependency is absent. Served with HTTP 503. */
+  | "embeddings_unavailable";
 
 export interface ChatCitation {
   sourceRef: string;
@@ -58,13 +90,30 @@ export interface ChatAnswer {
    * normal outcome rather than a fault.
    */
   followUps: string[];
+  /**
+   * Which of the refusal paths produced this response. Diagnostic only: the
+   * UI never renders it, and the reader always sees the same honest sentence
+   * whichever one it was. See {@link RefusalReason}.
+   */
+  refusalReason?: RefusalReason;
 }
 
 /** The canonical honest-refusal response shape — used whenever the
  * pipeline declines to answer, for whatever reason (retrieval gate, a
- * failed LLM call, or a response that cited nothing that validates). */
-export function refusalAnswer(): ChatAnswer {
-  return { answer: REFUSAL_MESSAGE, citations: [], refused: true, followUps: [] };
+ * failed LLM call, or a response that cited nothing that validates).
+ *
+ * The reader-facing sentence is deliberately the same for all of them: a
+ * visitor cannot act on "the provider is down" any differently than on "ask
+ * something else", and telling them which vendor broke is noise. The reason
+ * is carried alongside for the canary, not for the page. */
+export function refusalAnswer(reason: RefusalReason = "no_grounding"): ChatAnswer {
+  return {
+    answer: REFUSAL_MESSAGE,
+    citations: [],
+    refused: true,
+    followUps: [],
+    refusalReason: reason,
+  };
 }
 
 /** Returned (with an HTTP 500) when the pipeline throws unexpectedly — a
@@ -73,7 +122,13 @@ export function refusalAnswer(): ChatAnswer {
  * {@link refusalAnswer} so the client can tell "we don't know" apart from
  * "we broke" instead of blaming the user's connection for both. */
 export function serverErrorAnswer(): ChatAnswer {
-  return { answer: SERVER_ERROR_MESSAGE, citations: [], refused: true, followUps: [] };
+  return {
+    answer: SERVER_ERROR_MESSAGE,
+    citations: [],
+    refused: true,
+    followUps: [],
+    refusalReason: "server_error",
+  };
 }
 
 /**
@@ -87,12 +142,13 @@ export function serverErrorAnswer(): ChatAnswer {
 export function unavailableAnswer(): ChatAnswer {
   return {
     answer:
-      "Ask is temporarily unavailable — the local search model didn't load. " +
+      "Ask is temporarily unavailable: the local search model didn't load. " +
       "Everything it can tell you is on this page and in the case studies.",
     citations: [],
     refused: true,
     unavailable: true,
     followUps: [],
+    refusalReason: "embeddings_unavailable",
   };
 }
 
@@ -167,8 +223,10 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
   }
 
   // Model cited nothing that validates — downgrade to the same honest
-  // refusal rather than return an uncited claim.
-  if (validatedCitations.length === 0) return refusalAnswer();
+  // refusal rather than return an uncited claim. Distinct reason: this one
+  // means the provider answered and the answer was ungrounded, which is a
+  // prompt or corpus problem, not an outage.
+  if (validatedCitations.length === 0) return refusalAnswer("unvalidated_citations");
 
   const answer =
     typeof parsed?.answer === "string" && parsed.answer.trim().length > 0
