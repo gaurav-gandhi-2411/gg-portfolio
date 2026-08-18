@@ -2,7 +2,7 @@ import Link from "next/link";
 import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
 import type { Product } from "@/content/types";
-import type { TracegaugeDownloads } from "@/lib/live-data";
+import type { PypiPackageStats } from "@/lib/live-data";
 import type { ProjectRhythm } from "@/lib/project-rhythm";
 import { cn } from "@/lib/utils";
 
@@ -21,13 +21,14 @@ import { cn } from "@/lib/utils";
 export function ProjectCard({
   product,
   dateline,
-  downloads,
+  pypiStats,
   headingLevel = "h3",
   rhythm,
 }: {
   product: Product;
   dateline?: string;
-  downloads?: TracegaugeDownloads | null;
+  /** This package's own registry figures, looked up by its package name. */
+  pypiStats?: PypiPackageStats;
   /** h3 under the home section's h2; h2 on /projects, whose h1 is the page title (heading order, axe). */
   headingLevel?: "h2" | "h3";
   /** Size and tint for this card, from lib/project-rhythm.ts. */
@@ -90,9 +91,20 @@ export function ProjectCard({
               <code className="border-border/60 bg-background text-foreground w-fit rounded-md border px-[var(--space-3)] py-[var(--space-1-5)] font-mono text-caption">
                 {product.pypi.installCommand}
               </code>
-              {downloads?.lastWeek !== undefined && (
+              {/* Each figure renders only if its own fetch came back. A
+                  package whose registry lookup failed shows the install
+                  line alone rather than a zero or a stale version. */}
+              {pypiStats?.version !== undefined && (
                 <span className="text-muted-foreground font-mono text-caption">
-                  {downloads.lastWeek.toLocaleString()} downloads last week
+                  v{pypiStats.version}
+                  {pypiStats.releaseCount !== undefined && pypiStats.releaseCount > 1
+                    ? ` · ${pypiStats.releaseCount} releases`
+                    : ""}
+                </span>
+              )}
+              {pypiStats?.lastWeek !== undefined && (
+                <span className="text-muted-foreground font-mono text-caption">
+                  {pypiStats.lastWeek.toLocaleString()} downloads last week
                 </span>
               )}
             </div>

@@ -25,17 +25,61 @@ async function safeFetchJson<T>(url: string, init?: RequestInit): Promise<T | nu
   }
 }
 
-export interface TracegaugeDownloads {
-  lastWeek: number;
-  lastMonth: number;
+/**
+ * What a published package's card can say about itself without anyone
+ * hand-typing a number: how many people installed it last week, what
+ * version the registry is actually serving, and how many releases have
+ * gone out.
+ *
+ * Keyed by package name on purpose. The first version of this returned a
+ * single object from a hard-coded `tracegauge` URL, and the call site
+ * rendered it for any product with a `pypi` field — correct while exactly
+ * one product had one, and silently wrong the moment a second did, since
+ * adk-tracegauge's card would have shown tracegauge's download count with
+ * nothing anywhere to say so. The lookup is now the package's own name, so
+ * a missing entry renders nothing rather than someone else's number.
+ */
+export interface PypiPackageStats {
+  lastWeek?: number;
+  lastMonth?: number;
+  /** The version the registry is currently serving, e.g. "0.4.1". */
+  version?: string;
+  /** How many versions have ever been published, including pre-releases. */
+  releaseCount?: number;
 }
 
-export async function getTracegaugeDownloads(): Promise<TracegaugeDownloads | null> {
-  const data = await safeFetchJson<{
-    data: { last_week: number; last_month: number };
-  }>("https://pypistats.org/api/packages/tracegauge/recent");
-  if (!data) return null;
-  return { lastWeek: data.data.last_week, lastMonth: data.data.last_month };
+export type PypiStatsByPackage = Record<string, PypiPackageStats>;
+
+/**
+ * Both halves fail independently and soft: a package with a reachable
+ * registry but an unreachable download API still gets its version, and a
+ * package with neither is simply absent from the map. Absent is rendered
+ * as nothing, never as zero — a real zero-download week and an unreachable
+ * API must not look the same on the card (CHECKS.md's opening rule).
+ */
+export async function getPypiStats(packageNames: string[]): Promise<PypiStatsByPackage> {
+  const unique = [...new Set(packageNames)];
+  const entries = await Promise.all(
+    unique.map(async (name) => {
+      const [recent, registry] = await Promise.all([
+        safeFetchJson<{ data: { last_week: number; last_month: number } }>(
+          `https://pypistats.org/api/packages/${name}/recent`
+        ),
+        safeFetchJson<{ info: { version: string }; releases: Record<string, unknown> }>(
+          `https://pypi.org/pypi/${name}/json`
+        ),
+      ]);
+      const stats: PypiPackageStats = {};
+      if (recent?.data) {
+        stats.lastWeek = recent.data.last_week;
+        stats.lastMonth = recent.data.last_month;
+      }
+      if (registry?.info?.version) stats.version = registry.info.version;
+      if (registry?.releases) stats.releaseCount = Object.keys(registry.releases).length;
+      return [name, stats] as const;
+    })
+  );
+  return Object.fromEntries(entries.filter(([, stats]) => Object.keys(stats).length > 0));
 }
 
 export interface WarmerPuzzleInfo {

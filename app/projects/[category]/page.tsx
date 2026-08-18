@@ -48,7 +48,7 @@ export default async function CategoryProjectsPage({
   if (!cat) notFound();
 
   const matching = products.filter((p) => p.categories.includes(cat.id as CategoryId));
-  const { datelineFor, downloads } = await getProjectDisplayData(matching);
+  const { datelineFor, pypiStatsFor } = await getProjectDisplayData(matching);
 
   return (
     <main
@@ -83,7 +83,7 @@ export default async function CategoryProjectsPage({
               key={product.slug}
               product={product}
               dateline={datelineFor(product)}
-              downloads={product.pypi ? downloads : undefined}
+              pypiStats={pypiStatsFor(product)}
               headingLevel="h2"
             />
           ))}

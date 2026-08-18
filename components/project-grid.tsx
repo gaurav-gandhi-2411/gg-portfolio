@@ -26,7 +26,7 @@ export async function ProjectGrid({
   cardHeadingLevel?: "h2" | "h3";
   capAllAt4?: boolean;
 } = {}) {
-  const { datelineFor, downloads } = await getProjectDisplayData(products);
+  const { datelineFor, pypiStatsFor } = await getProjectDisplayData(products);
   const rhythm = projectRhythm(products);
 
   return (
@@ -51,7 +51,7 @@ export async function ProjectGrid({
             key={product.slug}
             product={product}
             dateline={datelineFor(product)}
-            downloads={product.pypi ? downloads : undefined}
+            pypiStats={pypiStatsFor(product)}
             headingLevel={cardHeadingLevel}
             rhythm={rhythm.get(product.slug)}
           />
