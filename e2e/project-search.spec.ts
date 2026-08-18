@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { products } from "../content/products";
 
 /**
  * BL-9 — /projects search box. Round 5 removed the client-side MiniLM
@@ -43,13 +44,20 @@ test.describe("/projects search", () => {
     await expect(listbox.getByRole("option").first()).toContainText("Style Maitri");
   });
 
-  test("a query matching nothing still ranks all 13, none hidden", async ({ page }) => {
+  test("a query matching nothing still ranks every project, none hidden", async ({ page }) => {
     await page.goto("/projects");
     const input = page.getByRole("combobox", { name: /search projects/i });
     await input.fill("quantum spreadsheet nonsense");
 
     // Ranks, never filters — every project still appears in the listbox.
-    await expect(page.getByRole("listbox").getByRole("option")).toHaveCount(13);
+    //
+    // The expected count comes from content/products.ts rather than a literal,
+    // which was 13 until adk-tracegauge landed. The two sides stay independent:
+    // one is the rendered DOM, the other is the source list, and nothing but a
+    // real behaviour change can make them disagree. A literal here would have
+    // to be edited on every project add, which is the edit most likely to be
+    // made by changing the number until the test passes (CHECKS.md 18).
+    await expect(page.getByRole("listbox").getByRole("option")).toHaveCount(products.length);
   });
 
   test("keyboard flow: focus, type, ArrowDown, Enter navigates to the top result", async ({

@@ -201,6 +201,20 @@ export const products: Product[] = [
     },
   },
   {
+    slug: "adk-tracegauge",
+    name: "adk-tracegauge",
+    tagline:
+      "Fails your build when an agent starts costing more per run, and tells you, every run, the smallest rise it could actually have caught.",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/adk-tracegauge",
+    categories: ["llm-agents", "evals-research", "tooling"],
+    techChips: ["Google ADK", "Bootstrap CI", "PyPI"],
+    pypi: {
+      packageName: "adk-tracegauge",
+      installCommand: "pip install adk-tracegauge",
+      badgeUrl: "https://img.shields.io/pypi/v/adk-tracegauge.svg",
+    },
+  },
+  {
     slug: "expense-tracker",
     name: "Expense Tracker",
     tagline:
