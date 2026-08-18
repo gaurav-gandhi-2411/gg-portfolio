@@ -4,6 +4,99 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
+## Wave 22 (2026-08-18) — adk-tracegauge, the TriageIQ retrieval explainer, /ask
+
+Brief: add adk-tracegauge to the grid, build four project explainers, improve /ask
+(deep links first, then a visible scope statement, multi-turn only if continuity can be
+kept reliably). What follows is what landed, what did not, and one thing found on the way
+that took priority over all of it.
+
+### P0 found mid-wave: /ask has been dead in production since 2026-08-16
+
+Not in the brief, found while starting the deep-link work, and it outranked the rest:
+**production `/ask` refuses every question**, in scope or not. Groq retired
+`llama-3.3-70b-versatile` on 2026-08-16 (its own deprecations table's shutdown date; also
+absent from the production models list). Two independent sources, and the timing is exact:
+`chat-canary` last green 2026-08-17T07:02Z, first red 12:51Z, and **no commit landed in that
+window**, so it was never a code change.
+
+`groqProvider.complete()` fails soft to `null` as designed, and `route.ts` turned that into
+the same `refusalAnswer()` it returns for an off-topic question. Three unrelated failures,
+one response, so the canary could only report "refused" — true on a healthy day.
+
+Fixed in PR #149 (open, routed to GG — a model cutover is an explicit escalation):
+`openai/gpt-oss-120b`, Groq's own named replacement, plus a `refusalReason` on every refusal
+path and a canary that prints the matching runbook line. **Not verifiable from here:** whether
+`GROQ_API_KEY` is also expired. If it is, the next canary run now says so instead of leaving
+anyone guessing.
+
+### Shipped
+
+| PR | What | State |
+|---|---|---|
+| #144 | adk-tracegauge in the grid: product, case study, provenance, per-package PyPI figures | merged |
+| #145 | TriageIQ retrieval data: the real retriever run offline, 700 issues, 6 queries | merged |
+| #146 | The retrieval results as text, server-rendered, no picture | merged |
+| #147 | The retrieval space as a still, one query at a time | open, green |
+| #148 | The retrieval space in WebGL, on the shared renderer | open, green |
+| #149 | The Groq model retirement and the refusal that hid it | open, green, **GG's call** |
+| #150 | Cassettes say which model produced them | open, stacked on #149 |
+| #151 | /ask cites the section, not the page; says what it can answer | open |
+| #152 | CHECKS.md 29 to 33 | open |
+
+### Defects found by looking at the rendered page, not at the checks
+
+Each of these was green in CI the whole time:
+
+1. **PyPI figures were attributed to the wrong package.** `getTracegaugeDownloads()` fetched
+   one hard-coded package and both call sites rendered it for any product with a `pypi` entry.
+   Correct while exactly one product had one. adk-tracegauge would have shown tracegauge's
+   download count. Fixed by keying on the package's own name, which makes the class unreachable
+   rather than tested.
+2. **Literal backticks rendering to visitors**, 16 of them across six case studies, live on
+   production. The site has no inline-code renderer and the bodies are plain strings.
+3. **A hand-written version going stale on arrival.** The first draft of adk-tracegauge's
+   results row said "v0.4.1, eight releases", read live off the registry at 09:10 UTC. 0.5.0
+   published at 09:16. tracegauge's own page had been at v0.10.0 while the registry served
+   0.12.0 for over a month. Both rows now carry no version; the card fetches it.
+4. **All 565 `/ask` citation labels carried an em dash**, and all 565 render. They are
+   assembled in a build script, and `scripts/` is outside `check-no-em-dash`'s scope by design.
+   See CHECKS.md 29.
+
+### Not done, and why
+
+- **Three of the four explainers.** One shipped (TriageIQ retrieval, #145 to #148). The spatial
+  audit named Warmer and the Multimodal Fashion Recommender as the other genuinely spatial
+  candidates. MFR is the strongest remaining: real image and text embeddings in a shared
+  space, and it currently has no interactive surface at all. Warmer already has a GL embedding
+  viewer and a heat toy, so a fourth explainer there would be duplicative; a better fourth is
+  adk-tracegauge's power-versus-variance grid as an interactive diagram, which turns its
+  central honest claim into something a reader can operate.
+- **Multi-turn context on /ask.** Deliberately out, per the brief's own condition. Nothing in
+  this wave makes continuity reliable, and a follow-up that inherits the wrong context is worse
+  than one that starts fresh.
+
+### Standing gaps, flagged not fixed
+
+- `content/resume-data.json` holds 13 projects; the site now shows 14. Nothing compares those
+  two sets, so the divergence is silent. Adding adk-tracegauge there means authoring its four
+  ranking scores and regenerating the PDF through the Word COM backend.
+- The chatbot eval's cassettes were recorded against the retired model. #150 makes that
+  visible; re-recording spends Groq quota and writes a new baseline, so it is GG's call:
+  `GROQ_API_KEY=... node evals/chatbot/run-eval.mjs --live --force`, then compare against
+  95.0 / 100.0 / 100.0 / 0.0 before committing.
+- `scripts/check-bundle-size.mjs` defaults to `localhost:3000`. A two-day-old server from
+  another worktree was listening there, and the gate's own plausibility floor caught it (231
+  bytes for a whole route). Recorded as a known sharp edge rather than fixed in passing; see
+  CHECKS.md 33.
+
+### Perf, measured
+
+Eager JS gzip against the 220,160 ceiling: `/` 196,809 · `/projects` 196,907 ·
+`/work/triageiq` 196,383 · `/work/adk-tracegauge` 196,164 · `/ask` 194,166. The retrieval
+explainer adds about 220 bytes eager; its 38 KB projection and all its GL code sit in lazy
+chunks nobody downloads by scrolling past.
+
 ## P0 — sitewide DOM-crash fix; the original View-Transitions diagnosis was wrong (2026-08-16, PR pending GG's merge)
 
 **Severity confirmed, root cause was NOT what the assigning brief (or the prior session) believed.**
