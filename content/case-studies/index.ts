@@ -1,4 +1,5 @@
 import type { CaseStudy } from "../types";
+import { adkTracegauge } from "./adk-tracegauge";
 import { aetherart } from "./aetherart";
 import { agentgauge } from "./agentgauge";
 import { dealhunter } from "./dealhunter";
@@ -31,5 +32,6 @@ export const caseStudies: Record<string, CaseStudy> = {
   [agentgauge.slug]: agentgauge,
   [reclaim.slug]: reclaim,
   [tracegauge.slug]: tracegauge,
+  [adkTracegauge.slug]: adkTracegauge,
   [expenseTracker.slug]: expenseTracker,
 };

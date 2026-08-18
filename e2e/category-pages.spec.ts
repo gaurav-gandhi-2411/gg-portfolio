@@ -52,7 +52,7 @@ test("clicking See all on a capped home category lands on its /projects/[categor
   expect(clicked, "expected at least one category with more than 4 projects").toBe(true);
 });
 
-test("clicking See all 13 on home's All view lands on /projects with the full set", async ({
+test("clicking See all N on home's All view lands on /projects with the full set", async ({
   page,
 }) => {
   await page.goto("/");

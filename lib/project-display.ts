@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Product } from "@/content/types";
-import { getRepoFreshness, getTracegaugeDownloads, getWarmerPuzzleNumber } from "@/lib/live-data";
+import { getPypiStats, getRepoFreshness, getWarmerPuzzleNumber } from "@/lib/live-data";
 
 /**
  * Wave 15 — factored out of project-grid.tsx so /projects/[category] can
@@ -29,10 +29,14 @@ export async function getProjectDisplayData(products: Product[]) {
     .map((p) => repoSlug(p.repoUrl))
     .filter((s): s is string => s !== null);
 
-  const [freshness, puzzle, downloads] = await Promise.all([
+  const packageNames = products
+    .map((p) => p.pypi?.packageName)
+    .filter((name): name is string => Boolean(name));
+
+  const [freshness, puzzle, pypiStats] = await Promise.all([
     getRepoFreshness(repoSlugs),
     getWarmerPuzzleNumber(),
-    getTracegaugeDownloads(),
+    getPypiStats(packageNames),
   ]);
 
   function datelineFor(product: Product): string | undefined {
@@ -46,5 +50,15 @@ export async function getProjectDisplayData(products: Product[]) {
     return repoData ? formatFreshness(repoData.lastCommitDate) : undefined;
   }
 
-  return { datelineFor, downloads };
+  /**
+   * By the card's own package name, never "the PyPI stats" as a single
+   * blob — see getPypiStats's header for the misattribution this shape
+   * exists to make impossible.
+   */
+  function pypiStatsFor(product: Product) {
+    const name = product.pypi?.packageName;
+    return name ? pypiStats[name] : undefined;
+  }
+
+  return { datelineFor, pypiStatsFor };
 }

@@ -42,6 +42,7 @@ const CASE_STUDY_REPO = {
   "gold-rate-tracker": "gaurav-gandhi-2411/gold-rate-tracker", aetherart: "gaurav-gandhi-2411/AetherArt",
   agentgauge: "gaurav-gandhi-2411/agentgauge", reclaim: "gaurav-gandhi-2411/reclaim",
   tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer", "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
+  "adk-tracegauge": "gaurav-gandhi-2411/adk-tracegauge",
 };
 async function fetchText(url) {
   const controller = new AbortController();

@@ -79,7 +79,7 @@ test.describe("Mobile viewport containment (375px)", () => {
 /**
  * Tap-target sizing regression (2026-08-10 mobile audit): every provenance
  * disclosure trigger measured 24px tall site-wide (dozens of instances
- * across all 13 case studies), and the primary nav, breadcrumb "back"
+ * across every case study), and the primary nav, breadcrumb "back"
  * links, and category filter chips were all under the 44px bar too. Each
  * fix uses the same technique — inline-flex + min-h-11 (and min-w-11 where
  * the target's own width was also short) with a matching negative margin

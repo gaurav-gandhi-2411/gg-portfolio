@@ -10,12 +10,12 @@ import { getProvenance } from "@/lib/provenance";
  *
  * NOT a /work/[slug] case study: content/case-studies/index.ts's own header
  * states its registry keys "match content/products.ts slugs exactly" — this
- * project-search feature searches OVER the 13 products in that list, it
- * isn't a 14th entry in it, so giving it a case-study page would break that
+ * project-search feature searches OVER the products in that list, it
+ * isn't an entry in it, so giving it a case-study page would break that
  * documented 1:1 invariant for no real benefit (a visitor can already reach
  * this content from the exact page where the feature lives, which is a
  * shorter path than a separate page would be). A collapsed-by-default
- * disclosure keeps /projects' primary job — browsing 13 projects — the
+ * disclosure keeps /projects' primary job — browsing the projects — the
  * visually dominant thing on the page; this is deliberately opt-in reading,
  * not a wall of text above the fold.
  *
@@ -130,11 +130,13 @@ export function SearchMethodology() {
             info={getProvenance("search:eval-limitations", undefined, VERIFIED_AT)}
             label="the eval's own limitations"
           >
-            This comparison runs on 28 queries against 13 candidate projects, a random 3-guess
-            baseline would already clear about 23% Recall@3 by chance, so every tier&apos;s
-            85–100% is a genuine signal, but scores this close to 100% don&apos;t by themselves
-            prove sophisticated retrieval on a catalog this distinct; and the 28 queries are
-            LLM-generated, not collected from real recruiters, real search logs, or real usage
+            This comparison ran on 28 queries against the 13 projects the catalog held at the
+            time, a random 3-guess baseline would already clear about 23% Recall@3 by chance, so
+            every tier&apos;s 85–100% is a genuine signal, but scores this close to 100%
+            don&apos;t by themselves prove sophisticated retrieval on a catalog this distinct;
+            the 28 queries are LLM-generated, not collected from real recruiters, real search
+            logs, or real usage; and the catalog has grown since without the comparison being
+            re-run against it, so those numbers describe the run as it happened, not today
           </MetricProvenance>
           .
         </p>

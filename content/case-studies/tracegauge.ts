@@ -16,9 +16,9 @@ export const tracegauge: CaseStudy = {
     "tracegauge scores a finished session's token economy, trajectory quality (was the sequence of steps purposeful), and deterministic waste, and does it against the developer's own historical baseline rather than an arbitrary universal number, entirely locally, with no data leaving the machine unless the developer explicitly opts in.",
   ],
   approach: [
-    "The CLI (`tes`) reads a Claude Code session's JSONL log from `~/.claude/projects`, redacts secrets at the moment of ingestion, and computes three independent axes rather than one combined score. Token economy compares the session's token usage against a p25–p75 band (the middle 50% of past sessions) built from the developer's own history for that same kind of task. Trajectory quality is rated by a local LLM judge running Qwen3-30B via Ollama (with an opt-in API path for judging), scoring whether each step in the session was purposeful. Deterministic waste is caught by two rule-based detectors, repeated-failed-retry and redundant-read, each of which attaches the specific turns that prove the finding, rather than asserting waste without evidence.",
+    "The CLI (tes) reads a Claude Code session's JSONL log from ~/.claude/projects, redacts secrets at the moment of ingestion, and computes three independent axes rather than one combined score. Token economy compares the session's token usage against a p25–p75 band (the middle 50% of past sessions) built from the developer's own history for that same kind of task. Trajectory quality is rated by a local LLM judge running Qwen3-30B via Ollama (with an opt-in API path for judging), scoring whether each step in the session was purposeful. Deterministic waste is caught by two rule-based detectors, repeated-failed-retry and redundant-read, each of which attaches the specific turns that prove the finding, rather than asserting waste without evidence.",
     "There is deliberately no composite score: token economy, trajectory quality, and waste each carry their own caveats about where they're valid and where they're not, and collapsing them into one number would hide exactly the honesty that makes each axis useful on its own.",
-    "A background watcher plus a dashboard that only listens on localhost automatically scores sessions as they finish, and the CLI also exposes `score`, `monitor`, `budget`, and `patterns` subcommands directly. Nothing phones home except two explicit, separately-consented opt-ins.",
+    "A background watcher plus a dashboard that only listens on localhost automatically scores sessions as they finish, and the CLI also exposes score, monitor, budget, and patterns subcommands directly. Nothing phones home except two explicit, separately-consented opt-ins.",
   ],
   architecture: {
     intro:
@@ -103,8 +103,8 @@ export const tracegauge: CaseStudy = {
     },
     {
       label: "Distribution",
-      value: "live on PyPI, v0.10.0",
-      detail: "pip install tracegauge",
+      value: "installable from PyPI",
+      detail: "pip install tracegauge; the project card carries the version and release count the registry is serving right now",
       sourceRef: "tracegauge:pypi",
     },
     {
