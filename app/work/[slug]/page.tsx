@@ -4,6 +4,7 @@ import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
 import { RetrievalResults } from "@/components/triageiq/retrieval-results";
+import { RetrievalSpaceFrame } from "@/components/triageiq/retrieval-space";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
 import { EmbeddingViewerFrame } from "@/components/warmer/embedding-viewer-frame";
 import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
@@ -208,18 +209,19 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
             describe this sample, and the recall figures above are the ones measured over
             everything.
           </p>
-          {/*
-            Every query's real result, server-rendered, with no JavaScript
-            involved in producing or reading it. The picture lands in a
-            following change and adds in-place switching on top of this; it
-            will not add a number this does not already carry, which is why
-            this ships first and on its own.
-          */}
-          <div className="flex flex-col gap-[var(--space-6)]">
-            {retrieval.queries.map((query) => (
-              <RetrievalResults key={query.n} query={query} topK={retrieval.top_k} />
-            ))}
-          </div>
+          <RetrievalSpaceFrame>
+            {/*
+              The no-JavaScript path, and the pre-hydration one: every query's
+              real result, server-rendered. The interactive version adds the
+              picture and in-place switching, never a number this does not
+              already carry.
+            */}
+            <div className="flex flex-col gap-[var(--space-6)]">
+              {retrieval.queries.map((query) => (
+                <RetrievalResults key={query.n} query={query} topK={retrieval.top_k} />
+              ))}
+            </div>
+          </RetrievalSpaceFrame>
         </section>
       </>
     );

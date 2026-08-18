@@ -13,6 +13,8 @@ import projection from "../content/data/triageiq-retrieval-projection.json";
  *      content and any picture added later is a view of it.
  *   2. A query whose answer was missed says so, with the rank it actually
  *      got, because a section that only ever shows hits is an advert.
+ *   3. Picking a query shows that query, in place, and the picture beside it
+ *      is a still of the same corpus rather than an empty box.
  *
  * The expected values come from the committed projection rather than being
  * typed in, so the page and the data stay two independently derived sides of
@@ -62,6 +64,40 @@ test.describe("TriageIQ retrieval space", () => {
     await expect(section.getByText(`#${missed.gold}`).first()).toBeVisible();
   });
 
+  test("picking a query shows that query's result, in place", async ({ page }) => {
+    await page.goto("/work/triageiq");
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+
+    // Hydrated: one query at a time now, with a control per query.
+    const buttons = section.getByRole("button", { name: /^#\d+$/ });
+    await expect(buttons).toHaveCount(projection.queries.length);
+    await expect(section.locator("ol > li")).toHaveCount(projection.top_k);
+
+    const second = projection.queries[1];
+    await section.getByRole("button", { name: `#${second.n}`, exact: true }).click();
+
+    await expect(section.getByText(second.title, { exact: false }).first()).toBeVisible();
+    for (const hit of second.retrieved) {
+      await expect(section.getByText(hit.title, { exact: false }).first()).toBeVisible();
+    }
+  });
+
+  test("the picture is a still of the same corpus, not an empty box", async ({ page }) => {
+    await page.goto("/work/triageiq");
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+    // Hydration has to have happened for the count to mean anything: without
+    // it, a low circle count would prove only that the island had not loaded.
+    await expect(section.getByRole("button", { name: /^#\d+$/ }).first()).toBeVisible();
+
+    const circles = section.locator("svg circle");
+    await expect(circles.first()).toBeVisible();
+    // Every corpus point is drawn, either dimmed in the field or emphasised on
+    // top, so the total is the corpus itself rather than a sample of it.
+    expect(await circles.count()).toBeGreaterThanOrEqual(projection.points.length);
+  });
+
   test("the gold answer is marked wherever it landed inside the shown results", async ({
     page,
   }) => {
@@ -71,11 +107,13 @@ test.describe("TriageIQ retrieval space", () => {
 
     await page.goto("/work/triageiq");
     const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+    await section.getByRole("button", { name: `#${hit.n}`, exact: true }).click();
+
     // Marked by data attribute rather than by the label's wording, so a copy
     // edit cannot silently turn this into a test of nothing.
-    const goldRows = section.locator('ol > li[data-gold="true"]');
-    expect(await goldRows.count()).toBe(
-      projection.queries.filter((q) => q.gold_in_top_k).length
-    );
+    const goldRow = section.locator('ol > li[data-gold="true"]');
+    await expect(goldRow).toHaveCount(1);
+    await expect(goldRow).toContainText(`#${hit.gold}`);
   });
 });
