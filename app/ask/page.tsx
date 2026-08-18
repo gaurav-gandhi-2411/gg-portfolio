@@ -6,6 +6,7 @@ import {
   EVAL_PLACEHOLDER_VALUE,
   type ChatbotEvalMetric,
 } from "@/content/chatbot-eval-summary";
+import { products } from "@/content/products";
 
 export const metadata: Metadata = {
   title: "Ask about my work · Gaurav Gandhi",
@@ -56,9 +57,41 @@ export default function AskPage() {
         </h1>
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
           A retrieval-grounded chatbot over my actual case studies, architecture write-ups, and
-          background, not a general-purpose assistant. It only answers from what it retrieves
-          here, and it will honestly say so and decline rather than guess when the question is
-          out of scope or the corpus doesn&apos;t support an answer.
+          background, not a general-purpose assistant.
+        </p>
+      </div>
+
+      {/*
+        What it can answer, said before anyone types.
+
+        The panel already declines honestly when a question is out of scope,
+        but a refusal is a poor way to learn what a thing is for: the reader
+        pays a full round trip to find out, and the sentence they get back is
+        the same one they would get if the corpus simply lacked the answer.
+        Saying it up front costs nothing and turns the first question from a
+        guess into a choice.
+
+        The project count is derived from content/products.ts rather than
+        typed, because a number in a sentence about what the assistant knows
+        is exactly the kind that goes stale the next time a project lands and
+        nothing anywhere would notice.
+      */}
+      <div className="border-border/60 mx-auto mt-10 max-w-measure rounded-xl border p-5">
+        <h2 className="text-foreground text-sm font-semibold">What it can answer</h2>
+        <ul className="text-muted-foreground mt-3 flex flex-col gap-[var(--space-2)] text-sm leading-relaxed">
+          <li>
+            All {products.length} project case studies: what each one does, how it works, the
+            decisions behind it, and the results, including the ones that went badly.
+          </li>
+          <li>Where I have worked, what I built there, and what I am looking for now.</li>
+          <li>
+            The provenance behind any number on this site: which repo, which file, which commit.
+          </li>
+        </ul>
+        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+          It answers from those pages and nothing else, and every answer links back to the
+          section it came from, so you can check it. Ask it something outside that and it will
+          say so rather than guess.
         </p>
       </div>
 

@@ -15,6 +15,7 @@ import { projectHue } from "@/lib/project-rhythm";
 import { getProvenance } from "@/lib/provenance";
 import { caseStudyReadingMinutes } from "@/lib/reading-time";
 import type { RelatedProduct } from "@/lib/related-products";
+import { SECTION_TITLES, headingId } from "@/lib/case-study-anchors";
 
 /**
  * Wave 12 — the /work/[slug] case-study template: numbered sections, one
@@ -29,13 +30,6 @@ import type { RelatedProduct } from "@/lib/related-products";
  * the 2026-07-30 UI/UX wave — see section.tsx). A scroll-driven reading
  * progress bar (pure CSS, @supports-gated) sits above the nav.
  */
-
-function headingId(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 function SectionHeading({ index, title }: { index: number; title: string }) {
   return (
@@ -70,15 +64,19 @@ export function CaseStudyPage({
   /** Wave 16 — other projects sharing a category, most-related first (lib/related-products.ts). */
   related?: RelatedProduct[];
 }) {
+  // Titles come from lib/case-study-anchors.ts, which the chatbot indexer
+  // also reads. /ask cites a chunk and links to the section it came from, and
+  // that link is only correct while the fragment it emits is the id this page
+  // renders. One list, two readers, no third copy to drift.
   const tocSections: string[] = [
-    "The problem",
-    "How it works",
-    ...(study.architecture ? ["Architecture"] : []),
-    ...((study.decisions?.length ?? 0) > 0 ? ["Key decisions, and why"] : []),
+    SECTION_TITLES.problem,
+    SECTION_TITLES.approach,
+    ...(study.architecture ? [SECTION_TITLES.architecture] : []),
+    ...((study.decisions?.length ?? 0) > 0 ? [SECTION_TITLES.decisions] : []),
     ...(study.diagram ? [study.diagram.title] : []),
-    ...((study.results?.length ?? 0) > 0 ? ["Results, the honest numbers"] : []),
+    ...((study.results?.length ?? 0) > 0 ? [SECTION_TITLES.results] : []),
     ...(study.story ? [study.story.title] : []),
-    ...((study.closing?.length ?? 0) > 0 ? ["What this means if you need something similar"] : []),
+    ...((study.closing?.length ?? 0) > 0 ? [SECTION_TITLES.closing] : []),
   ];
   let sectionIndex = 0;
   const next = () => ++sectionIndex;
@@ -166,7 +164,7 @@ export function CaseStudyPage({
             <PrintButton />
           </p>
 
-          <SectionHeading index={next()} title="The problem" />
+          <SectionHeading index={next()} title={SECTION_TITLES.problem} />
           {study.problem.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
@@ -176,7 +174,7 @@ export function CaseStudyPage({
             </p>
           ))}
 
-          <SectionHeading index={next()} title="How it works" />
+          <SectionHeading index={next()} title={SECTION_TITLES.approach} />
           {study.approach.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
@@ -188,7 +186,7 @@ export function CaseStudyPage({
 
           {study.architecture && (
             <>
-              <SectionHeading index={next()} title="Architecture" />
+              <SectionHeading index={next()} title={SECTION_TITLES.architecture} />
               {study.architecture.intro && (
                 <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
                   {study.architecture.intro}
@@ -210,7 +208,7 @@ export function CaseStudyPage({
 
           {(study.decisions?.length ?? 0) > 0 && (
             <>
-              <SectionHeading index={next()} title="Key decisions, and why" />
+              <SectionHeading index={next()} title={SECTION_TITLES.decisions} />
               <ol className="mt-[var(--space-4)] flex flex-col gap-[var(--space-6)]">
                 {study.decisions?.map((decision) => (
                   <li key={decision.sourceRef} className="border-border/40 border-l-2 pl-5">
@@ -242,7 +240,7 @@ export function CaseStudyPage({
 
           {(study.results?.length ?? 0) > 0 && (
             <>
-              <SectionHeading index={next()} title="Results, the honest numbers" />
+              <SectionHeading index={next()} title={SECTION_TITLES.results} />
               <dl className="case-results">
                 {study.results?.map((result) => {
                   const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
@@ -297,7 +295,7 @@ export function CaseStudyPage({
             <>
               <SectionHeading
                 index={next()}
-                title="What this means if you need something similar"
+                title={SECTION_TITLES.closing}
               />
               {study.closing?.map((paragraph) => (
                 <p
