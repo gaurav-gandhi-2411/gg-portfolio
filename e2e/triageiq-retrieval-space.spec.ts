@@ -15,6 +15,15 @@ import projection from "../content/data/triageiq-retrieval-projection.json";
  *      got, because a section that only ever shows hits is an advert.
  *   3. Picking a query shows that query, in place, and the picture beside it
  *      is a still of the same corpus rather than an empty box.
+ *   4. A visitor whose device qualifies gets the WebGL layer, and one whose
+ *      device does not, or who asked for less motion, keeps the still.
+ *
+ * Sentence 3's second half used to be tested unconditionally, because until
+ * the WebGL layer existed the SVG was what every visitor got. It is not any
+ * more, and that test failed the moment the canvas arrived, correctly. The
+ * assertion it made (every corpus point drawn, not an empty box) is not
+ * dropped: it moved into the reduced-motion test below, which is the case it
+ * was really about.
  *
  * The expected values come from the committed projection rather than being
  * typed in, so the page and the data stay two independently derived sides of
@@ -83,19 +92,48 @@ test.describe("TriageIQ retrieval space", () => {
     }
   });
 
-  test("the picture is a still of the same corpus, not an empty box", async ({ page }) => {
+  test("a reduced-motion visitor keeps the still and gets no GL context", async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await context.newPage();
+    await page.goto("/work/triageiq");
+
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+    // Hydration has to have happened for this to mean anything: without it the
+    // absence of a canvas would prove only that the island had not loaded.
+    await expect(section.getByRole("button", { name: /^#\d+$/ }).first()).toBeVisible();
+
+    await expect(page.getByTestId("triageiq-retrieval-gl")).toHaveCount(0);
+    const circles = section.locator("svg circle");
+    await expect(circles.first()).toBeVisible();
+    expect(await circles.count()).toBeGreaterThanOrEqual(projection.points.length);
+
+    await context.close();
+  });
+
+  test("the WebGL layer mounts and draws when the device qualifies", async ({ page }) => {
+    // Same seam the Warmer viewer's tests use: CI runners report <=4 cores, so
+    // the capability gate correctly declines WebGL there. Without this the GL
+    // path would be covered only by local runs, which is the blind spot the
+    // seam exists to close rather than accept.
+    await page.addInitScript(() => {
+      (window as unknown as { __ggForceWebGLCapability?: boolean }).__ggForceWebGLCapability =
+        true;
+    });
     await page.goto("/work/triageiq");
     const section = page.getByRole("region", { name: SECTION });
     await section.scrollIntoViewIfNeeded();
-    // Hydration has to have happened for the count to mean anything: without
-    // it, a low circle count would prove only that the island had not loaded.
-    await expect(section.getByRole("button", { name: /^#\d+$/ }).first()).toBeVisible();
 
-    const circles = section.locator("svg circle");
-    await expect(circles.first()).toBeVisible();
-    // Every corpus point is drawn, either dimmed in the field or emphasised on
-    // top, so the total is the corpus itself rather than a sample of it.
-    expect(await circles.count()).toBeGreaterThanOrEqual(projection.points.length);
+    const canvas = page.getByTestId("triageiq-retrieval-gl");
+    await expect(canvas).toBeAttached();
+    // A canvas that never got a context or never drew would still be attached,
+    // so assert it has a real backing store rather than only an element.
+    const size = await canvas.evaluate((el) => [
+      (el as HTMLCanvasElement).width,
+      (el as HTMLCanvasElement).height,
+    ]);
+    expect(size[0]).toBeGreaterThan(0);
+    expect(size[1]).toBeGreaterThan(0);
   });
 
   test("the gold answer is marked wherever it landed inside the shown results", async ({

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
 
 import { RetrievalResults } from "@/components/triageiq/retrieval-results";
 import { RetrievalScatter } from "@/components/triageiq/retrieval-scatter";
 import { emphasisFor, type RetrievalProjection } from "@/lib/triageiq-retrieval-view";
+import { mayUseWebGL } from "@/lib/webgl/capability";
 import projectionJson from "@/content/data/triageiq-retrieval-projection.json";
 
 /**
@@ -16,6 +18,11 @@ import projectionJson from "@/content/data/triageiq-retrieval-projection.json";
  */
 const projection = projectionJson as RetrievalProjection;
 
+const RetrievalSpaceGL = dynamic(() => import("./retrieval-space-gl"), {
+  ssr: false,
+  loading: () => null,
+});
+
 /**
  * The interactive half of the retrieval-space explainer.
  *
@@ -23,10 +30,6 @@ const projection = projectionJson as RetrievalProjection;
  * gold set, embedded by the same model production uses and laid out by t-SNE.
  * Pick a query and the five issues the retriever actually returned light up,
  * with the one the gold set calls related marked wherever it landed.
- *
- * A WebGL layer replaces the SVG for visitors whose device qualifies; it
- * lands separately, and this stage is the shape everything falls back to,
- * which is why it ships first and on its own.
  *
  * The picture is a layout and the ranking is not computed in it. That gap is
  * the thing most likely to mislead a reader here, so it is stated in the copy
@@ -36,12 +39,19 @@ const projection = projectionJson as RetrievalProjection;
  */
 export default function RetrievalSpaceClient() {
   const [selected, setSelected] = useState(0);
+  // Decided once, in a lazy initialiser rather than an effect. This module is
+  // dynamically imported with ssr:false, so there is no server render for a
+  // capability read to disagree with, and doing it here means a qualifying
+  // visitor never sees the SVG paint and then get replaced by a canvas.
+  const [useGL, setUseGL] = useState(() => mayUseWebGL());
 
   const query = projection.queries[selected];
   const emphasis = useMemo(
     () => emphasisFor(projection.points, query),
     [query]
   );
+
+  const handleUnsupported = useCallback(() => setUseGL(false), []);
 
   return (
     <div className="flex flex-col gap-[var(--space-5)]">
@@ -65,7 +75,15 @@ export default function RetrievalSpaceClient() {
 
       <div className="grid gap-[var(--space-6)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="border-border/40 relative aspect-square overflow-hidden rounded-lg border">
-          <RetrievalScatter points={projection.points} emphasis={emphasis} />
+          {useGL ? (
+            <RetrievalSpaceGL
+              points={projection.points}
+              emphasis={emphasis}
+              onUnsupported={handleUnsupported}
+            />
+          ) : (
+            <RetrievalScatter points={projection.points} emphasis={emphasis} />
+          )}
         </div>
 
         <div className="flex flex-col gap-[var(--space-3)]">
