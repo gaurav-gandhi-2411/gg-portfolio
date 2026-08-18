@@ -8,8 +8,9 @@ it is a source of false confidence, and the more thorough it looks the worse
 that is.
 
 This is written down because the same failure was found **fifteen times in three
-days**, in fifteen different disguises, by fifteen unrelated routes, and thirteen
-times more in the design rebuild that followed. None was a bug in the usual sense. Almost every one was green — one that was red had already
+days**, in fifteen different disguises, by fifteen unrelated routes, thirteen
+times more in the design rebuild that followed, and five times more in the wave
+after that. None was a bug in the usual sense. Almost every one was green — one that was red had already
 been explained away in advance, one was a `2>/dev/null` typed for tidiness, one was
 a check that ran perfectly against an address the product had moved out of, one was
 a monitoring stack installed after an outage it could not have detected, and one was
@@ -24,7 +25,17 @@ session. These are the failures with the fewest available defenses, because no g
 catches a wrong inference drawn from an accurate report, and none of them announces
 itself as anything other than an ordinary error.
 
-Instances 16 through 28 came later, from a design rebuild rather than an audit,
+Instances 29 through 33 came last, and three of them are about the boundary of a
+control rather than its logic: a copy rule that reaches where copy is written and
+not where it is assembled, one alarm serving three failures that need three
+different responses, and a docblock claiming more reach than its assertions
+deliver. Instance 32 is this document's own method turned on itself, a negative
+control run against a build that was being rewritten while it ran. Instance 33 is
+the only entry here that ends well, and is included for that reason: a gate that
+knew the order of magnitude of its own correct answer refused an implausible one
+and caught a failure nobody had written it for.
+
+Instances 16 through 28 came earlier, from a design rebuild rather than an audit,
 and they extend the pattern rather than repeat it. Every earlier entry is a
 check that could not see its subject. Instance 16 is a check that saw its
 subject perfectly and had been told to look for the wrong thing. Instance 17 is
@@ -1078,10 +1089,187 @@ subject.** A fixed port, a bare `git status` with no directory, a hard-coded
 sibling path (instance 26) are all the same error, and all of them answer
 confidently about the wrong thing rather than failing.
 
+**29. A copy rule with a build script inside its blind spot.** `check-no-em-dash.mjs`
+names its own scope, which is the thing this document keeps asking for: string
+literals and JSX in `components/**` and `app/**`, string literals in
+`content/**`, and named fields of two `content/*.json` files. Everything about
+that is honest. It is also a description of where the copy is *written*, and
+some of the copy is *assembled*.
+
+Every citation under an `/ask` answer renders a `sourceLabel`, and every one of
+them is built in `scripts/chatbot/build-index.mjs` from a template like
+`` `${cs.title} case study — Results: ${r.label}` ``. **All 565 of them carried
+an em dash.** They render as the visible text of a link, directly under an
+answer, on the page the site invites a reader to interrogate. The check was
+green every run for months.
+
+Three things make this worth its own entry rather than a footnote on 18:
+
+- **The blind spot is a directory, and directories are how people reason about
+  scope.** `scripts/` is obviously not site copy, right up until a script
+  concatenates two strings a visitor reads. Nothing about the rule was wrong;
+  its surface was drawn around authorship rather than around destination, and
+  those two came apart at exactly one file.
+- **It was found by counting, not by reading.** Reading the check confirms it
+  does what it says. Reading the indexer confirms it builds labels. Only
+  counting em dashes in the built artifact puts the two together. This is the
+  same method that found the earlier `content/*.json` gap the check's own
+  header describes, which means the method worked twice and the lesson from
+  the first time was applied to the file rather than to the class.
+- **The fix needed an exemption, and the exemption needed a denominator.** 115
+  of the labels quote a `provenance.md` heading verbatim, and that file is
+  already a documented exclusion because rewriting a quoted heading falsifies a
+  citation. So the exemption follows the text into the label. It is printed,
+  not skipped: `783 rendered JSON field(s) ... plus 301 exempt as quoted
+  provenance headings`. A field a check declined to judge still has to reach
+  the denominator, or "I looked and it was fine" and "I did not look" are the
+  same number again.
+
+The question that generalises, and it is not "what does this check scan": **for
+every string a visitor reads, which check reaches the place it is assembled,
+as opposed to the place it is written?**
+
+**30. The same alarm for a dead vendor and an off-topic question.** Instance 12
+recorded a guard that reported "could not verify" as "confirmed outage". This is
+the same defect with the sign flipped, in this repo, on the surface the site is
+proudest of.
+
+Groq retired `llama-3.3-70b-versatile` on 2026-08-16. `/ask` refuses every
+question in production from that moment. `groqProvider.complete()` fails soft to
+`null`, exactly as designed, and `route.ts` turns that `null` into
+`refusalAnswer()` — the same bytes it returns when retrieval scores below
+threshold, which is what an off-topic question produces. Three unrelated
+failures, one response.
+
+`chat-canary.yml` did everything right. It fires every six hours, asks a real
+answerable question, treats `refused: true` as a failure, opens an issue, and
+comments on it. It went red on schedule and reported: **"pipeline did not
+produce a grounded answer"**. That sentence is true on a healthy day for an
+out-of-scope question, so it named nothing, and the failure sat for two days.
+
+What is uncomfortable is how close the canary came. Its own comment lists the
+candidate causes in the right order: *"e.g. GROQ_API_KEY missing/revoked, or the
+retrieval index broken"*. The author knew there were several. The response body
+could not say which, so the check could only report the union.
+
+The route *did* know: it logs `provider: "none"` for the retrieval gate and
+`provider: "groq"` for a failed completion. The information existed, one process
+boundary away from the only reader who needed it. **A diagnosis available in a
+log the alarm cannot read is not available to the alarm.**
+
+Fixed by putting the reason in the response — `no_grounding`,
+`provider_unavailable`, `unvalidated_citations`, `server_error`,
+`embeddings_unavailable` — and having the canary print the matching runbook
+line. The reader still sees one sentence, because a visitor cannot act on "the
+vendor retired a model" differently than on "ask something else". The
+distinction was never for them.
+
+The durable half is not the model swap. **A pinned model id is a dependency
+with an expiry date that nothing in the repo watches**, and the next one expires
+too. What changed is that the next expiry is named on its first firing rather
+than on its third day.
+
+**31. A test whose comment overstated what the test reached.** Small, and a new
+shape: every other entry here is a defect in a control. This is a defect in the
+*claim about* a control, written by someone who had just built it and had every
+reason to believe the claim.
+
+`e2e/ask-deep-links.spec.ts` loads every case study and asserts each anchor the
+chatbot index emits resolves to a real element. Its first docblock said it would
+catch a wrong anchor in the shared module "even though every producer agrees".
+
+Checked, because the habit is to check. Renaming a section title in
+`lib/case-study-anchors.ts` renames the heading and the emitted anchor together,
+and **all 34 tests still pass**. The claim was false.
+
+The test is not weaker than it should be — for this property, both sides
+agreeing *is* correctness, since the link lands on the right heading whatever it
+is called. What it really guards is an anchor the indexer emits that the page
+never renders, and that sabotage fails 26 of 34. Both facts are now in the file.
+
+The lesson is about where a wrong sentence about a control ends up. Nobody
+re-derives a test's reach from scratch; they read the comment. A docblock
+claiming more than the assertions deliver is a check that covers less than its
+name, moved one layer out into prose, where no gate looks at all. **Write down
+the sabotage that fails a test, not the one you assume would.**
+
+**32. Grading a build while rebuilding underneath it.** Instance 28 in a new
+costume, committed the same day it was read.
+
+Verifying that new tests fail against a reverted fix: sabotage two components,
+`npm run build`, run the suite. Eight of ten failed, including two that had no
+business failing. The result looked like evidence and was noise: a `next start`
+launched earlier was still serving `.next` while the build rewrote it
+underneath, so the suite graded a directory in motion, some routes stale and
+some fresh. Playwright's `reuseExistingServer` adopted it, correctly, because
+the port was this checkout's own.
+
+Killing the server by PID and re-running produced the clean result: **exactly
+the two sabotaged behaviours failed, the other three passed.**
+
+The tell was that the failure set was larger and less specific than the
+sabotage. A negative control that fails *more* than it should is as broken as one
+that fails less, and much easier to accept, because failing is what it was
+supposed to do. **When a sabotage run fails more tests than the sabotage
+explains, suspect the apparatus before the code.**
+
+The narrower rule: `reuseExistingServer` is correct for speed and unsafe across
+a rebuild. The port fix from instance 28 guarantees the server belongs to this
+worktree. It cannot guarantee it is serving this build.
+
+**33. A gate hard-coded to a port, and the plausibility floor that saved it.**
+Found in the same session and worth keeping, because it is the good outcome.
+
+`scripts/check-bundle-size.mjs` defaults to `http://localhost:3000`. A two-day-old
+`next start` from another worktree was listening there. The gate ran, fetched
+that server's page, summed its chunks, and reported:
+
+```
+FAIL — POLYFILL_MISSING: polyfill chunk(s) totaled only 21 bytes gzip within
+this route's 231-byte total, well under the 5000-byte plausibility floor
+(historical reference: 39,627 bytes)
+```
+
+231 bytes for a whole route. The gate did not know it was talking to the wrong
+server and did not need to: it knew what its own answer should roughly look
+like, and refused an implausible one instead of reporting it.
+
+This is the shape worth copying. Instance 28's fix was to make the port
+unambiguous, which is right and specific. This is the general version:
+**a check that knows the order of magnitude of its own correct answer can
+reject a wrong target without ever identifying it.** The failure it caught is
+not one it was written for.
+
+Left as-is deliberately. `BASE_URL_OVERRIDE` exists, CI runs its own server on a
+fresh runner, and the floor catches the local case loudly. Deriving the port
+here the way `playwright.config.ts` does would be tidier, and it is recorded as
+a known sharp edge rather than fixed on the way past.
+
 ## What follows from it
 
 - **Name the surface.** For every check, state which paths, which entries, which
   identities it actually reaches. If you cannot state it, you do not know it.
+- **Scope a copy rule by where the string is read, not by where it is typed.**
+  A directory boundary tracks authorship, and a build script that concatenates
+  two strings a visitor reads sits on the wrong side of it. For every string a
+  visitor reads, ask which check reaches the place it is *assembled*
+  (instance 29).
+- **A diagnosis that lives only in a log the alarm cannot read is not available
+  to the alarm.** If two failures need different responses, the difference has
+  to travel in the artifact the monitor actually receives, not in a log one
+  process boundary away (instance 30).
+- **Write down the sabotage that fails a test, not the one you assume would.**
+  Nobody re-derives a test's reach from scratch; they read the comment. A
+  docblock claiming more than the assertions deliver is a check covering less
+  than its name, moved into prose where no gate looks (instance 31).
+- **When a sabotage run fails more tests than the sabotage explains, suspect the
+  apparatus.** A negative control that fails too much is as broken as one that
+  fails too little, and far easier to accept, because failing is what it was
+  meant to do (instance 32).
+- **Give a check a sense of the magnitude of its own correct answer.** A gate
+  that knows roughly what its result should look like can reject a wrong target
+  without ever identifying it, which catches failures it was never written for
+  (instance 33).
 - **Give non-coverage its own status,** distinct from pass and from fail. This
   repo uses `UNVERIFIABLE` (tried, could not), `NO_LINE` / `SKIPPED` (nothing to
   compare), `QUALITATIVE` (correct forever, no anchor possible, not a backlog
