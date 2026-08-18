@@ -1217,6 +1217,23 @@ The narrower rule: `reuseExistingServer` is correct for speed and unsafe across
 a rebuild. The port fix from instance 28 guarantees the server belongs to this
 worktree. It cannot guarantee it is serving this build.
 
+**It recurred an hour after this entry was written, by its author, in the same
+session.** Merging `main` into a branch, rebuilding, and running the suite gave
+**112 failures**: a missing WebGL canvas, a launcher visibility assertion, a
+disclosure's `aria-expanded`, category filter counts. A server started earlier
+in the session was still on the port. Killing it by PID and re-running gave 433
+passed, 0 failed.
+
+Two things follow, and the second is the point of recording it. Writing the
+lesson down did not prevent the repeat, because the moment it applies is a
+moment of surprise, not of recall. What did catch it was the tell this entry
+already names: **the failure set was far broader and more diverse than the
+change could explain.** A merge of a retrieval explainer and a set of citation
+links does not break a launcher and a filter count. So the generalised form is
+not about sabotage runs at all: *whenever a suite fails in a shape the diff
+cannot account for, check what the suite was pointed at before reading a single
+stack trace.*
+
 **33. A gate hard-coded to a port, and the plausibility floor that saved it.**
 Found in the same session and worth keeping, because it is the good outcome.
 
