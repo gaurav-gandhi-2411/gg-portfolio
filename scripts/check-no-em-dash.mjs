@@ -11,7 +11,9 @@
 //
 //   covered: string literals and JSX text in components/**/*.tsx and
 //            app/**/*.tsx, string literals in content/**/*.ts, and the
-//            value-bearing fields of content/*.json.
+//            value-bearing fields of the content JSON files named in
+//            JSON_FILES below (the metrics stores, and the two projection
+//            data files whose titles and terms render on a case study).
 //
 //   NOT covered: code comments, and docs/reports/PLAN/CHECKS/spec/README.
 //            Those are written for people working on the repo, not for
@@ -70,8 +72,34 @@ const CODE_ROOTS = [
 // direction for a rule about voice: a false pass on a field nobody renders
 // costs nothing, while a false pass on rendered copy is the thing this
 // exists to stop, and is exactly what the previous version did.
-const RENDERED_JSON_KEYS = new Set(["value", "label", "store_value_at_sync"]);
-const JSON_FILES = ["metrics.json", "resume-metrics.json"];
+const RENDERED_JSON_KEYS = new Set([
+  "value",
+  "label",
+  "store_value_at_sync",
+  // content/data/*.json. These hold quoted source material -- a GitHub issue
+  // title, a term from an eval vocabulary -- which is the shape this file's
+  // header argues should be exempt, and it is exempt for a citation in
+  // provenance.md because a citation is quoted rather than written. The
+  // difference here is that these strings are not citations, they are the
+  // page: a visitor reads issue titles in the retrieval explainer and term
+  // labels on the Warmer viewer the same way they read a paragraph. Quoted
+  // copy that renders is still copy that renders, and a rule about the site's
+  // voice that stops at the edge of a data file covers less than its name.
+  //
+  // If a regenerated projection ever does bring in an em dash from real
+  // upstream text, this fails and the fix is a decision, not a silent pass:
+  // pick a different sample, or state on the page that the string is quoted
+  // verbatim. Both are better than finding out from the rendered page.
+  "title",
+  "gold_title",
+  "term",
+]);
+const JSON_FILES = [
+  "metrics.json",
+  "resume-metrics.json",
+  "data/triageiq-retrieval-projection.json",
+  "data/hinglish-embedding-projection.json",
+];
 
 function walk(dir, exts, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -137,7 +165,7 @@ for (const file of codeFiles) {
 // ---- json value fields ----------------------------------------------------
 let jsonFieldsScanned = 0;
 for (const name of JSON_FILES) {
-  const full = path.join(ROOT, "content", name);
+  const full = path.join(ROOT, "content", ...name.split("/"));
   let parsed;
   try {
     parsed = JSON.parse(readFileSync(full, "utf8"));
