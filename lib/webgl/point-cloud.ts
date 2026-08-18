@@ -26,6 +26,11 @@ const VERTEX_SHADER_SOURCE = `
   attribute vec3 aBase;
   attribute vec3 aFinetuned;
   attribute float aBaseOpacity;
+  // 0 for every point unless a caller sets it. Both uses below are written so
+  // that 0 is exact identity (multiply by 1.0, add 0.0), which is what lets
+  // the Warmer viewer keep rendering the same pixels it did before this
+  // attribute existed.
+  attribute float aEmphasis;
 
   uniform float uMorph;
   uniform float uAspect;
@@ -78,8 +83,12 @@ const VERTEX_SHADER_SOURCE = `
     // relative cluster identity stays exactly what the static layer encodes
     // while the GL layer — which is drawn much larger — still reads as
     // structure rather than as faint noise.
-    vAlpha = aBaseOpacity * (0.60 + depthFactor * 0.40) * uGain;
-    gl_PointSize = (3.2 + depthFactor * 4.2) * uDpr * scale;
+    // Emphasis reads as brightness and size, never as a second hue: the
+    // token file allows exactly one accent, so a highlighted point has to be
+    // the same indigo turned up rather than a different colour.
+    float lift = 1.0 + aEmphasis * 4.0;
+    vAlpha = min(aBaseOpacity * (0.60 + depthFactor * 0.40) * uGain * lift, 1.0);
+    gl_PointSize = (3.2 + depthFactor * 4.2) * (1.0 + aEmphasis * 3.2) * uDpr * scale;
   }
 `;
 
@@ -132,6 +141,16 @@ export interface PointCloudRenderer {
    * frame.
    */
   project(morph: number, angleRadians?: number): Float32Array;
+  /**
+   * Per-point emphasis, 0 to 1, one entry per point in the order given to the
+   * factory. Lives in its own buffer rather than the interleaved one so a
+   * whole-set update is a single upload, and so the interleaved layout every
+   * existing caller depends on is untouched.
+   *
+   * A caller that never calls this gets all zeros, which the shader treats as
+   * exact identity.
+   */
+  setEmphasis(values: ArrayLike<number>): void;
   dispose(): void;
 }
 
@@ -213,9 +232,21 @@ export function createPointCloudRenderer(
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, cpuData, gl.STATIC_DRAW);
 
+  // One float per point, separate from the interleaved buffer above.
+  const emphasisBuffer = gl.createBuffer();
+  if (!emphasisBuffer) {
+    gl.deleteBuffer(buffer);
+    gl.deleteProgram(program);
+    throw new Error("point-cloud: gl.createBuffer returned null for emphasis");
+  }
+  const emphasisData = new Float32Array(points.length);
+  gl.bindBuffer(gl.ARRAY_BUFFER, emphasisBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, emphasisData, gl.DYNAMIC_DRAW);
+
   const aBase = gl.getAttribLocation(program, "aBase");
   const aFinetuned = gl.getAttribLocation(program, "aFinetuned");
   const aBaseOpacity = gl.getAttribLocation(program, "aBaseOpacity");
+  const aEmphasis = gl.getAttribLocation(program, "aEmphasis");
   const uMorph = gl.getUniformLocation(program, "uMorph");
   const uAspect = gl.getUniformLocation(program, "uAspect");
   const uDpr = gl.getUniformLocation(program, "uDpr");
@@ -262,6 +293,10 @@ export function createPointCloudRenderer(
     gl.enableVertexAttribArray(aBaseOpacity);
     gl.vertexAttribPointer(aBaseOpacity, 1, gl.FLOAT, false, stride, 6 * FLOAT_BYTES);
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, emphasisBuffer);
+    gl.enableVertexAttribArray(aEmphasis);
+    gl.vertexAttribPointer(aEmphasis, 1, gl.FLOAT, false, 0, 0);
+
     gl.uniform1f(uMorph, morph);
     gl.uniform1f(uAspect, aspect);
     gl.uniform1f(uDpr, dpr);
@@ -297,10 +332,22 @@ export function createPointCloudRenderer(
     return out;
   }
 
+  function setEmphasis(values: ArrayLike<number>): void {
+    // Short input leaves the tail at whatever it held, which would show as a
+    // stale highlight nobody asked for; clear first so the argument is the
+    // whole truth about which points are emphasised.
+    emphasisData.fill(0);
+    const n = Math.min(values.length, emphasisData.length);
+    for (let i = 0; i < n; i++) emphasisData[i] = values[i];
+    gl.bindBuffer(gl.ARRAY_BUFFER, emphasisBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, emphasisData, gl.DYNAMIC_DRAW);
+  }
+
   function dispose(): void {
     gl.deleteBuffer(buffer);
+    gl.deleteBuffer(emphasisBuffer);
     gl.deleteProgram(program);
   }
 
-  return { render, resize, project, dispose };
+  return { render, resize, project, setEmphasis, dispose };
 }
