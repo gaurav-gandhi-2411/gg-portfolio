@@ -248,8 +248,110 @@ function extractChromeVersion(lhr) {
 }
 
 const PROFILE_PREFIX = "gg-lh-profile-";
+/** The other half of what this script leaves in tmpdir; see the exit handler. */
+const RAW_OUTPUT_PREFIX = "gg-portfolio-lighthouse-";
 /** Directories this process could not remove, reported at the end rather than swallowed. */
 const leakedProfiles = [];
+
+/**
+ * Profile dirs this process has created and not yet removed.
+ *
+ * Cleanup used to live only in a run's own `finally`, with a sweep of stale
+ * dirs at startup as the backstop. That covers a run that finishes, and
+ * nothing else, and a startup sweep only helps if there IS a next run. The
+ * common failure here is not a crash: it is the process being killed part
+ * way through, by a command timeout or by an interrupt, which is exactly what
+ * happened repeatedly while measuring this engagement. Every one of those
+ * leaves its dir behind until somebody happens to run Lighthouse again.
+ *
+ * So cleanup now also happens on the way out. This set is the list of what
+ * still needs removing at that point.
+ */
+const liveProfiles = new Set();
+
+/**
+ * Best-effort synchronous removal, for the exit path where nothing can be
+ * awaited. Two attempts rather than the async path's seven, because a
+ * synchronous retry loop cannot wait for Windows to release a handle without
+ * blocking the exit it is running inside.
+ */
+function removeProfilesSync(reason) {
+  for (const dir of [...liveProfiles]) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        rmSync(dir, { recursive: true, force: true });
+        liveProfiles.delete(dir);
+        break;
+      } catch {
+        /* locked; the startup sweep remains the backstop for this case */
+      }
+    }
+  }
+  if (liveProfiles.size > 0) {
+    console.warn(
+      `  (${reason}: ${liveProfiles.size} profile dir(s) still locked on the way out, left for the next run's sweep)`
+    );
+  }
+}
+
+/**
+ * The raw per-run LHR dir, removed on the way out unless the caller asked for
+ * it somewhere specific.
+ *
+ * THIS is the directory that was actually accumulating. The profile-dir leak
+ * was found and fixed, the sweep was written, and the problem kept coming
+ * back, because the sweep only ever matched PROFILE_PREFIX while
+ * RAW_OUTPUT_DIR was created by mkdtempSync on every single invocation and
+ * removed by nothing, anywhere, ever. 66 of them were on this machine holding
+ * 170.9 MB when this was written, against zero leaked profile dirs.
+ *
+ * That is this repo's own recurring shape one more time: a control whose name
+ * says "cleans up Lighthouse temp dirs" and whose reach is one of the two
+ * prefixes it would have to cover to mean that.
+ *
+ * Nothing durable points into it. The per-run rawPath is returned in memory
+ * and never written to the summary, and the artifacts that survive a run are
+ * reports/*.summary.json and reports/*.report.json. So the contract is: raw
+ * output is scratch, and anyone who wants to keep it sets OUTPUT_DIR_OVERRIDE,
+ * which is respected and never deleted.
+ */
+const RAW_OUTPUT_DIR_IS_OURS = !process.env.OUTPUT_DIR_OVERRIDE;
+
+function removeRawOutputDirSync() {
+  if (!RAW_OUTPUT_DIR_IS_OURS) return;
+  try {
+    rmSync(RAW_OUTPUT_DIR, { recursive: true, force: true });
+  } catch {
+    /* locked; the sweep below covers it on a later run */
+  }
+}
+
+/**
+ * Cleanup on the way out, for every exit Node itself controls: a normal
+ * finish, an explicit process.exit(), and an uncaught exception.
+ *
+ * WHAT THIS DOES NOT COVER, stated because the difference matters on this
+ * platform. Signal handlers were tried first and removed again after testing
+ * them: on Windows an externally delivered SIGINT/SIGTERM terminates the
+ * process without the handler ever running, verified directly rather than
+ * assumed (a probe process with handlers registered for all four signals was
+ * killed with process.kill(pid, 'SIGINT') and neither cleaned up nor printed
+ * anything). So a forced kill, and a command timeout, still leak, and no
+ * in-process code can change that.
+ *
+ * That is exactly why sweepStaleProfiles stays rather than being replaced by
+ * this: it is the backstop for the one case an exit handler structurally
+ * cannot reach. It now covers both prefixes, which is the fix it needed.
+ */
+process.on("exit", () => {
+  removeProfilesSync("on exit");
+  removeRawOutputDirSync();
+});
+process.on("uncaughtException", (err) => {
+  removeProfilesSync("uncaught exception");
+  removeRawOutputDirSync();
+  throw err;
+});
 
 /**
  * Removes a profile directory, waiting for Windows to let go of it.
@@ -289,7 +391,10 @@ function sweepStaleProfiles() {
   let bytes = 0;
   let skippedRecent = 0;
   for (const name of readdirSync(tmpdir())) {
-    if (!name.startsWith(PROFILE_PREFIX)) continue;
+    // Both prefixes. Matching only PROFILE_PREFIX is what let the raw-output
+    // dirs accumulate untouched while this function reported success, which
+    // is the whole reason the leak kept coming back after being fixed.
+    if (!name.startsWith(PROFILE_PREFIX) && !name.startsWith(RAW_OUTPUT_PREFIX)) continue;
     const dir = join(tmpdir(), name);
     try {
       const st = statSync(dir);
@@ -307,7 +412,7 @@ function sweepStaleProfiles() {
   }
   if (removed > 0 || skippedRecent > 0) {
     console.log(
-      `Swept ${removed} stale Chrome profile(s) from ${tmpdir()}` +
+      `Swept ${removed} stale Lighthouse temp dir(s) (Chrome profiles and raw output) from ${tmpdir()}` +
         (bytes ? ` (${(bytes / 1024 / 1024).toFixed(0)} MB)` : "") +
         (skippedRecent ? `, left ${skippedRecent} newer than 15min alone` : "")
     );
@@ -349,6 +454,7 @@ async function runOnce(url, chromePath, runIndex) {
   // function does its own best-effort removal instead, on a path this
   // function actually controls.
   const profileDir = mkdtempSync(join(tmpdir(), "gg-lh-profile-"));
+  liveProfiles.add(profileDir);
   const chrome = await launchChrome({
     chromePath,
     userDataDir: profileDir,
@@ -387,7 +493,7 @@ async function runOnce(url, chromePath, runIndex) {
     // resolves when the process is signalled, not when Windows has released
     // its handles on the profile, so a removal issued immediately afterwards
     // hits a locked directory. Waiting a moment and trying again clears it.
-    await removeProfileWithRetry(profileDir, runIndex);
+    if (await removeProfileWithRetry(profileDir, runIndex)) liveProfiles.delete(profileDir);
   }
   if (!result?.lhr) throw new Error("lighthouse() returned no lhr");
   const { lhr } = result;
