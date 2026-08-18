@@ -157,7 +157,7 @@
     },
     "gold-rate-tracker:headline": {
       "label": "Naive baseline vs. ML model (199-fold backtest)",
-      "value": "Naive wins — ships the honest baseline, not the model",
+      "value": "Naive wins: ships the honest baseline, not the model",
       "repo": "gaurav-gandhi-2411/gold-rate-tracker",
       "source_file": "data/backtest.json",
       "source_line": 8,
@@ -206,7 +206,7 @@
     },
     "reclaim:honesty-arc": {
       "label": "Exact-duplicate reclaimable estimate, corrected as real safety bugs were found",
-      "value": "~48GB → 23.09GB → 4.26GB → 3.92GB — never corrected upward",
+      "value": "~48GB → 23.09GB → 4.26GB → 3.92GB, never corrected upward",
       "repo": "gaurav-gandhi-2411/reclaim",
       "source_file": "docs/CASE_STUDY.md",
       "source_line": 761,
