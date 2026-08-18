@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
+import { RetrievalResults } from "@/components/triageiq/retrieval-results";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
 import { EmbeddingViewerFrame } from "@/components/warmer/embedding-viewer-frame";
 import { EmbeddingViewerStatic } from "@/components/warmer/embedding-viewer-static";
@@ -10,6 +11,7 @@ import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
 import { getWarmerPuzzleNumber } from "@/lib/live-data";
+import { getRetrievalProjection } from "@/lib/triageiq-retrieval";
 import { relatedProducts } from "@/lib/related-products";
 
 export function generateStaticParams() {
@@ -158,18 +160,68 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       </>
     );
   } else if (slug === "triageiq") {
+    const retrieval = getRetrievalProjection();
     demo = (
-      <section
-        aria-label="Try an illustrative TriageIQ classifier"
-        className="border-border/40 mt-16 flex flex-col gap-2 border-t pt-10"
-      >
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
-        <p className="max-w-measure text-base leading-relaxed text-foreground">
-          The same technique as stage 1, running live in your browser on a small sample of
-          real GitHub issues:
-        </p>
-        <TriageiqClassifyDisclosure />
-      </section>
+      <>
+        <section
+          aria-label="Try an illustrative TriageIQ classifier"
+          className="border-border/40 mt-16 flex flex-col gap-2 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            The same technique as stage 1, running live in your browser on a small sample of
+            real GitHub issues:
+          </p>
+          <TriageiqClassifyDisclosure />
+        </section>
+
+        <section
+          aria-label="Which already-solved issues look like this one"
+          className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+        >
+          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+            The second question, in the space it is answered in
+          </p>
+          <p className="max-w-measure text-base leading-relaxed text-foreground">
+            {retrieval.corpus_size} real {retrieval.repo} issues, embedded by the model this
+            project actually ships and laid out in three dimensions. Pick one of the six and
+            you see the five issues the retriever handed back for it, in its order, with the
+            one the gold set calls related marked wherever it came in.
+          </p>
+          {/*
+            The caveat sits above the picture, not under it. A point cloud is
+            persuasive on its own terms and this one would happily be read as
+            saying "related issues sit next to each other", which is a claim
+            about the picture rather than about the retriever.
+          */}
+          <p className="max-w-measure text-sm leading-relaxed text-muted-foreground">
+            <span className="font-medium text-foreground">
+              What the picture is, and what it is not.
+            </span>{" "}
+            Every rank here was worked out in the model&apos;s own 768 dimensions before
+            anything was drawn. What you see is a t-SNE layout, which is a flattening chosen to
+            look tidy, so two dots sitting together are not necessarily each other&apos;s
+            nearest neighbours and a highlighted issue can land anywhere on screen. That is why
+            the highlight follows issue numbers rather than distance. The corpus is also a
+            seed-fixed sample of {retrieval.corpus_size} of the{" "}
+            {retrieval.corpus_total.toLocaleString()} issues in the gold set, so these ranks
+            describe this sample, and the recall figures above are the ones measured over
+            everything.
+          </p>
+          {/*
+            Every query's real result, server-rendered, with no JavaScript
+            involved in producing or reading it. The picture lands in a
+            following change and adds in-place switching on top of this; it
+            will not add a number this does not already carry, which is why
+            this ships first and on its own.
+          */}
+          <div className="flex flex-col gap-[var(--space-6)]">
+            {retrieval.queries.map((query) => (
+              <RetrievalResults key={query.n} query={query} topK={retrieval.top_k} />
+            ))}
+          </div>
+        </section>
+      </>
     );
   }
 
