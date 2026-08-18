@@ -46,7 +46,7 @@ export const reviewiq: CaseStudy = {
   decisions: [
     {
       title: "Groq only on the client-data path, Gemini is dev-only",
-      body: "Gemini's free tier trains on submitted data, which is unacceptable for real customer reviews. The client-facing path is hard-restricted to Groq-hosted models, enforced in code by an `assert_privacy_safe()` check rather than left as a policy someone could forget to follow.",
+      body: "Gemini's free tier trains on submitted data, which is unacceptable for real customer reviews. The client-facing path is hard-restricted to Groq-hosted models, enforced in code by an assert_privacy_safe() check rather than left as a policy someone could forget to follow.",
       sourceRef: "reviewiq:privacy-routing",
     },
     {
