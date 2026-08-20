@@ -76,6 +76,10 @@ const RENDERED_JSON_KEYS = new Set([
   "value",
   "label",
   "store_value_at_sync",
+  // The visible text of a citation link under an /ask answer. Assembled in
+  // scripts/chatbot/build-index.mjs, which is outside this check's file
+  // scope, so all 565 of them carried an em dash while this reported clean.
+  "sourceLabel",
   // content/data/*.json. These hold quoted source material -- a GitHub issue
   // title, a term from an eval vocabulary -- which is the shape this file's
   // header argues should be exempt, and it is exempt for a citation in
@@ -99,7 +103,24 @@ const JSON_FILES = [
   "resume-metrics.json",
   "data/triageiq-retrieval-projection.json",
   "data/hinglish-embedding-projection.json",
+  "chatbot/index.json",
 ];
+
+/**
+ * Citation labels that quote a provenance.md heading verbatim.
+ *
+ * content/provenance.md is already a documented exclusion from this check
+ * (see the header): its rendered surface is a citation string, and rewriting
+ * a quoted heading to satisfy a house style falsifies the citation. The
+ * chatbot index builds a label by prefixing those same headings, so the
+ * exemption has to follow the text into the label, or this check would
+ * demand an edit to provenance.md that the check itself forbids.
+ *
+ * Narrow on purpose: it exempts the prefix that marks quoted material, not
+ * the file. Every other label in that index is written rather than quoted,
+ * and is covered.
+ */
+const QUOTED_LABEL_PREFIXES = ["Provenance ledger, "];
 
 function walk(dir, exts, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -164,6 +185,7 @@ for (const file of codeFiles) {
 
 // ---- json value fields ----------------------------------------------------
 let jsonFieldsScanned = 0;
+let quotedExempt = 0;
 for (const name of JSON_FILES) {
   const full = path.join(ROOT, "content", ...name.split("/"));
   let parsed;
@@ -180,6 +202,13 @@ for (const name of JSON_FILES) {
     } else if (node && typeof node === "object") {
       for (const [k, v] of Object.entries(node)) visit(v, k, trail ? `${trail}.${k}` : k);
     } else if (typeof node === "string" && RENDERED_JSON_KEYS.has(key)) {
+      if (QUOTED_LABEL_PREFIXES.some((prefix) => node.startsWith(prefix))) {
+        // Counted as exempt rather than skipped silently: a field this check
+        // decided not to judge still has to reach the denominator, or "I
+        // looked and it was fine" and "I did not look" print the same number.
+        quotedExempt += 1;
+        return;
+      }
       jsonFieldsScanned += 1;
       if (node.includes(EM)) {
         violations.push({ where: `content/${name} at ${trail}`, text: node.slice(0, 110) });
@@ -199,7 +228,9 @@ if (jsonFieldsScanned === 0) {
 
 console.log(
   `check-no-em-dash: scanned ${codeFiles.length} rendering file(s) and ` +
-    `${jsonFieldsScanned} rendered JSON field(s) for the em dash character\n`
+    `${jsonFieldsScanned} rendered JSON field(s) for the em dash character` +
+    (quotedExempt > 0 ? `, plus ${quotedExempt} exempt as quoted provenance headings` : "") +
+    `\n`
 );
 
 if (violations.length > 0) {
