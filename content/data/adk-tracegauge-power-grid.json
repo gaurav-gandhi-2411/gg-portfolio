@@ -1,0 +1,180 @@
+{
+  "_source": "gaurav-gandhi-2411/adk-tracegauge at commit e06af2e (README.md:95-131, docs/audit/Q1_WITHIN_CASE_CV.md:48-51). Every cell here is a number already published and audited in that repo -- not a fresh simulation. Wilson 95% CIs, confidence=0.98, >=2,000 trials/cell for the two regime grids; the real-measured point cites its own trial count directly. See content/case-studies/adk-tracegauge.ts's story section and content/provenance.md's adk-tracegauge section for the narrative this data supports.",
+  "effect": "10% cost regression",
+  "n_values": [30, 50, 100],
+  "regimeA": {
+    "label": "Fixed absolute dollar noise",
+    "approximates": "an evalset of near-identical cases -- the same prompt shape repeated, where response-length noise is roughly constant in dollar terms regardless of that case's cost",
+    "row_label": "Absolute SD",
+    "rows": [
+      {
+        "value": 0.0002,
+        "display": "$0.0002",
+        "power": [
+          { "n": 30, "pct": 100.0, "ci": [99.81, 100.0] },
+          { "n": 50, "pct": 100.0, "ci": [99.81, 100.0] },
+          { "n": 100, "pct": 100.0, "ci": [99.81, 100.0] }
+        ]
+      },
+      {
+        "value": 0.0004,
+        "display": "$0.0004",
+        "power": [
+          { "n": 30, "pct": 100.0, "ci": [99.81, 100.0] },
+          { "n": 50, "pct": 100.0, "ci": [99.81, 100.0] },
+          { "n": 100, "pct": 100.0, "ci": [99.81, 100.0] }
+        ]
+      },
+      {
+        "value": 0.0008,
+        "display": "$0.0008",
+        "note": "the package's originally-published grid's own constant",
+        "power": [
+          { "n": 30, "pct": 99.0, "ci": [98.46, 99.35] },
+          { "n": 50, "pct": 100.0, "ci": [99.81, 100.0] },
+          { "n": 100, "pct": 100.0, "ci": [99.81, 100.0] }
+        ]
+      },
+      {
+        "value": 0.0016,
+        "display": "$0.0016",
+        "power": [
+          { "n": 30, "pct": 55.8, "ci": [53.61, 57.96] },
+          { "n": 50, "pct": 78.3, "ci": [76.44, 80.05] },
+          { "n": 100, "pct": 97.9, "ci": [97.17, 98.44] }
+        ]
+      },
+      {
+        "value": 0.0032,
+        "display": "$0.0032",
+        "power": [
+          { "n": 30, "pct": 15.35, "ci": [13.84, 17.0] },
+          { "n": 50, "pct": 24.05, "ci": [22.23, 25.97] },
+          { "n": 100, "pct": 46.35, "ci": [44.17, 48.54] }
+        ]
+      }
+    ]
+  },
+  "regimeB": {
+    "label": "Proportional (CV-scaled) noise",
+    "approximates": "an evalset of genuinely varying task complexity -- short factual questions mixed with long-form generation, where cost itself varies a lot case to case and so does the noise around it",
+    "row_label": "CV",
+    "modes": {
+      "twoSample": {
+        "label": "Two-sample",
+        "note": "raw per-invocation cost CV -- two-sample has no case-level structure, so this is the only regime it can sit in",
+        "rows": [
+          {
+            "value": 0.1,
+            "display": "0.1",
+            "power": [
+              { "n": 30, "pct": 91.65, "ci": [90.36, 92.78] },
+              { "n": 50, "pct": 99.35, "ci": [98.89, 99.62] },
+              { "n": 100, "pct": 100.0, "ci": [99.81, 100.0] }
+            ]
+          },
+          {
+            "value": 0.2,
+            "display": "0.2",
+            "power": [
+              { "n": 30, "pct": 35.3, "ci": [33.24, 37.42] },
+              { "n": 50, "pct": 55.75, "ci": [53.56, 57.91] },
+              { "n": 100, "pct": 85.0, "ci": [83.37, 86.5] }
+            ]
+          },
+          {
+            "value": 0.4,
+            "display": "0.4",
+            "power": [
+              { "n": 30, "pct": 9.85, "ci": [8.62, 11.23] },
+              { "n": 50, "pct": 14.05, "ci": [12.6, 15.64] },
+              { "n": 100, "pct": 27.85, "ci": [25.93, 29.86] }
+            ]
+          },
+          {
+            "value": 0.6,
+            "display": "0.6",
+            "power": [
+              { "n": 30, "pct": 5.65, "ci": [4.72, 6.75] },
+              { "n": 50, "pct": 7.6, "ci": [6.52, 8.84] },
+              { "n": 100, "pct": 14.5, "ci": [13.02, 16.11] }
+            ]
+          },
+          {
+            "value": 1.0,
+            "display": "1.0",
+            "power": [
+              { "n": 30, "pct": 4.15, "ci": [3.36, 5.12] },
+              { "n": 50, "pct": 4.5, "ci": [3.68, 5.5] },
+              { "n": 100, "pct": 8.55, "ci": [7.4, 9.86] }
+            ]
+          }
+        ]
+      },
+      "paired": {
+        "label": "Paired",
+        "note": "within-case cost CV across independent runs of the same eval case -- the shipped default's mode, and where the real measurement below lands",
+        "rows": [
+          {
+            "value": 0.1,
+            "display": "0.1",
+            "power": [
+              { "n": 30, "pct": 58.35, "ci": [56.18, 60.49] },
+              { "n": 50, "pct": 83.2, "ci": [81.5, 84.77] },
+              { "n": 100, "pct": 98.05, "ci": [97.35, 98.57] }
+            ]
+          },
+          {
+            "value": 0.2,
+            "display": "0.2",
+            "power": [
+              { "n": 30, "pct": 18.55, "ci": [16.91, 20.31] },
+              { "n": 50, "pct": 27.35, "ci": [25.44, 29.35] },
+              { "n": 100, "pct": 49.45, "ci": [47.26, 51.64] }
+            ]
+          },
+          {
+            "value": 0.4,
+            "display": "0.4",
+            "power": [
+              { "n": 30, "pct": 8.15, "ci": [7.03, 9.43] },
+              { "n": 50, "pct": 8.85, "ci": [7.68, 10.17] },
+              { "n": 100, "pct": 13.85, "ci": [12.41, 15.43] }
+            ]
+          },
+          {
+            "value": 0.6,
+            "display": "0.6",
+            "power": [
+              { "n": 30, "pct": 4.2, "ci": [3.41, 5.17] },
+              { "n": 50, "pct": 5.05, "ci": [4.17, 6.1] },
+              { "n": 100, "pct": 6.65, "ci": [5.64, 7.83] }
+            ]
+          },
+          {
+            "value": 1.0,
+            "display": "1.0",
+            "power": [
+              { "n": 30, "pct": 2.6, "ci": [1.99, 3.39] },
+              { "n": 50, "pct": 3.6, "ci": [2.87, 4.51] },
+              { "n": 100, "pct": 5.0, "ci": [4.13, 6.04] }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "realMeasured": {
+    "label": "One real evalset, measured directly",
+    "detail": "scripts/measure_within_case_cv_ollama.py ran the same 36-case evalset twice (real repeats of the same cases) against ollama_chat/qwen2.5:7b: within-case CV came out at 0.1566 (pooled duplicate-measurement estimator; bias check t-stat=-0.189, not significant). Located on the Regime B / Paired table directly at n=30 and n=36 -- not interpolated.",
+    "regime": "B",
+    "mode": "paired",
+    "cv": 0.1566,
+    "points": [
+      { "n": 30, "effectPct": 10, "power": 28.45, "ci": [26.52, 30.47], "trials": "569/2000" },
+      { "n": 36, "effectPct": 10, "power": 32.25, "ci": [30.24, 34.33], "trials": "645/2000" },
+      { "n": 30, "effectPct": 25, "power": 92.25, "ci": [91.0, 93.34], "trials": "1845/2000" },
+      { "n": 36, "effectPct": 25, "power": 96.35, "ci": [95.44, 97.09], "trials": "1927/2000" }
+    ]
+  }
+}
