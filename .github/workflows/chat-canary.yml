@@ -55,9 +55,17 @@ jobs:
           fi
 
           # A 200 with refused:true or zero citations means the pipeline
-          # isn't actually answering (e.g. GROQ_API_KEY missing/revoked, or
-          # the retrieval index broken) — this is a genuinely answerable
+          # isn't actually answering — this is a genuinely answerable
           # question, so that's still a real failure, not a normal refusal.
+          #
+          # `refusalReason` (lib/chatbot/answer.ts) says WHICH failure, and
+          # exists because this check could not. On 2026-08-16 Groq retired
+          # the pinned model; every completion failed, the route turned that
+          # into the same refusal it uses for an off-topic question, and this
+          # job went red every six hours for two days saying only "refused".
+          # That is a true statement about a healthy day too, so it named
+          # nothing. Echo the reason first, and let the issue body carry the
+          # runbook line that matches it.
           echo "$BODY" | node -e '
             let d = "";
             process.stdin.on("data", c => (d += c));
@@ -70,7 +78,23 @@ jobs:
                 process.exit(1);
               }
               if (parsed.refused !== false || !Array.isArray(parsed.citations) || parsed.citations.length === 0) {
-                console.error("pipeline did not produce a grounded answer:", JSON.stringify(parsed));
+                const reason = parsed.refusalReason || "unreported";
+                const runbook = {
+                  provider_unavailable:
+                    "The completion call did not come back. Check that the pinned model in lib/chatbot/llm-provider.ts is still on Groq's production list (it has been retired out from under us before), then check GROQ_API_KEY and quota.",
+                  no_grounding:
+                    "Retrieval scored below threshold for a question that used to pass. Check content/chatbot/index.json is current and that the embedding model loaded.",
+                  unvalidated_citations:
+                    "The model answered and cited nothing that validates. A prompt or corpus problem, not an outage.",
+                  embeddings_unavailable:
+                    "@huggingface/transformers did not load, so nothing can be embedded. Check the install-time optional dependency.",
+                  server_error: "The pipeline threw. Read the logged stack against requestId.",
+                  unreported:
+                    "The response carried no refusalReason, which means it came from a build older than the one that added it.",
+                }[reason];
+                console.error(`refusalReason=${reason}`);
+                console.error(runbook);
+                console.error("full response:", JSON.stringify(parsed));
                 process.exit(1);
               }
               console.log("canary OK:", parsed.answer.slice(0, 120));

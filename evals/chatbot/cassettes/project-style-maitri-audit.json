@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"Two trust-destroying bugs, including a consistency bug where the outfit-board tool and plain-search path handled missing inventory situations differently, with one being honest and the other confabulating.\",\n   \"citations\": [\n      {\"sourceRef\": \"style-maitri:live-audit\"}\n   ]\n}",
   "tokensIn": 1011,
   "tokensOut": 67

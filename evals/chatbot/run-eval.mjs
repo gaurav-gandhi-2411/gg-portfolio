@@ -116,11 +116,34 @@ function loadCassette(id) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+/**
+ * Which model this eval's numbers actually describe.
+ *
+ * A cassette is a recording, and a recording of a model that no longer exists
+ * still replays perfectly: every threshold keeps passing while the pipeline
+ * in production is a different pipeline. Groq retired
+ * llama-3.3-70b-versatile on 2026-08-16 and nothing here would have said so,
+ * because nothing here recorded which model spoke.
+ *
+ * So the cassettes now carry it, and this run compares what they were
+ * recorded against with what production ships. A mismatch is reported as its
+ * own visible status rather than as a failure: re-recording costs a real
+ * Groq quota run, so failing the gate would block CI on something only a
+ * deliberate, budgeted act can fix, and a gate nobody can satisfy gets
+ * disabled. Loud and passing is the honest state here; silent and passing is
+ * what this replaces.
+ */
+const SHIPPED_MODEL = "openai/gpt-oss-120b";
+
 function writeCassette(id, groqResponse, tokensIn, tokensOut) {
   if (!existsSync(CASSETTES_DIR)) mkdirSync(CASSETTES_DIR, { recursive: true });
   writeFileSync(
     cassettePathFor(id),
-    JSON.stringify({ groqResponse, tokensIn, tokensOut }, null, 2) + "\n"
+    JSON.stringify(
+      { recordedModel: SHIPPED_MODEL, groqResponse, tokensIn, tokensOut },
+      null,
+      2
+    ) + "\n"
   );
 }
 
@@ -165,7 +188,14 @@ async function runFixture(fixture, lib) {
 
   if (existingCassette) {
     const final = lib.buildAnswer(existingCassette.groqResponse, chunks);
-    return { fixture, chunks, maxScore, final, source: "cassette" };
+    return {
+      fixture,
+      chunks,
+      maxScore,
+      final,
+      source: "cassette",
+      cassetteModel: existingCassette.recordedModel ?? null,
+    };
   }
 
   return { fixture, chunks, maxScore, final: null, source: "skipped" };
@@ -214,6 +244,26 @@ function computeSummary(results) {
   };
 }
 
+/**
+ * Which models this run's numbers actually came from.
+ *
+ * Derived from the cassettes replayed, not from a constant, so it reports
+ * what happened rather than what was intended. A cassette recorded before
+ * this field existed reports "unstamped" rather than being assumed current:
+ * "I do not know which model produced this" and "this is the shipped model"
+ * must not print the same way.
+ */
+function modelProvenance(results) {
+  const seen = new Map();
+  for (const r of results) {
+    if (r.source !== "cassette") continue;
+    const model = r.cassetteModel ?? "unstamped";
+    seen.set(model, (seen.get(model) ?? 0) + 1);
+  }
+  const drifted = [...seen.keys()].filter((m) => m !== SHIPPED_MODEL);
+  return { seen, drifted, shipped: SHIPPED_MODEL };
+}
+
 function formatMetric(metric) {
   if (metric.value === null) return `n/a (n=0)`;
   return `${(metric.value * 100).toFixed(1)}% (n=${metric.n})`;
@@ -234,6 +284,31 @@ function writeReports(results, summary, today) {
     "",
     `Mode: ${LIVE ? `--live${FORCE ? " --force" : ""}` : "cassette-replay (default, no live API calls)"}.`,
     "",
+    "## Which model these numbers describe",
+    "",
+    ...(() => {
+      const { seen, drifted, shipped } = modelProvenance(results);
+      const lines = [`Production ships \`${shipped}\`.`, ""];
+      if (seen.size === 0) {
+        lines.push("No cassette was replayed this run, so nothing here is attributable to a model.");
+      } else {
+        lines.push("| Model the cassette was recorded against | Fixtures |");
+        lines.push("| --- | --- |");
+        for (const [model, count] of seen) lines.push(`| \`${model}\` | ${count} |`);
+      }
+      if (drifted.length > 0) {
+        lines.push(
+          "",
+          "**MODEL DRIFT.** Every metric below was produced by a model that is " +
+            "not the one production serves, so they describe a pipeline that no " +
+            "longer runs. The thresholds still pass, which is exactly the problem: " +
+            "a recording of a retired model replays perfectly forever. Re-recording " +
+            "costs a real Groq quota run, so this is reported rather than failed."
+        );
+      }
+      lines.push("");
+      return lines;
+    })(),
     "## Summary",
     "",
     "| Metric | Value |",

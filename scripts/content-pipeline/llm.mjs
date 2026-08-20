@@ -15,8 +15,12 @@
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export const MODELS = {
-  curator: { model: "llama-3.3-70b-versatile" },
-  framer: { model: "llama-3.3-70b-versatile" },
+  // Groq retired llama-3.3-70b-versatile on 2026-08-16. Both stages moved to
+  // Groq's own named replacement for it. The verifier stays on a different
+  // model family below, which is the property that mattered here and is
+  // unaffected by the swap.
+  curator: { model: "openai/gpt-oss-120b" },
+  framer: { model: "openai/gpt-oss-120b" },
   // Different model family than curator/framer (Meta Llama) — Qwen (Alibaba), for genuine
   // independence on the verifier's re-check, not a second vote from the same family.
   verifier: { model: "qwen/qwen3.6-27b" },

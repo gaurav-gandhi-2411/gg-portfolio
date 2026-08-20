@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { unavailableAnswer } from "../lib/chatbot/answer";
+
 /**
  * The degraded state for /ask when @huggingface/transformers is absent.
  *
@@ -16,14 +18,13 @@ import { expect, test } from "@playwright/test";
  * import produces exactly this response — is covered by embed.test.ts's
  * EmbeddingUnavailableError assertions and the route's name-matched branch.
  */
-const UNAVAILABLE_BODY = {
-  answer:
-    "Ask is temporarily unavailable — the local search model didn't load. " +
-    "Everything it can tell you is on this page and in the case studies.",
-  citations: [],
-  refused: true,
-  unavailable: true,
-};
+// Built by the real production helper rather than hand-copied. The copy in
+// this file had already drifted: it still carried the em dash the source
+// string dropped, and every assertion below kept passing because they match
+// on "temporarily unavailable", which both spellings contain. A stub that
+// quietly stops resembling what the server sends is a test of a response
+// nobody serves.
+const UNAVAILABLE_BODY = unavailableAnswer();
 
 async function stubUnavailable(page: import("@playwright/test").Page) {
   await page.route("**/api/chat", async (route) => {

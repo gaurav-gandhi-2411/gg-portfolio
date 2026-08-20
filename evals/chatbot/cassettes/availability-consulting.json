@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"GG is open to select AI/ML consulting engagements, in addition to full-time Senior or Principal Applied AI roles.\",\n   \"citations\": [\n      {\"sourceRef\": \"availability:summary\"}\n   ]\n}",
   "tokensIn": 884,
   "tokensOut": 48

@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"GG ensured reliable, scalable downstream analytics for a high-volume booking/transaction client by designing end-to-end GCP ETL pipelines plus dashboards for campaign targeting, segmentation, and trend monitoring as a Data Engineer at Tata Consultancy Services.\",\n   \"citations\": [\n      {\"sourceRef\": \"resume:tcs-pipelines\"}\n   ]\n}",
   "tokensIn": 867,
   "tokensOut": 74
