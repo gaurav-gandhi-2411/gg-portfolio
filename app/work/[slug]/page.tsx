@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PowerGridFrame } from "@/components/adk-tracegauge/power-grid-frame";
 import { PowerGridStatic } from "@/components/adk-tracegauge/power-grid-static";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
@@ -238,7 +239,9 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           had named. Pick a noise shape, a variance level, and an eval-set size below, and see
           the same tradeoff the package&apos;s own retraction was built on.
         </p>
-        <PowerGridStatic />
+        <PowerGridFrame>
+          <PowerGridStatic />
+        </PowerGridFrame>
       </section>
     );
   }
