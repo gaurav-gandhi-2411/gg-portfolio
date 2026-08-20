@@ -161,6 +161,50 @@ test.describe("/ask", () => {
  * interception — not a real network condition — so it's deterministic and
  * fast in CI.
  */
+test("a refusal never shows the reader why it refused", async ({ page }) => {
+  // refusalReason is diagnostic: it exists so the canary can name which of
+  // five failures happened, after a retired model spent two days looking
+  // exactly like an off-topic question. It is not for the page. A visitor
+  // cannot act on "the vendor retired a model" any differently than on "ask
+  // something else", and putting a provider's name in front of them would be
+  // noise at best and alarming at worst.
+  //
+  // Asserted against the rendered text rather than against the component,
+  // because the failure this guards is somebody rendering the field later
+  // while debugging and leaving it in.
+  await page.route("**/api/chat", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        answer: "I don't have grounded information to answer that.",
+        citations: [],
+        refused: true,
+        followUps: [],
+        refusalReason: "provider_unavailable",
+      }),
+    })
+  );
+
+  await page.goto("/ask");
+  const input = page.getByRole("textbox").first();
+  await input.fill("what is the weather");
+  await input.press("Enter");
+
+  await expect(page.getByText(/grounded information/i).first()).toBeVisible();
+  const body = await page.locator("body").innerText();
+  for (const reason of [
+    "provider_unavailable",
+    "no_grounding",
+    "unvalidated_citations",
+    "embeddings_unavailable",
+    "server_error",
+    "refusalReason",
+  ]) {
+    expect(body, `"${reason}" must never reach the page`).not.toContain(reason);
+  }
+});
+
 test.describe("/ask error handling", () => {
   async function submitAnyQuestion(page: import("@playwright/test").Page): Promise<void> {
     await page.goto("/ask");

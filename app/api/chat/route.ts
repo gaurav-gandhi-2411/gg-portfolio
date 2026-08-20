@@ -33,6 +33,7 @@ import {
   unavailableAnswer,
   type ChatAnswer,
 } from "@/lib/chatbot/answer";
+import { CHAT_MODEL_ID } from "@/lib/chatbot/pricing";
 
 const MAX_QUESTION_LENGTH = 500;
 
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(refusalAnswer(), { status: 400 });
+    return NextResponse.json(refusalAnswer("no_grounding"), { status: 400 });
   }
 
   const question =
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
           model: "none",
         })
       );
-      return NextResponse.json(refusalAnswer());
+      return NextResponse.json(refusalAnswer("no_grounding"));
     }
 
     const systemPrompt = buildSystemPrompt();
@@ -188,10 +189,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
           tokensIn: 0,
           tokensOut: 0,
           provider: "groq",
-          model: "llama-3.3-70b-versatile",
+          // From the pricing table rather than hand-typed here. The literal
+          // that used to sit on this line was a third copy of the model id,
+          // and a log line naming a model the request did not use is worse
+          // than one naming none.
+          model: CHAT_MODEL_ID,
         })
       );
-      return NextResponse.json(refusalAnswer());
+      // Distinct from the retrieval gate above: this is the provider, not
+      // the question. The two used to be one response, which is how a model
+      // Groq retired looked exactly like a visitor asking about the weather.
+      return NextResponse.json(refusalAnswer("provider_unavailable"));
     }
 
     // Single source of truth for citation validation + the refusal decision

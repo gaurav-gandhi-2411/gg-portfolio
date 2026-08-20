@@ -1,20 +1,30 @@
-// Wave 16 — USD/token pricing for the reconciliation chatbot's one LLM call
-// (Groq's llama-3.3-70b-versatile, same model scripts/content-pipeline/llm.mjs
-// already uses for curator/framer — see that file's header for why Groq).
+// Wave 16 — USD/token pricing for the reconciliation chatbot's one LLM call.
 //
-// Rates below are Groq's published per-1M-token prices for this model as of
-// wave 16 (2026-07-26), taken from https://groq.com/pricing/. Groq has changed
-// pricing on this model before — re-check against the live pricing page if
-// these numbers look stale (e.g. if a monthly cost report looks off by more
-// than a rounding error).
+// Rates are Groq's published per-1M-token prices, from
+// https://console.groq.com/docs/models. Groq has changed pricing before, and
+// has now retired a model out from under this table, so re-check the live
+// page if a monthly cost report looks off by more than a rounding error.
+//
+// The retired entry is kept rather than deleted. estimateCost() is called on
+// every answered request, and a table that only knows the current model
+// silently returns 0 for anything else, which is the difference between "this
+// call was free" and "we stopped costing this call" written the same way.
+// Keeping the old rate means a cassette or a log line recorded against the
+// old model still prices correctly.
 export const GROQ_PRICING_USD_PER_MILLION_TOKENS = {
+  // Current. Groq's named replacement for the retired model below.
+  "openai/gpt-oss-120b": {
+    input: 0.15,
+    output: 0.6,
+  },
+  // Retired by Groq on 2026-08-16. Kept for pricing historical records.
   "llama-3.3-70b-versatile": {
     input: 0.59,
     output: 0.79,
   },
 } as const;
 
-const MODEL_ID = "llama-3.3-70b-versatile";
+const MODEL_ID = "openai/gpt-oss-120b";
 
 /**
  * Estimates the USD cost of one chat completion call given token counts,
@@ -30,3 +40,6 @@ export function estimateCost(tokensIn: number, tokensOut: number): number {
   if (!rates) return 0;
   return (tokensIn * rates.input + tokensOut * rates.output) / 1_000_000;
 }
+
+/** The model id every caller should report, so no log line hand-types one. */
+export const CHAT_MODEL_ID = MODEL_ID;
