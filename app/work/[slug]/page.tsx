@@ -6,6 +6,7 @@ import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
 import { ItemResults } from "@/components/mmfr/item-results";
+import { ItemSpaceFrame } from "@/components/mmfr/item-space-frame";
 import { RetrievalResults } from "@/components/triageiq/retrieval-results";
 import { RetrievalSpaceFrame } from "@/components/triageiq/retrieval-space";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
@@ -278,18 +279,19 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           the day-one, no-purchase-history case the results above already name -- run through
           {" "}{mmfr.image_model} and {mmfr.text_model}, fused by {mmfr.fusion}.
         </p>
-        {/*
-          Every anchor's real result, server-rendered, with no JavaScript
-          involved in producing or reading it. A picture lands in a following
-          change and adds in-place switching on top of this; it will not add
-          a number this does not already carry, which is why this ships
-          first and on its own.
-        */}
-        <div className="flex flex-col gap-[var(--space-6)]">
-          {mmfr.anchors.map((anchor) => (
-            <ItemResults key={anchor.id} anchor={anchor} />
-          ))}
-        </div>
+        <ItemSpaceFrame>
+          {/*
+            The no-JavaScript path, and the pre-hydration one: every anchor's
+            real result, server-rendered. The interactive version adds the
+            picture and in-place switching, never a number this does not
+            already carry.
+          */}
+          <div className="flex flex-col gap-[var(--space-6)]">
+            {mmfr.anchors.map((anchor) => (
+              <ItemResults key={anchor.id} anchor={anchor} />
+            ))}
+          </div>
+        </ItemSpaceFrame>
       </section>
     );
   }

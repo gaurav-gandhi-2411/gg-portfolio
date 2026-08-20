@@ -98,4 +98,47 @@ test.describe("MMFR item space", () => {
     const section = page.getByRole("region", { name: SECTION });
     await expect(section).toBeVisible();
   });
+
+  test("picking an anchor shows that anchor's result, in place", async ({ page }) => {
+    await page.goto("/work/multimodal-fashion-recommender");
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+
+    // Hydrated: one anchor at a time now, with a control per anchor,
+    // labelled by category (each of the six anchors sits in a distinct
+    // category, since the offline script samples without replacement).
+    const buttons = section.getByRole("button", {
+      name: new RegExp(`^(${projection.categories.join("|")})$`),
+    });
+    await expect(buttons).toHaveCount(projection.anchors.length);
+    await expect(section.locator("ol > li")).toHaveCount(projection.anchors[0].neighbors.length);
+
+    const second = projection.anchors[1];
+    await section.getByRole("button", { name: second.category, exact: true }).click();
+
+    await expect(section.getByText(second.title, { exact: false }).first()).toBeVisible();
+    for (const hit of second.neighbors) {
+      await expect(section.getByText(hit.title, { exact: false }).first()).toBeVisible();
+    }
+  });
+
+  test("the picture is a still of the same catalogue, not an empty box", async ({ page }) => {
+    await page.goto("/work/multimodal-fashion-recommender");
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+    // Hydration has to have happened for the count to mean anything: without
+    // it, a low circle count would prove only that the island had not loaded.
+    await expect(
+      section.getByRole("button", {
+        name: new RegExp(`^(${projection.categories.join("|")})$`),
+      }).first()
+    ).toBeVisible();
+
+    const circles = section.locator("svg circle");
+    await expect(circles.first()).toBeVisible();
+    // Every catalogue point is drawn, either dimmed in the field or
+    // emphasised on top, so the total is the catalogue itself rather than a
+    // sample of it.
+    expect(await circles.count()).toBeGreaterThanOrEqual(projection.points.length);
+  });
 });
