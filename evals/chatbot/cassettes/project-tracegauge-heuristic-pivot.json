@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"The heuristic-primary design was abandoned because three out of four candidate rule-based waste heuristics failed to achieve sufficient inter-annotator agreement, requiring cross-turn intent inference that no phrase-matching rule can capture.\",\n   \"citations\": [\n       {\"sourceRef\": \"tracegauge:heuristic-pivot\"}\n   ]\n}",
   "tokensIn": 873,
   "tokensOut": 72

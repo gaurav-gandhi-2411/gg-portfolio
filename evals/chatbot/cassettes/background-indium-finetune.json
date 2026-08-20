@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"97%+\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-finetune\"}\n   ]\n}",
   "tokensIn": 793,
   "tokensOut": 36

@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"GG's role at FedEx Express was Decision Scientist, and he delivered a ~20% reduction in operational inefficiencies by upgrading ARIMA pipelines to SARIMA with Box-Jenkins tuning, Fourier seasonality, and automated anomaly filtering.\",\n   \"citations\": [\n      {\"sourceRef\": \"resume:fedex-forecasting\"}\n   ]\n}",
   "tokensIn": 709,
   "tokensOut": 74

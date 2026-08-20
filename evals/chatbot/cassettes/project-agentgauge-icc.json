@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"The ICC finding changed how AgentGauge allocates trials across tasks by spending the same budget on more tasks at one trial each, instead of many trials on few tasks.\",\n   \"citations\": [\n      {\"sourceRef\": \"agentgauge:icc-mde\"}\n   ]\n}",
   "tokensIn": 996,
   "tokensOut": 63

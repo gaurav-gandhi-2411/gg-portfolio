@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"AetherArt fits Stable Diffusion XL into an 8GB consumer GPU budget by running the model at half precision (FP16), swapping in a corrected VAE, and using an optional 4-bit quantization mode (NF4).\",\n   \"citations\": [\n      {\"sourceRef\": \"aetherart:approach:2\"}\n   ]\n}",
   "tokensIn": 920,
   "tokensOut": 79

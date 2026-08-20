@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"The target-leakage bug in TriageIQ's resolution-time predictor was caused by the train/test split dividing issues by closed_at, which guaranteed that any issue still open at the cutoff date landed in the test set and every already-resolved issue landed in train. Fixing this bug by re-splitting by created_at collapsed the mean absolute error from 693 days to 87 days, an 8x improvement.\",\n   \"citations\": [\n       {\"sourceRef\": \"triageiq:split-fix\"}\n   ]\n}",
   "tokensIn": 1147,
   "tokensOut": 112

@@ -1,4 +1,5 @@
 {
+  "recordedModel": "llama-3.3-70b-versatile",
   "groqResponse": "{\n  \"answer\": \"No, the Chronos-Bolt-Tiny model did not beat the naive flat-hold forecast.\",\n   \"citations\": [\n      {\"sourceRef\": \"gold-rate-tracker:headline\"},\n      {\"sourceRef\": \"gold-rate-tracker:headline\"},\n      {\"sourceRef\": \"gold-rate-tracker:approach:3\"},\n      {\"sourceRef\": \"gold-rate-tracker:approach:2\"}\n   ]\n}",
   "tokensIn": 977,
   "tokensOut": 93
