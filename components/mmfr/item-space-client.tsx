@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
 
 import { ItemResults } from "@/components/mmfr/item-results";
 import { ItemScatter } from "@/components/mmfr/item-scatter";
 import { emphasisFor, type MmfrProjection } from "@/lib/mmfr-projection-view";
+import { mayUseWebGL } from "@/lib/webgl/capability";
 import projectionJson from "@/content/data/mmfr-projection.json";
 
 /**
@@ -17,6 +19,11 @@ import projectionJson from "@/content/data/mmfr-projection.json";
  */
 const projection = projectionJson as MmfrProjection;
 
+const ItemSpaceGL = dynamic(() => import("./item-space-gl"), {
+  ssr: false,
+  loading: () => null,
+});
+
 /**
  * The interactive half of the MMFR item-space explainer.
  *
@@ -26,10 +33,6 @@ const projection = projectionJson as MmfrProjection;
  * actually returned for it light up, with whether each shares the anchor's
  * real category.
  *
- * A WebGL layer replaces the SVG for visitors whose device qualifies; it
- * lands separately, and this stage is the shape everything falls back to,
- * which is why it ships first and on its own.
- *
  * The picture is a layout and the ranking is not computed in it. That gap is
  * the thing most likely to mislead a reader here, so it is stated in the copy
  * beside the canvas rather than left for anyone to work out, and the
@@ -38,12 +41,19 @@ const projection = projectionJson as MmfrProjection;
  */
 export default function ItemSpaceClient() {
   const [selected, setSelected] = useState(0);
+  // Decided once, in a lazy initialiser rather than an effect. This module is
+  // dynamically imported with ssr:false, so there is no server render for a
+  // capability read to disagree with, and doing it here means a qualifying
+  // visitor never sees the SVG paint and then get replaced by a canvas.
+  const [useGL, setUseGL] = useState(() => mayUseWebGL());
 
   const anchor = projection.anchors[selected];
   const emphasis = useMemo(
     () => emphasisFor(projection.points, anchor),
     [anchor]
   );
+
+  const handleUnsupported = useCallback(() => setUseGL(false), []);
 
   return (
     <div className="flex flex-col gap-[var(--space-5)]">
@@ -67,7 +77,15 @@ export default function ItemSpaceClient() {
 
       <div className="grid gap-[var(--space-6)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="border-border/40 relative aspect-square overflow-hidden rounded-lg border">
-          <ItemScatter points={projection.points} emphasis={emphasis} />
+          {useGL ? (
+            <ItemSpaceGL
+              points={projection.points}
+              emphasis={emphasis}
+              onUnsupported={handleUnsupported}
+            />
+          ) : (
+            <ItemScatter points={projection.points} emphasis={emphasis} />
+          )}
         </div>
 
         <div className="flex flex-col gap-[var(--space-3)]">
