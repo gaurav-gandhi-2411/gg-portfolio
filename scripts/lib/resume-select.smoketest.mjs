@@ -134,6 +134,11 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
   // identical reason, but resume-data.json's entry never picked up that fix.
   // It now joins ShelfSense in the repo_only forced-collapse set below
   // instead of the ranked sequence.
+  // 2026-08-20: adk-tracegauge added to the pool (scripts/check-resume-
+  // project-coverage.mjs closed the gap where products.ts had 14 products
+  // and this pool only covered 13). role_relevance 3 / technical_depth 4 /
+  // metric_strength 4 / demo_quality 2 lands it right after aetherart and
+  // ahead of gold-rate-tracker in the ranked sequence.
   const EXPECTED_SEQUENCE = [
     "proj:triageiq",
     "proj:style-maitri",
@@ -141,6 +146,7 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
     "proj:mmfr",
     "proj:warmer",
     "proj:aetherart",
+    "proj:adk-tracegauge",
     "proj:gold-rate-tracker",
     "proj:dealhunter",
     "proj:reviewiq",
