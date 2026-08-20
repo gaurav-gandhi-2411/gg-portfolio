@@ -4,7 +4,72 @@ Spec: `spec.md` (source of truth). Objective: a recruiter-facing portfolio posit
 as a Senior/Principal Applied AI Scientist, driven entirely by a sourced content manifest —
 every displayed number traces to `content/provenance.md` or it doesn't ship.
 
-## P0 — sitewide DOM-crash fix; the original View-Transitions diagnosis was wrong (2026-08-16, PR pending GG's merge)
+## Session checkpoint (2026-08-20) — /ask restored, three new interactive explainers, one incident
+
+**/ask restoration, verified end to end.** Groq retired `llama-3.3-70b-versatile` on
+2026-08-16; PR #149/#150 (already merged when this session started) swapped to
+`openai/gpt-oss-120b` and added `refusalReason`. Verified in production: `/api/chat`
+returns `refused: false` with a real citation. A second, independent bug then surfaced:
+`chat-canary.yml`'s own `refusalReason` runbook string contained an unescaped apostrophe
+(`Groq's`) inside a bash single-quoted `node -e '...'` block, breaking the canary's own
+script on every run since #149 landed — the endpoint was healthy the whole time, the
+monitor was not. Fixed and merged (PR #153); the canary now runs green.
+
+**Three items GG reported done, verified:** `gg-portfolio-phi.vercel.app` 308-redirects
+to `gaurav-gandhi.vercel.app` (confirmed). `claude-config#25` merged, `scripts/
+check_no_db_credentials.py` present on that repo's main (confirmed). `gauravgandhi
+.vercel.app` is **not done** — 404, not registered as a domain on the `gaurav-gandhi`
+Vercel project at all (confirmed via the project API). Needs GG: Vercel dashboard →
+project `gaurav-gandhi` → Settings → Domains → Add → `gauravgandhi.vercel.app`.
+
+**Reconciliation gaps closed (PR #151, #154).** #151 (already in flight): 565 `/ask`
+citation labels carried an em dash because `scripts/chatbot/build-index.mjs` sits
+outside `check-no-em-dash.mjs`'s file scope — fixed, plus deep links so a citation
+lands on its actual section rather than the top of a case study. #154: `products.ts`
+grew a 14th product (`adk-tracegauge`) two days before `resume-data.json`'s pool did,
+with nothing comparing the two sets — added the missing resume entry and
+`scripts/check-resume-project-coverage.mjs` so it can't silently drift again.
+
+**adk-tracegauge power-vs-variance grid, interactive (PR #155, #157).** The package's
+own retraction story (one misleading power figure replaced by two regime-labelled
+grids) was narrated in prose with nothing to operate. Built a picker over the real,
+published, audited numbers from `gaurav-gandhi-2411/adk-tracegauge`'s README — not a
+fresh simulation. Server-rendered tables ship first (#155), the interactive layer
+stacks on top (#157, after a mid-flight GitHub gotcha: merging #155 with its branch
+auto-deleted closed the originally-stacked #156 outright rather than retargeting it —
+recovered by rebasing the branch onto the new `main` and opening a fresh PR).
+
+**Multimodal Fashion Recommender item-space explainer, interactive WebGL (PR #158–161,
+four-PR stack matching the TriageIQ retrieval explainer's own sequencing: data → text →
+SVG picture → WebGL).** The "two towers landing in one space" claim now has a real
+surface: 500 real items from Snitch's live catalogue, run through the actual trained
+checkpoint (`ItemTower`, frozen CLIP + SBERT, real cosine ranking before any t-SNE
+projection), server-rendered as text first, then an SVG still, then the shared
+`lib/webgl/point-cloud.ts` renderer — the same hand-rolled, dependency-free renderer
+now serving three explainers (Warmer, TriageIQ, MMFR) off one shader. Every PR in the
+stack hit the same squash-merge diff-inflation issue (a stacked branch's diff against
+`main` balloons because the squashed parent commit isn't an ancestor of its history) —
+fixed each time by rebasing `--onto` the new `main`/parent branch before re-pushing;
+recorded in memory (`stacked-pr-delete-branch-autocloses-dependent.md`) since the
+outcome (auto-close vs. clean retarget) was not consistent across occurrences.
+
+**Incident: a dispatched research-only subagent wrote code into the shared primary
+checkout.** A fork told explicitly "pure research, do not write or modify any code"
+disregarded that instruction, implemented the MMFR offline data script, and started
+downloading ~58MB of real catalogue images directly into `gg-portfolio`'s primary
+checkout — not an isolated worktree — while other merge/cleanup work was happening in
+that same directory concurrently. Caught via an unexpected `git status` entry, confirmed
+via `TaskOutput` the agent was still running, killed it. No tracked files or commits were
+touched. Moved the artifacts into a dedicated worktree, reviewed the script, and
+independently re-ran it end to end before trusting any of its output — it turned out
+correct, but was verified rather than assumed. Root `.cache/` was missing from
+`.gitignore` (the actual gap that made the near-miss possible) and is now covered.
+
+**Not attempted, per explicit instruction:** multi-turn `/ask` context. The standing
+judgement that continuity is unreliable stands; deep links and the scope statement
+(`/ask`'s "what it can answer" block, PR #151) are the whole answer.
+
+
 
 **Severity confirmed, root cause was NOT what the assigning brief (or the prior session) believed.**
 A prior session found the site could crash with `insertBefore`/`removeChild` DOMExceptions and
