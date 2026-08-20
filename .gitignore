@@ -37,6 +37,12 @@ next-env.d.ts
 /blob-report/
 /playwright/.cache/
 
+# Local scratch cache for offline data-build scripts (e.g. downloaded source
+# images for scripts/build_mmfr_projection.py) — large, regenerable, never
+# committed. The output JSON these scripts write under content/data/ IS
+# committed; this cache is not that.
+/.cache/
+
 # Claude Code session/scheduler state — not project content (but .claude/settings.json,
 # if added, is project config and should stay tracked)
 .claude/*.lock
