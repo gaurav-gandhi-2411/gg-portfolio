@@ -81,7 +81,7 @@ jobs:
                 const reason = parsed.refusalReason || "unreported";
                 const runbook = {
                   provider_unavailable:
-                    "The completion call did not come back. Check that the pinned model in lib/chatbot/llm-provider.ts is still on Groq's production list (it has been retired out from under us before), then check GROQ_API_KEY and quota.",
+                    "The completion call did not come back. Check that the pinned model in lib/chatbot/llm-provider.ts is still on Groq'"'"'s production list (it has been retired out from under us before), then check GROQ_API_KEY and quota.",
                   no_grounding:
                     "Retrieval scored below threshold for a question that used to pass. Check content/chatbot/index.json is current and that the embedding model loaded.",
                   unvalidated_citations:
