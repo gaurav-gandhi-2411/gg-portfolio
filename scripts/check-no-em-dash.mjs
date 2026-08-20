@@ -103,6 +103,7 @@ const JSON_FILES = [
   "resume-metrics.json",
   "data/triageiq-retrieval-projection.json",
   "data/hinglish-embedding-projection.json",
+  "data/mmfr-projection.json",
   "chatbot/index.json",
 ];
 
