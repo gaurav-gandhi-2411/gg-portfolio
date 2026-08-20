@@ -136,6 +136,21 @@ jobs:
       - name: No em dash in rendered copy
         run: node scripts/check-no-em-dash.mjs
 
+      # chat-canary.yml's own verdict logic broke twice in the same file, in
+      # the same way (an apostrophe inside a bash-single-quoted `node -e`
+      # block, PR #149 and again in the fix that named the first one). Both
+      # times the break shipped unnoticed because nothing ever ran the
+      # verdict logic except the scheduled job itself, against real
+      # production, every six hours. Extracted to
+      # scripts/chatbot/canary-verdict.mjs and exercised here against
+      # known-good and known-bad responses for every refusalReason the
+      # runbook covers, so a future edit that breaks the verdict (a syntax
+      # error, a crossed-wire runbook lookup, a flipped condition) fails on
+      # every PR instead of only being discoverable by a human going looking
+      # after the fact.
+      - name: Chat canary verdict self-test
+        run: node scripts/chatbot/canary-verdict.smoketest.mjs
+
       - name: Build
         run: npm run build
 
