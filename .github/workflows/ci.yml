@@ -113,6 +113,15 @@ jobs:
       - name: Resume PDF vs. resume-data.json consistency
         run: node scripts/check-resume-pdf-consistency.mjs
 
+      # content/products.ts grew a 14th product (adk-tracegauge, PR #144)
+      # and content/resume-data.json's project pool stayed at 13 for two
+      # days with nothing comparing the two counts (see
+      # scripts/check-resume-project-coverage.mjs's header). Same family as
+      # the two checks above: two files that describe the same set of
+      # projects, no shared enforcement keeping them in sync.
+      - name: Resume project pool vs. products.ts coverage
+        run: node scripts/check-resume-project-coverage.mjs
+
       # The homepage's three headline figures come from paid work, so they are
       # the only numbers on the site a reader cannot check by clicking
       # something. This ties each to the role-ladder bullet it was taken from
