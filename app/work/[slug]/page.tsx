@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PowerGridStatic } from "@/components/adk-tracegauge/power-grid-static";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
@@ -224,6 +225,21 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           </RetrievalSpaceFrame>
         </section>
       </>
+    );
+  } else if (slug === "adk-tracegauge") {
+    demo = (
+      <section
+        aria-label="Power to catch a cost rise, by noise shape and eval-set size"
+        className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+      >
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+        <p className="max-w-measure text-base leading-relaxed text-foreground">
+          The story above is that one power figure turned out to depend on an assumption nobody
+          had named. Pick a noise shape, a variance level, and an eval-set size below, and see
+          the same tradeoff the package&apos;s own retraction was built on.
+        </p>
+        <PowerGridStatic />
+      </section>
     );
   }
 
