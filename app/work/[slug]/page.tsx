@@ -5,6 +5,7 @@ import { PowerGridStatic } from "@/components/adk-tracegauge/power-grid-static";
 import { CaseStudyPage } from "@/components/case-study-page";
 import { HeatToyShell } from "@/components/heat-toy-shell";
 import { CaseStudyJsonLd } from "@/components/json-ld";
+import { ItemResults } from "@/components/mmfr/item-results";
 import { RetrievalResults } from "@/components/triageiq/retrieval-results";
 import { RetrievalSpaceFrame } from "@/components/triageiq/retrieval-space";
 import { TriageiqClassifyDisclosure } from "@/components/triageiq-classify-disclosure";
@@ -14,6 +15,7 @@ import { caseStudies } from "@/content/case-studies";
 import { products } from "@/content/products";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
 import { getWarmerPuzzleNumber } from "@/lib/live-data";
+import { getMmfrProjection } from "@/lib/mmfr-projection";
 import { getRetrievalProjection } from "@/lib/triageiq-retrieval";
 import { relatedProducts } from "@/lib/related-products";
 
@@ -242,6 +244,52 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
         <PowerGridFrame>
           <PowerGridStatic />
         </PowerGridFrame>
+      </section>
+    );
+  } else if (slug === "multimodal-fashion-recommender") {
+    const mmfr = getMmfrProjection();
+    demo = (
+      <section
+        aria-label="Items landing near each other in the shared space"
+        className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
+      >
+        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+        <p className="max-w-measure text-base leading-relaxed text-foreground">
+          {mmfr.n_points} real items from {mmfr.brand}&apos;s live catalogue, fused by the
+          trained item tower this project actually ships and laid out in three dimensions. Pick
+          one of the six and you see the five items the model&apos;s own space actually returned
+          for it, in its order, with whether each shares its real catalogue category.
+        </p>
+        {/*
+          Same caveat placement as TriageIQ's retrieval space, and for the
+          same reason: a point cloud is persuasive on its own terms, and this
+          one would happily be read as saying "similar items sit next to each
+          other" -- a claim about the picture rather than about the tower.
+        */}
+        <p className="max-w-measure text-sm leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">
+            What the picture is, and what it is not.
+          </span>{" "}
+          Every neighbor here was ranked in the model&apos;s own 256 dimensions before anything
+          was drawn. What you see is a t-SNE layout, chosen to look tidy, so two dots sitting
+          together are not necessarily each other&apos;s nearest neighbours and a highlighted
+          item can land anywhere on screen. That is why the highlight follows product ids
+          rather than distance. This is one brand&apos;s catalogue the model never trained on --
+          the day-one, no-purchase-history case the results above already name -- run through
+          {" "}{mmfr.image_model} and {mmfr.text_model}, fused by {mmfr.fusion}.
+        </p>
+        {/*
+          Every anchor's real result, server-rendered, with no JavaScript
+          involved in producing or reading it. A picture lands in a following
+          change and adds in-place switching on top of this; it will not add
+          a number this does not already carry, which is why this ships
+          first and on its own.
+        */}
+        <div className="flex flex-col gap-[var(--space-6)]">
+          {mmfr.anchors.map((anchor) => (
+            <ItemResults key={anchor.id} anchor={anchor} />
+          ))}
+        </div>
       </section>
     );
   }
