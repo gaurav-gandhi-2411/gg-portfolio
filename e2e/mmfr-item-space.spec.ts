@@ -122,23 +122,57 @@ test.describe("MMFR item space", () => {
     }
   });
 
-  test("the picture is a still of the same catalogue, not an empty box", async ({ page }) => {
+  test("a reduced-motion visitor keeps the still and gets no GL context", async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await context.newPage();
     await page.goto("/work/multimodal-fashion-recommender");
+
     const section = page.getByRole("region", { name: SECTION });
     await section.scrollIntoViewIfNeeded();
-    // Hydration has to have happened for the count to mean anything: without
-    // it, a low circle count would prove only that the island had not loaded.
+    // Hydration has to have happened for this to mean anything: without it
+    // the absence of a canvas would prove only that the island had not
+    // loaded.
     await expect(
       section.getByRole("button", {
         name: new RegExp(`^(${projection.categories.join("|")})$`),
       }).first()
     ).toBeVisible();
 
+    await expect(page.getByTestId("mmfr-item-space-gl")).toHaveCount(0);
     const circles = section.locator("svg circle");
     await expect(circles.first()).toBeVisible();
     // Every catalogue point is drawn, either dimmed in the field or
     // emphasised on top, so the total is the catalogue itself rather than a
     // sample of it.
     expect(await circles.count()).toBeGreaterThanOrEqual(projection.points.length);
+
+    await context.close();
+  });
+
+  test("the WebGL layer mounts and draws when the device qualifies", async ({ page }) => {
+    // Same seam the TriageIQ retrieval space and Warmer viewer's tests use:
+    // CI runners report <=4 cores, so the capability gate correctly declines
+    // WebGL there. Without this the GL path would be covered only by local
+    // runs, which is the blind spot the seam exists to close rather than
+    // accept.
+    await page.addInitScript(() => {
+      (window as unknown as { __ggForceWebGLCapability?: boolean }).__ggForceWebGLCapability =
+        true;
+    });
+    await page.goto("/work/multimodal-fashion-recommender");
+    const section = page.getByRole("region", { name: SECTION });
+    await section.scrollIntoViewIfNeeded();
+
+    const canvas = page.getByTestId("mmfr-item-space-gl");
+    await expect(canvas).toBeAttached();
+    // A canvas that never got a context or never drew would still be
+    // attached, so assert it has a real backing store rather than only an
+    // element.
+    const size = await canvas.evaluate((el) => [
+      (el as HTMLCanvasElement).width,
+      (el as HTMLCanvasElement).height,
+    ]);
+    expect(size[0]).toBeGreaterThan(0);
+    expect(size[1]).toBeGreaterThan(0);
   });
 });
