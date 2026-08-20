@@ -1,0 +1,124 @@
+{
+  "route": "/",
+  "url": "https://gaurav-gandhi.vercel.app/",
+  "branch": "chore/pre-launch-prod-verification",
+  "date": "2026-08-20",
+  "n": 6,
+  "throttlingMethod": "simulate",
+  "blockedUrlPatterns": [],
+  "chromeExtraFlags": [],
+  "lighthouseVersion": "13.4.1",
+  "chromeVersion": "151.0.0.0",
+  "host": "Legion (win32 10.0.26200)",
+  "medianRunIndex": 1,
+  "aggregate": {
+    "performance": {
+      "mean": 88.17,
+      "stddev": 4.58,
+      "values": [
+        88,
+        86,
+        92,
+        94,
+        81,
+        88
+      ]
+    },
+    "accessibility": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "best-practices": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "seo": {
+      "mean": 100,
+      "stddev": 0,
+      "values": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "fcp-ms": {
+      "mean": 1130.69,
+      "stddev": 30.02,
+      "values": [
+        1099.4344999999998,
+        1120.0405,
+        1120.3780000000002,
+        1119.162,
+        1186.501,
+        1138.598
+      ]
+    },
+    "lcp-ms": {
+      "mean": 3135.69,
+      "stddev": 199.17,
+      "values": [
+        3092.4345,
+        3356.0405,
+        3041.378,
+        2942.1620000000003,
+        3409.501,
+        2972.598
+      ]
+    },
+    "tbt-ms": {
+      "mean": 205.75,
+      "stddev": 83.92,
+      "values": [
+        205.99999999999977,
+        197.5,
+        121,
+        109,
+        318.5,
+        282.5
+      ]
+    },
+    "cls": {
+      "mean": 0,
+      "stddev": 0,
+      "values": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "si-ms": {
+      "mean": 3696.4,
+      "stddev": 981.64,
+      "values": [
+        4428.505374407879,
+        4616.934750503553,
+        3214.3438072581757,
+        2174.591687191158,
+        4514.168163787687,
+        3229.85634275991
+      ]
+    }
+  }
+}
