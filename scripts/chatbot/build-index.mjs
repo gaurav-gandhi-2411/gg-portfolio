@@ -23,6 +23,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+
+import { anchorFor, caseStudyUrl, storyAnchor } from "../../lib/case-study-anchors.ts";
 import {
   embed,
   EMBEDDING_MODEL_ID,
@@ -64,19 +66,45 @@ async function loadCaseStudies() {
   return caseStudies;
 }
 
+/**
+ * A NOTE ON `sourceLabel`, because it does not look like site copy and is.
+ *
+ * Every one of these strings renders, as the visible text of a citation link
+ * under an /ask answer. All 565 of them carried an em dash, because they are
+ * assembled here rather than written in content/, and scripts/ is outside
+ * check-no-em-dash's scope by design (it scans components, app and content).
+ * A standing copy rule that a build script can quietly opt out of is the
+ * shape this repo keeps finding: the check was green the whole time and the
+ * rule was broken on every citation the site has ever shown.
+ *
+ * Anything assigned to sourceLabel below is read by a visitor. Write it the
+ * way the rest of the site is written.
+ */
+
 /** One chunk per problem/approach paragraph, decision, result, the story (as a
  * whole), and closing paragraph — the structural units the CaseStudy type
  * already defines, not fixed-size windows. */
 function chunksForCaseStudy(cs) {
   const chunks = [];
-  const url = `/work/${cs.slug}`;
+  // Per section, not per page. A citation that lands on the top of a
+  // seven-minute case study makes the reader hunt for the sentence the
+  // assistant just quoted; one that lands on the section it came from makes
+  // the claim checkable in one movement, which is the whole reason the
+  // citation is there.
+  //
+  // Anchors come from lib/case-study-anchors.ts, which
+  // components/case-study-page.tsx also renders from, so the fragment
+  // emitted here is the id that page produces rather than a re-typed guess
+  // that silently stops resolving the day a heading is reworded.
+  const url = (anchor) => caseStudyUrl(cs.slug, anchor);
+  const story = storyAnchor(cs);
 
   cs.problem.forEach((para, i) => {
     chunks.push({
       text: `${cs.title}: ${para}`,
       sourceRef: `${cs.slug}:problem:${i + 1}`,
-      sourceLabel: `${cs.title} case study — Problem`,
-      url,
+      sourceLabel: `${cs.title} case study, the problem`,
+      url: url(anchorFor("problem")),
     });
   });
 
@@ -84,8 +112,8 @@ function chunksForCaseStudy(cs) {
     chunks.push({
       text: `${cs.title}: ${para}`,
       sourceRef: `${cs.slug}:approach:${i + 1}`,
-      sourceLabel: `${cs.title} case study — Approach`,
-      url,
+      sourceLabel: `${cs.title} case study, how it works`,
+      url: url(anchorFor("approach")),
     });
   });
 
@@ -93,8 +121,8 @@ function chunksForCaseStudy(cs) {
     chunks.push({
       text: `${cs.title} — ${d.title}. ${d.body}`,
       sourceRef: d.sourceRef,
-      sourceLabel: `${cs.title} case study — Decision: ${d.title}`,
-      url,
+      sourceLabel: `${cs.title} case study, decision: ${d.title}`,
+      url: url(anchorFor("decisions")),
     });
   }
 
@@ -102,8 +130,8 @@ function chunksForCaseStudy(cs) {
     chunks.push({
       text: `${cs.title} — ${r.label}: ${r.value}.${r.detail ? ` ${r.detail}` : ""}`,
       sourceRef: r.sourceRef,
-      sourceLabel: `${cs.title} case study — Results: ${r.label}`,
-      url,
+      sourceLabel: `${cs.title} case study, results: ${r.label}`,
+      url: url(anchorFor("results")),
     });
   }
 
@@ -111,8 +139,12 @@ function chunksForCaseStudy(cs) {
     chunks.push({
       text: `${cs.title} — ${cs.story.title}. ${cs.story.body.join(" ")}`,
       sourceRef: cs.story.sourceRef,
-      sourceLabel: `${cs.title} case study — Story`,
-      url,
+      sourceLabel: `${cs.title} case study, the story`,
+      // The story's heading is its own title, so this anchor is computed per
+      // case study. A study without a story never reaches this branch, and
+      // storyAnchor returns null rather than a fragment for a heading that
+      // was never rendered.
+      url: url(story),
     });
   }
 
@@ -122,8 +154,8 @@ function chunksForCaseStudy(cs) {
     chunks.push({
       text: `${cs.title} — what this means if you need something similar: ${para}`,
       sourceRef: arr.length === 1 ? `${cs.slug}:closing` : `${cs.slug}:closing:${i + 1}`,
-      sourceLabel: `${cs.title} case study — Takeaway`,
-      url,
+      sourceLabel: `${cs.title} case study, what it means for you`,
+      url: url(anchorFor("closing")),
     });
   });
 
@@ -175,7 +207,7 @@ function chunksForProvenance(text) {
     chunks.push({
       text: `${heading}: ${paraText}`,
       sourceRef: `provenance:${headingSlug}:p${n}`,
-      sourceLabel: `Provenance ledger — ${heading}`,
+      sourceLabel: `Provenance ledger, ${heading}`,
     });
   }
 
@@ -208,7 +240,7 @@ function chunksForProvenance(text) {
         chunks.push({
           text: `${heading} — ${cells.slice(1).join(" — ")}`,
           sourceRef: idMatch[1],
-          sourceLabel: `Provenance ledger — ${heading}`,
+          sourceLabel: `Provenance ledger, ${heading}`,
         });
       } else {
         const n = (rowCounts.get(headingSlug) ?? 0) + 1;
@@ -216,7 +248,7 @@ function chunksForProvenance(text) {
         chunks.push({
           text: `${heading} — ${cells.join(" — ")}`,
           sourceRef: `provenance:${headingSlug}:row${n}`,
-          sourceLabel: `Provenance ledger — ${heading}`,
+          sourceLabel: `Provenance ledger, ${heading}`,
         });
       }
       continue;
@@ -254,7 +286,7 @@ function chunksForProducts(productsSrc, caseStudySlugs) {
     chunks.push({
       text: `${name}: ${tagline}${techChips.length ? ` Built with: ${techChips.join(", ")}.` : ""}`,
       sourceRef: `${slug}:tagline`,
-      sourceLabel: `Product overview — ${name}`,
+      sourceLabel: `Product overview, ${name}`,
       url: hasCaseStudy ? `/work/${slug}` : undefined,
     });
   }
@@ -275,8 +307,8 @@ function chunksForExperience(experience) {
             : `${entry.company}: ${bullet.text}`,
           sourceRef: bullet.sourceRef,
           sourceLabel: role.title
-            ? `Experience — ${entry.company} — ${role.title}`
-            : `Experience — ${entry.company}`,
+            ? `Experience, ${entry.company}, ${role.title}`
+            : `Experience, ${entry.company}`,
           url: "/#experience",
         });
       }
@@ -292,7 +324,7 @@ function chunksForAvailability(availability) {
     {
       text: availability.summary,
       sourceRef: "availability:summary",
-      sourceLabel: "Availability — role search",
+      sourceLabel: "Availability, role search",
       url: "/#contact",
     },
   ];
@@ -315,7 +347,7 @@ function chunksForSite(site) {
     {
       text: `${site.name} is a ${site.role} based in ${site.location}. ${site.tagline} Current status: ${site.status}. Profiles: ${profiles}.`,
       sourceRef: "site:identity",
-      sourceLabel: "Site identity — Gaurav Gandhi",
+      sourceLabel: "Site identity, Gaurav Gandhi",
       url: "/",
     },
   ];
