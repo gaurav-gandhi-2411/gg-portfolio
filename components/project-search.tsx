@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { keywordScore } from "@/lib/search/keyword-score";
+import { publishSearchMatch, registerSearchClear } from "@/lib/search/query-match-store";
 import { buildSearchableText } from "@/lib/search/searchable-text";
 import { CATEGORIES, type Product } from "@/content/types";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,16 @@ import { cn } from "@/lib/utils";
  * weights); only the render now excludes zero-score results, and an
  * explicit "no projects match" message covers the zero-results case that
  * this used to render as silence.
+ *
+ * Round 7 (GG's launch review, again) — round 6 fixed THIS dropdown's own
+ * filtering, and was verified against exactly that: the dropdown, typed
+ * "tria", showed only TriageIQ. It was never checked against the grid
+ * sitting directly underneath, which round 6 never touched at all —
+ * ProjectFilter (the category pills + "Showing X of Y" grid) had zero
+ * awareness of the search query before this round, so a correctly-narrowed
+ * dropdown sat over a grid still reading the unfiltered total. See
+ * lib/search/query-match-store.ts: `ranked`, already filtered to score > 0,
+ * is now published so the grid can filter by the same computation.
  *
  * UI pattern: a single-focus combobox (role="combobox" on the input,
  * aria-activedescendant into a role="listbox" panel) rather than a
@@ -105,6 +116,36 @@ export function ProjectSearch({ products }: { products: Product[] }) {
     scored.sort((a, b) => b.score - a.score);
     return scored;
   }, [productsWithText, trimmedQuery]);
+
+  // Round 7 (GG's launch review) — this dropdown already filters to matches
+  // (round 6's fix), but the grid below it never did: ProjectSearch and
+  // ProjectFilter are unrelated siblings under /projects's Server Component
+  // page, so typing "tria" correctly narrowed THIS panel to TriageIQ while
+  // the grid still read "Showing 14 of 14" underneath it — indistinguishable
+  // from search doing nothing to anyone not staring at the dropdown alone.
+  // `ranked` (already score > 0, the same computation the dropdown itself
+  // trusts) is the single source of truth published to the grid; see
+  // lib/search/query-match-store.ts for why this is a module-level store
+  // rather than lifted React state.
+  useEffect(() => {
+    publishSearchMatch(
+      trimmedQuery.length === 0 ? null : new Set(ranked.map((r) => r.product.slug))
+    );
+  }, [trimmedQuery, ranked]);
+
+  // Registered once, not per-keystroke: lets the grid's zero-results empty
+  // state clear the actual search box, not just its own filtered view of it.
+  useEffect(() => {
+    registerSearchClear(() => {
+      setQuery("");
+      setOpen(false);
+      setActiveIndex(-1);
+    });
+    return () => {
+      registerSearchClear(null);
+      publishSearchMatch(null);
+    };
+  }, []);
 
   function handleFocus(): void {
     if (trimmedQuery.length > 0) setOpen(true);
