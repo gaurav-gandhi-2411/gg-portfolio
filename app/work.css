@@ -127,6 +127,19 @@
   transition:
     transform var(--dur-base) var(--ease-out-soft),
     visibility var(--dur-base) step-end;
+  /* GG's launch-review round three, card click targets: a `transform`
+   * (even the resting translateY here, unrelated to positioning) makes an
+   * element paint as if positioned per the CSS Transforms spec, so this
+   * list -- later in DOM order than .card-stretch-link's title link, both
+   * inside .project-card-body's stacking context -- silently painted ABOVE
+   * the stretch overlay and swallowed clicks meant to fall through to it.
+   * Found by a new e2e test clicking a coordinate that happened to land on
+   * this row: the click landed on inert text instead of navigating. These
+   * chips have never been interactive (no onClick, no links) -- pointer-
+   * events:none is the correct fix, not a z-index war with a decorative
+   * list that was never meant to be a target at all.
+   */
+  pointer-events: none;
 }
 
 .project-card:hover .project-card-chips,
