@@ -126,8 +126,16 @@ export function ProjectFilter({
  * harness describing the bug accurately rather than being flaky.
  */
 
+  // gap-1, not a relied-on JSX text-node space before the count span: a
+  // flex container (this button is inline-flex, for vertical centering)
+  // wraps each contiguous run of text in its own anonymous flex item, and
+  // whitespace sitting at the boundary between two flex items collapses
+  // away instead of rendering — "All " + <span>14</span> becomes "All14"
+  // on screen even though the source has a literal space between them.
+  // The count spans below rely on this gap rather than on incidental
+  // whitespace surviving flex layout.
   const pillBase =
-    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
+    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center gap-1 rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
   // Wave 14 fix: a solid fill, not a 15%-tint border — GG reported clicking
   // a pill and "nothing happens." The mechanism was firing correctly (the
   // bug hunt is in reports/wave14-…); the actual defect was that success
