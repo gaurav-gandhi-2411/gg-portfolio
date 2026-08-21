@@ -384,13 +384,28 @@ export function createHeroFieldRenderer(
     /* The field fills the frame rather than fitting inside it: this is full
      * bleed, and a contain fit would letterbox the cloud into a blob in the
      * middle of a wide viewport, which is exactly what the boxed hero looked
-     * like. Correcting the aspect only partially (the 0.4 exponent) keeps
+     * like. Correcting the aspect only partially (the exponent below) keeps
      * some of the stretch, so a wide screen gets a wide field instead of one
      * that grows a huge empty band above and below. Stretching an abstract
      * scatter is invisible in a way that stretching a recognizable shape
-     * would not be. */
-    extentX = BASE_EXTENT * Math.pow(Math.max(aspect, 1), 0.4);
-    extentY = BASE_EXTENT * Math.pow(Math.max(1 / aspect, 1), 0.4);
+     * would not be.
+     *
+     * GG's launch-review round three: "whether the field's density is even
+     * across the frame or bunched right." Measured (a hue-filtered pixel
+     * scan of the rendered hero, isolating --indigo dots/strands from the
+     * white headline text and the also-indigo accent-gradient span, both of
+     * which confounded a first attempt at this using plain luminance) --
+     * the field's own real, un-fabricated t-SNE data is genuinely
+     * symmetric (419 points, x-mean -0.000, 212 left of center / 207
+     * right), so this was never a data problem. It is a correction-
+     * strength one: 0.4 pulled the field in tighter than the frame it fills,
+     * leaving the scrim-adjacent band dense and the true right edge (past
+     * roughly 1100px of 1440) empty. 0.3 lets more of the natural
+     * aspect-driven stretch through, spreading the same points further
+     * toward that edge without touching their relative density or
+     * repositioning the field's own center. */
+    extentX = BASE_EXTENT * Math.pow(Math.max(aspect, 1), 0.3);
+    extentY = BASE_EXTENT * Math.pow(Math.max(1 / aspect, 1), 0.3);
   }
 
   function resize(cssWidth: number, cssHeight: number, devicePixelRatio: number): void {
