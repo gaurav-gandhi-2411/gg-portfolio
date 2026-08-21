@@ -228,13 +228,13 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
   // prompt or corpus problem, not an outage.
   if (validatedCitations.length === 0) return refusalAnswer("unvalidated_citations");
 
-  const answer =
+  const rawAnswer =
     typeof parsed?.answer === "string" && parsed.answer.trim().length > 0
       ? parsed.answer
       : REFUSAL_MESSAGE;
 
   return {
-    answer,
+    answer: collapseVerbatimRepeat(rawAnswer),
     citations: validatedCitations,
     refused: false,
     followUps: validateFollowUps(parsed?.followUps, retrievedBySourceRef),
@@ -282,4 +282,33 @@ function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>)
   }
 
   return out;
+}
+
+/**
+ * GG tapped a follow-up chip and the answer bubble showed the same
+ * paragraph twice, verbatim, in one response. The raw completion content is
+ * otherwise trusted as-is (this codebase has no other place that
+ * post-processes model prose), so this is a narrow, targeted safety net for
+ * exactly that one failure shape — a model output that is, in full, two
+ * back-to-back copies of the same text — rather than a general repetition
+ * detector that would risk mangling ordinary prose that legitimately reuses
+ * a phrase.
+ *
+ * Checks splits within 2 characters of the midpoint (a model restating
+ * itself rarely inserts more than a little connecting whitespace between
+ * the two copies) for an exact match, after trimming each half. The
+ * length > 20 guard exists so a genuinely short answer that happens to
+ * split into two identical halves by coincidence (unlikely, but a real
+ * false-positive path for very short text) is left alone.
+ */
+export function collapseVerbatimRepeat(text: string): string {
+  const trimmed = text.trim();
+  const mid = Math.floor(trimmed.length / 2);
+  for (let split = mid - 2; split <= mid + 2; split++) {
+    if (split <= 0 || split >= trimmed.length) continue;
+    const first = trimmed.slice(0, split).trim();
+    const second = trimmed.slice(split).trim();
+    if (first.length > 20 && first === second) return first;
+  }
+  return trimmed;
 }
