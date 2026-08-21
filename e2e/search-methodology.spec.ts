@@ -59,16 +59,17 @@ test.describe("/projects search-methodology disclosure", () => {
     await expect(page.getByText(/every tier's 95% wilson confidence interval/i)).toBeVisible();
   });
 
-  test("a cited claim's source-provenance disclosure opens, shows the report citation, and links to provenance.md", async ({
+  test("a cited claim's source-provenance disclosure opens, shows the report citation as plain text, with no link", async ({
     page,
   }) => {
     // These sourceRefs are prose-tier (a content/provenance.md row, no
     // content/metrics.json entry) — MetricProvenance's own documented rule
     // (components/metric-provenance.tsx) renders the raw source text
-    // verbatim and links only to provenance.md itself, never to a file
-    // this parser picked out of the prose (a wrong citation next to a real
-    // number is worse than no citation). So this test checks the report
-    // filename appears as plain cited text, not as a synthesized link —
+    // verbatim and, since GG's round-three launch review, offers no link at
+    // all for this tier (not even to provenance.md itself, which used to be
+    // the one exception — a hiring-facing surface sending the reader to a
+    // repo file reads as "go check my work"). So this test checks the
+    // report filename appears as plain cited text, never as a link —
     // scoped to this ONE claim's own provenance group: MetricProvenance's
     // opacity-based reveal (components/metric-provenance.tsx's own comment
     // on why — it must stay on under prefers-reduced-motion) means every
@@ -81,6 +82,6 @@ test.describe("/projects search-methodology disclosure", () => {
     await claim.click();
     const group = page.getByRole("group", { name: "Source for Keyword-only, shipped" });
     await expect(group.getByText(/BL-9-round5-static-embedding-and-decision\.md/i)).toBeVisible();
-    await expect(group.getByRole("link", { name: /View in content\/provenance\.md/i })).toBeVisible();
+    await expect(group.getByRole("link")).toHaveCount(0);
   });
 });
