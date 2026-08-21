@@ -77,7 +77,7 @@ export const products: Product[] = [
     // through the warming bridge instead of straight to the frontend.
     liveUrl: "https://gaurav-gandhi.vercel.app/warmup/style-maitri",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-shopping-assistant",
-    categories: ["llm-agents", "retrieval", "vision"],
+    categories: ["llm-agents", "retrieval", "vision", "evals-research"],
     techChips: ["LangGraph", "FAISS + BM25", "CLIP", "Groq"],
     metric: refreshableMetric("style-maitri:intent-accuracy"),
     figure: { kind: "bar", pct: 93.8, valueText: "93.8% (n=211)" },
