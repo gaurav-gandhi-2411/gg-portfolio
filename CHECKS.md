@@ -914,6 +914,53 @@ carve-out in this repository: what is it keyed on, and is that narrower or wider
 than the thing that justified it? A `// eslint-disable-next-line` is scoped to
 the line and is fine. A path in an ignore list is scoped to the path and is not.
 
+**Recurrence (2026-08-21, gg-portfolio, three separate PRs in one session).**
+The "scoping beats scheduling" fix this entry describes is not live. Read
+directly from `~/.claude/scripts/merge_gate.py` in this session:
+`OVERRIDE_ALLOWLIST` is still `dict[str, dict[str, object]]` keyed on the bare
+path, and `REQUIRED_OVERRIDE_FIELDS = ("lines", "rationale", "verifier_url")`
+— three fields, no PR-scoping field anywhere in the entry shape or in
+`validate_override_entry`. `pr_number` appears only as the runtime argument
+naming which PR is *currently* being evaluated and in the audit-log line that
+records which PR *consumed* an override after the fact — nothing in the lookup
+itself restricts an entry to the PR that justified it. The #119 batch this entry
+was written about is still sitting in the allowlist as bare paths, unchanged.
+
+It fired three times in the same session, on three different #119 leftover
+paths, each caught only because that PR's own diff happened to touch a file
+#119 once touched:
+
+- `app/ask/page.tsx` and `components/sections/research.tsx`, both genuinely
+  unrelated to #119's crash fix, both matched the stale entry, both would have
+  passed silently under the entry's recorded (oversized) ceiling. Disclosed in
+  each PR body per gate 3c's own requirement rather than treated as
+  legitimately earned overrides.
+- `components/chatbot/ask-panel.tsx`, a third #119 leftover, took a different
+  path through the same bug: this diff (10 lines) exceeded the entry's own
+  recorded ceiling (6 lines), so `evaluate_size_gate` refused the override,
+  counted the diff in full as reviewable, and surfaced an `override errors`
+  message in the gate 3 detail line — gate 3 still passed cleanly on the raw
+  line count (58 reviewable, well under 400), so no gate 3c disclosure was
+  owed and none was needed. Worth recording as a *distinct* shape of the same
+  root cause: a stale bare-path entry can fail in a way that's safely caught
+  by its own ceiling check (this case) or in a way that silently passes under
+  a ceiling that's still wide enough for an unrelated diff (the first two
+  cases) — the entry's staleness is the constant; which failure mode you get
+  depends on how big the unrelated diff happens to be.
+
+All three: the shared script was left untouched, per standing instruction to
+leave this recurrence for GG rather than self-authorize a fix to tooling other
+sessions also depend on.
+
+Same lesson this entry already draws, now with three data points instead of
+one: a described fix and a shipped fix are not the same fact, and a control's
+own documentation can drift out of sync with its own source the same way any
+other control drifts out of sync with the surface it claims to cover. "What
+surface does this actually reach" is a question worth re-asking of a control's
+*specification*, not only of its code — this entry was itself never
+re-verified against the script it describes until this recurrence forced the
+check.
+
 **24. Two disclosure checks that could not match their own subject.**
 Found while writing the disclosure instance 23's fix required, which is the only
 reason it was found at all. Gate 3c asks whether a PR body discloses a gate
