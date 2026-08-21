@@ -125,7 +125,7 @@ test("axe: zero violations on /projects with search results open", async ({ page
  */
 test("axe: zero violations on /projects with the search-methodology panel open", async ({ page }) => {
   await gotoSettled(page, "/projects");
-  const trigger = page.getByRole("button", { name: /how this search was built/i });
+  const trigger = page.getByRole("button", { name: "Search methodology", exact: true });
   await trigger.click();
   await expect(page.getByText(/every tier's 95% wilson confidence interval/i)).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();

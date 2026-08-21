@@ -256,8 +256,27 @@ body::after {
 }
 
 /* The one phrase that matters gets the soft cut and the accent, so it is set
- * differently rather than only coloured differently. */
+ * differently rather than only coloured differently.
+ *
+ * background-clip: text paints the gradient into the background positioning
+ * area (the padding-box), then clips it to the glyph shapes — but italic
+ * ink routinely overhangs its own advance-width box, most visibly on the
+ * last glyph of a span, which has no following character to extend that
+ * box. With color: transparent, whatever ink falls outside the box gets no
+ * paint at all: not clipped-and-still-there, just missing pixels. That is
+ * the clipped "s" in "products" GG found — an italic, gradient-filled span
+ * ending exactly at a glyph whose ink leans past its box on every viewport
+ * width, not a one-off rendering glitch. inline-block turns the span into
+ * its own box so extra padding actually enlarges the paint area (a plain
+ * inline span's background box is line-box-relative and mostly ignores
+ * padding for this purpose); the padding buys the overhang room and the
+ * matching negative margin gives that room back so the following word
+ * doesn't visibly shift.
+ */
 .hero-headline-accent {
+  display: inline-block;
+  padding: 0 0.08em;
+  margin: 0 -0.08em;
   font-variation-settings: "wght" 600, "opsz" 144, "SOFT" 100, "WONK" 1;
   font-style: italic;
   background: linear-gradient(102deg, var(--text-hi) 8%, var(--indigo) 92%);
@@ -385,69 +404,6 @@ body::after {
 .hero-social:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
-}
-
-/*
- * The numbers sit on the bottom edge of the first screen. They used to be a
- * bordered strip directly under the copy, which is the shape of a table
- * header and read like one. Here they are the floor of the composition and
- * the reward for the first scroll pixel.
- */
-.hero-stats {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  margin: 0;
-  border-top: 1px solid color-mix(in oklab, var(--border) 32%, transparent);
-  padding-top: var(--space-6);
-}
-
-.hero-stat {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-4);
-}
-
-.hero-stat-figure {
-  margin: 0;
-  min-width: 3.5ch;
-  font-family: var(--font-heading);
-  font-size: clamp(2rem, 4.4vw, 3.25rem);
-  font-variation-settings: "wght" 500, "opsz" 144, "SOFT" 20, "WONK" 0;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--text-hi) 15%, var(--indigo) 95%);
-  background-clip: text;
-  color: transparent;
-}
-
-.hero-stat-label {
-  max-width: 30ch;
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  line-height: 1.45;
-  letter-spacing: 0.04em;
-}
-
-/* 390px and 1440px are designed separately rather than one scaled into the
- * other. On a phone the numbers read as a stacked list with the figure
- * leading each row; from tablet up they become a three-column rail along the
- * bottom edge with the label under its figure. */
-@media (min-width: 768px) {
-  .hero-stats {
-    flex-direction: row;
-    gap: var(--space-12);
-  }
-  .hero-stat {
-    flex: 1 1 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
-  }
-  .hero-stat-label {
-    max-width: 24ch;
-  }
 }
 
 /*
