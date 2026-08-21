@@ -10,6 +10,8 @@
 @import "./work.css";
 /* Case study template. Same contract. */
 @import "./case-study.css";
+/* Depth/pointer-light for the sections below the hero. Same contract. */
+@import "./sections-motion.css";
 
 /*
  * GG Portfolio design tokens (rule 15b).

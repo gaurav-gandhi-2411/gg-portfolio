@@ -8,7 +8,9 @@ import { setPointerState } from "@/lib/pointer";
  * The single pointer listener on the site.
  *
  * Renders nothing. It attaches one passive listener, smooths the position,
- * and writes it once per frame to the element that actually reads it.
+ * and writes it once per frame to every element that actually reads it —
+ * originally just `.hero-spotlight`, now that plus one `.section-ambient`
+ * leaf per section below the hero (components/section.tsx).
  *
  * It used to write five custom properties to <html> every frame, and that was
  * the single largest cost on the page. Custom properties inherit, so setting
@@ -20,12 +22,16 @@ import { setPointerState } from "@/lib/pointer";
  * hero's SSR'd point cloud is still in the DOM and the tree is more than twice
  * this size, that per-frame cost was consuming most of the main thread.
  *
- * There is exactly one CSS consumer, .hero-spotlight, and it has no
- * descendants, so the write goes there instead. --mdx/--mdy are not written
- * as CSS at all any more: nothing in any stylesheet reads them, only the GL
- * layer does, and it reads them from setPointerState.
+ * The fix was never "write to fewer things" in the abstract, it was "never
+ * write to an ancestor" — so this scales to several consumers exactly the
+ * way it scaled to one: every consumer is still its own leaf with no
+ * descendants, found once via a single `querySelectorAll` rather than a
+ * `querySelector`, and each still costs nothing per the same measurement.
+ * --mdx/--mdy are not written as CSS at all any more: nothing in any
+ * stylesheet reads them, only the GL layer does, and it reads them from
+ * setPointerState.
  *
- * It writes inline styles on a node React rendered, which React does not own
+ * It writes inline styles on nodes React rendered, which React does not own
  * the contents of. That is the whole reason this is a style write and not a
  * DOM write: nothing here inserts, removes or reparents a node, which is the
  * rule that came out of the round-nine crash. Setting a custom property on an
@@ -53,7 +59,19 @@ export function PointerField() {
     // The one element whose CSS reads --mx/--my/--pointer-on. Looked up once;
     // if the route has no hero the JS side still runs, because the GL layer
     // reads the same values through setPointerState rather than through CSS.
-    const spotlight = document.querySelector<HTMLElement>(".hero-spotlight");
+    //
+    // GG's launch-review round two: "the machinery exists and nothing below
+    // the hero reads it." components/section.tsx now renders one
+    // `.section-ambient` leaf per section (About/Experience/Work/Contact/
+    // Research); each gets the same per-frame write .hero-spotlight always
+    // got. Still never the document root — that is the one measured,
+    // load-bearing constraint this component's own header documents (a
+    // custom property on <html> cost 17.3ms/frame against 0ms on a leaf,
+    // and there is no in-between: CSS custom properties inherit, so
+    // anything above a leaf invalidates the whole document's computed
+    // style). Six leaves cost six cheap writes; the root would cost the
+    // page.
+    const targets = document.querySelectorAll<HTMLElement>(".hero-spotlight, .section-ambient");
 
     let targetX = 0.5;
     let targetY = 0.5;
@@ -65,11 +83,14 @@ export function PointerField() {
     let idleFrames = 0;
 
     const write = () => {
-      if (spotlight) {
-        spotlight.style.setProperty("--mx", x.toFixed(4));
-        spotlight.style.setProperty("--my", y.toFixed(4));
-        spotlight.style.setProperty("--pointer-on", strength.toFixed(4));
-      }
+      const mx = x.toFixed(4);
+      const my = y.toFixed(4);
+      const on = strength.toFixed(4);
+      targets.forEach((target) => {
+        target.style.setProperty("--mx", mx);
+        target.style.setProperty("--my", my);
+        target.style.setProperty("--pointer-on", on);
+      });
       setPointerState(x, y, x - 0.5, y - 0.5, strength);
     };
 
@@ -123,9 +144,11 @@ export function PointerField() {
       document.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("blur", onLeave);
       if (frame !== null) cancelAnimationFrame(frame);
-      spotlight?.style.removeProperty("--mx");
-      spotlight?.style.removeProperty("--my");
-      spotlight?.style.removeProperty("--pointer-on");
+      targets.forEach((target) => {
+        target.style.removeProperty("--mx");
+        target.style.removeProperty("--my");
+        target.style.removeProperty("--pointer-on");
+      });
     };
   }, []);
 

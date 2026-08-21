@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { InlineLink } from "@/components/inline-link";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { researchPapers } from "@/content/research";
 
@@ -12,6 +11,9 @@ import { researchPapers } from "@/content/research";
  * spread (title + status + links left, thesis right), filling the
  * 1024–1600px band with the same content instead of stacking it in a
  * narrow strand. Below lg, unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave).
+ *
+ * GG's launch-review round two dropped the RevealGroup wrapper — see
+ * components/sections/about.tsx's header for why.
  */
 export function Research() {
   return (
@@ -29,7 +31,7 @@ export function Research() {
        * Experience: once each item has a border, the border is doing the
        * separating and the old whitespace is just distance.
        */}
-      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
+      <div className="flex flex-col gap-[var(--space-6)]">
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
@@ -82,7 +84,7 @@ export function Research() {
             </p>
           </article>
         ))}
-      </RevealGroup>
+      </div>
     </Section>
   );
 }

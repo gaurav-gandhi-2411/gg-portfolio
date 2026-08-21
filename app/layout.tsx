@@ -6,6 +6,7 @@ import { BootLoader } from "@/components/boot-loader";
 import { ChatLauncher } from "@/components/chatbot/chat-launcher";
 import { PersonJsonLd } from "@/components/json-ld";
 import { ScrollDriver } from "@/components/motion/scroll-driver";
+import { SectionDepth } from "@/components/motion/section-depth";
 import { PointerField } from "@/components/pointer-field";
 import { SiteNav } from "@/components/site-nav";
 import { site } from "@/content/site";
@@ -138,16 +139,20 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
-        {/* Both render nothing and both no-op for reduced-motion visitors.
-            One writes the shared pointer position that every layer which
-            acknowledges the cursor reads; the other owns smooth scrolling
-            and the single clock that scroll-linked motion runs on. They sit
-            in the root layout rather than on the homepage because the header
-            and the case study pages will read from the same two sources, and
-            a second listener or a second clock added later is how a site
-            ends up fighting itself. */}
+        {/* All three render nothing and all three no-op for reduced-motion
+            visitors. PointerField writes the shared pointer position every
+            layer that acknowledges the cursor reads (the hero's spotlight,
+            now also each section's `.section-ambient`); ScrollDriver owns
+            smooth scrolling and the single clock scroll-linked motion runs
+            on; SectionDepth is the scroll-scrubbed depth/entrance tween for
+            About/Experience/Work/Contact/Research. They sit in the root
+            layout rather than lower down because a second listener or a
+            second clock added later is how a site ends up fighting itself
+            — the same reasoning that already put PointerField/ScrollDriver
+            here, extended rather than repeated. */}
         <PointerField />
         <ScrollDriver />
+        <SectionDepth />
         <SiteNav />
         {children}
         <ChatLauncher />

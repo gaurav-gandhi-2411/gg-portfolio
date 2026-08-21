@@ -1,6 +1,5 @@
 import { FileTextIcon } from "@/components/icons";
 import { LinkButton } from "@/components/link-button";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { experience } from "@/content/experience";
 import { site } from "@/content/site";
@@ -14,11 +13,15 @@ import { site } from "@/content/site";
  * (company, dates, location, tech) beside the bullet column — the classic
  * resume geometry — so the card's width at 1024–1600px is carrying
  * information, not padding. Below lg the wave-12 layout is unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave — see section.tsx).
+ *
+ * GG's launch-review round two dropped the RevealGroup wrapper — see
+ * components/sections/about.tsx's header for why (components/section.tsx's
+ * `.section-content` now carries the continuous entrance).
  */
 export function Experience() {
   return (
     <Section id="experience" label="Experience" width="wide">
-      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
+      <div className="flex flex-col gap-[var(--space-6)]">
         {experience.map((entry) => (
           <article
             key={entry.company}
@@ -126,7 +129,7 @@ export function Experience() {
             View the full resume
           </LinkButton>
         </p>
-      </RevealGroup>
+      </div>
     </Section>
   );
 }
