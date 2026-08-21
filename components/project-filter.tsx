@@ -166,8 +166,13 @@ export function ProjectFilter({
   // on screen even though the source has a literal space between them.
   // The count spans below rely on this gap rather than on incidental
   // whitespace surviving flex layout.
+  // Round 3 (GG): "scroll and transition feel dated" — was bare
+  // transition-colors (Tailwind's default duration/curve); every pill on
+  // /projects and the homepage Work section is clicked far more often than
+  // any showcase animation, so it's the token-driven timing (--dur-fast /
+  // --ease-out-soft) that most sets the site's everyday feel.
   const pillBase =
-    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center gap-1 rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
+    "focus-visible:outline-ring -my-[5px] inline-flex min-h-11 items-center gap-1 rounded-full border px-3.5 py-[var(--space-1-5)] text-sm transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none active:scale-95 motion-reduce:active:scale-100";
   // Wave 14 fix: a solid fill, not a 15%-tint border — GG reported clicking
   // a pill and "nothing happens." The mechanism was firing correctly (the
   // bug hunt is in reports/wave14-…); the actual defect was that success
@@ -269,7 +274,7 @@ export function ProjectFilter({
         <p className="mt-[var(--space-6)] text-center">
           <Link
             href={seeAllHref}
-            className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center text-sm font-medium transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             {seeAllLabel}
           </Link>
@@ -289,7 +294,7 @@ export function ProjectFilter({
           <button
             type="button"
             onClick={() => (searchMatch ? clearSearch() : select("all"))}
-            className="text-accent focus-visible:outline-ring mt-[var(--space-2)] text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+            className="text-accent focus-visible:outline-ring mt-[var(--space-2)] text-sm font-medium transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
             {searchMatch ? "Clear search" : "Show all projects"}
           </button>
