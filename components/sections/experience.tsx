@@ -22,7 +22,7 @@ export function Experience() {
         {experience.map((entry) => (
           <article
             key={entry.company}
-            className="border-border/40 bg-card/40 rounded-xl border p-6 md:p-8"
+            className="border-border/40 bg-card/40 rounded-xl border p-6 transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 md:p-8"
           >
             {/* 16rem rail: the longest tech chip ("Bayesian Change-Point
                 Detection") wrapped into a stretched capsule at 14rem
