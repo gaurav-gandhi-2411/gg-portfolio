@@ -1,6 +1,5 @@
 import { FileTextIcon } from "@/components/icons";
 import { LinkButton } from "@/components/link-button";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { experience } from "@/content/experience";
 import { site } from "@/content/site";
@@ -14,15 +13,23 @@ import { site } from "@/content/site";
  * (company, dates, location, tech) beside the bullet column — the classic
  * resume geometry — so the card's width at 1024–1600px is carrying
  * information, not padding. Below lg the wave-12 layout is unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave — see section.tsx).
+ *
+ * GG's launch-review round two dropped the RevealGroup wrapper — see
+ * components/sections/about.tsx's header for why (components/section.tsx's
+ * `.section-content` now carries the continuous entrance). Each card is a
+ * `.section-card` (app/sections-motion.css) for the pointer tilt, with NO
+ * resting transform on it — that CSS file's own comment on why: this
+ * card's meta rail is `position: sticky` (`lg:sticky lg:top-24` below), and
+ * an ancestor transform changes a sticky descendant's containing block.
  */
 export function Experience() {
   return (
     <Section id="experience" label="Experience" width="wide">
-      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
+      <div className="flex flex-col gap-[var(--space-6)]">
         {experience.map((entry) => (
           <article
             key={entry.company}
-            className="border-border/40 bg-card/40 rounded-xl border p-6 transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 md:p-8"
+            className="section-card border-border/40 bg-card/40 rounded-xl border p-6 md:p-8"
           >
             {/* 16rem rail: the longest tech chip ("Bayesian Change-Point
                 Detection") wrapped into a stretched capsule at 14rem
@@ -126,7 +133,7 @@ export function Experience() {
             View the full resume
           </LinkButton>
         </p>
-      </RevealGroup>
+      </div>
     </Section>
   );
 }

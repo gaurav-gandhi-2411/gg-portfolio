@@ -1,5 +1,4 @@
 import { InlineLink } from "@/components/inline-link";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { availability } from "@/content/availability";
 import { site } from "@/content/site";
@@ -9,8 +8,9 @@ import { site } from "@/content/site";
  * index where products belong). The big serif email link stays — it earned
  * its place as the page's one unmissable action.
  *
- * Wave 9: RevealGroup (mode="onview") replaces the plain wrapper — the
- * site's new default reveal pattern (GG's integration map, item 2).
+ * Wave 9: RevealGroup (mode="onview") replaced the plain wrapper. GG's
+ * launch-review round two replaced RevealGroup in turn — see
+ * components/sections/about.tsx's header for why.
  */
 export function Contact() {
   return (
@@ -18,7 +18,7 @@ export function Contact() {
       {/* Wave 11: fully centered — Contact is the page's closing note and
           the one section short enough to read comfortably center-aligned;
           the display-size email anchors the axis. */}
-      <RevealGroup mode="onview" className="flex flex-col items-center gap-[var(--space-6)] text-center">
+      <div className="flex flex-col items-center gap-[var(--space-6)] text-center">
         {/* Wave 10 (GG: previous copy read vague/casual — "let's talk",
             "if the scope is a good fit"). Direct and professional: what I'm
             looking for, how to reach me, where I am. */}
@@ -67,7 +67,7 @@ export function Contact() {
             Hugging Face
           </InlineLink>
         </p>
-      </RevealGroup>
+      </div>
     </Section>
   );
 }

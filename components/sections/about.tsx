@@ -1,5 +1,4 @@
 import { HeadlineStats } from "@/components/headline-stats";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { aboutParagraphs, skillChips } from "@/content/about";
 
@@ -14,6 +13,14 @@ import { aboutParagraphs, skillChips } from "@/content/about";
  * mobile/tablet layout is byte-identical to wave 12's. (The two renderings
  * are display-toggled — display:none removes the hidden one from the
  * accessibility tree, so nothing announces twice.)
+ *
+ * GG's launch-review round two dropped the RevealGroup wrapper this prose
+ * used to sit in — components/section.tsx's own `.section-content` now
+ * carries a continuous, scroll-scrubbed entrance for every section built on
+ * it (components/motion/section-depth.tsx), which is the thing that
+ * replaced the one-shot IntersectionObserver reveal RevealGroup was. The
+ * skills panel is a `.section-card` now (app/sections-motion.css) for the
+ * same pointer-tilt every other content card below the hero gets.
  */
 export function About() {
   return (
@@ -27,7 +34,7 @@ export function About() {
       <HeadlineStats />
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-x-14">
-        <RevealGroup mode="onview" className="flex flex-col items-center gap-[var(--space-5)] lg:items-start">
+        <div className="flex flex-col items-center gap-[var(--space-5)] lg:items-start">
           {aboutParagraphs.map((paragraph) => (
             <p
               key={paragraph.slice(0, 32)}
@@ -39,10 +46,10 @@ export function About() {
           <p className="border-border/40 text-muted-foreground max-w-measure border-t pt-5 text-sm leading-relaxed lg:hidden">
             Working across {skillChips.join(" · ")}.
           </p>
-        </RevealGroup>
+        </div>
 
         <aside className="hidden lg:block" aria-label="Core skills">
-          <div className="border-border/40 rounded-xl border p-[var(--space-5)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+          <div className="section-card border-border/40 rounded-xl border p-[var(--space-5)]">
             <h3 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
               Working across
             </h3>

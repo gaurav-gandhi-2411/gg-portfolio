@@ -48,37 +48,58 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className={`mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}>
-      <div className="flex flex-col items-center text-center">
-        <h2 className="font-heading text-title font-semibold text-foreground">{label}</h2>
-        {/*
-         * The one mark every section shares. Before this, a section was a
-         * centered serif line and then content, so five sections down the page
-         * read as five paragraphs of different lengths rather than five
-         * sections: nothing said "a new thing starts here" except whitespace,
-         * which the long ones (Experience at 1700px tall) swallowed.
-         *
-         * Deliberately the page's own accent and nothing else. A per-section
-         * colour would compete with the case-study template, which already
-         * spends thirteen derived hues off this token (see globals.css's
-         * --accent-h note), and the point here is that the sections are one
-         * system rather than thirteen.
-         *
-         * Static, not animated. It is small enough that a draw-in would be
-         * motion nobody asked for, and it means reduced-motion visitors get
-         * the identical composition rather than a flattened one.
-         */}
-        <span aria-hidden className="section-rule mt-[var(--space-4)]" />
-        {labelNote ? (
-          <p className="text-muted-foreground mt-[var(--space-4)] font-mono text-caption">{labelNote}</p>
-        ) : null}
-        {lede ? (
-          <p className="text-muted-foreground mt-[var(--space-5)] max-w-measure text-base leading-relaxed">
-            {lede}
-          </p>
-        ) : null}
+    <section
+      id={id}
+      className={`section-plane relative mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}
+    >
+      {/* Depth layer, behind everything. Pointer-reactive (the same --mx/--my
+          PointerField already writes to the hero's own spotlight, extended
+          here — see that component's own header for why each target has to
+          be a leaf, never the root) and scroll-parallax'd at a different
+          rate than .section-content (components/motion/section-depth.tsx),
+          so the section reads as two planes rather than one flat card. */}
+      <div className="section-ambient" aria-hidden="true" />
+
+      {/* Everything a visitor reads, as one plane in front of the ambient
+          layer above. Also components/motion/section-depth.tsx's transform
+          target — a continuous, scroll-position-scrubbed translateY across
+          the section's own entrance band, never opacity (the hero's own
+          rule: text never fades, because an axe pass once landed mid-fade
+          and read the contrast of a half-transparent heading — see
+          app/hero.css). Reduced-motion visitors and no-JS get this at its
+          resting transform (none), same as RevealGroup's own contract. */}
+      <div className="section-content relative">
+        <div className="flex flex-col items-center text-center">
+          <h2 className="font-heading text-title font-semibold text-foreground">{label}</h2>
+          {/*
+           * The one mark every section shares. Before this, a section was a
+           * centered serif line and then content, so five sections down the page
+           * read as five paragraphs of different lengths rather than five
+           * sections: nothing said "a new thing starts here" except whitespace,
+           * which the long ones (Experience at 1700px tall) swallowed.
+           *
+           * Deliberately the page's own accent and nothing else. A per-section
+           * colour would compete with the case-study template, which already
+           * spends thirteen derived hues off this token (see globals.css's
+           * --accent-h note), and the point here is that the sections are one
+           * system rather than thirteen.
+           *
+           * Static, not animated. It is small enough that a draw-in would be
+           * motion nobody asked for, and it means reduced-motion visitors get
+           * the identical composition rather than a flattened one.
+           */}
+          <span aria-hidden className="section-rule mt-[var(--space-4)]" />
+          {labelNote ? (
+            <p className="text-muted-foreground mt-[var(--space-4)] font-mono text-caption">{labelNote}</p>
+          ) : null}
+          {lede ? (
+            <p className="text-muted-foreground mt-[var(--space-5)] max-w-measure text-base leading-relaxed">
+              {lede}
+            </p>
+          ) : null}
+        </div>
+        <div className="mt-[var(--space-10)] min-w-0 md:mt-[var(--space-12)]">{children}</div>
       </div>
-      <div className="mt-[var(--space-10)] min-w-0 md:mt-[var(--space-12)]">{children}</div>
     </section>
   );
 }

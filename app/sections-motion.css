@@ -1,0 +1,137 @@
+/*
+ * Depth, pointer light, and card tilt for About, Experience, Work, Contact
+ * and Research.
+ *
+ * Consumes tokens from globals.css and defines none of its own, same
+ * contract as hero.css/work.css/case-study.css.
+ *
+ * GG's launch review, round two: the hero moves (a WebGL field, per-point
+ * drift, a pointer lens, scroll-linked depth) and everything below it read
+ * as a static document. The first pass added a hover shadow and a slightly
+ * bigger scroll reveal, which is not the same claim and reads the same as
+ * before. This is the real one: sections get a second, pointer-reactive
+ * plane behind their content (the same --mx/--my PointerField already
+ * writes for the hero's spotlight, extended to a leaf per section rather
+ * than the document root -- see components/pointer-field.tsx's own header
+ * for why that distinction is load-bearing, not stylistic), a continuous
+ * scroll-scrubbed depth parallax between that plane and the content
+ * (components/motion/section-depth.tsx) instead of a one-shot
+ * IntersectionObserver reveal, and a real pointer-tracked tilt on content
+ * cards (components/section-card-motion.tsx) instead of a hover shadow
+ * swap.
+ */
+
+/*
+ * ── The section shell ───────────────────────────────────────────────────
+ * Contains the ambient layer's parallax drift and glow radius so neither
+ * bleeds into a neighbouring section or opens a horizontal scrollbar.
+ */
+.section-plane {
+  overflow: clip;
+  isolation: isolate;
+}
+
+/*
+ * ── The ambient/depth plane ─────────────────────────────────────────────
+ * Behind .section-content, pointer-reactive exactly like .hero-spotlight
+ * (app/hero.css) -- same --mx/--my/--pointer-on custom properties, same
+ * radial-gradient shape, deliberately smaller and much fainter: this is a
+ * content section a visitor reads, not the page's own opening composition.
+ *
+ * Sized past the section's own box (top/bottom extended) so the continuous
+ * scroll parallax (components/motion/section-depth.tsx moves this between
+ * roughly -8% and +8% of its own height across the section's transit) never
+ * uncovers a hard edge.
+ */
+.section-ambient {
+  position: absolute;
+  inset: -12% 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: calc(0.14 + var(--pointer-on, 0) * 0.22);
+  background: radial-gradient(
+    30rem 30rem at calc(var(--mx, 0.5) * 100%) calc(var(--my, 0.5) * 100%),
+    var(--glow-soft) 0%,
+    var(--glow-faint) 45%,
+    transparent 72%
+  );
+  transition: opacity var(--dur-slow) var(--ease-out-soft);
+}
+
+.section-content {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-ambient {
+    transition: none;
+  }
+}
+
+/*
+ * ── Content cards ────────────────────────────────────────────────────────
+ * Experience's company cards, Research's paper cards, About's skills panel.
+ * A pointer-tracked tilt, not a hover shadow swap -- components/section-
+ * card-motion.tsx writes --card-px/--card-py (0..1 across the card) exactly
+ * as components/project-grid-motion.tsx already does for .project-card,
+ * reusing that established vocabulary rather than a new one. Gentler max
+ * angle than the project grid (1.4deg vs 2.4deg): these are text-dense
+ * reading surfaces, not product cards, and a stronger tilt would fight
+ * legibility rather than add depth to it.
+ *
+ * The lift + border + shadow from the first pass stay -- they were never
+ * wrong, only insufficient on their own. The tilt is what makes hover read
+ * as a physical object responding to where the cursor actually is, rather
+ * than a binary on/off state.
+ */
+/*
+ * No resting `transform` here, not even a bare `perspective()` — a
+ * `perspective()` transform function only needs to be present in whichever
+ * transform value is active at a given moment, never pre-declared, and
+ * Experience's own company cards have a `position: sticky` meta rail as a
+ * direct descendant (components/sections/experience.tsx). ANY transform on
+ * an ancestor, including an inert one, changes what counts as that
+ * descendant's containing block and is exactly the kind of thing that
+ * silently breaks sticky positioning several files away from the change
+ * that caused it. Leaving `.section-card` transform-free at rest is what
+ * keeps this component ignorant of, and safe for, whatever its callers put
+ * inside it.
+ */
+.section-card {
+  transition:
+    transform var(--dur-base) var(--ease-out-soft),
+    border-color var(--dur-base) var(--ease-out-soft),
+    box-shadow var(--dur-base) var(--ease-out-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .section-card:hover,
+  .section-card:focus-within {
+    border-color: color-mix(in oklab, var(--indigo) 50%, transparent);
+    box-shadow: var(--shadow-card-hover);
+    transform: perspective(1400px) translateY(-3px)
+      rotateX(calc((var(--card-py, 0.5) - 0.5) * -1.4deg)) rotateY(calc((var(--card-px, 0.5) - 0.5) * 1.4deg));
+  }
+}
+
+/* Coarse pointers get the lift and the light border without a tilt driven
+ * by a cursor position that does not exist on a touchscreen -- same
+ * reasoning as .project-card's own touch handling (app/work.css). */
+@media (hover: none) {
+  .section-card:focus-within {
+    border-color: color-mix(in oklab, var(--indigo) 50%, transparent);
+    box-shadow: var(--shadow-card-hover);
+    transform: perspective(1400px) translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-card {
+    transition: border-color var(--dur-base) var(--ease-out-soft);
+    transform: none;
+  }
+  .section-card:hover,
+  .section-card:focus-within {
+    transform: none;
+  }
+}

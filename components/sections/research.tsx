@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { InlineLink } from "@/components/inline-link";
-import { RevealGroup } from "@/components/reveal-group";
 import { Section } from "@/components/section";
 import { researchPapers } from "@/content/research";
 
@@ -12,6 +11,11 @@ import { researchPapers } from "@/content/research";
  * spread (title + status + links left, thesis right), filling the
  * 1024–1600px band with the same content instead of stacking it in a
  * narrow strand. Below lg, unchanged (breakpoint moved from xl to lg in the 2026-07-30 UI/UX wave).
+ *
+ * GG's launch-review round two dropped the RevealGroup wrapper — see
+ * components/sections/about.tsx's header for why. Each card is a
+ * `.section-card` (app/sections-motion.css) for the pointer tilt, replacing
+ * the first pass's hand-written hover/focus-within utility classes.
  */
 export function Research() {
   return (
@@ -29,11 +33,11 @@ export function Research() {
        * Experience: once each item has a border, the border is doing the
        * separating and the old whitespace is just distance.
        */}
-      <RevealGroup mode="onview" className="flex flex-col gap-[var(--space-6)]">
+      <div className="flex flex-col gap-[var(--space-6)]">
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
-            className="border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover focus-within:-translate-y-1 focus-within:border-accent/50 focus-within:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
+            className="section-card border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
           >
             <div className="contents lg:flex lg:flex-col lg:gap-[var(--space-3)]">
               <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
@@ -82,7 +86,7 @@ export function Research() {
             </p>
           </article>
         ))}
-      </RevealGroup>
+      </div>
     </Section>
   );
 }
