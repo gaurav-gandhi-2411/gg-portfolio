@@ -226,9 +226,9 @@ test("axe: zero violations with a metric's source-provenance panel open (structu
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
 
-/** Prose tier renders different markup (verbatim row text + a single
- * provenance.md link, no per-citation list) — scanned separately since a
- * structured-tier pass doesn't exercise it. */
+/** Prose tier renders different markup (verbatim row text, no per-citation
+ * list and, since GG's round-three launch review, no link at all) —
+ * scanned separately since a structured-tier pass doesn't exercise it. */
 test("axe: zero violations with a metric's source-provenance panel open (prose tier)", async ({ page }) => {
   await gotoSettled(page, "/work/triageiq");
   await page

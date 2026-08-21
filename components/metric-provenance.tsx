@@ -82,14 +82,17 @@ export function MetricProvenance({
           Confidence distinction (GG, 2026-08-06): a "structured" ref comes
           straight from content/metrics.json (machine-refreshed via a
           reviewed PR, carries a real commit_sha) — its citations are exact,
-          so they render as clean, clickable file links below. A "prose"
-          ref only ever had the sourceText above, parsed out of
-          provenance.md's free-text Source cell by this component's own
-          regex-based parser — that parser's guess at which file/line it
-          refers to is NOT rendered as a citation, because a wrong citation
-          next to a real number is worse than no citation. The only link
-          offered for that tier goes to provenance.md itself, never to a
-          file this parser picked out of its prose.
+          so they render as clean, clickable file links below. A "prose" ref
+          only ever had the sourceText above, parsed out of provenance.md's
+          free-text Source cell by this component's own regex-based parser —
+          that parser's guess at which file/line it refers to is NOT
+          rendered as a citation, because a wrong citation next to a real
+          number is worse than no citation. GG's launch-review round three:
+          no link at all for this tier either, not even to provenance.md
+          itself — a hiring-facing surface with a repo-file link off every
+          uncertain number reads as sending the reader to go check my work,
+          which the sourceText above already states plainly enough on its
+          own.
         */}
         {info.tier === "structured" && info.citations.length > 0 && (
           <ul className="mt-[var(--space-2-5)] flex flex-col gap-[var(--space-1)]">
@@ -114,16 +117,6 @@ export function MetricProvenance({
               </li>
             ))}
           </ul>
-        )}
-        {info.tier === "prose" && info.provenanceDocUrl && (
-          <a
-            href={info.provenanceDocUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent focus-visible:outline-ring mt-[var(--space-2-5)] inline-block font-mono text-[11px] underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            View in content/provenance.md ↗
-          </a>
         )}
         <p className="text-muted-foreground/80 mt-[var(--space-2-5)] text-[11px]">
           {info.tier === "structured" && info.citations.some((c) => c.commitSha) && (
