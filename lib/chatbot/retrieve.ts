@@ -40,6 +40,52 @@ export interface RetrievedChunk {
 
 const TOP_K = 5;
 
+const chunksBySourceRef = new Map(index.chunks.map((c) => [c.sourceRef, c]));
+
+/**
+ * Direct lookup, not similarity search — for pinning a follow-up chip's
+ * previously-validated sourceRef into a fresh request (round three's fix,
+ * see app/api/chat/route.ts). Returns undefined for anything not in the
+ * corpus, which is what keeps this safe against a client sending an
+ * arbitrary/malformed sourceRef: only a chunk that genuinely exists here
+ * can ever be pinned, so this can't become a way to inject content.
+ */
+export function getChunkBySourceRef(sourceRef: string): RetrievedChunk | undefined {
+  const chunk = chunksBySourceRef.get(sourceRef);
+  if (!chunk) return undefined;
+  return { text: chunk.text, sourceRef: chunk.sourceRef, sourceLabel: chunk.sourceLabel, url: chunk.url, score: 1 };
+}
+
+export interface ResolvedRequestChunks {
+  chunks: RetrievedChunk[];
+  /** True when a valid pinned sourceRef was found — app/api/chat/route.ts
+   * skips its refusal-score gate in this case: a chip's own sourceRef,
+   * once already validated on the turn that offered it, is independent
+   * evidence this question is grounded, which a low fresh-retrieval score
+   * on the follow-up's own phrasing must not override. */
+  pinned: boolean;
+}
+
+/**
+ * Combines fresh retrieval with an optional follow-up pin into the final
+ * chunk set for one request. Pure and synchronous (no network/embedding
+ * call — takes `retrieved` as already-computed) so it's directly
+ * unit-testable against fixed fixtures, the same reason lib/chatbot/
+ * answer.ts's buildAnswer takes pre-retrieved chunks rather than calling
+ * retrieve() itself. See getChunkBySourceRef's own comment for why an
+ * arbitrary/forged sourceRef can't pin anything that isn't genuinely in
+ * the corpus.
+ */
+export function resolveRequestChunks(
+  retrieved: RetrievedChunk[],
+  followUpSourceRef: string | undefined
+): ResolvedRequestChunks {
+  const pinnedChunk = followUpSourceRef ? getChunkBySourceRef(followUpSourceRef) : undefined;
+  if (!pinnedChunk) return { chunks: retrieved, pinned: false };
+  const alreadyPresent = retrieved.some((c) => c.sourceRef === pinnedChunk.sourceRef);
+  return { chunks: alreadyPresent ? retrieved : [pinnedChunk, ...retrieved], pinned: true };
+}
+
 // Dense weighted higher than lexical: the corpus is prose (case-study
 // paragraphs, provenance rows), so semantic similarity is the primary signal
 // for most questions. Lexical is a 0.3 assist specifically for exact

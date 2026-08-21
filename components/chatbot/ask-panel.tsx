@@ -36,11 +36,24 @@ interface Citation {
   url?: string;
 }
 
+interface FollowUp {
+  question: string;
+  /**
+   * The chunk this follow-up was validated against on the turn that
+   * offered it. Sent back to the server when the chip is tapped
+   * (handleFollowUp below) so app/api/chat/route.ts can pin that exact
+   * chunk into the follow-up's own request — round three's fix for GG
+   * tapping a validated chip and getting refused as ungrounded anyway. See
+   * lib/chatbot/answer.ts's ChatFollowUp for the full mechanism.
+   */
+  sourceRef: string;
+}
+
 interface ChatResponseBody {
   answer: string;
   citations: Citation[];
   refused: boolean;
-  followUps: string[];
+  followUps: FollowUp[];
 }
 
 interface ConversationTurn {
@@ -49,7 +62,7 @@ interface ConversationTurn {
   citations: Citation[];
   refused: boolean;
   /** Grounded next questions, already validated server-side. */
-  followUps: string[];
+  followUps: FollowUp[];
 }
 
 /**
@@ -176,8 +189,20 @@ async function parseChatResponse(res: Response): Promise<ChatResponseBody | null
   const body = raw as ChatResponseBody;
   // followUps is optional on the wire on purpose: an older recorded response
   // or a model that returned none is a normal outcome, not a parse failure.
+  // Each entry needs both a non-empty question AND its sourceRef (round
+  // three) — a shape surprise on either half drops that one entry rather
+  // than failing the whole response, matching how the rest of this parser
+  // fails toward showing less.
   const followUps = Array.isArray(body.followUps)
-    ? body.followUps.filter((q): q is string => typeof q === "string" && q.trim().length > 0)
+    ? body.followUps.filter(
+        (f): f is FollowUp =>
+          typeof f === "object" &&
+          f !== null &&
+          typeof f.question === "string" &&
+          f.question.trim().length > 0 &&
+          typeof f.sourceRef === "string" &&
+          f.sourceRef.length > 0
+      )
     : [];
   return {
     answer: body.answer,
@@ -195,7 +220,15 @@ export function AskPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
 
-  async function ask(rawQuestion: string): Promise<void> {
+  /**
+   * @param followUpSourceRef - present only when `rawQuestion` came from a
+   * follow-up chip, not the composer or an opener chip. Round three: naming
+   * the chunk this exact question was already validated against lets the
+   * server pin it into this new, otherwise-independent request rather than
+   * trusting fresh retrieval to relocate it on the follow-up's own
+   * phrasing alone. See app/api/chat/route.ts's pinning logic.
+   */
+  async function ask(rawQuestion: string, followUpSourceRef?: string): Promise<void> {
     const trimmed = rawQuestion.trim();
     // "unavailable" is terminal for this mount: the composer is disabled, but
     // guard the handler too so a stray Enter or a programmatic submit cannot
@@ -211,7 +244,7 @@ export function AskPanel() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({ question: trimmed, followUpSourceRef }),
         signal: controller.signal,
       });
 
@@ -292,9 +325,9 @@ export function AskPanel() {
    * they already decided. The composer still holds the text, so a slip is
    * visible and repeatable.
    */
-  function handleFollowUp(q: string): void {
-    setQuestion(q);
-    void ask(q);
+  function handleFollowUp(followUp: FollowUp): void {
+    setQuestion(followUp.question);
+    void ask(followUp.question, followUp.sourceRef);
   }
 
   const isEmpty = turns.length === 0 && status !== "loading";
@@ -330,7 +363,7 @@ export function AskPanel() {
             <p className="text-muted-foreground max-w-measure text-sm leading-relaxed">
               Ask a question, or try one of these:
             </p>
-            <ChipRow questions={SUGGESTED_QUESTIONS} onPick={handlePickSuggestion} />
+            <ChipRow items={SUGGESTED_QUESTIONS} getLabel={(q) => q} onPick={handlePickSuggestion} />
           </div>
         ) : (
           <ol className="flex flex-col gap-[var(--space-5)]">
@@ -385,7 +418,7 @@ export function AskPanel() {
       remainingQuestions.length > 0 ? (
         <div className="message-in flex flex-col gap-[var(--space-2)]">
           <p className="text-muted-foreground text-caption">Or ask about:</p>
-          <ChipRow questions={remainingQuestions} onPick={handlePickSuggestion} compact />
+          <ChipRow items={remainingQuestions} getLabel={(q) => q} onPick={handlePickSuggestion} compact />
         </div>
       ) : null}
 
@@ -444,7 +477,7 @@ function TurnAnswer({
 }: {
   turn: ConversationTurn;
   shouldAnimate: boolean;
-  onFollowUp: (question: string) => void;
+  onFollowUp: (followUp: FollowUp) => void;
 }) {
   const revealed = useAnswerReveal(turn.answer, shouldAnimate);
   const isFullyRevealed = revealed.length === turn.answer.length;
@@ -498,20 +531,30 @@ function TurnAnswer({
       {turn.followUps.length > 0 && isFullyRevealed ? (
         <div className="message-in mt-[var(--space-2)] flex flex-col gap-[var(--space-2)] border-t border-border/40 pt-[var(--space-3)]">
           <p className="text-muted-foreground font-mono text-caption">Keep digging</p>
-          <ChipRow questions={turn.followUps} onPick={onFollowUp} compact />
+          <ChipRow items={turn.followUps} getLabel={(f) => f.question} onPick={onFollowUp} compact />
         </div>
       ) : null}
     </div>
   );
 }
 
-function ChipRow({
-  questions,
+/**
+ * Generic over its item type so both opener chips (plain question strings —
+ * SUGGESTED_QUESTIONS has no per-item sourceRef, and needs none, since
+ * `handlePickSuggestion` only ever loads the composer) and follow-up chips
+ * (round three's `{question, sourceRef}` — see FollowUp's own comment for
+ * why the sourceRef has to travel with the click, not just the label) can
+ * share one component without either shape being forced into the other's.
+ */
+function ChipRow<T>({
+  items,
+  getLabel,
   onPick,
   compact = false,
 }: {
-  questions: readonly string[];
-  onPick: (question: string) => void;
+  items: readonly T[];
+  getLabel: (item: T) => string;
+  onPick: (item: T) => void;
   compact?: boolean;
 }) {
   return (
@@ -521,21 +564,24 @@ function ChipRow({
         compact ? "justify-start" : "justify-center"
       )}
     >
-      {questions.map((q) => (
-        <button
-          key={q}
-          type="button"
-          // Marks every suggestion chip regardless of which block renders it,
-          // so a test can assert "no suggestions are offered" without knowing
-          // which container it came from — the gap that let five visible chips
-          // through the degraded-state test.
-          data-testid="ask-suggestion"
-          onClick={() => onPick(q)}
-          className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
-        >
-          {q}
-        </button>
-      ))}
+      {items.map((item) => {
+        const label = getLabel(item);
+        return (
+          <button
+            key={label}
+            type="button"
+            // Marks every suggestion chip regardless of which block renders it,
+            // so a test can assert "no suggestions are offered" without knowing
+            // which container it came from — the gap that let five visible chips
+            // through the degraded-state test.
+            data-testid="ask-suggestion"
+            onClick={() => onPick(item)}
+            className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

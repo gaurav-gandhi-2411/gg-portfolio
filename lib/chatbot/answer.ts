@@ -57,6 +57,20 @@ export interface ChatCitation {
   url?: string;
 }
 
+export interface ChatFollowUp {
+  question: string;
+  /**
+   * The chunk this follow-up was validated against for THIS turn. Carried
+   * through to the client (round three's fix) so tapping the chip can send
+   * it back — see app/api/chat/route.ts's pinning logic for why: a chip
+   * tap is a brand-new, stateless request scored against the follow-up's
+   * OWN phrasing, and sourceRef validation here only ever proved the
+   * chunk existed in THIS turn's retrieval, never that asking the
+   * follow-up's exact words as a fresh query would find it again.
+   */
+  sourceRef: string;
+}
+
 export interface ChatAnswer {
   answer: string;
   citations: ChatCitation[];
@@ -86,10 +100,15 @@ export interface ChatAnswer {
    * and offering one that leads to "I don't have that information" teaches
    * a visitor the assistant is guessing.
    *
+   * Round three: validating the sourceRef here is necessary but was not
+   * sufficient — see {@link ChatFollowUp}'s own comment for why the
+   * sourceRef is now carried through to the client instead of being
+   * discarded after this check.
+   *
    * Absent from older recorded cassettes, which is why an empty array is a
    * normal outcome rather than a fault.
    */
-  followUps: string[];
+  followUps: ChatFollowUp[];
   /**
    * Which of the refusal paths produced this response. Diagnostic only: the
    * UI never renders it, and the reader always sees the same honest sentence
@@ -260,9 +279,9 @@ const MAX_FOLLOW_UPS = 3;
  * sourceRef, a duplicate, or anything overlong is dropped rather than
  * repaired, and returning nothing is a normal outcome.
  */
-function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>): string[] {
+function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>): ChatFollowUp[] {
   if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
+  const out: ChatFollowUp[] = [];
   const seen = new Set<string>();
 
   for (const item of raw) {
@@ -278,7 +297,7 @@ function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>)
     if (seen.has(key)) continue;
 
     seen.add(key);
-    out.push(text);
+    out.push({ question: text, sourceRef });
   }
 
   return out;

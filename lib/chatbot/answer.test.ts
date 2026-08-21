@@ -56,14 +56,20 @@ const withFollowUps = (followUps: unknown) =>
     followUps,
   });
 
-test("keeps follow-ups whose sourceRef was actually retrieved", () => {
+test("keeps follow-ups whose sourceRef was actually retrieved, and carries the sourceRef through", () => {
+  // Round three: the sourceRef used to be discarded after this check, so a
+  // tapped chip's follow-up request had no way to prove it. Now it rides
+  // along on the response so app/api/chat/route.ts can pin the same chunk
+  // for the second, independent request the tap fires.
   const result = buildAnswer(
     withFollowUps([
       { question: "What did the Spearman score reach?", sourceRef: "warmer:results:1" },
     ]),
     chunks
   );
-  assert.deepEqual(result.followUps, ["What did the Spearman score reach?"]);
+  assert.deepEqual(result.followUps, [
+    { question: "What did the Spearman score reach?", sourceRef: "warmer:results:1" },
+  ]);
 });
 
 test("drops a follow-up citing a chunk that was never retrieved", () => {
@@ -99,7 +105,9 @@ test("drops duplicates, ignoring case", () => {
     ]),
     chunks
   );
-  assert.deepEqual(result.followUps, ["What did the score reach?"]);
+  assert.deepEqual(result.followUps, [
+    { question: "What did the score reach?", sourceRef: "warmer:results:1" },
+  ]);
 });
 
 test("drops a follow-up too long to read as a chip", () => {
