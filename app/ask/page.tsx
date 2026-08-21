@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AskPanel } from "@/components/chatbot/ask-panel";
-import {
-  chatbotEvalSummary,
-  EVAL_PLACEHOLDER_VALUE,
-  type ChatbotEvalMetric,
-} from "@/content/chatbot-eval-summary";
 import { products } from "@/content/products";
 
 export const metadata: Metadata = {
@@ -21,31 +16,18 @@ export const metadata: Metadata = {
  * Wave 16 — the flagship RAG chatbot demo, a dedicated page rather than a
  * floating widget (GG's explicit framing: this is meant to be looked at,
  * not tucked in a corner). AskPanel does all the interaction; this file is
- * the page shell, the honest-scope intro copy, and the published eval
- * numbers, which read from content/chatbot-eval-summary.ts so wiring in
- * real results (once evals/chatbot/run-eval.mjs exists and has run) is a
- * one-file edit, not a restructure.
+ * the page shell and the honest-scope intro copy.
+ *
+ * The published eval-numbers block (retrieval recall@5, groundedness,
+ * refusal precision/false-refusal-rate) is gone as of GG's launch review —
+ * it doesn't belong in front of a visitor. The real, measured numbers it
+ * showed are not lost: they're recorded properly in
+ * reports/wave16-chatbot-eval-2026-07-26.md/.json with the full per-fixture
+ * cassette breakdown, which is where eval provenance belongs (rule 65b),
+ * not a metrics dashboard on the page a candidate is trying to talk to.
  */
 
-const METRIC_LABELS: Record<keyof typeof chatbotEvalSummary, string> = {
-  retrievalRecallAt5: "Retrieval recall@5",
-  groundednessRate: "Groundedness rate",
-  refusalPrecision: "Refusal precision",
-  falseRefusalRate: "False refusal rate",
-};
-
-function formatMetric(metric: ChatbotEvalMetric): string {
-  if (metric.value === EVAL_PLACEHOLDER_VALUE) return "Pending";
-  return `${(metric.value * 100).toFixed(0)}%`;
-}
-
 export default function AskPage() {
-  const metrics = Object.entries(chatbotEvalSummary) as [
-    keyof typeof chatbotEvalSummary,
-    ChatbotEvalMetric,
-  ][];
-  const evalPending = metrics.every(([, m]) => m.value === EVAL_PLACEHOLDER_VALUE);
-
   return (
     <main
       id="main"
@@ -97,30 +79,6 @@ export default function AskPage() {
 
       <div className="mt-10 md:mt-12">
         <AskPanel />
-      </div>
-
-      <div className="border-border/60 mt-12 rounded-xl border p-5">
-        <h2 className="text-foreground text-sm font-semibold">Eval results</h2>
-        {evalPending ? (
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-            Eval results pending. This chatbot has an eval harness in progress
-            (evals/chatbot/); published numbers will replace this block once it has run.
-          </p>
-        ) : (
-          <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {metrics.map(([key, metric]) => (
-              <div key={key} className="flex flex-col gap-1">
-                <dt className="text-muted-foreground text-xs">{METRIC_LABELS[key]}</dt>
-                <dd className="flex flex-col gap-1">
-                  <span className="font-mono text-lead font-semibold text-foreground">
-                    {formatMetric(metric)}
-                  </span>
-                  <span className="text-muted-foreground font-mono text-xs">n={metric.n}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        )}
       </div>
 
       <p className="mt-12 text-center">
