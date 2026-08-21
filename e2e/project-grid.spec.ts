@@ -54,6 +54,27 @@ async function gridRows(page: import("@playwright/test").Page) {
   }, HOLE_TOLERANCE_PX);
 }
 
+/**
+ * A category click is a synchronous CSS `display:none` swap (no transition
+ * to wait out), but `getBoundingClientRect()` right after it can still land
+ * mid-layout under CI's contended main thread — a fixed 500ms passed most
+ * runs and then flaked twice on the exact same category/card pair
+ * (round 3, 2026-08-21), which is the signature of a measurement racing
+ * layout rather than a real rhythm bug: a genuine gap would reproduce every
+ * time, not intermittently. Polls until two reads in a row agree instead of
+ * trusting a single one taken after an arbitrary delay.
+ */
+async function stableGridRows(page: import("@playwright/test").Page) {
+  let previous = JSON.stringify(await gridRows(page));
+  for (let i = 0; i < 10; i++) {
+    await page.waitForTimeout(100);
+    const next = JSON.stringify(await gridRows(page));
+    if (next === previous) return JSON.parse(next) as Awaited<ReturnType<typeof gridRows>>;
+    previous = next;
+  }
+  return JSON.parse(previous) as Awaited<ReturnType<typeof gridRows>>;
+}
+
 test.describe("project grid rhythm", () => {
   test("every full row is filled, so the varied card sizes leave no holes", async ({ page }) => {
     await page.goto("/projects");
@@ -77,9 +98,8 @@ test.describe("project grid rhythm", () => {
     for (let i = 1; i < count; i++) {
       const label = (await pills.nth(i).textContent())?.trim() ?? "";
       await pills.nth(i).click();
-      await page.waitForTimeout(500);
 
-      const result = await gridRows(page);
+      const result = await stableGridRows(page);
       expect(result!.cardCount, `"${label}" shows cards`).toBeGreaterThan(0);
       expect(
         result!.holes,
