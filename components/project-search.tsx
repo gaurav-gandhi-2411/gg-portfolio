@@ -36,10 +36,21 @@ import { cn } from "@/lib/utils";
  * /ask's server-side chatbot still uses it (lib/chatbot/embed.mjs). Only
  * THIS feature's client-side use of it is gone.
  *
- * All 13 projects are always shown, re-ranked — this box ranks, it never
- * filters to zero, so there is no "no results" state to design for (the
- * closed panel — no query typed yet — is this component's actual empty
- * state; see the render below).
+ * Round 6 (GG's launch review) — round 5's "always show every project,
+ * re-ranked, never filter to zero" design is gone. It was deliberate and it
+ * was tested (the removed test asserted exactly this), but it does not
+ * survive contact with a real person typing a real query: GG typed "red" on
+ * production and reported the search "did not work". It did run, and it did
+ * score correctly — "red" matches two projects, but only through substrings
+ * buried in a tech-chip token ("Tiered routing") and a tagline verb
+ * ("predicts"), neither visible in the rendered card. Because the panel
+ * never filters, the visible result was still all 14 projects in a subtly
+ * reordered list with no rendered signal that anything had matched at all —
+ * indistinguishable, to a person, from the box doing nothing. The scoring
+ * algorithm itself is unchanged (still the round-5 tier, still the same
+ * weights); only the render now excludes zero-score results, and an
+ * explicit "no projects match" message covers the zero-results case that
+ * this used to render as silence.
  *
  * UI pattern: a single-focus combobox (role="combobox" on the input,
  * aria-activedescendant into a role="listbox" panel) rather than a
@@ -88,10 +99,9 @@ export function ProjectSearch({ products }: { products: Product[] }) {
 
   const ranked: ScoredProduct[] = useMemo(() => {
     if (trimmedQuery.length === 0) return [];
-    const scored = productsWithText.map(({ product, text }) => ({
-      product,
-      score: keywordScore(trimmedQuery, text),
-    }));
+    const scored = productsWithText
+      .map(({ product, text }) => ({ product, score: keywordScore(trimmedQuery, text) }))
+      .filter((s) => s.score > 0);
     scored.sort((a, b) => b.score - a.score);
     return scored;
   }, [productsWithText, trimmedQuery]);
@@ -164,6 +174,21 @@ export function ProjectSearch({ products }: { products: Product[] }) {
         placeholder="Try: reduces on-call issue triage time"
         className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
       />
+
+      {open && trimmedQuery.length > 0 && ranked.length === 0 ? (
+        // Same id as the listbox below so aria-controls always resolves to
+        // whichever of the two is actually on screen. Not role="listbox"
+        // itself — an empty listbox with no role="option" children fails
+        // axe's aria-required-children check, and there is nothing here to
+        // select anyway.
+        <p
+          id={listboxId}
+          role="status"
+          className="border-border/60 bg-popover text-popover-foreground shadow-card-hover absolute top-full left-0 z-20 mt-2 w-full rounded-lg border p-3 text-sm text-muted-foreground"
+        >
+          No projects match &ldquo;{trimmedQuery}&rdquo;.
+        </p>
+      ) : null}
 
       {open && ranked.length > 0 ? (
         <ul

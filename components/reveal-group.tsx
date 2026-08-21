@@ -47,13 +47,20 @@ export function RevealGroup({
 
     function run() {
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      // 20px/600ms, not the original 10px/450ms (GG's launch review: "the
+      // hero moves and nothing else does" — a 10px/450ms rise reads as
+      // barely perceptible next to the hero's continuous parallax, easy to
+      // miss on a normal scroll speed even though the mechanism was firing
+      // correctly the whole time). Amplitude and duration only; the
+      // structural safety this component's header documents (never an
+      // initial hidden state outside this imperative call) is unchanged.
       const kf: Keyframe[] = [
-        { opacity: 0, transform: "translateY(10px)" },
+        { opacity: 0, transform: "translateY(20px)" },
         { opacity: 1, transform: "translateY(0)" },
       ];
       const easing = "cubic-bezier(0.16, 1, 0.3, 1)";
       Array.from(el!.children).forEach((child, i) => {
-        child.animate(kf, { duration: 450, delay: i * stepMs, easing, fill: "backwards" });
+        child.animate(kf, { duration: 600, delay: i * stepMs, easing, fill: "backwards" });
       });
     }
 
