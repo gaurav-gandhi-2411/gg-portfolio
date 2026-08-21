@@ -30,7 +30,7 @@ export const products: Product[] = [
       "Reads a new GitHub issue and tells you which component it belongs to, which already-solved issues look like it, and roughly how long it will take to close.",
     liveUrl: "https://triage-iq-orcin.vercel.app/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/triage-iq",
-    categories: ["llm-agents", "retrieval", "forecasting"],
+    categories: ["llm-agents", "retrieval", "forecasting", "evals-research"],
     techChips: ["TF-IDF", "BGE + FAISS", "LightGBM", "Groq"],
     // The kubernetes figure, not vscode's higher 89.8% — the card shows one
     // number and this is the lower of the two, which is the right default for
@@ -51,7 +51,7 @@ export const products: Product[] = [
       "A word game you play once a day, where your only clue is how close each guess comes in meaning to the secret word.",
     liveUrl: "https://playwarmer.vercel.app/",
     // Repo (mindmeld) is private — no public repo link until that changes. See provenance.md.
-    categories: ["retrieval"],
+    categories: ["retrieval", "evals-research"],
     techChips: ["Flutter", "sentence-transformers", "Firebase"],
     metric: refreshableMetric("warmer:hinglish-fix"),
     figure: { kind: "dumbbell", from: -0.003, to: 0.813, scaleNote: "0–1 scale" },
@@ -89,7 +89,7 @@ export const products: Product[] = [
     tagline:
       "Forecasts retail demand a week out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/shelfsense-m5",
-    categories: ["forecasting"],
+    categories: ["forecasting", "evals-research"],
     techChips: ["LightGBM", "Dagster", "M5 dataset"],
     metric: refreshableMetric("shelfsense:wrmsse"),
     figure: { kind: "dumbbell", from: 0.8956, to: 0.5693, scaleNote: "WRMSSE, lower is better" },
@@ -105,7 +105,7 @@ export const products: Product[] = [
     // that URL leaks.
     liveUrl: "https://gaurav-gandhi.vercel.app/warmup/aetherart",
     repoUrl: "https://github.com/gaurav-gandhi-2411/AetherArt",
-    categories: ["vision"],
+    categories: ["vision", "evals-research"],
     techChips: ["SDXL LoRA", "ControlNet", "Cloud Run"],
     metric: refreshableMetric("aetherart:vram"),
   },
@@ -115,7 +115,7 @@ export const products: Product[] = [
     tagline:
       "Answers whether rewriting an AI agent's tool descriptions actually made it better at its job, with an A/B harness for MCP servers. The research behind my tool-description paper.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
-    categories: ["evals-research", "llm-agents"],
+    categories: ["evals-research", "llm-agents", "tooling"],
     techChips: ["MCP", "Causal measurement", "Python"],
     // Wave 13: the previous "8 scoring dimensions" claim went stale — the
     // repo's own predictive-validity study falsified the v1 8-axis score
@@ -192,7 +192,7 @@ export const products: Product[] = [
     tagline:
       "Scores a Claude Code session on how efficient it was, and shows you where the tokens went to waste.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/token-efficiency-scorer",
-    categories: ["tooling", "evals-research"],
+    categories: ["tooling", "evals-research", "llm-agents"],
     techChips: ["Python", "PyPI"],
     pypi: {
       packageName: "tracegauge",
@@ -225,7 +225,7 @@ export const products: Product[] = [
     // site is worse than no link; the backend (Cloud Run) is separately
     // confirmed live. See provenance.md's wave-19 addendum.
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
-    categories: ["retrieval", "forecasting"],
+    categories: ["retrieval", "forecasting", "llm-agents"],
     techChips: ["Groq", "Prophet", "IsolationForest"],
     metric: refreshableMetric("expense-tracker:tests"),
   },
