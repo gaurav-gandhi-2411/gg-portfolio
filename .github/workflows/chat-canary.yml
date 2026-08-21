@@ -79,7 +79,28 @@ jobs:
           # and known-bad responses instead of only ever running for real
           # against production every six hours -- a monitor nobody has seen
           # fail is not a monitor.
-          echo "$BODY" | node scripts/chatbot/check-canary-verdict.mjs
+          #
+          # Round three (GG): the reason+runbook computed here used to reach
+          # only this job's own console output (stderr) -- never the actual
+          # alert a human sees. The GitHub issue below read only http_status
+          # and the raw response body, so telling a Groq 429 apart from a
+          # genuine retrieval regression meant clicking into the Actions log
+          # by hand, the exact manual step a canary exists to remove.
+          # Capturing stdout+stderr and the exit code separately (rather
+          # than just letting the pipeline's own exit code propagate) is
+          # what lets the verdict reach $GITHUB_OUTPUT before this step
+          # decides whether to fail.
+          set +e
+          VERDICT_OUTPUT=$(echo "$BODY" | node scripts/chatbot/check-canary-verdict.mjs 2>&1)
+          VERDICT_EXIT=$?
+          set -e
+          echo "$VERDICT_OUTPUT"
+          {
+            echo "verdict<<CANARY_VERDICT_EOF"
+            echo "$VERDICT_OUTPUT"
+            echo "CANARY_VERDICT_EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit "$VERDICT_EXIT"
 
       - name: Open/update the failure issue
         if: failure()
@@ -88,6 +109,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           HTTP_STATUS: ${{ steps.probe.outputs.http_status }}
           RESPONSE_BODY: ${{ steps.probe.outputs.body }}
+          VERDICT: ${{ steps.probe.outputs.verdict }}
         run: |
           TITLE="Chat canary failing: /api/chat is not answering"
           BODY=$(cat <<EOF
@@ -97,6 +119,12 @@ jobs:
 
           - **When:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
           - **HTTP status:** \`${HTTP_STATUS:-000}\`
+          - **Verdict (refusalReason + runbook, empty for a non-200 status
+            since the check never ran):**
+
+          \`\`\`
+          ${VERDICT:-(no verdict — the request itself failed before a response body existed to check; see HTTP status above)}
+          \`\`\`
           - **Response body:**
 
           \`\`\`
