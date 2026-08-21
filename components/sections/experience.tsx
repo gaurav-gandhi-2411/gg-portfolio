@@ -26,7 +26,9 @@ export function Experience() {
   return (
     <Section id="experience" label="Experience" width="wide">
       <div className="flex flex-col gap-[var(--space-6)]">
-        {experience.map((entry) => (
+        {experience.map((entry) => {
+          const isLadder = (entry.subRoles?.length ?? 0) > 1;
+          return (
           <article
             key={entry.company}
             className="section-card border-border/40 bg-card/40 rounded-xl border p-6 md:p-8"
@@ -75,29 +77,33 @@ export function Experience() {
                 </p>
               </div>
 
-              <div className="mt-[var(--space-5)] flex flex-col gap-[var(--space-5)] lg:mt-0">
-                {entry.subRoles?.map((role) => {
-                  const showDates =
-                    (entry.subRoles?.length ?? 0) > 1 || role.dateRange !== entry.dateRange;
-                  return (
-                    <div key={role.title} className="flex flex-col gap-[var(--space-2-5)]">
-                      {/*
-                       * h4 under the company's h3, rather than the <p> this
-                       * was. Three roles at one company were previously
-                       * indistinguishable from body text to anything reading
-                       * the document outline, so a screen-reader user
-                       * navigating by heading got one stop per company and no
-                       * way to reach a specific role. Visual size is
-                       * unchanged; this is outline, not styling.
-                       */}
+              {/*
+               * Round 3 (GG): "The Experience section should read as a
+               * journey" — three titles stacked with dates said three
+               * things happened in order, not that they were one climb.
+               * A rail with a dot per role says path the way the case-study
+               * rail already says position (case-study.css) — same visual
+               * grammar, different meaning. Only companies with more than
+               * one role get it: a single-role entry has no climb to show,
+               * so FedEx and TCS keep the plain stack below unchanged.
+               */}
+              {isLadder ? (
+                <div className="experience-ladder mt-[var(--space-5)] lg:mt-0">
+                  <div aria-hidden="true" className="experience-ladder-line" />
+                  {entry.subRoles?.map((role, index) => (
+                    <div
+                      key={role.title}
+                      className="experience-ladder-rung flex flex-col gap-[var(--space-2-5)]"
+                      data-current={index === 0 ? "true" : undefined}
+                    >
+                      <span aria-hidden="true" className="experience-ladder-dot" />
+                      {/* h4 under the company's h3 — see the reveal comment below. */}
                       <h4 className="text-sm">
                         <span className="font-medium text-foreground">{role.title}</span>
-                        {showDates && (
-                          <span className="text-muted-foreground font-mono text-caption">
-                            {" "}
-                            · {role.dateRange}
-                          </span>
-                        )}
+                        <span className="text-muted-foreground font-mono text-caption">
+                          {" "}
+                          · {role.dateRange}
+                        </span>
                       </h4>
                       <ul className="flex flex-col gap-[var(--space-2)]">
                         {role.bullets.map((bullet) => (
@@ -110,9 +116,47 @@ export function Experience() {
                         ))}
                       </ul>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-[var(--space-5)] flex flex-col gap-[var(--space-5)] lg:mt-0">
+                  {entry.subRoles?.map((role) => {
+                    const showDates = role.dateRange !== entry.dateRange;
+                    return (
+                      <div key={role.title} className="flex flex-col gap-[var(--space-2-5)]">
+                        {/*
+                         * h4 under the company's h3, rather than the <p> this
+                         * was. Three roles at one company were previously
+                         * indistinguishable from body text to anything reading
+                         * the document outline, so a screen-reader user
+                         * navigating by heading got one stop per company and no
+                         * way to reach a specific role. Visual size is
+                         * unchanged; this is outline, not styling.
+                         */}
+                        <h4 className="text-sm">
+                          <span className="font-medium text-foreground">{role.title}</span>
+                          {showDates && (
+                            <span className="text-muted-foreground font-mono text-caption">
+                              {" "}
+                              · {role.dateRange}
+                            </span>
+                          )}
+                        </h4>
+                        <ul className="flex flex-col gap-[var(--space-2)]">
+                          {role.bullets.map((bullet) => (
+                            <li
+                              key={bullet.sourceRef}
+                              className="text-muted-foreground border-border/40 border-l-2 pl-4 text-sm leading-relaxed"
+                            >
+                              {bullet.text}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <p className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)] lg:hidden">
@@ -126,7 +170,8 @@ export function Experience() {
               ))}
             </p>
           </article>
-        ))}
+          );
+        })}
 
         <p className="mt-[var(--space-2)] text-center">
           <LinkButton href={site.resumeUrl} icon={<FileTextIcon />}>
