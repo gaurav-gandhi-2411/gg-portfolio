@@ -33,9 +33,9 @@ export default function ProjectsPage() {
           {products.length} projects · {liveProductCount(products)} live today
         </p>
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
-          Everything I&apos;ve built and shipped, from daily-use products to research tools.
-          Each one has a case study explaining the problem, the architecture, and the honest
-          numbers, including the ones that didn&apos;t flatter me.
+          Everything I&apos;ve built and shipped — daily-use products, research tools, all of it.
+          Each one has a case study: the problem, how I built it, and the honest numbers,
+          including the ones that didn&apos;t flatter me.
         </p>
       </div>
 
