@@ -418,8 +418,13 @@ body::after {
 }
 
 /* Quiet by default, lifting and lighting up on approach. Icon-only, so each
- * one carries an aria-label; the 44px box is the tap target, not the glyph. */
+ * one carries an aria-label (the accessible name) and, GG's launch-review
+ * round three, a visible tooltip too — the aria-label alone gave a screen
+ * reader a name but left a sighted mouse user with nothing on hover, and a
+ * keyboard user tabbing through with nothing at all. `position: relative`
+ * so .hero-social-tip below can anchor to this one icon, not the whole list. */
 .hero-social {
+  position: relative;
   display: inline-flex;
   width: 2.75rem;
   height: 2.75rem;
@@ -442,6 +447,37 @@ body::after {
 .hero-social:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* aria-hidden (the aria-label on .hero-social already gives the accessible
+ * name — this is a purely visual duplicate, and announcing it too would be
+ * redundant). Opacity-only reveal, same rule as every other hover-popover
+ * on this site (app/globals.css's project-card note, components/metric-
+ * provenance.tsx): opacity carries no motion, so it stays on under
+ * prefers-reduced-motion with no extra media query needed here. Shown on
+ * :hover AND :focus-visible — a native `title` attribute would have covered
+ * hover only, leaving keyboard users with nothing, which is the same gap
+ * this fix exists to close. */
+.hero-social-tip {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-caption);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-soft);
+}
+
+.hero-social:hover .hero-social-tip,
+.hero-social:focus-visible .hero-social-tip {
+  opacity: 1;
 }
 
 /*
