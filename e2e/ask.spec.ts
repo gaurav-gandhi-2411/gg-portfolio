@@ -166,12 +166,14 @@ test.describe("/ask", () => {
  * fast in CI.
  */
 test("a refusal never shows the reader why it refused", async ({ page }) => {
-  // refusalReason is diagnostic: it exists so the canary can name which of
-  // five failures happened, after a retired model spent two days looking
-  // exactly like an off-topic question. It is not for the page. A visitor
-  // cannot act on "the vendor retired a model" any differently than on "ask
-  // something else", and putting a provider's name in front of them would be
-  // noise at best and alarming at worst.
+  // refusalReason is primarily for the canary: it names which of five
+  // failures happened, after a retired model spent two days looking
+  // exactly like an off-topic question. As of round three it also decides
+  // which of two sentences the reader sees (lib/chatbot/answer.ts's
+  // refusalAnswer()) -- but the raw reason string, or any of its sibling
+  // keys, must still never reach the rendered page itself. Putting a
+  // provider's name or an internal enum value in front of a visitor would
+  // be noise at best and alarming at worst.
   //
   // Asserted against the rendered text rather than against the component,
   // because the failure this guards is somebody rendering the field later
