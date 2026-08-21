@@ -1,4 +1,4 @@
-import type { Product } from "@/content/types";
+import { CATEGORIES, type Product } from "../content/types.ts";
 
 /**
  * How the project grid gets rhythm without getting holes.
@@ -65,6 +65,53 @@ export function projectRhythm(products: readonly Product[]): Map<string, Project
   });
 
   return rhythm;
+}
+
+/**
+ * Grid-column CSS overriding `projectRhythm`'s own global spread/standard
+ * assignment, per category-filtered view.
+ *
+ * `projectRhythm` guarantees no holes only for the one sequence it actually
+ * walked -- the full, unfiltered list. `components/project-filter.tsx`
+ * filters by hiding non-matching cards with `display:none`, which leaves
+ * every visible card's size exactly as the FULL list assigned it, and a
+ * filtered subset's own parity has no relationship to the full list's. That
+ * is not a hypothetical: with Style Maitri tagged evals-research, its
+ * global rhythm computes "standard" (a non-spread project, Multimodal
+ * Fashion Recommender, sits between it and Warmer in the full list and
+ * consumes the empty-row slot) while the evals-research view alone -- where
+ * that project is absent -- computes "spread" for the same card, and the
+ * grid rendered with the global "standard" value stranded the next spread
+ * card mid-row, a real hole (GG's launch review, confirmed against a live
+ * render).
+ *
+ * The fix keeps `projectRhythm`'s own design (computed from position, never
+ * a hand-kept list) rather than picking around it: recompute rhythm scoped
+ * to each category's own member list, and for every card whose per-view
+ * size disagrees with the global one, emit a same-specificity-beating CSS
+ * rule (`.project-grid` folded into the selector) that applies only while
+ * that category is the active filter. `grid-column: auto` is the grid
+ * spec's own default, so forcing it back is a full, clean undo of the
+ * global `1 / -1` spread span, not an approximation of one.
+ *
+ * Desktop-only, matching `.project-card[data-size="spread"]`'s own media
+ * query (app/work.css) -- below that breakpoint every card is single-column
+ * and there is no second column for a hole to appear in.
+ */
+export function categoryRhythmOverrides(products: readonly Product[]): string {
+  const globalRhythm = projectRhythm(products);
+
+  return CATEGORIES.flatMap(({ id }) => {
+    const members = products.filter((p) => p.categories.includes(id));
+    const viewRhythm = projectRhythm(members);
+
+    return members
+      .filter((p) => viewRhythm.get(p.slug)?.size !== globalRhythm.get(p.slug)?.size)
+      .map((p) => {
+        const spread = viewRhythm.get(p.slug)?.size === "spread";
+        return `[data-active-category="${id}"] .project-grid [data-slug="${p.slug}"]{grid-column:${spread ? "1/-1" : "auto"}}`;
+      });
+  }).join("");
 }
 
 /** The base accent's own hue, which every project's tint is an offset from. */
