@@ -282,6 +282,19 @@ body::after {
   background: linear-gradient(102deg, var(--text-hi) 8%, var(--indigo) 92%);
   background-clip: text;
   color: transparent;
+  /* GG's launch-review round three: measured (Range.getBoundingClientRect
+   * on each word, 1440px viewport) every headline word-gap at 11.45-
+   * 11.47px except "AI"->"products", the one gap entirely inside this
+   * italic run, at 12.59px -- about 10% wider, with nothing visually
+   * marking why. The padding/negative-margin pair above already keeps
+   * this span's OWN boundaries (build->AI, products->and) neutral against
+   * the roman text outside it; this is a separate effect, the italic
+   * cut's own space-character advance width at this size/weight/SOFT
+   * setting running wider than roman's. em-relative, not a fixed px
+   * value, since the headline's font-size is itself fluid
+   * (clamp(2.35rem, 6.6vw, 5.2rem)) -- re-measured after this change:
+   * the gap now matches every other word-gap in the headline. */
+  word-spacing: -0.0135em;
 }
 
 .hero-status {
@@ -323,6 +336,17 @@ body::after {
   align-items: flex-start;
   gap: var(--space-1);
   margin-top: var(--space-6);
+  /* GG's launch-review round three: .hero-copy's flex column left-aligns
+   * every child's LAYOUT BOX at the same x (confirmed: both this and
+   * .hero-headline measure left:48 at 1440px) — but a box edge is not
+   * where the eye reads "the text starts." A pixel scan for the first
+   * non-background column found the headline's own ink (Fraunces "I")
+   * starting 2px right of its box, while this byline's ink (JetBrains
+   * Mono "G", near-zero left side-bearing at this weight) starts flush
+   * with its box — different typefaces, different built-in whitespace
+   * before the glyph, same box edge. This nudges the box 2px right so the
+   * INK lines up instead of the box. */
+  margin-left: 2px;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--text-caption);
@@ -363,6 +387,20 @@ body::after {
 
 @media (min-width: 768px) {
   .hero-headline {
+    margin-top: var(--space-8);
+  }
+  /* GG's launch-review round three: measured (getBoundingClientRect on
+   * each block, 1440px viewport) the actual vertical rhythm as pill to
+   * headline 32px, headline to byline 24px, byline to actions 40px --
+   * a dip then a rise, not a rhythm a reader can name but exactly the
+   * kind of inconsistency that reads as "off" without an obvious cause.
+   * Mobile's own sequence (24, 24, 32 -- .hero-headline and .hero-actions
+   * both fall back to their un-overridden base margins below this
+   * breakpoint) is already flat-then-rising and untouched here. Matching
+   * .hero-headline's own 32px turns the desktop sequence into 32, 32, 40:
+   * two even steps, then more room before the CTA -- a rhythm rather than
+   * a dip. */
+  .hero-byline {
     margin-top: var(--space-8);
   }
   .hero-actions {
