@@ -7,8 +7,14 @@ import type { RetrievedChunk } from "./retrieve.ts";
 
 register(pathToFileURL("evals/chatbot/alias-loader.mjs").href, import.meta.url);
 
-const { buildAnswer, refusalAnswer, serverErrorAnswer, unavailableAnswer, REFUSAL_MESSAGE } =
-  await import("./answer.ts");
+const {
+  buildAnswer,
+  refusalAnswer,
+  serverErrorAnswer,
+  unavailableAnswer,
+  REFUSAL_MESSAGE,
+  SERVER_ERROR_MESSAGE,
+} = await import("./answer.ts");
 
 /**
  * Refusal reasons.
@@ -81,16 +87,31 @@ test("a citation that does not validate is a different reason from an empty corp
   assert.notEqual(ungrounded.refusalReason, refusalAnswer("no_grounding").refusalReason);
 });
 
-test("the reader sees the same sentence whatever the reason", () => {
-  // The reason is for the canary, not for the page. A visitor cannot act on
-  // "the vendor retired a model" any differently than on "ask something
-  // else", and naming a vendor in the UI would be noise at best.
+test("no_grounding and unvalidated_citations render the same sentence", () => {
+  // Both genuinely mean "ask something else" -- the corpus doesn't cover
+  // it, or the model couldn't ground an answer in what it found. A visitor
+  // cannot act on those two any differently from each other.
   assert.equal(refusalAnswer("no_grounding").answer, REFUSAL_MESSAGE);
-  assert.equal(refusalAnswer("provider_unavailable").answer, REFUSAL_MESSAGE);
   assert.equal(
     buildAnswer(JSON.stringify({ answer: "x", citations: [] }), chunks).answer,
     REFUSAL_MESSAGE
   );
+});
+
+test("provider_unavailable renders actionable text distinct from REFUSAL_MESSAGE", () => {
+  // Round three, GG: a 429 (or any exhausted-retry transport failure) and a
+  // genuine "I don't have grounded information" rendered identically, and
+  // that collapse caused three separate multi-day-invisible failures on
+  // this endpoint (the 2026-08-16 Groq retirement, the canary's own
+  // apostrophe break, and a burst of Groq 429s the retry in
+  // lib/chatbot/llm-provider.ts reduces the frequency of but cannot
+  // eliminate). "Try asking about one of those" is wrong advice when the
+  // question was fine and the completion call just didn't come back --
+  // this is the one reason that gets SERVER_ERROR_MESSAGE's "try again"
+  // text instead.
+  const provider = refusalAnswer("provider_unavailable");
+  assert.equal(provider.answer, SERVER_ERROR_MESSAGE);
+  assert.notEqual(provider.answer, REFUSAL_MESSAGE);
 });
 
 test("no reader-facing message carries an em dash", () => {
@@ -99,6 +120,7 @@ test("no reader-facing message carries an em dash", () => {
   // carried one, including the refusal a visitor is most likely to see.
   for (const answer of [
     refusalAnswer("no_grounding"),
+    refusalAnswer("provider_unavailable"),
     serverErrorAnswer(),
     unavailableAnswer(),
   ]) {

@@ -110,9 +110,13 @@ export interface ChatAnswer {
    */
   followUps: ChatFollowUp[];
   /**
-   * Which of the refusal paths produced this response. Diagnostic only: the
-   * UI never renders it, and the reader always sees the same honest sentence
-   * whichever one it was. See {@link RefusalReason}.
+   * Which of the refusal paths produced this response. Primarily for the
+   * canary (see chat-canary.yml's own runbook lookup), not the page — but
+   * as of round three it also decides which of two sentences the reader
+   * sees: "provider_unavailable" gets SERVER_ERROR_MESSAGE (actionable —
+   * retry the same question), everything else gets REFUSAL_MESSAGE (ask
+   * something else). See {@link refusalAnswer}'s own comment for why that
+   * one reason needed its own text. See {@link RefusalReason}.
    */
   refusalReason?: RefusalReason;
 }
@@ -121,13 +125,29 @@ export interface ChatAnswer {
  * pipeline declines to answer, for whatever reason (retrieval gate, a
  * failed LLM call, or a response that cited nothing that validates).
  *
- * The reader-facing sentence is deliberately the same for all of them: a
- * visitor cannot act on "the provider is down" any differently than on "ask
- * something else", and telling them which vendor broke is noise. The reason
- * is carried alongside for the canary, not for the page. */
+ * The reader-facing sentence is the same for "no_grounding" and
+ * "unvalidated_citations" — a visitor cannot act on "the corpus doesn't
+ * cover that" any differently than on "the model didn't cite anything";
+ * both mean the honest answer is "ask something else", and "try asking
+ * about one of those" is correct advice for both.
+ *
+ * "provider_unavailable" is the one exception, not an oversight (round
+ * three, GG — this exact collapse has caused three separate multi-day-
+ * invisible failures: the 2026-08-16 Groq model retirement, the canary's
+ * own single-quote/apostrophe break, and a burst of Groq 429s that #189's
+ * retry reduces the frequency of but cannot eliminate). "Try asking about
+ * one of those" is actively WRONG advice here — the question and the
+ * corpus were both fine; the completion call itself didn't come back.
+ * Retrying the SAME question is the correct action, which is exactly what
+ * SERVER_ERROR_MESSAGE already says, and it's equally true here: the
+ * failure has been logged (this function's caller does so before
+ * returning it), and it is transient from the visitor's side regardless
+ * of which vendor or code path actually broke. The reason is still
+ * carried alongside for the canary either way — this only changes what
+ * two of the five reasons render as. */
 export function refusalAnswer(reason: RefusalReason = "no_grounding"): ChatAnswer {
   return {
-    answer: REFUSAL_MESSAGE,
+    answer: reason === "provider_unavailable" ? SERVER_ERROR_MESSAGE : REFUSAL_MESSAGE,
     citations: [],
     refused: true,
     followUps: [],
