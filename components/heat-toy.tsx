@@ -254,7 +254,7 @@ export function HeatToy() {
             setError(false);
             setRetryNonce((n) => n + 1);
           }}
-          className="focus-visible:outline-ring rounded-md border border-border px-[var(--space-3)] py-[var(--space-1-5)] text-sm text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:bg-card"
+          className="focus-visible:outline-ring rounded-md border border-border px-[var(--space-3)] py-[var(--space-1-5)] text-sm text-foreground transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:bg-card"
         >
           Try again
         </button>
@@ -302,7 +302,7 @@ export function HeatToy() {
               <button
                 type="button"
                 onClick={() => submitWord(w)}
-                className="focus-visible:outline-ring rounded-md border border-border bg-card px-2.5 py-[var(--space-1)] font-mono text-caption text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:border-ring"
+                className="focus-visible:outline-ring rounded-md border border-border bg-card px-2.5 py-[var(--space-1)] font-mono text-caption text-foreground transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 hover:border-ring"
               >
                 {w}
               </button>

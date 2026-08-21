@@ -65,7 +65,7 @@ export function ProjectCard({
             <Heading className="font-heading text-lead font-semibold text-foreground">
               <Link
                 href={`/work/${product.slug}`}
-                className="card-stretch-link focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                className="card-stretch-link focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
               >
                 {product.name}
               </Link>
@@ -148,7 +148,7 @@ export function ProjectCard({
           <div className="mt-auto flex flex-wrap gap-x-5 gap-y-[var(--space-2)] pt-5 text-sm">
             <Link
               href={`/work/${product.slug}`}
-              className="card-clickable text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="card-clickable text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               Case study →
             </Link>

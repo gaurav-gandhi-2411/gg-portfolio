@@ -40,7 +40,7 @@ export function MetricProvenance({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="decoration-muted-foreground/60 hover:decoration-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 min-w-11 items-center rounded-sm underline decoration-dotted underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="decoration-muted-foreground/60 hover:decoration-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 min-w-11 items-center rounded-sm underline decoration-dotted underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {children}
         <span className="sr-only">, show source for {label}</span>
@@ -69,7 +69,7 @@ export function MetricProvenance({
           // both text children below forces a break inside an otherwise
           // unbroken token instead of letting it run past the box —
           // fixes the true cause; see the two className additions below.
-          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-150 ease-out",
+          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
           "group-hover/prov:pointer-events-auto group-hover/prov:opacity-100",
           "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100"
         )}

@@ -36,7 +36,7 @@ export function Contact() {
             primary action. */}
         <a
           href={`mailto:${site.email}`}
-          className="font-heading inline-flex min-h-11 w-fit items-center text-lead font-semibold break-all text-foreground transition-[color,transform] duration-300 ease-out hover:-translate-y-0.5 hover:text-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:text-title lg:text-heading"
+          className="font-heading inline-flex min-h-11 w-fit items-center text-lead font-semibold break-all text-foreground transition-[color,transform] duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:text-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:text-title lg:text-heading"
         >
           {site.email}
         </a>

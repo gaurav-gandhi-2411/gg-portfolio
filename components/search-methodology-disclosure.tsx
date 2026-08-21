@@ -31,7 +31,7 @@ export function SearchMethodologyDisclosure({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="text-muted-foreground hover:text-accent focus-visible:outline-ring -mx-2 -my-2.5 flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-left text-xs underline decoration-1 underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+        className="text-muted-foreground hover:text-accent focus-visible:outline-ring -mx-2 -my-2.5 flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-left text-xs underline decoration-1 underline-offset-4 transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
       >
         {summary}
         <span aria-hidden>{open ? "▲" : "▼"}</span>

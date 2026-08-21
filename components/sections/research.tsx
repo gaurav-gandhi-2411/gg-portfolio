@@ -83,7 +83,7 @@ export function Research() {
                 {/* Wave 12: the benchmark behind the paper has its own case study. */}
                 <Link
                   href="/work/agentgauge"
-                  className="card-stretch-link text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                  className="card-stretch-link text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 >
                   Read the benchmark&apos;s case study →
                 </Link>
