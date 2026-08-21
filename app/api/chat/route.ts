@@ -22,7 +22,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getCache } from "@vercel/functions";
-import { retrieve, RETRIEVAL_THRESHOLD } from "@/lib/chatbot/retrieve";
+import { resolveRequestChunks, retrieve, RETRIEVAL_THRESHOLD } from "@/lib/chatbot/retrieve";
 import { groqProvider } from "@/lib/chatbot/llm-provider";
 import {
   buildAnswer,
@@ -104,6 +104,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
       ? (body as { question: unknown }).question
       : undefined;
 
+  // Round three's fix: present only when the client is submitting a
+  // follow-up chip it was handed on a PRIOR turn (components/chatbot/
+  // ask-panel.tsx's handleFollowUp), naming the chunk that request's own
+  // buildAnswer() already validated the follow-up against. See the pinning
+  // logic below for why a plain "just re-run retrieval on the question
+  // text" isn't enough on its own.
+  const followUpSourceRefRaw =
+    typeof body === "object" && body !== null && "followUpSourceRef" in body
+      ? (body as { followUpSourceRef: unknown }).followUpSourceRef
+      : undefined;
+  const followUpSourceRef =
+    typeof followUpSourceRefRaw === "string" && followUpSourceRefRaw.length > 0
+      ? followUpSourceRefRaw
+      : undefined;
+
   if (
     typeof question !== "string" ||
     question.trim().length === 0 ||
@@ -147,13 +162,30 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatAnswe
   // assistant is broken" is diagnosable from `vercel logs` alone, no repro
   // needed.
   try {
-    const { chunks, maxScore } = await retrieve(question);
+    const { chunks: retrieved, maxScore } = await retrieve(question);
+
+    // Pin the follow-up's own validated chunk into this request's context,
+    // rather than trusting fresh retrieval (scored against the follow-up's
+    // OWN phrasing, a completely independent query) to find it again on
+    // its own. GG tapped "Which platforms host his professional profiles?"
+    // — a chip that passed sourceRef validation on the turn that offered
+    // it — and got refused as ungrounded anyway: the chunk that grounded
+    // it originally never necessarily ranks in this second request's own
+    // top-K, because sourceRef validation only ever proved the chunk
+    // existed in the FIRST turn's retrieval, not that asking the
+    // follow-up's exact words as a brand-new query would retrieve it
+    // again. See resolveRequestChunks's own comment for why this is a
+    // separate, pure, unit-tested function rather than inline here.
+    const { chunks, pinned } = resolveRequestChunks(retrieved, followUpSourceRef);
     const retrievedSourceRefs = chunks.map((c) => c.sourceRef);
 
     // Refusal gate: below threshold (or nothing retrieved), refuse without
     // spending an LLM call at all — the honest answer and the cheap answer
-    // are the same answer here.
-    if (chunks.length === 0 || maxScore < RETRIEVAL_THRESHOLD) {
+    // are the same answer here. Skipped when a pin landed: a chip's own
+    // sourceRef, once validated, is independent, out-of-band evidence this
+    // question is grounded — the whole reason it was offered as a chip —
+    // so a low fresh-retrieval score here must not override that.
+    if (!pinned && (chunks.length === 0 || maxScore < RETRIEVAL_THRESHOLD)) {
       console.log(
         JSON.stringify({
           requestId,
