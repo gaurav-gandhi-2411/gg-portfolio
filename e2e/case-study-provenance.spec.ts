@@ -64,14 +64,11 @@ test.describe("Case-study metric provenance", () => {
     await expect(panel).toContainText("README.md:91-98");
     // GG's 2026-08-06 call: a prose-tier metric never renders this
     // component's own regex-extracted file citation as a link (a wrong
-    // citation next to a real number is worse than no citation) — the
-    // only link is to the site's own provenance.md, never a parsed path.
-    const links = panel.getByRole("link");
-    await expect(links).toHaveCount(1);
-    await expect(links.first()).toHaveAttribute(
-      "href",
-      "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md"
-    );
+    // citation next to a real number is worse than no citation). GG's
+    // launch-review round three: no link at all for this tier any more,
+    // not even to the site's own provenance.md — the source text alone
+    // is the citation now.
+    await expect(panel.getByRole("link")).toHaveCount(0);
   });
 
   test("the CQR coverage metric resolves via metrics.json to the shipped figure, not the design-decision ADR's earlier exploratory numbers (regression test, issue #45)", async ({
@@ -113,12 +110,7 @@ test.describe("Case-study metric provenance", () => {
     const panel = page.getByRole("group", { name: /Source for LLM fabrication rate/ });
     await expect(panel).toHaveCSS("opacity", "1");
     await expect(panel).toContainText("docs/architecture/adr/0018-gold-set-train-contamination.md");
-    const links = panel.getByRole("link");
-    await expect(links).toHaveCount(1);
-    await expect(links.first()).toHaveAttribute(
-      "href",
-      "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md"
-    );
+    await expect(panel.getByRole("link")).toHaveCount(0);
   });
 
   test("a metrics.json-backed metric still renders its clean citation link (structured tier is unaffected by the prose fallback's fail-closed handling)", async ({

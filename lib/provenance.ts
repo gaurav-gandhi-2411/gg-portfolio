@@ -49,11 +49,7 @@ export interface ProvenanceInfo {
   measuredAt?: string;
   /** Falls back to the case study's own verifiedAt when no specific measuredAt exists. */
   verifiedAt: string;
-  /** Prose tier's honest fallback link — the site's own provenance.md, never a parsed/interpreted file citation. */
-  provenanceDocUrl?: string;
 }
-
-const PROVENANCE_DOC_URL = "https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/content/provenance.md";
 
 const metrics = (metricsJson as { metrics: Record<string, MetricEntry> }).metrics;
 
@@ -131,6 +127,5 @@ export function getProvenance(
     citations,
     measuredAt,
     verifiedAt: studyVerifiedAt,
-    provenanceDocUrl: PROVENANCE_DOC_URL,
   };
 }
