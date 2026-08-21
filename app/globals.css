@@ -603,6 +603,47 @@ p {
   }
 }
 
+/*
+ * Whole-card click target (GG's launch-review round three): "On a project
+ * card only the title opens the case study. The whole card should be
+ * clickable, with the inner Live and Source links still working
+ * independently." Same complaint on Research. Standard stretched-link
+ * pattern, used by both components/project-card.tsx and components/
+ * sections/research.tsx (not scoped to one card type — hence living here,
+ * not in app/work.css): one existing link on the card grows a
+ * pseudo-element covering the card's own content box, so a click almost
+ * anywhere lands on that link, without a second nested <a> (invalid
+ * markup) or making the whole <article> itself a link (which would
+ * swallow every inner click, including the ones this has to leave alone).
+ *
+ * inset:0 rather than reaching past the card's own padding to its outer
+ * edge: both card types' padding is responsive (Research's is literally
+ * `p-6 md:p-8`, two different values at one Tailwind breakpoint), and
+ * compensating for that in plain CSS would mean hand-duplicating Tailwind's
+ * breakpoint here just to cover a padding ring nobody perceives as
+ * separate from "the card." The content box this actually covers is what
+ * reads as the card to a visitor.
+ *
+ * .card-clickable is what keeps every OTHER link on the card (Live,
+ * Source, Repo, arXiv, a second explicit "case study"/"benchmark" link)
+ * landing on itself: a positioned descendant paints ABOVE normal in-flow
+ * inline content regardless of DOM order (CSS2.1 painting order, step 6
+ * vs step 5), so without their own position + higher z-index this
+ * stretched overlay — itself a positioned descendant — would sit on top
+ * of them and silently take every click meant for them.
+ */
+.card-stretch-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.card-clickable {
+  position: relative;
+  z-index: 1;
+}
+
 /* Reading progress on case-study pages — scroll-driven animation, zero
  * JS. Hidden entirely where animation-timeline is unsupported (a static
  * full-width bar would be noise, not progress). Kept under reduced
