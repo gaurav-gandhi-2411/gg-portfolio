@@ -100,6 +100,36 @@ test.describe("/projects search", () => {
     await expect(options).toHaveText(expected.map((name) => new RegExp(`^${name}`)));
   });
 
+  test("typing a query narrows the visible grid, not just the dropdown", async ({ page }) => {
+    // Round 7 repro: the dropdown already filtered correctly (round 6), but
+    // ProjectFilter's grid underneath it had no idea a search existed —
+    // typing "tria" narrowed the dropdown to TriageIQ while the grid still
+    // read "Showing 14 of 14" with all 14 cards visible. This asserts the
+    // GRID specifically (.project-grid article:visible, the same locator
+    // e2e/a11y.spec.ts already uses for "how many cards actually render"),
+    // never the listbox — a test that only checked the dropdown again would
+    // reproduce the exact gap this round exists to close.
+    const query = "tria";
+    const expected = matchingProductNames(query);
+    expect(expected.length).toBeGreaterThan(0);
+    expect(expected.length).toBeLessThan(products.length);
+
+    await page.goto("/projects");
+    const grid = page.locator(".project-grid article:visible");
+    await expect(grid).toHaveCount(products.length);
+
+    const input = page.getByRole("combobox", { name: /search projects/i });
+    await input.fill(query);
+
+    await expect(grid).toHaveCount(expected.length);
+    await expect(page.getByText(`Showing ${expected.length} of ${expected.length} projects`)).toBeVisible();
+
+    // Escape (the box's own existing clear affordance) restores the full grid.
+    await input.press("Escape");
+    await expect(grid).toHaveCount(products.length);
+    await expect(page.getByText(`Showing ${products.length} of ${products.length} projects`)).toBeVisible();
+  });
+
   test("a query matching nothing shows an explicit no-results message, not the full list", async ({
     page,
   }) => {
@@ -112,6 +142,25 @@ test.describe("/projects search", () => {
     await expect(page.getByRole("status")).toContainText(
       /no projects match .quantum spreadsheet nonsense./i
     );
+  });
+
+  test("a query matching nothing also empties the grid, with a search-specific reset", async ({
+    page,
+  }) => {
+    await page.goto("/projects");
+    const input = page.getByRole("combobox", { name: /search projects/i });
+    await input.fill("quantum spreadsheet nonsense");
+
+    const grid = page.locator(".project-grid article:visible");
+    await expect(grid).toHaveCount(0);
+    await expect(page.getByText("No projects match your search.")).toBeVisible();
+
+    const clear = page.getByRole("button", { name: "Clear search" });
+    await expect(clear).toBeVisible();
+    await clear.click();
+
+    await expect(input).toHaveValue("");
+    await expect(grid).toHaveCount(products.length);
   });
 
   test("keyboard flow: focus, type, ArrowDown, Enter navigates to the top result", async ({
