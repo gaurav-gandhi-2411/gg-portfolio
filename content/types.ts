@@ -1,12 +1,6 @@
 // Shared content types. Every displayed number/claim carries a `sourceRef` —
 // an ID matching a row in content/provenance.md. No sourceRef, no ship (rule 65b).
 
-export interface Stat {
-  value: string;
-  label: string;
-  sourceRef: string;
-}
-
 export interface ExperienceBullet {
   text: string;
   sourceRef: string;
