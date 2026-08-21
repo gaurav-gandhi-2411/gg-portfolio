@@ -8,6 +8,7 @@ import { PersonJsonLd } from "@/components/json-ld";
 import { ScrollDriver } from "@/components/motion/scroll-driver";
 import { SectionDepth } from "@/components/motion/section-depth";
 import { PointerField } from "@/components/pointer-field";
+import { SectionCardMotion } from "@/components/section-card-motion";
 import { SiteNav } from "@/components/site-nav";
 import { site } from "@/content/site";
 import "./globals.css";
@@ -139,13 +140,15 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
-        {/* All three render nothing and all three no-op for reduced-motion
+        {/* All four render nothing and all four no-op for reduced-motion
             visitors. PointerField writes the shared pointer position every
             layer that acknowledges the cursor reads (the hero's spotlight,
-            now also each section's `.section-ambient`); ScrollDriver owns
-            smooth scrolling and the single clock scroll-linked motion runs
-            on; SectionDepth is the scroll-scrubbed depth/entrance tween for
-            About/Experience/Work/Contact/Research. They sit in the root
+            now also each section's `.section-ambient` and, per-card, each
+            `.section-card`'s tilt); ScrollDriver owns smooth scrolling and
+            the single clock scroll-linked motion runs on; SectionDepth is
+            the scroll-scrubbed depth/entrance tween for About/Experience/
+            Work/Contact/Research; SectionCardMotion is the one delegated
+            listener behind those sections' card tilt. They sit in the root
             layout rather than lower down because a second listener or a
             second clock added later is how a site ends up fighting itself
             — the same reasoning that already put PointerField/ScrollDriver
@@ -153,6 +156,7 @@ export default function RootLayout({
         <PointerField />
         <ScrollDriver />
         <SectionDepth />
+        <SectionCardMotion />
         <SiteNav />
         {children}
         <ChatLauncher />
