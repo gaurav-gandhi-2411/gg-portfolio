@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
+import {
+  clearSearch,
+  getSearchMatch,
+  getServerSearchMatch,
+  subscribeSearchMatch,
+} from "@/lib/search/query-match-store";
 import { CATEGORIES, type CategoryId } from "@/content/types";
 
 type Active = CategoryId | "all";
@@ -64,6 +70,16 @@ function emit() {
  * always "all" (see the module comment above) — for THAT case specifically,
  * capping would become a permanent content gate instead of a tease, so a
  * <noscript> override restores full visibility whenever scripting is off.
+ *
+ * Round 7 (GG's launch review) — this component previously had no idea a
+ * search box existed. ProjectSearch's own combobox dropdown was correctly
+ * filtering to matches (round 6), but this grid, sitting directly under it
+ * with a live "Showing X of Y" counter, kept the unfiltered total: typing
+ * "tria" narrowed the dropdown to TriageIQ while the grid still read
+ * "Showing 14 of 14". Now subscribes to the same score > 0 match set the
+ * dropdown publishes (lib/search/query-match-store.ts) and intersects it
+ * with the category filter, using the identical per-slug <style> hiding
+ * technique the overflow tease above already established.
  */
 export function ProjectFilter({
   cats,
@@ -83,6 +99,12 @@ export function ProjectFilter({
 }) {
   const active = useSyncExternalStore(subscribe, readCategoryFromUrl, () => "all" as Active);
 
+  // Round 7 (GG's launch review) — ProjectSearch (the /projects combobox)
+  // publishes which slugs its own score > 0 ranking matched; null means no
+  // query is active, so category filtering alone applies exactly as before
+  // (and matches the SSR/no-JS snapshot below, which never has a query).
+  const searchMatch = useSyncExternalStore(subscribeSearchMatch, getSearchMatch, getServerSearchMatch);
+
   function select(next: Active) {
     const url = new URL(window.location.href);
     if (next === "all") url.searchParams.delete("category");
@@ -99,9 +121,19 @@ export function ProjectFilter({
     return byCat;
   }, [cats]);
 
-  const orderedForActive = useMemo(
-    () => (active === "all" ? cats : cats.filter((p) => p.categories.includes(active))),
-    [cats, active],
+  const orderedForActive = useMemo(() => {
+    const byCategory = active === "all" ? cats : cats.filter((p) => p.categories.includes(active));
+    return searchMatch ? byCategory.filter((p) => searchMatch.has(p.slug)) : byCategory;
+  }, [cats, active, searchMatch]);
+  // Cards that lost the search but not the category — still real DOM nodes
+  // (category CSS alone doesn't hide them), so they need their own explicit
+  // hide, the same per-slug <style> technique the overflow tease already
+  // uses below. Computed against the pre-search `cats` list (not
+  // orderedForActive) so a card excluded by category too still gets a rule;
+  // harmless (it's already hidden), and keeps this independent of category.
+  const searchExcludedSlugs = useMemo(
+    () => (searchMatch ? cats.filter((p) => !searchMatch.has(p.slug)).map((p) => p.slug) : []),
+    [cats, searchMatch],
   );
   const totalMatching = orderedForActive.length;
   const isCapped = active === "all" ? capAllAt4 : true;
@@ -222,6 +254,15 @@ export function ProjectFilter({
         </>
       )}
 
+      {searchExcludedSlugs.length > 0 && (
+        // No <noscript> override needed here, unlike the overflow tease
+        // above: without JS, searchMatch is always null (the SSR snapshot),
+        // so this array is always empty and the rule never renders.
+        <style>
+          {searchExcludedSlugs.map((slug) => `[data-slug="${slug}"]{display:none}`).join("")}
+        </style>
+      )}
+
       <div data-active-category={active}>{children}</div>
 
       {showSeeAll && (
@@ -237,13 +278,20 @@ export function ProjectFilter({
 
       {totalMatching === 0 && (
         <div className="border-border/40 bg-card/40 mt-[var(--space-8)] rounded-xl border px-[var(--space-6)] py-10 text-center">
-          <p className="text-foreground">Nothing in this category yet.</p>
+          {/* Search and category are independent filters, so the message and
+              its reset action name whichever one actually produced zero —
+              "Nothing in this category yet" would be a wrong label for a
+              search with no matches, and clearing the category wouldn't fix
+              that case anyway. */}
+          <p className="text-foreground">
+            {searchMatch ? "No projects match your search." : "Nothing in this category yet."}
+          </p>
           <button
             type="button"
-            onClick={() => select("all")}
+            onClick={() => (searchMatch ? clearSearch() : select("all"))}
             className="text-accent focus-visible:outline-ring mt-[var(--space-2)] text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
           >
-            Show all projects
+            {searchMatch ? "Clear search" : "Show all projects"}
           </button>
         </div>
       )}
