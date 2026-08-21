@@ -453,7 +453,7 @@ export function AskPanel() {
           disabled={
             status === "loading" || status === "unavailable" || question.trim().length === 0
           }
-          className="bg-accent text-accent-foreground focus-visible:outline-ring min-h-11 shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-accent text-accent-foreground focus-visible:outline-ring min-h-11 shrink-0 rounded-md px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:enabled:-translate-y-0.5 hover:enabled:shadow-card-hover active:enabled:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:enabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Ask
         </button>
@@ -506,7 +506,7 @@ function TurnAnswer({
               {c.url ? (
                 <Link
                   href={c.url}
-                  className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                  className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                 >
                   {c.label}
                 </Link>
@@ -576,7 +576,7 @@ function ChipRow<T>({
             // through the degraded-state test.
             data-testid="ask-suggestion"
             onClick={() => onPick(item)}
-            className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="border-border bg-card hover:border-accent/40 hover:text-foreground text-muted-foreground focus-visible:outline-ring min-h-11 rounded-full border px-[var(--space-3)] py-[var(--space-1-5)] text-left text-caption transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             {label}
           </button>

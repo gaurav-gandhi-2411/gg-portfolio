@@ -121,7 +121,7 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
           <button
             type="button"
             onClick={() => void startWaking()}
-            className="bg-accent text-accent-foreground hover:shadow-card-hover focus-visible:outline-ring mt-[var(--space-8)] inline-flex items-center gap-[var(--space-2)] rounded-lg px-5 py-[var(--space-3)] text-sm font-medium transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="bg-accent text-accent-foreground hover:shadow-card-hover focus-visible:outline-ring mt-[var(--space-8)] inline-flex items-center gap-[var(--space-2)] rounded-lg px-5 py-[var(--space-3)] text-sm font-medium transition-[transform,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             Wake the demo
           </button>
@@ -160,7 +160,7 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
             <button
               type="button"
               onClick={() => void startWaking()}
-              className="border-border/60 bg-card/60 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring inline-flex items-center gap-[var(--space-2)] rounded-lg border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="border-border/60 bg-card/60 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring inline-flex items-center gap-[var(--space-2)] rounded-lg border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium transition-[transform,box-shadow,border-color,background-color] duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               Try again
             </button>
@@ -172,13 +172,13 @@ export function WarmupClient({ config }: { config: WarmupConfig }) {
       <p className="mt-[var(--space-10)] flex gap-[var(--space-6)] text-sm">
         <Link
           href="/"
-          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           ← Home
         </Link>
         <Link
           href="/projects"
-          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+          className="text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
         >
           All projects →
         </Link>

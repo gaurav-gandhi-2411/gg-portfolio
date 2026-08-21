@@ -259,7 +259,7 @@ export function ProjectSearch({ products }: { products: Product[] }) {
                 router.push(`/work/${r.product.slug}`);
               }}
               className={cn(
-                "cursor-pointer rounded-md px-3 py-2 transition-colors motion-reduce:transition-none",
+                "cursor-pointer rounded-md px-3 py-2 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] motion-reduce:transition-none",
                 i === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-secondary"
               )}
             >

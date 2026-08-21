@@ -241,7 +241,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
             type="button"
             aria-pressed={!showFinetuned}
             onClick={() => onToggle(false)}
-            className={`min-h-11 px-[var(--space-4)] text-sm transition-colors ${
+            className={`min-h-11 px-[var(--space-4)] text-sm transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] ${
               !showFinetuned
                 ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"
@@ -253,7 +253,7 @@ export default function EmbeddingViewerGL({ onUnsupported }: EmbeddingViewerGLPr
             type="button"
             aria-pressed={showFinetuned}
             onClick={() => onToggle(true)}
-            className={`border-border/40 min-h-11 border-l px-[var(--space-4)] text-sm transition-colors ${
+            className={`border-border/40 min-h-11 border-l px-[var(--space-4)] text-sm transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] ${
               showFinetuned
                 ? "bg-accent/15 text-foreground"
                 : "text-muted-foreground hover:text-foreground"

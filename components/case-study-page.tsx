@@ -108,7 +108,7 @@ export function CaseStudyPage({
           <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
             <Link
               href="/projects"
-              className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← All projects
             </Link>
@@ -343,7 +343,7 @@ export function CaseStudyPage({
             </p>
             <Link
               href="/projects"
-              className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+              className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
             >
               ← Back to all projects
             </Link>
@@ -404,7 +404,7 @@ export function CaseStudyPage({
                     <li key={relatedProduct.slug}>
                       <Link
                         href={`/work/${relatedProduct.slug}`}
-                        className="focus-visible:outline-ring text-foreground block text-sm font-medium transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+                        className="focus-visible:outline-ring text-foreground block text-sm font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
                       >
                         {relatedProduct.name}
                       </Link>

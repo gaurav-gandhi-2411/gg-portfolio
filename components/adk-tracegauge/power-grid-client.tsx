@@ -166,7 +166,7 @@ function ToggleButton({
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={`border-border/40 min-h-11 rounded-md border px-[var(--space-3)] py-[var(--space-2)] font-mono text-caption transition-colors motion-reduce:transition-none ${
+      className={`border-border/40 min-h-11 rounded-md border px-[var(--space-3)] py-[var(--space-2)] font-mono text-caption transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] motion-reduce:transition-none ${
         pressed
           ? "bg-accent/15 border-accent/50 text-foreground"
           : "text-muted-foreground hover:text-foreground"

@@ -108,7 +108,7 @@ export function TriageiqClassifyToy() {
             key={s.number}
             type="button"
             onClick={() => classify(s.title)}
-            className="border-border bg-card hover:border-accent/40 focus-visible:outline-ring rounded-md border px-2.5 py-[var(--space-1)] text-left font-mono text-caption transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="border-border bg-card hover:border-accent/40 focus-visible:outline-ring rounded-md border px-2.5 py-[var(--space-1)] text-left font-mono text-caption transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
             title={s.url}
           >
             {s.repo} #{s.number}
