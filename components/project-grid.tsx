@@ -4,7 +4,7 @@ import { ProjectGridMotion } from "@/components/project-grid-motion";
 import { RevealGroup } from "@/components/reveal-group";
 import { products } from "@/content/products";
 import { getProjectDisplayData } from "@/lib/project-display";
-import { projectRhythm } from "@/lib/project-rhythm";
+import { categoryRhythmOverrides, projectRhythm } from "@/lib/project-rhythm";
 
 /**
  * Wave 13 — the one project grid (all 13 projects, AI/ML-depth order from
@@ -28,12 +28,17 @@ export async function ProjectGrid({
 } = {}) {
   const { datelineFor, pypiStatsFor } = await getProjectDisplayData(products);
   const rhythm = projectRhythm(products);
+  // See lib/project-rhythm.ts's own header: the global rhythm above only
+  // guarantees no holes for the unfiltered "All" view; this covers every
+  // category-filtered one.
+  const rhythmOverrides = categoryRhythmOverrides(products);
 
   return (
     <ProjectFilter
       cats={products.map((p) => ({ slug: p.slug, categories: p.categories }))}
       capAllAt4={capAllAt4}
     >
+      {rhythmOverrides && <style>{`@media (min-width: 1024px){${rhythmOverrides}}`}</style>}
       <RevealGroup
         mode="onview"
         // Columns engage at lg, exactly where Section's width step does —
