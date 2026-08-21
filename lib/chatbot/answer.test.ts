@@ -13,7 +13,7 @@ import type { RetrievedChunk } from "./retrieve.ts";
 // because a static import would be hoisted above the registration.
 register(pathToFileURL("evals/chatbot/alias-loader.mjs").href, import.meta.url);
 
-const { buildAnswer } = await import("./answer.ts");
+const { buildAnswer, collapseVerbatimRepeat } = await import("./answer.ts");
 
 /**
  * Follow-up validation.
@@ -139,4 +139,47 @@ test("a refusal carries no follow-ups", () => {
   );
   assert.equal(result.refused, true);
   assert.deepEqual(result.followUps, []);
+});
+
+/**
+ * Verbatim-repeat collapsing.
+ *
+ * GG tapped a follow-up chip and the answer bubble printed the same
+ * paragraph twice in one response. Narrow, targeted fix (not a general
+ * repetition detector — see collapseVerbatimRepeat's own comment for why):
+ * an answer that is, in full, two back-to-back copies of the same text
+ * collapses to one copy.
+ */
+test("collapseVerbatimRepeat: a doubled answer collapses to one copy", () => {
+  const original =
+    "Gaurav leads a five-person data-science team inside Uber's AI org, via Indium Software.";
+  assert.equal(collapseVerbatimRepeat(`${original} ${original}`), original);
+  assert.equal(collapseVerbatimRepeat(`${original}\n\n${original}`), original);
+  assert.equal(collapseVerbatimRepeat(`${original}${original}`), original);
+});
+
+test("collapseVerbatimRepeat: a normal answer is left unchanged", () => {
+  const normal =
+    "Gaurav leads a five-person data-science team inside Uber's AI org. " +
+    "He also builds independent AI products and research on the side.";
+  assert.equal(collapseVerbatimRepeat(normal), normal);
+});
+
+test("collapseVerbatimRepeat: a short coincidental near-split is left alone", () => {
+  // "AB AB" as two 2-char halves would trivially match a naive check; the
+  // length > 20 guard is what keeps this from firing on short text.
+  assert.equal(collapseVerbatimRepeat("AB AB"), "AB AB");
+});
+
+test("buildAnswer applies the collapse to the model's raw answer text", () => {
+  const original = "Spearman correlation went from -0.003 to 0.813 after retraining.";
+  const result = buildAnswer(
+    JSON.stringify({
+      answer: `${original} ${original}`,
+      citations: [{ sourceRef: "warmer:results:1" }],
+      followUps: [],
+    }),
+    chunks
+  );
+  assert.equal(result.answer, original);
 });
