@@ -1,12 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * BL-9 round 5 — "How this search was built" methodology disclosure
+ * BL-9 round 5 — "Search methodology" disclosure
  * (components/search-methodology.tsx), rendered on /projects directly
  * under the search box. Collapsed by default (see that component's own
  * header for why); these tests exercise the open/close toggle and confirm
  * the content a visitor is meant to actually find is reachable both by
  * mouse and by keyboard alone.
+ *
+ * Round 6 (GG's launch review) shortened the trigger's own label from "How
+ * this search was built, and the fancier option lost (show the numbers)" to
+ * "Search methodology" — the disclosure was already collapsed by default,
+ * so the material was never the problem; the label editorializing about its
+ * own rigor was.
  */
 
 test.describe("/projects search-methodology disclosure", () => {
@@ -14,7 +20,7 @@ test.describe("/projects search-methodology disclosure", () => {
     page,
   }) => {
     await page.goto("/projects");
-    const trigger = page.getByRole("button", { name: /how this search was built/i });
+    const trigger = page.getByRole("button", { name: "Search methodology", exact: true });
     await expect(trigger).toBeVisible();
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
     await expect(page.getByText(/every tier's 95% wilson confidence interval/i)).toBeHidden();
@@ -45,7 +51,7 @@ test.describe("/projects search-methodology disclosure", () => {
 
   test("keyboard-only: tab to the trigger and activate with Enter", async ({ page }) => {
     await page.goto("/projects");
-    const trigger = page.getByRole("button", { name: /how this search was built/i });
+    const trigger = page.getByRole("button", { name: "Search methodology", exact: true });
     await trigger.focus();
     await expect(trigger).toBeFocused();
     await page.keyboard.press("Enter");
@@ -70,7 +76,7 @@ test.describe("/projects search-methodology disclosure", () => {
     // regardless of its `data-open` state, so an unscoped locator matches
     // all four claims' panels at once (found by running this test).
     await page.goto("/projects");
-    await page.getByRole("button", { name: /how this search was built/i }).click();
+    await page.getByRole("button", { name: "Search methodology", exact: true }).click();
     const claim = page.getByRole("button", { name: /show source for keyword-only, shipped/i });
     await claim.click();
     const group = page.getByRole("group", { name: "Source for Keyword-only, shipped" });

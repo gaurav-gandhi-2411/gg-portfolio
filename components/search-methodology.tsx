@@ -58,10 +58,7 @@ const VERIFIED_AT = "2026-08-15";
 
 export function SearchMethodology() {
   return (
-    <SearchMethodologyDisclosure
-      summary="How this search was built, and the fancier option lost (show the numbers)"
-      panelId="search-methodology-panel"
-    >
+    <SearchMethodologyDisclosure summary="Search methodology" panelId="search-methodology-panel">
       <div className="max-w-measure text-left">
         <p className="text-muted-foreground text-sm leading-relaxed">
           This box shipped after four build-and-measure rounds tested whether a client-side

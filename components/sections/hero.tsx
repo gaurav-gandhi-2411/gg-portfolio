@@ -10,20 +10,7 @@ import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
 import { HeroMotion } from "@/components/hero/hero-motion";
 import { LinkButton } from "@/components/link-button";
 import { site } from "@/content/site";
-import { liveProductCount, products } from "@/content/products";
-import type { Stat } from "@/content/types";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
-
-/**
- * Whole years since the first data-science role on the resume (TCS, Jul 2021,
- * per content/experience.ts dateRange and resume p.1). Computed, not
- * hand-typed, so it can never silently go stale (same drift-proofing
- * rationale as liveProductCount, see provenance.md#derived:career-years).
- */
-function careerYears(): number {
-  const start = Date.UTC(2021, 6, 1); // Jul 2021
-  return Math.floor((Date.now() - start) / (365.25 * 24 * 3600 * 1000));
-}
 
 /**
  * The hero, rebuilt around the field instead of on top of it.
@@ -57,9 +44,14 @@ function careerYears(): number {
  * row. If everything is emphasized then nothing is, and the resume is the
  * thing a visitor is actually here to open.
  *
- * The stats moved to the bottom edge of the first screen, so the opening
- * frame is field and headline and the numbers are what the first scroll
- * buys. They are also no longer a bordered strip, which read as a table row.
+ * The stat row that used to sit at the bottom edge of the hero — years in
+ * data science, live product count, and a duplicate of the 50M+ doc-AI
+ * figure — is gone as of GG's launch review. It was meant to be replaced by
+ * HeadlineStats' $10M+/~70%/50M+ row (components/headline-stats.tsx,
+ * rendered above the About prose), not to sit alongside it; having both live
+ * put two stat rows on the same page, one of them repeating "50M+" under a
+ * different label, which reads as a mistake because it is one. See
+ * provenance.md's "Hero stats" table for both retirement notes.
  *
  * The "Currently building: X, updated Nd ago" line is gone at GG's request.
  * lib/live-data.ts still exports getCurrentlyBuilding and is still covered
@@ -76,24 +68,6 @@ function careerYears(): number {
  */
 export function Hero() {
   const { points } = getEmbeddingProjection();
-
-  const heroStats: Stat[] = [
-    {
-      value: String(careerYears()),
-      label: "years in data science and ML",
-      sourceRef: "derived:career-years",
-    },
-    {
-      value: String(liveProductCount(products)),
-      label: "AI products live today",
-      sourceRef: "derived:products-live-count",
-    },
-    {
-      value: "50M+",
-      label: "documents behind the Uber doc-AI I helped build",
-      sourceRef: "resume:indium-ds-docunderstanding",
-    },
-  ];
 
   const socials = [
     { href: site.githubUrl, label: "GitHub", icon: <GitHubIcon /> },
@@ -166,15 +140,6 @@ export function Hero() {
             </ul>
           </div>
         </div>
-
-        <dl data-hero-plane="stats" className="hero-stats">
-          {heroStats.map((stat) => (
-            <div key={stat.sourceRef} className="hero-stat">
-              <dd className="hero-stat-figure">{stat.value}</dd>
-              <dt className="hero-stat-label">{stat.label}</dt>
-            </div>
-          ))}
-        </dl>
       </div>
 
       <HeroMotion />
