@@ -33,7 +33,7 @@ export function Research() {
         {researchPapers.map((paper) => (
           <article
             key={paper.title}
-            className="border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
+            className="border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover focus-within:-translate-y-1 focus-within:border-accent/50 focus-within:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
           >
             <div className="contents lg:flex lg:flex-col lg:gap-[var(--space-3)]">
               <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">

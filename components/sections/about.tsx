@@ -42,7 +42,7 @@ export function About() {
         </RevealGroup>
 
         <aside className="hidden lg:block" aria-label="Core skills">
-          <div className="border-border/40 rounded-xl border p-[var(--space-5)]">
+          <div className="border-border/40 rounded-xl border p-[var(--space-5)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0">
             <h3 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
               Working across
             </h3>
