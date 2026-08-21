@@ -134,6 +134,9 @@ export function Hero() {
                     className="hero-social"
                   >
                     {social.icon}
+                    <span aria-hidden="true" className="hero-social-tip">
+                      {social.label}
+                    </span>
                   </a>
                 </li>
               ))}
