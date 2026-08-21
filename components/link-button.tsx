@@ -10,6 +10,16 @@ import { cn } from "@/lib/utils";
  * The resume button VIEWS the PDF in a new tab (target=_blank, no
  * `download` attribute) — GG's explicit wave-12 requirement. `sameTab`
  * covers mailto/anchor targets.
+ *
+ * Round 3 (GG): "scroll and transition feel dated." This is the one
+ * component behind every prominent button on the site (hero CTAs, resume
+ * links, case-study actions, the chatbot launcher) and it was animating on
+ * Tailwind's bare `ease-out`/`duration-200` — literal defaults, never the
+ * site's own `--ease-out-soft`/`--dur-fast` tokens every bespoke motion
+ * surface (hero, cards, reveals) already uses. The showcase animations were
+ * tuned; the thing a visitor's cursor actually touches on every page
+ * wasn't, which is the more likely source of "dated" than any one big
+ * effect — it's the interaction that repeats.
  */
 export function LinkButton({
   href,
@@ -32,7 +42,7 @@ export function LinkButton({
       {...(sameTab ? {} : { target: "_blank", rel: "noreferrer" })}
       className={cn(
         "inline-flex min-h-11 items-center gap-[var(--space-2)] rounded-lg px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium",
-        "transition-[transform,box-shadow,border-color,background-color] duration-200 ease-out",
+        "transition-[transform,box-shadow,border-color,background-color] duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
         "hover:-translate-y-0.5 active:translate-y-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
