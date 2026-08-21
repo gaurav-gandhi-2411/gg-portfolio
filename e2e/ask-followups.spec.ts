@@ -13,7 +13,12 @@ import { expect, test } from "@playwright/test";
 
 const ANSWER = "Warmer's Hinglish embedding was retrained after scoring near zero.";
 
-async function stubChat(page: import("@playwright/test").Page, followUps: string[]) {
+interface StubFollowUp {
+  question: string;
+  sourceRef: string;
+}
+
+async function stubChat(page: import("@playwright/test").Page, followUps: StubFollowUp[]) {
   await page.route("**/api/chat", async (route) => {
     await route.fulfill({
       status: 200,
@@ -37,8 +42,8 @@ test.describe("ask follow-ups", () => {
 
   test("an answer offers grounded follow-ups, and tapping one asks it", async ({ page }) => {
     await stubChat(page, [
-      "What did the Spearman score reach?",
-      "How was the Hinglish model retrained?",
+      { question: "What did the Spearman score reach?", sourceRef: "warmer:results:1" },
+      { question: "How was the Hinglish model retrained?", sourceRef: "warmer:problem:1" },
     ]);
     await page.goto("/ask");
 
@@ -61,6 +66,31 @@ test.describe("ask follow-ups", () => {
     ).toBeVisible();
     const turns = page.locator("ol > li");
     await expect(turns).toHaveCount(2, { timeout: 15_000 });
+  });
+
+  test("round three: tapping a follow-up sends its sourceRef back, so the server can pin it", async ({
+    page,
+  }) => {
+    // GG tapped a chip that had already passed sourceRef validation on the
+    // turn that offered it, and got refused as ungrounded anyway — the
+    // second, independent request had no way to prove which chunk it was
+    // promised against. This is the client half of the fix: the tap has to
+    // actually send the sourceRef, or the server has nothing to pin.
+    await stubChat(page, [
+      { question: "What did the Spearman score reach?", sourceRef: "warmer:results:1" },
+    ]);
+    await page.goto("/ask");
+    await page.getByRole("textbox").fill("What went wrong with Warmer?");
+    await page.getByRole("textbox").press("Enter");
+    await expect(page.getByText("Keep digging")).toBeVisible({ timeout: 15_000 });
+
+    const [request] = await Promise.all([
+      page.waitForRequest("**/api/chat"),
+      page.getByRole("button", { name: "What did the Spearman score reach?" }).click(),
+    ]);
+    const sent = request.postDataJSON();
+    expect(sent.question).toBe("What did the Spearman score reach?");
+    expect(sent.followUpSourceRef).toBe("warmer:results:1");
   });
 
   test("an answer with no grounded follow-ups offers none, rather than filler", async ({
