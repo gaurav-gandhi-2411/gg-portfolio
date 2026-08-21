@@ -405,7 +405,15 @@ export function AskPanel() {
               : "Ask about a project, the architecture, or what I'm looking for…"
           }
           autoComplete="off"
-          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring min-h-11 w-full rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
+          // truncate (overflow:hidden + text-overflow:ellipsis + whitespace:
+          // nowrap) — a native <input> placeholder gets none of these by
+          // default, so at narrow widths the full placeholder text hard-
+          // clips mid-word with no ellipsis, no visual cue more text
+          // follows (GG's launch-review round two, 390px: "Ask about a
+          // project, the architecture," ending on a bare comma). Also
+          // covers real typed VALUE text overflowing the box the same way,
+          // which had the identical silent-clip problem.
+          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring min-h-11 w-full truncate rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
         />
         <button
           type="submit"

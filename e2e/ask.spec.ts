@@ -49,22 +49,26 @@ test.describe("/ask", () => {
    * exposed: the fixed bottom-right launcher can land on top of
    * case-study-page.tsx's sticky right rail (on-this-page nav, metric,
    * related-project links) at lg+, making rail links unclickable, not just
-   * visually crowded — that rail only renders at lg+ (`hidden lg:block`),
-   * so the launcher is hidden there in lockstep (chat-launcher.tsx) rather
-   * than computing the rail's variable horizontal position. Below lg the
-   * rail doesn't exist, so the launcher stays visible there unchanged.
+   * visually crowded — that rail only renders at lg+ (`hidden lg:block`).
+   *
+   * GG's launch-review round two found the same root cause below lg, where
+   * the rail doesn't exist but ordinary paragraph text does: a 30-route
+   * walk at 390px caught the launcher sitting over live body text on
+   * /work/triageiq mid-scroll (a fixed corner element and a page long
+   * enough to scroll any line of text through that corner — the identical
+   * mechanism the rail fix already named, just never checked at this
+   * width). The launcher now hides on every /work/[slug] route regardless
+   * of viewport (chat-launcher.tsx) rather than only at lg+.
    */
-  test("the chat launcher hides on case-study pages at lg+ (rail collision) but stays visible below lg", async ({
-    page,
-  }) => {
+  test("the chat launcher hides on case-study pages at every width", async ({ page }) => {
     await page.goto("/work/triageiq");
     const launcher = page.getByRole("link", { name: "Ask about my work" });
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await expect(launcher).toBeHidden();
+    await expect(launcher).toHaveCount(0);
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(launcher).toBeVisible();
+    await expect(launcher).toHaveCount(0);
   });
 
   test("suggested-question chips are visible, clickable, and populate the input", async ({
