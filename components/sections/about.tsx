@@ -18,7 +18,9 @@ import { aboutParagraphs, skillChips } from "@/content/about";
  * used to sit in — components/section.tsx's own `.section-content` now
  * carries a continuous, scroll-scrubbed entrance for every section built on
  * it (components/motion/section-depth.tsx), which is the thing that
- * replaced the one-shot IntersectionObserver reveal RevealGroup was.
+ * replaced the one-shot IntersectionObserver reveal RevealGroup was. The
+ * skills panel is a `.section-card` now (app/sections-motion.css) for the
+ * same pointer-tilt every other content card below the hero gets.
  */
 export function About() {
   return (
@@ -47,7 +49,7 @@ export function About() {
         </div>
 
         <aside className="hidden lg:block" aria-label="Core skills">
-          <div className="border-border/40 rounded-xl border p-[var(--space-5)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-accent/50 hover:shadow-card-hover motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+          <div className="section-card border-border/40 rounded-xl border p-[var(--space-5)]">
             <h3 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
               Working across
             </h3>

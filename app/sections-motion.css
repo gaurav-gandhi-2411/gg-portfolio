@@ -1,6 +1,6 @@
 /*
- * Depth and pointer light for About, Experience, Work, Contact and
- * Research.
+ * Depth, pointer light, and card tilt for About, Experience, Work, Contact
+ * and Research.
  *
  * Consumes tokens from globals.css and defines none of its own, same
  * contract as hero.css/work.css/case-study.css.
@@ -9,17 +9,12 @@
  * drift, a pointer lens, scroll-linked depth) and everything below it read
  * as a static document. The first pass added a hover shadow and a slightly
  * bigger scroll reveal, which is not the same claim and reads the same as
- * before. This is the real one: sections get a second, pointer-reactive
- * plane behind their content (the same --mx/--my PointerField already
- * writes for the hero's spotlight, extended to a leaf per section rather
- * than the document root -- see components/pointer-field.tsx's own header
- * for why that distinction is load-bearing, not stylistic), and a
- * continuous scroll-scrubbed depth parallax between that plane and the
- * content (components/motion/section-depth.tsx) instead of a one-shot
- * IntersectionObserver reveal. Real pointer-tracked hover tilt on content
- * cards is a follow-up in the same batch (components/section-card-motion.tsx)
- * -- kept as its own PR because the two mechanisms are independently
- * reviewable and together the diff exceeds rule 70a gate 3's line cap.
+ * before. The real fix shipped in two PRs, split because the combined diff
+ * exceeded rule 70a gate 3's 400-line cap: the plane/ambient/content rules
+ * below (a pointer-reactive plane behind content, scroll-scrubbed depth
+ * parallax) shipped first; this file's card-tilt rules are the follow-up --
+ * real pointer-tracked tilt on content cards (components/section-card-
+ * motion.tsx) instead of a hover shadow swap.
  */
 
 /*
@@ -66,5 +61,73 @@
 @media (prefers-reduced-motion: reduce) {
   .section-ambient {
     transition: none;
+  }
+}
+
+/*
+ * ── Content cards ────────────────────────────────────────────────────────
+ * Experience's company cards, Research's paper cards, About's skills panel.
+ * A pointer-tracked tilt, not a hover shadow swap -- components/section-
+ * card-motion.tsx writes --card-px/--card-py (0..1 across the card) exactly
+ * as components/project-grid-motion.tsx already does for .project-card,
+ * reusing that established vocabulary rather than a new one. Gentler max
+ * angle than the project grid (1.4deg vs 2.4deg): these are text-dense
+ * reading surfaces, not product cards, and a stronger tilt would fight
+ * legibility rather than add depth to it.
+ *
+ * The lift + border + shadow from the first pass stay -- they were never
+ * wrong, only insufficient on their own. The tilt is what makes hover read
+ * as a physical object responding to where the cursor actually is, rather
+ * than a binary on/off state.
+ */
+/*
+ * No resting `transform` here, not even a bare `perspective()` — a
+ * `perspective()` transform function only needs to be present in whichever
+ * transform value is active at a given moment, never pre-declared, and
+ * Experience's own company cards have a `position: sticky` meta rail as a
+ * direct descendant (components/sections/experience.tsx). ANY transform on
+ * an ancestor, including an inert one, changes what counts as that
+ * descendant's containing block and is exactly the kind of thing that
+ * silently breaks sticky positioning several files away from the change
+ * that caused it. Leaving `.section-card` transform-free at rest is what
+ * keeps this component ignorant of, and safe for, whatever its callers put
+ * inside it.
+ */
+.section-card {
+  transition:
+    transform var(--dur-base) var(--ease-out-soft),
+    border-color var(--dur-base) var(--ease-out-soft),
+    box-shadow var(--dur-base) var(--ease-out-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .section-card:hover,
+  .section-card:focus-within {
+    border-color: color-mix(in oklab, var(--indigo) 50%, transparent);
+    box-shadow: var(--shadow-card-hover);
+    transform: perspective(1400px) translateY(-3px)
+      rotateX(calc((var(--card-py, 0.5) - 0.5) * -1.4deg)) rotateY(calc((var(--card-px, 0.5) - 0.5) * 1.4deg));
+  }
+}
+
+/* Coarse pointers get the lift and the light border without a tilt driven
+ * by a cursor position that does not exist on a touchscreen -- same
+ * reasoning as .project-card's own touch handling (app/work.css). */
+@media (hover: none) {
+  .section-card:focus-within {
+    border-color: color-mix(in oklab, var(--indigo) 50%, transparent);
+    box-shadow: var(--shadow-card-hover);
+    transform: perspective(1400px) translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-card {
+    transition: border-color var(--dur-base) var(--ease-out-soft);
+    transform: none;
+  }
+  .section-card:hover,
+  .section-card:focus-within {
+    transform: none;
   }
 }
