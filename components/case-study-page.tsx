@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { CaseStudyRail } from "@/components/case-study-rail";
 import { FlowDiagram } from "@/components/flow-diagram";
-import { InlineLink } from "@/components/inline-link";
 import { LinkButton } from "@/components/link-button";
 import { MetricProvenance } from "@/components/metric-provenance";
 import { PrintButton } from "@/components/print-button";
@@ -18,35 +16,20 @@ import type { RelatedProduct } from "@/lib/related-products";
 import { SECTION_TITLES, headingId } from "@/lib/case-study-anchors";
 
 /**
- * Wave 12 — the /work/[slug] case-study template: numbered sections, one
- * idea per section, novice-readable, everything server-rendered; `demo`
- * is the one interactive slot injected by the route.
- *
- * Wave 13 — desktop composition (GG's standing 1024–1600px complaint):
- * at lg the page becomes content column + sticky right rail (on-this-page
- * anchors, the headline metric, project links) so the case study reads
- * like a documented spread instead of a strand in a void. Below lg the
- * wave-12 single column is unchanged (breakpoint moved from xl to lg in
- * the 2026-07-30 UI/UX wave — see section.tsx). A scroll-driven reading
- * progress bar (pure CSS, @supports-gated) sits above the nav.
+ * CONCEPT B — "the calm article": case studies are deliberately NOT made to
+ * look like the homepage. Fourteen pages carry most of the reading time on
+ * this site, and a centered-editorial, card-grid language that reads well
+ * for a landing page gets tiring across long technical prose. This
+ * direction keeps the homepage and /projects exactly as they are, and gives
+ * the case study its own, quieter, single-column reading mode: a narrow
+ * measure even on a wide monitor, no sidebar, no boxed "on this page" nav,
+ * no eyebrow labels or eval-table chrome — structure carried by whitespace
+ * and a quiet type change alone, the way a well-set essay reads.
  */
 
-function SectionHeading({ index, title }: { index: number; title: string }) {
+function SectionHeading({ title }: { title: string }) {
   return (
-    <h2
-      id={headingId(title)}
-      data-case-heading
-      /* Alternating rhythm. Odd sections get a hue rule and a touch more
-       * top margin; even ones stay plain. Walking down a page of
-       * identically stacked blocks is most of why these read as documents
-       * rather than as a piece of work, and the eye needs something to
-       * break the run — a rule is enough; a numeral isn't information the
-       * reader needs (GG, production audit 2026-08-22: no numbering on
-       * sections that aren't a real sequence, this round's regression of
-       * an already-settled call). */
-      data-rhythm={index % 2 === 0 ? "even" : "odd"}
-      className="case-heading"
-    >
+    <h2 id={headingId(title)} data-case-heading className="case-heading-article">
       {title}
     </h2>
   );
@@ -61,26 +44,8 @@ export function CaseStudyPage({
   study: CaseStudy;
   product: Product | undefined;
   demo?: React.ReactNode;
-  /** Wave 16 — other projects sharing a category, most-related first (lib/related-products.ts). */
   related?: RelatedProduct[];
 }) {
-  // Titles come from lib/case-study-anchors.ts, which the chatbot indexer
-  // also reads. /ask cites a chunk and links to the section it came from, and
-  // that link is only correct while the fragment it emits is the id this page
-  // renders. One list, two readers, no third copy to drift.
-  const tocSections: string[] = [
-    SECTION_TITLES.problem,
-    SECTION_TITLES.approach,
-    ...(study.architecture ? [SECTION_TITLES.architecture] : []),
-    ...((study.decisions?.length ?? 0) > 0 ? [SECTION_TITLES.decisions] : []),
-    ...(study.diagram ? [study.diagram.title] : []),
-    ...((study.results?.length ?? 0) > 0 ? [SECTION_TITLES.results] : []),
-    ...(study.story ? [study.story.title] : []),
-    ...((study.closing?.length ?? 0) > 0 ? [SECTION_TITLES.closing] : []),
-  ];
-  let sectionIndex = 0;
-  const next = () => ++sectionIndex;
-
   const lastUpdated = getCaseStudyLastUpdated(study.slug);
   const readingMinutes = caseStudyReadingMinutes(study);
 
@@ -88,355 +53,176 @@ export function CaseStudyPage({
     <main
       id="main"
       data-case-study
-      /* The project's own hue, the same one its card carried on the grid, so
-       * arriving here feels like following that card rather than landing on
-       * a generic page. Only surfaces read it; every piece of text stays on
-       * the neutral tokens, so no project's colour can move a contrast
-       * ratio. */
       style={{ "--case-hue": String(projectHue(allProducts, study.slug)) } as React.CSSProperties}
-      className="case-study mx-auto w-full max-w-2xl flex-1 px-[var(--space-6)] pt-[var(--space-12)] pb-[var(--space-20)] md:pt-[var(--space-16)] lg:max-w-5xl"
+      className="case-study-article mx-auto w-full max-w-2xl flex-1 px-[var(--space-6)] pt-[var(--space-14)] pb-[var(--space-24)] md:pt-[var(--space-20)]"
     >
       <div aria-hidden="true" className="reading-progress" />
-      {/* Full bleed, breaking out of the column the article is set in. A case
-          study used to open with a back-link and a heading on the same flat
-          plane as its body copy, which is a document, not a piece of work
-          being presented. */}
-      <div aria-hidden="true" className="case-opening-wash" />
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,42rem)_15rem] lg:justify-between lg:gap-x-12">
-        <div data-case-article className="min-w-0">
-          <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
-            <Link
-              href="/projects"
-              className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-            >
-              ← All projects
-            </Link>
+      <p className="text-muted-foreground text-sm">
+        <Link
+          href="/projects"
+          className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
+        >
+          ← All projects
+        </Link>
+      </p>
+
+      <h1 className="font-heading text-heading mt-[var(--space-5)] font-semibold tracking-tight text-foreground">
+        {study.title}
+      </h1>
+      <p className="text-muted-foreground mt-[var(--space-3)] text-body-lg leading-relaxed">{study.dek}</p>
+
+      <p className="text-muted-foreground mt-[var(--space-4)] text-sm">
+        {lastUpdated && <>Updated {lastUpdated} · </>}
+        {readingMinutes} min read
+        {(product?.techChips?.length ?? 0) > 0 && <> · Built with {product?.techChips?.join(", ")}</>}
+      </p>
+
+      <p className="mt-[var(--space-5)] flex flex-wrap gap-[var(--space-3)]">
+        {study.links.map((link, i) => (
+          <LinkButton key={link.href} href={link.href} variant={i === 0 ? "primary" : "secondary"}>
+            {link.label} ↗
+          </LinkButton>
+        ))}
+        <PrintButton />
+      </p>
+
+      <div data-case-article className="case-article-body min-w-0">
+        <SectionHeading title={SECTION_TITLES.problem} />
+        {study.problem.map((paragraph) => (
+          <p key={paragraph.slice(0, 32)} className="case-article-p">
+            {paragraph}
           </p>
+        ))}
 
-          <h1 className="font-heading text-display mt-[var(--space-6)] font-semibold tracking-tight text-foreground">
-            {study.title}
-          </h1>
-          <p className="text-muted-foreground mt-[var(--space-4)] text-body-lg leading-relaxed">{study.dek}</p>
-
-          {/* Wave 15 — signals the page is maintained (not a stale
-              write-once artifact) and helps a skimmer decide whether to
-              read now or bookmark. lastUpdated is derived from the source
-              file's own git history (lib/last-updated.ts) — never
-              hand-typed, so it can't silently go stale; renders nothing if
-              git history isn't available (fail-soft, same convention as
-              every other derived value on this site). */}
-          <p className="text-muted-foreground mt-[var(--space-3)] font-mono text-caption">
-            {lastUpdated && <>Last updated {lastUpdated} · </>}
-            {readingMinutes} min read
+        <SectionHeading title={SECTION_TITLES.approach} />
+        {study.approach.map((paragraph) => (
+          <p key={paragraph.slice(0, 32)} className="case-article-p">
+            {paragraph}
           </p>
+        ))}
 
-          {(product?.techChips?.length ?? 0) > 0 && (
-            <p className="mt-[var(--space-5)] flex flex-wrap gap-[var(--space-2)]">
-              {product?.techChips?.map((chip) => (
-                <span
-                  key={chip}
-                  className="border-border/40 text-muted-foreground rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-mono text-caption"
-                >
-                  {chip}
-                </span>
-              ))}
-            </p>
-          )}
-
-          {/* Design-review (wave 12): one primary action per surface — the
-              first link (the live/try destination, or the repo when that's
-              all there is) carries the filled variant. */}
-          <p className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-3)]">
-            {study.links.map((link, i) => (
-              <LinkButton
-                key={link.href}
-                href={link.href}
-                variant={i === 0 ? "primary" : "secondary"}
-              >
-                {link.label} ↗
-              </LinkButton>
-            ))}
-            {/* Wave 16 — printable case study: window.print() needs a client
-                boundary, kept as a one-component island (see print-button.tsx).
-                Hidden by the print stylesheet itself (no point printing a
-                print button). */}
-            <PrintButton />
-          </p>
-
-          <SectionHeading index={next()} title={SECTION_TITLES.problem} />
-          {study.problem.map((paragraph) => (
-            <p
-              key={paragraph.slice(0, 32)}
-              className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
-            >
-              {paragraph}
-            </p>
-          ))}
-
-          <SectionHeading index={next()} title={SECTION_TITLES.approach} />
-          {study.approach.map((paragraph) => (
-            <p
-              key={paragraph.slice(0, 32)}
-              className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
-            >
-              {paragraph}
-            </p>
-          ))}
-
-          {study.architecture && (
-            <>
-              <SectionHeading index={next()} title={SECTION_TITLES.architecture} />
-              {study.architecture.intro && (
-                <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
-                  {study.architecture.intro}
-                </p>
-              )}
-              <div className="mt-[var(--space-6)]">
-                <FlowDiagram
-                  stages={study.architecture.stages}
-                  label={`${study.title} architecture diagram`}
-                />
-              </div>
-              {study.architecture.note && (
-                <p className="text-muted-foreground mt-[var(--space-4)] text-sm leading-relaxed">
-                  {study.architecture.note}
-                </p>
-              )}
-            </>
-          )}
-
-          {(study.decisions?.length ?? 0) > 0 && (
-            <>
-              <SectionHeading index={next()} title={SECTION_TITLES.decisions} />
-              <ol className="mt-[var(--space-4)] flex flex-col gap-[var(--space-6)]">
-                {study.decisions?.map((decision) => (
-                  <li key={decision.sourceRef} className="border-border/40 border-l-2 pl-5">
-                    <p className="font-medium text-foreground">{decision.title}</p>
-                    <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
-                      {decision.body}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-
-          {study.diagram && (
-            <>
-              <SectionHeading index={next()} title={study.diagram.title} />
-              <div className="mt-[var(--space-6)]">
-                <StepCurve
-                  points={study.diagram.points}
-                  unit={study.diagram.unit}
-                  label={study.diagram.title}
-                />
-              </div>
+        {study.architecture && (
+          <>
+            <SectionHeading title={SECTION_TITLES.architecture} />
+            {study.architecture.intro && <p className="case-article-p">{study.architecture.intro}</p>}
+            <div className="mt-[var(--space-6)]">
+              <FlowDiagram stages={study.architecture.stages} label={`${study.title} architecture diagram`} />
+            </div>
+            {study.architecture.note && (
               <p className="text-muted-foreground mt-[var(--space-4)] text-sm leading-relaxed">
-                {study.diagram.caption}
+                {study.architecture.note}
               </p>
-            </>
-          )}
+            )}
+          </>
+        )}
 
-          {(study.results?.length ?? 0) > 0 && (
-            <>
-              <SectionHeading index={next()} title={SECTION_TITLES.results} />
-              <dl className="case-results">
-                {study.results?.map((result) => {
-                  const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
-                  return (
-                    <div
-                      key={result.sourceRef + result.label}
-                      // Positioning root for MetricProvenance's disclosure
-                      // panel (selfAnchor={false} below): anchoring here,
-                      // not to the value alone, means the panel opens below
-                      // the whole result — value AND label — instead of
-                      // landing on top of the label immediately beneath it.
-                      className="case-result relative"
-                    >
-                      <dd className="case-result-value" data-format={result.format ?? "stat"}>
-                        <MetricProvenance info={provenance} label={result.label} selfAnchor={false}>
-                          {result.value}
-                        </MetricProvenance>
-                      </dd>
-                      <dt className="case-result-label">
-                        {result.label}
-                        {result.detail && (
-                          <span className="text-muted-foreground/80"> · {result.detail}</span>
-                        )}
-                      </dt>
-                    </div>
-                  );
-                })}
-              </dl>
-            </>
-          )}
+        {(study.decisions?.length ?? 0) > 0 && (
+          <>
+            <SectionHeading title={SECTION_TITLES.decisions} />
+            {study.decisions?.map((decision) => (
+              <p key={decision.sourceRef} className="case-article-p">
+                <em className="case-article-decision-lead">{decision.title}.</em> {decision.body}
+              </p>
+            ))}
+          </>
+        )}
 
-          {study.story && (
-            <>
-              <SectionHeading index={next()} title={study.story.title} />
-              {study.story.leadIn && (
-                <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
-                  {study.story.leadIn.text}
-                </p>
-              )}
-              {study.story.body.map((paragraph) => {
-                const text = typeof paragraph === "string" ? paragraph : paragraph.text;
+        {study.diagram && (
+          <>
+            <SectionHeading title={study.diagram.title} />
+            <div className="mt-[var(--space-6)]">
+              <StepCurve points={study.diagram.points} unit={study.diagram.unit} label={study.diagram.title} />
+            </div>
+            <p className="text-muted-foreground mt-[var(--space-4)] text-sm leading-relaxed">{study.diagram.caption}</p>
+          </>
+        )}
+
+        {(study.results?.length ?? 0) > 0 && (
+          <>
+            <SectionHeading title={SECTION_TITLES.results} />
+            <dl className="case-results-article">
+              {study.results?.map((result) => {
+                const provenance = getProvenance(result.sourceRef, product?.repoUrl, study.verifiedAt);
                 return (
-                  <p
-                    key={text.slice(0, 32)}
-                    className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
-                  >
-                    {text}
-                  </p>
+                  <div key={result.sourceRef + result.label} className="case-result-article relative">
+                    <dt className="case-result-article-label">{result.label}</dt>
+                    <dd className="case-result-article-value" data-format={result.format ?? "stat"}>
+                      <MetricProvenance info={provenance} label={result.label} selfAnchor={false}>
+                        {result.value}
+                      </MetricProvenance>
+                      {result.detail && (
+                        <span className="case-result-article-detail"> — {result.detail}</span>
+                      )}
+                    </dd>
+                  </div>
                 );
               })}
-            </>
-          )}
+            </dl>
+          </>
+        )}
 
-          {demo}
-
-          {(study.closing?.length ?? 0) > 0 && (
-            <>
-              <SectionHeading
-                index={next()}
-                title={SECTION_TITLES.closing}
-              />
-              {study.closing?.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 32)}
-                  className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed"
-                >
-                  {paragraph}
+        {study.story && (
+          <>
+            <SectionHeading title={study.story.title} />
+            {study.story.leadIn && <p className="case-article-p">{study.story.leadIn.text}</p>}
+            {study.story.body.map((paragraph) => {
+              const text = typeof paragraph === "string" ? paragraph : paragraph.text;
+              return (
+                <p key={text.slice(0, 32)} className="case-article-p">
+                  {text}
                 </p>
-              ))}
-            </>
-          )}
+              );
+            })}
+          </>
+        )}
 
-          {/* Wave 15 — "Work with me": a client/hiring-manager reading this
-              far into a case study is the highest-intent visitor on the
-              site and previously had no conversion path here (only the
-              generic project links below, and Contact at the very bottom
-              of the homepage). Same copy register as components/sections/
-              contact.tsx, so it reads as one voice, not a bolted-on ad. */}
-          <div className="border-accent/30 bg-accent/5 print-hide mt-[var(--space-16)] flex flex-col items-center gap-[var(--space-3)] rounded-xl border px-[var(--space-6)] py-8 text-center">
-            <p className="text-foreground text-base leading-relaxed">
-              Building something like this? {availability.summary}
-            </p>
-            <p className="flex flex-wrap justify-center gap-[var(--space-3)]">
-              <LinkButton href={`mailto:${site.email}`} variant="primary">
-                Email me ↗
-              </LinkButton>
-              <LinkButton href={site.resumeUrl} variant="secondary">
-                View resume ↗
-              </LinkButton>
-            </p>
-          </div>
+        {demo}
 
-          <div className="border-border/40 mt-[var(--space-10)] flex flex-col items-center gap-[var(--space-5)] border-t pt-[var(--space-10)] text-center">
-            <p className="text-muted-foreground text-sm">Want to see it for yourself?</p>
-            <p className="flex flex-wrap justify-center gap-[var(--space-3)]">
-              {study.links.map((link, i) => (
-                <LinkButton
-                  key={link.href}
-                  href={link.href}
-                  variant={i === 0 ? "primary" : "secondary"}
-                >
-                  {link.label} ↗
-                </LinkButton>
-              ))}
-            </p>
-            <Link
-              href="/projects"
-              className="text-accent focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center text-sm font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-            >
-              ← Back to all projects
-            </Link>
-          </div>
-        </div>
+        {(study.closing?.length ?? 0) > 0 && (
+          <>
+            <SectionHeading title={SECTION_TITLES.closing} />
+            {study.closing?.map((paragraph) => (
+              <p key={paragraph.slice(0, 32)} className="case-article-p">
+                {paragraph}
+              </p>
+            ))}
+          </>
+        )}
 
-        <aside className="print-hide hidden lg:block">
-          <div className="sticky top-20 flex flex-col gap-8 pt-[var(--space-16)]">
-            <nav aria-label="On this page">
-              <h2 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
-                On this page
-              </h2>
-              {/* The rail. Server-rendered and complete before any script
-                  runs, so the section list is linkable with JavaScript off;
-                  components/case-study-rail.tsx only marks which entry you
-                  are currently inside and fills the track behind it. */}
-              <ol data-case-rail className="case-rail">
-                {tocSections.map((title) => (
-                  <li key={title} data-rail-item={headingId(title)} className="case-rail-item">
-                    <a href={`#${headingId(title)}`} className="case-rail-link">
-                      {title}
-                    </a>
-                  </li>
-                ))}
-              </ol>
-            </nav>
+        <p className="case-article-p print-hide">
+          <em>Building something like this?</em> {availability.summary}{" "}
+          <a href={`mailto:${site.email}`} className="case-article-link">
+            Email me ↗
+          </a>{" "}
+          or{" "}
+          <a href={site.resumeUrl} className="case-article-link">
+            view my resume ↗
+          </a>
+          .
+        </p>
 
-            {product?.metric && (
-              <div className="border-border/40 rounded-xl border p-[var(--space-5)]">
-                <p className="font-mono text-base font-medium text-foreground">
-                  {product.metric.value}
-                </p>
-                <p className="text-muted-foreground mt-1.5 text-caption leading-snug">
-                  {product.metric.label}
-                </p>
-              </div>
-            )}
+        {related.length > 0 && (
+          <p className="text-muted-foreground print-hide mt-[var(--space-10)] text-sm leading-relaxed">
+            Related:{" "}
+            {related.map(({ product: relatedProduct }, i) => (
+              <span key={relatedProduct.slug}>
+                {i > 0 && ", "}
+                <Link href={`/work/${relatedProduct.slug}`} className="case-article-link">
+                  {relatedProduct.name}
+                </Link>
+              </span>
+            ))}
+            .
+          </p>
+        )}
 
-            <p className="flex flex-col gap-[var(--space-2-5)] text-sm">
-              {study.links.map((link) => (
-                <InlineLink key={link.href} href={link.href} className="w-fit">
-                  {link.label} ↗
-                </InlineLink>
-              ))}
-            </p>
-
-            {/* Wave 16 — related projects, derived from shared categories
-                (lib/related-products.ts); omitted entirely when a case
-                study shares no category with anything else, rather than
-                rendering an empty heading. */}
-            {related.length > 0 && (
-              <div>
-                <h2 className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
-                  Related projects
-                </h2>
-                <ul className="mt-[var(--space-3)] flex flex-col gap-[var(--space-3)]">
-                  {related.map(({ product: relatedProduct }) => (
-                    <li key={relatedProduct.slug}>
-                      <Link
-                        href={`/work/${relatedProduct.slug}`}
-                        className="focus-visible:outline-ring text-foreground block text-sm font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-                      >
-                        {relatedProduct.name}
-                      </Link>
-                      {/* Production audit (2026-08-22): this used to list
-                          every shared category as a chip row, but "related"
-                          is computed from shared categories in the first
-                          place — on a page with three related projects that
-                          all share the SAME single category, every chip
-                          read identically ("LLM & Agents" ×3), telling a
-                          reader nothing about which one to actually click.
-                          The tagline is a real per-project differentiator
-                          that already exists in content/products.ts. */}
-                      <p className="text-muted-foreground mt-[var(--space-1)] line-clamp-2 text-caption leading-snug">
-                        {relatedProduct.tagline}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </aside>
+        <p className="text-muted-foreground mt-[var(--space-6)] border-t border-border/40 pt-[var(--space-6)] text-sm">
+          <Link href="/projects" className="case-article-link">
+            ← Back to all projects
+          </Link>
+        </p>
       </div>
-
-      {/* Renders nothing. Drives the rail by attribute so the markup
-          above stays server-rendered and complete. */}
-      <CaseStudyRail headingIds={tocSections.map(headingId)} />
     </main>
   );
 }

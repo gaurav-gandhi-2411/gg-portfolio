@@ -1,221 +1,101 @@
 /*
- * The case study template.
+ * CONCEPT B — "the calm article" (design-unification exploration).
  *
- * Thirteen of these carry most of the reading time on the site and had zero
- * design attention across twelve rounds: a back-link, a heading, and a stack
- * of identical prose blocks. They read as documents. Consumes tokens from
- * globals.css and defines none, same contract as the other surface files.
- *
- * --case-hue is written per page by components/case-study-page.tsx and is
- * the same hue the project's card carried on the grid, so following a card
- * here feels like following that card. Only surfaces read it; every piece of
- * text stays on the neutral tokens, so no project's colour can move a
- * contrast ratio.
+ * Deliberately does not borrow the homepage's card/grid language. A narrow
+ * reading column even at wide viewports, no sidebar, no boxed navigation,
+ * no eyebrow labels — structure is carried by whitespace and a quiet type
+ * change alone, closer to a well-set essay than a documented spread.
  */
 
-.case-study {
+.case-study-article {
   position: relative;
 }
 
-/*
- * The full-bleed opening.
- *
- * Breaks out of the column the article is set in, using the viewport width
- * rather than a fixed inset so it stays flush at every size. It is a wash
- * rather than a block: the copy sits on it, not inside a box drawn around
- * the copy, which is the difference between a page that opens and a page
- * with a banner stuck on top.
- */
-.case-opening-wash {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: -1;
-  width: 100vw;
-  height: 34rem;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background:
-    radial-gradient(
-      70% 100% at 18% 0%,
-      oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.16) 0%,
-      transparent 68%
-    ),
-    linear-gradient(to bottom, var(--plane-far) 0%, transparent 82%);
-  mask-image: linear-gradient(to bottom, black 0%, black 46%, transparent 100%);
+.case-article-body {
+  margin-top: var(--space-10);
 }
 
-/*
- * Section headings, alternating.
- *
- * Odd sections hang their numeral in the margin under a hue rule; even ones
- * keep it inline. On a page of a dozen sections that alternation is what
- * stops the eye walking down identical stacked blocks, and it costs no
- * additional markup, only which side of a modulo the index falls on.
- *
- * The hanging numeral only hangs where there is a margin to hang into. Below
- * lg the column is the full width, so both variants sit inline and the
- * rhythm comes from the rule instead.
- */
-.case-heading {
-  margin-top: var(--space-14);
+.case-article-p {
+  margin-top: var(--space-5);
+  color: var(--muted-foreground);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.case-article-decision-lead {
+  color: var(--foreground);
+  font-style: italic;
+}
+
+/* Quiet section break: no eyebrow, no numeral, no rule. A slightly larger
+ * italic serif subhead and generous top margin do the whole job. */
+.case-heading-article {
+  margin-top: var(--space-16);
   scroll-margin-top: 6rem;
   color: var(--foreground);
   font-family: var(--font-heading);
-  font-size: var(--text-title);
-  font-variation-settings: "wght" 600, "opsz" 72, "SOFT" 0, "WONK" 1;
-  line-height: var(--text-title--line-height);
+  font-size: var(--text-lead);
+  font-style: italic;
+  font-variation-settings: "wght" 500, "opsz" 40, "SOFT" 8, "WONK" 0;
+  line-height: 1.3;
 }
 
-.case-heading[data-rhythm="odd"] {
-  margin-top: var(--space-16);
-  border-top: 1px solid oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.28);
-  padding-top: var(--space-6);
-}
-
-/*
- * Results, set as display type.
- *
- * These were body copy in a monospace face on a bordered list: the numbers a
- * case study exists to report, typeset exactly like the sentence next to
- * them. They are the payload, so they get display sizing and the label goes
- * underneath as the caption it always was.
- */
-.case-results {
-  display: grid;
-  gap: var(--space-6);
-  margin-top: var(--space-8);
-}
-
-@media (min-width: 640px) {
-  .case-results {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-8) var(--space-10);
-  }
-}
-
-.case-result {
+/* Results — a quiet inline list, not a stat grid: the number sits in the
+ * page's own accent colour at reading size, not a display numeral. */
+.case-results-article {
+  margin-top: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  border-top: 1px solid oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.22);
-  padding-top: var(--space-4);
+  gap: var(--space-3);
 }
 
-.case-result-value {
-  margin: 0;
-  color: var(--foreground);
-  font-family: var(--font-heading);
-  /* Large, but it has to survive a value like "~48GB to 23.09GB to 4.26GB",
-   * so it wraps rather than being cut and the floor is low enough to fit. */
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
-  font-variation-settings: "wght" 500, "opsz" 144, "SOFT" 20, "WONK" 0;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-wrap: pretty;
+.case-result-article {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
 }
 
-/*
- * Production audit (2026-08-22): a real finding, not a short number, was
- * being set at the same huge display size as an actual number — reads like
- * a fabricated metric ("Deterministic replay suite, per-run cost
- * accounting" typeset exactly like "89.8%"). content/types.ts's optional
- * `format: "prose"` on a result row switches it to readable body type: the
- * body face, no numeral-tuned font-variation-settings, normal tracking and
- * line-height. Everything else about the row (the label, the source
- * disclosure, the layout) stays identical.
- */
-.case-result-value[data-format="prose"] {
-  font-family: var(--font-sans);
-  font-size: var(--text-body-lg);
+.case-result-article-label {
+  color: var(--muted-foreground);
+  font-size: 1.0625rem;
+}
+
+.case-result-article-label::after {
+  content: ":";
+}
+
+.case-result-article-value {
+  color: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277));
+  font-weight: 600;
+  font-size: 1.0625rem;
+}
+
+.case-result-article-value[data-format="prose"] {
   font-weight: 500;
-  font-variation-settings: normal;
-  line-height: var(--text-body-lg--line-height);
-  letter-spacing: normal;
+  font-style: italic;
 }
 
-.case-result-label {
+.case-result-article-detail {
   color: var(--muted-foreground);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-weight: 400;
+  font-style: normal;
 }
 
-/*
- * The rail.
- *
- * Sticky positioning, never a ScrollTrigger pin: a pin wraps its target in a
- * spacer div ScrollTrigger creates and owns, which is a structural change to
- * a subtree React rendered. The sticky wrapper is in the markup already.
- *
- * The track fills as you move through the article, driven by one number
- * written by components/case-study-rail.tsx, and the entry you are inside is
- * marked with aria-current so it reads as position and not just colour.
- */
-.case-rail {
-  --rail-progress: 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1-5);
-  margin-top: var(--space-3);
-  padding-left: var(--space-4);
-  list-style: none;
-}
-
-.case-rail::before,
-.case-rail::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 2px;
-  border-radius: 1px;
-}
-
-/* The track, and the fill over it. */
-.case-rail::before {
-  height: 100%;
-  background: color-mix(in oklab, var(--border) 40%, transparent);
-}
-
-.case-rail::after {
-  height: calc(var(--rail-progress) * 100%);
-  background: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.9);
-}
-
-.case-rail-link {
-  display: block;
-  padding-block: var(--space-0-5);
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
-  line-height: 1.35;
+.case-article-link {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--foreground) 35%, transparent);
+  text-underline-offset: 3px;
   transition: color var(--dur-fast) var(--ease-out-soft);
 }
 
-.case-rail-link:hover {
-  color: var(--foreground);
-}
-
-.case-rail-link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* The section you are currently inside. Colour plus weight, so it does not
- * depend on colour alone to say which one it is. */
-.case-rail-item[aria-current="true"] .case-rail-link {
-  color: var(--foreground);
-  font-weight: 500;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .case-rail-link {
-    transition: none;
-  }
+.case-article-link:hover {
+  color: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277));
 }
 
 @media print {
-  .case-opening-wash {
-    display: none;
+  .case-study-article {
+    max-width: none;
   }
 }
