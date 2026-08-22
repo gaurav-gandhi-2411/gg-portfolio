@@ -788,16 +788,25 @@ p {
  * right — this is a different claim. GG's diagnosis of the whole site was
  * that every animation on it, including this rule, only ever moves in
  * response to scroll or pointer position; nothing has its own life. The
- * shimmer below runs on a plain infinite timer, independent of both, so the
  * mark reads as alive on a page nobody is touching. Reduced-motion visitors
- * still get the identical resting composition (background-position: 50%),
- * never a flattened one.
+ * still get the identical resting composition, never a flattened one.
+ *
+ * Perf pass (2026-08-23): this originally animated its own `background-
+ * position` directly — a paint-triggering property, not a composited one.
+ * Same visual, now `transform`-only: the base gradient is static, a
+ * separate `::after` highlight sweeps across it via `translateX`,
+ * screen-blended over the static gradient. (This alone wasn't the fix for
+ * the home-page score regression — see the "Ambient / idle motion" block
+ * below for what was — but it's strictly better practice regardless, so
+ * it stays.)
  */
 .section-rule {
+  position: relative;
   display: block;
   width: 4.5rem;
   height: 2px;
   border-radius: 1px;
+  overflow: hidden;
   background: linear-gradient(
     to right,
     transparent 0%,
@@ -805,13 +814,20 @@ p {
     var(--accent) 65%,
     transparent 100%
   );
-  background-size: 200% 100%;
-  animation: rule-shimmer 7s var(--ease-in-out-soft) infinite alternate;
+}
+.section-rule::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 0%, oklch(1 0 0 / 0.65) 50%, transparent 100%);
+  mix-blend-mode: screen;
+  transform: translateX(-100%);
+  animation: rule-shimmer-sweep 7s var(--ease-in-out-soft) infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
-  .section-rule {
+  .section-rule::after {
     animation: none;
-    background-position: 50% 0%;
+    transform: translateX(0%);
   }
 }
 
@@ -823,9 +839,38 @@ p {
  * every other animation on this site already is: identical resting
  * composition under prefers-reduced-motion, never a flattened one.
  *
- * `rule-shimmer` — consumed by .section-rule above and
- * .case-heading-modular-rule (app/case-study.css); a light gradient slowly
- * traveling inside the mark rather than the mark itself moving.
+ * Perf regression and fix (2026-08-23): shipping this dropped home's
+ * Lighthouse performance score below its standing 81-94 band (one
+ * observed run: 75). Root-caused with a real same-session A/B, n=5 each,
+ * against a throwaway preview of the commit immediately before this
+ * landed — not a guess: main-thread work went from a 3084ms median
+ * (pre-ambient-motion) to 6728ms (post), consistently, across repeated
+ * runs. Tried and confirmed NOT the cause, each isolated individually
+ * against a live preview: the animated property (background-position vs.
+ * transform/opacity), .ambient-plane's element size (unbounded vs.
+ * height-capped), and `will-change` layer-promotion hints — none of these
+ * recovered the score on their own. A consolidation attempt (all three
+ * effects reduced to one shared, inherited, animated custom property on
+ * :root) made it drastically WORSE (perf 52, main-thread ~9950ms) — an
+ * inherited custom property changing on :root forces a full-document style
+ * recalculation every frame, which costs far more than N independent
+ * per-element animations ever did. What actually worked:
+ * `content-visibility: auto` on .section-plane (app/sections-motion.css) —
+ * most of these animations were running on sections below the fold, doing
+ * real, continuous, invisible-to-anyone work for their entire time
+ * off-screen. Skipping that work while a section isn't near the viewport
+ * (native platform behavior, not a hand-rolled IntersectionObserver) took
+ * main-thread work back to a 4083ms median — verified not to break the
+ * existing GSAP scroll-parallax (.section-ambient's translateY still
+ * tracks scroll position correctly on a content-visibility-skipped-then-
+ * revealed section) or introduce layout shift (CLS stayed 0 across every
+ * run). The property/size/will-change changes stay anyway — they're
+ * independently better practice — but content-visibility is what actually
+ * closed the gap.
+ *
+ * `rule-shimmer-sweep` — consumed by .section-rule above and
+ * .case-heading-modular-rule (app/case-study.css); a light traveling
+ * inside the mark rather than the mark itself moving.
  *
  * `ambient-breathe` — consumed by .ambient-plane below (home sections via
  * .section-plane, case studies via .case-study-modular, and /projects'
@@ -837,12 +882,12 @@ p {
  * the foreground glyph never does, so the identity is alive without the
  * thing a visitor actually reads ever going soft.
  */
-@keyframes rule-shimmer {
+@keyframes rule-shimmer-sweep {
   from {
-    background-position: 0% 0%;
+    transform: translateX(-100%);
   }
   to {
-    background-position: 100% 0%;
+    transform: translateX(100%);
   }
 }
 
@@ -863,6 +908,13 @@ p {
   content: "";
   position: absolute;
   inset: 0;
+  /* The gradient is a fixed 44rem×32rem ellipse, fully transparent past 72%
+   * of its own radius (~11.5rem past centre) — nothing was ever visible
+   * beyond roughly the top third of a tall section (Experience runs to
+   * ~1700px) anyway. Bounding the box to what the gradient actually needs
+   * costs nothing visually on any section short enough that the cap never
+   * applies. */
+  max-height: 40rem;
   z-index: -1;
   pointer-events: none;
   background: radial-gradient(
