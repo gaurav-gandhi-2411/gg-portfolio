@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 /**
  * Wave 16 — the one persistent entry point into the flagship RAG chatbot
@@ -38,14 +39,29 @@ import { usePathname } from "next/navigation";
  * on every /work/[slug] route, full stop. Case-study pages already carry
  * their own strong CTAs (the rail's links on lg+, "Work with me" below
  * it) — this was never the only path forward there, on any width.
+ *
+ * Production audit (2026-08-22) — the same mechanism, found on /projects at
+ * 390px: a real-scroll walk caught this pill sitting over a TriageIQ card's
+ * own description text mid-scroll. /projects has no strong alternate CTA
+ * to /ask (no nav-bar link to it anywhere on the site — this pill is the
+ * only persistent path in), so unlike /work/[slug] this isn't hidden
+ * outright; the project grid's own column count is what actually changes
+ * the risk (single column, cards stacked tight, below lg; two columns with
+ * real breathing room at lg+, per components/project-grid.tsx), so the
+ * hide below is scoped to exactly that breakpoint, on /projects routes
+ * only.
  */
 export function ChatLauncher() {
   const pathname = usePathname();
   if (pathname === "/ask") return null;
   if (pathname.startsWith("/work/")) return null;
+  const isProjectsRoute = pathname === "/projects" || pathname.startsWith("/projects/");
 
   return (
-    <nav aria-label="Ask AI assistant" className="fixed right-5 bottom-5 z-40">
+    <nav
+      aria-label="Ask AI assistant"
+      className={cn("fixed right-5 bottom-5 z-40", isProjectsRoute && "hidden lg:block")}
+    >
       <Link
         href="/ask"
         className="border-border/60 bg-card/90 text-foreground hover:border-accent/60 hover:bg-card focus-visible:outline-ring flex min-h-11 items-center gap-[var(--space-2)] rounded-full border px-[var(--space-4)] py-[var(--space-2-5)] text-sm font-medium backdrop-blur-md transition-[transform,box-shadow,border-color,background-color] duration-[var(--dur-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:shadow-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
