@@ -47,15 +47,20 @@
   line-height: var(--text-title--line-height);
 }
 
-/* Same rule-shimmer timer as the homepage's .section-rule
- * (app/globals.css) — a light gradient traveling slowly inside the mark, on
- * its own timer, independent of scroll or pointer position. */
+/* Same rule-shimmer-sweep timer as the homepage's .section-rule
+ * (app/globals.css) — a light traveling slowly inside the mark, on its own
+ * timer, independent of scroll or pointer position. `transform` only (see
+ * .section-rule's own comment for why background-position got replaced on
+ * perf grounds) — the base gradient is static, a `::after` highlight sweeps
+ * across it. */
 .case-heading-modular-rule {
+  position: relative;
   display: block;
   margin-top: var(--space-4);
   width: 2rem;
   height: 2px;
   border-radius: 1px;
+  overflow: hidden;
   background: linear-gradient(
     to right,
     transparent 0%,
@@ -63,13 +68,20 @@
     oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277)) 65%,
     transparent 100%
   );
-  background-size: 200% 100%;
-  animation: rule-shimmer 7s var(--ease-in-out-soft) infinite alternate;
+}
+.case-heading-modular-rule::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 0%, oklch(1 0 0 / 0.65) 50%, transparent 100%);
+  mix-blend-mode: screen;
+  transform: translateX(-100%);
+  animation: rule-shimmer-sweep 7s var(--ease-in-out-soft) infinite alternate;
 }
 @media (prefers-reduced-motion: reduce) {
-  .case-heading-modular-rule {
+  .case-heading-modular-rule::after {
     animation: none;
-    background-position: 50% 0%;
+    transform: translateX(0%);
   }
 }
 

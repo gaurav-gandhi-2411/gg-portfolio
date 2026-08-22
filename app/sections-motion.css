@@ -28,6 +28,28 @@
 }
 
 /*
+ * `content-visibility: auto` was tried here as the fix for the home-page
+ * Lighthouse regression documented in app/globals.css's "Ambient / idle
+ * motion" block — and it worked: main-thread work dropped from a 6728ms to
+ * a 4083ms median (n=5, same-session A/B), essentially matching the
+ * pre-ambient-motion baseline. Reverted anyway. Its `contain-intrinsic-size`
+ * estimate stands in for a section's real height until the section has
+ * rendered once, and that estimate is genuinely different per section AND
+ * per viewport width (Experience: ~1720px at 1440px wide, ~2540px at
+ * 375-412px wide) — a generic guess broke site-nav.tsx's
+ * IntersectionObserver-based "which section am I reading" indicator
+ * (wrong estimate for Contact specifically); a per-section desktop-tuned
+ * fix then broke it again under Lighthouse's default mobile emulation via
+ * a real, measured CLS event; a follow-up per-section-per-breakpoint fix
+ * then broke a DIFFERENT test at a THIRD width (375px, distinct from
+ * Playwright's own ~412px mobile-project default). Shipping this safely
+ * needs accurate estimates audited against every width this site's own
+ * e2e suite actually tests (at minimum 375, ~412, 390, 1440), not a couple
+ * of spot-measurements — real follow-up work, not a same-session fix. See
+ * PR #<fill in> discussion for the full investigation.
+ */
+
+/*
  * ── The ambient/depth plane ─────────────────────────────────────────────
  * Behind .section-content, pointer-reactive exactly like .hero-spotlight
  * (app/hero.css) -- same --mx/--my/--pointer-on custom properties, same

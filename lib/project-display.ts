@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Product } from "@/content/types";
+import { formatFreshness } from "@/lib/format-freshness";
 import { getPypiStats, getRepoFreshness, getWarmerPuzzleNumber } from "@/lib/live-data";
 
 /**
@@ -13,15 +14,6 @@ function repoSlug(repoUrl: string | undefined): string | null {
   if (!repoUrl) return null;
   const match = repoUrl.match(/github\.com\/([^/]+\/[^/]+?)\/?$/);
   return match ? match[1] : null;
-}
-
-function formatFreshness(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  if (days <= 0) return "shipped today";
-  if (days === 1) return "shipped yesterday";
-  if (days < 30) return `shipped ${days}d ago`;
-  if (days < 365) return `shipped ${Math.floor(days / 30)}mo ago`;
-  return `shipped ${Math.floor(days / 365)}y ago`;
 }
 
 export async function getProjectDisplayData(products: Product[]) {
