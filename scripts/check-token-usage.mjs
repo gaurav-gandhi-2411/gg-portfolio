@@ -225,8 +225,18 @@ for (const file of allFiles) {
   if (file === fileURLToPath(import.meta.url)) continue;
   scan(file, HEX_RE, "raw hex color", "use a --color-*/--graphite-*/--indigo etc. token instead");
   scan(file, FONT_SIZE_RE, "Tailwind default font size", "use this project's own text-caption/body/body-lg/lead/title/heading/display scale");
-  scan(file, DURATION_RE, "Tailwind default transition duration", "use duration-[var(--dur-instant|fast|base|slow|ambient)]");
-  scan(file, EASE_RE, "Tailwind default easing", "use ease-[var(--ease-out-soft|in-out-soft|spring)]");
+  scan(
+    file,
+    DURATION_RE,
+    "Tailwind default transition duration",
+    "use one of this project's own duration tokens instead, e.g. duration-[var(--dur-fast)]"
+  );
+  scan(
+    file,
+    EASE_RE,
+    "Tailwind default easing",
+    "use one of this project's own easing tokens instead, e.g. ease-[var(--ease-out-soft)]"
+  );
   scan(file, SPACING_ARBITRARY_RE, "arbitrary spacing value off the scale", "use the matching -[var(--space-N)] token, or a plain scale utility if one matches");
 }
 

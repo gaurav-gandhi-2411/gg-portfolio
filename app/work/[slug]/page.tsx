@@ -150,7 +150,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
             Try the engine
             {puzzle ? (
-              <span className="font-mono normal-case tracking-normal">
+              <span data-live-value className="font-mono normal-case tracking-normal">
                 {" "}
                 · puzzle #{puzzle.number} today
               </span>
