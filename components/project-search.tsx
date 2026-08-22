@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ProjectMark, type ProjectMarkId } from "@/components/project-mark";
 import { keywordScore } from "@/lib/search/keyword-score";
 import { publishSearchMatch, registerSearchClear } from "@/lib/search/query-match-store";
 import { buildSearchableText } from "@/lib/search/searchable-text";
+import { projectHue } from "@/lib/project-rhythm";
 import { CATEGORIES, type Product } from "@/content/types";
 import { cn } from "@/lib/utils";
 
@@ -263,7 +265,15 @@ export function ProjectSearch({ products }: { products: Product[] }) {
                 i === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-secondary"
               )}
             >
-              <span className="block text-sm font-medium">{r.product.name}</span>
+              <span className="flex items-center gap-[var(--space-2)] text-sm font-medium">
+                <ProjectMark
+                  id={r.product.slug as ProjectMarkId}
+                  hue={projectHue(products, r.product.slug)}
+                  size={18}
+                  className="mark-idle shrink-0"
+                />
+                {r.product.name}
+              </span>
               <span
                 className={cn(
                   "block text-caption leading-snug",

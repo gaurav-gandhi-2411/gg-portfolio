@@ -46,10 +46,14 @@ test.describe("shared interactive components use the site's motion tokens", () =
   });
 
   test("an inline prose link transitions on --dur-base / --ease-out-soft", async ({ page }) => {
-    await page.goto("/work/triageiq");
-    // InlineLink's own distinguishing classes (components/inline-link.tsx) --
-    // LinkButton also renders "↗"-suffixed links on this page, so matching by
-    // arrow text alone picks up the wrong component.
+    // Concept C (2026-08-22) moved every case-study action link (top row,
+    // footer row, "Related projects") onto LinkButton pills -- InlineLink no
+    // longer renders anywhere on /work/[slug]. It still renders on /projects
+    // (ProjectCard's "Live ↗"/"Source ↗" links), which is where this now
+    // points. InlineLink's own decoration-border class (components/inline-
+    // link.tsx) is unique to it sitewide, so no arrow-text disambiguation
+    // against LinkButton is needed here the way it was on the old page.
+    await page.goto("/projects");
     const link = page.locator("a.decoration-border").first();
     const timing = await link.evaluate((el) => {
       const style = getComputedStyle(el);

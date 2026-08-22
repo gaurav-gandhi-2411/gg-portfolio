@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EvalFigure } from "@/components/eval-figure";
 import { InlineLink } from "@/components/inline-link";
+import { ProjectMark, type ProjectMarkId } from "@/components/project-mark";
 import type { Product } from "@/content/types";
 import type { PypiPackageStats } from "@/lib/live-data";
 import type { ProjectRhythm } from "@/lib/project-rhythm";
@@ -43,6 +44,7 @@ export function ProjectCard({
 }) {
   const Heading = headingLevel;
   const size = rhythm?.size ?? "standard";
+  const hue = (rhythm?.hueShift ?? 0) + 277;
   return (
     <article
       data-cats={product.categories.join(" ")}
@@ -62,7 +64,8 @@ export function ProjectCard({
       <div className="project-card-body grid gap-x-8 gap-y-6 @[28rem]:grid-cols-[minmax(0,1fr)_13rem]">
         <div className="flex min-w-0 flex-col">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <Heading className="font-heading text-lead font-semibold text-foreground">
+            <Heading className="flex items-center gap-[var(--space-2-5)] font-heading text-lead font-semibold text-foreground">
+              <ProjectMark id={product.slug as ProjectMarkId} hue={hue} size={28} className="mark-idle shrink-0" />
               <Link
                 href={`/work/${product.slug}`}
                 className="card-stretch-link focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -186,7 +189,9 @@ export function ProjectCard({
 
         {!product.figure && product.metric && (
           <p className="text-sm @[28rem]:max-w-[13rem] @[28rem]:self-center @[28rem]:justify-self-end @[28rem]:text-right">
-            <span className="font-mono font-medium text-foreground">{product.metric.value}</span>{" "}
+            <span className="value-settle font-mono font-medium text-foreground">
+              {product.metric.value}
+            </span>{" "}
             <span className="text-muted-foreground">· {product.metric.label}</span>
           </p>
         )}

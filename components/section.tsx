@@ -50,7 +50,7 @@ export function Section({
   return (
     <section
       id={id}
-      className={`section-plane relative mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}
+      className={`section-plane ambient-plane relative mx-auto w-full px-[var(--space-6)] py-16 md:py-24 ${WIDTHS[width]}`}
     >
       {/* Depth layer, behind everything. Pointer-reactive (the same --mx/--my
           PointerField already writes to the hero's own spotlight, extended
