@@ -152,7 +152,22 @@ export interface CaseStudy {
   /** Model/method choices and why — the teaching core. */
   decisions?: { title: string; body: string; sourceRef: string }[];
   /** Sourced metrics, including the honest/unflattering ones. */
-  results?: { label: string; value: string; detail?: string; sourceRef: string }[];
+  results?: {
+    label: string;
+    value: string;
+    detail?: string;
+    sourceRef: string;
+    /**
+     * "prose" typesets `value` as readable body text instead of the huge
+     * display numeral every other result gets — for a value that is
+     * genuinely a sentence/finding rather than a number, ratio, or short
+     * measured quantity (production audit, 2026-08-22: several case
+     * studies had full sentences set at display-numeral size, which reads
+     * as a fabricated-looking metric). Omit for anything that IS a short
+     * number/ratio/quantity, which is most rows and stays the default.
+     */
+    format?: "prose";
+  }[];
   /** The hardest documented engineering/debugging story. */
   story?: {
     title: string;

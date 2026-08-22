@@ -2,15 +2,52 @@ import { expect, test } from "@playwright/test";
 
 /**
  * Every results-section metric on a case-study page is wrapped in a
- * source-reveal disclosure (components/metric-provenance.tsx) — tap/click
+ * source-reveal disclosure (components/metric-provenance.tsx) — click/tap
  * toggles a real APG disclosure (button + aria-expanded/aria-controls), and
- * the same `data-open` state drives an opacity reveal a mouse hover also
- * triggers via `group-hover` (untestable headlessly without a hover-capable
- * pointer, so only the click/tap path is exercised here — the mobile
- * Playwright project covers the touch case for free since both use the
- * same click event).
+ * the same `data-open` state drives the opacity reveal. Opening any one
+ * closes every other panel on the page (a shared exclusive store, production
+ * audit 2026-08-22) — click/tap is the only way in or out, on desktop and
+ * mobile alike, so the mobile Playwright project exercises the same code
+ * path as desktop rather than a separate touch affordance.
  */
 test.describe("Case-study metric provenance", () => {
+  test("opening a second metric's source closes the first — at most one panel open at once (production audit, 2026-08-22)", async ({
+    page,
+  }) => {
+    await page.goto("/work/triageiq");
+
+    // Deliberately the first and last results on the page (not two adjacent
+    // ones): on the 390px single-column layout an open panel can overlap the
+    // very next row (a separate, pre-existing spatial issue — panels are
+    // capped and dismiss on outside-click, but two adjacent metrics can
+    // still visually collide), which would make this test about exclusivity
+    // flaky for reasons that have nothing to do with what it's checking.
+    const first = page.getByRole("button", {
+      name: /show source for Component classifier top-3 accuracy \(vscode\)/,
+    });
+    const second = page.getByRole("button", {
+      name: /show source for LLM fabrication rate/,
+    });
+    const firstPanel = page.getByRole("group", {
+      name: /Source for Component classifier top-3 accuracy \(vscode\)/,
+    });
+    const secondPanel = page.getByRole("group", {
+      name: /Source for LLM fabrication rate/,
+    });
+
+    await first.click();
+    await expect(first).toHaveAttribute("aria-expanded", "true");
+    await expect(firstPanel).toHaveCSS("opacity", "1");
+
+    await second.click();
+    await expect(second).toHaveAttribute("aria-expanded", "true");
+    await expect(secondPanel).toHaveCSS("opacity", "1");
+    // The bug this regression-tests: the first panel used to stay open too,
+    // each capable of covering unrelated content behind it.
+    await expect(first).toHaveAttribute("aria-expanded", "false");
+    await expect(firstPanel).toHaveCSS("opacity", "0");
+  });
+
   test("tap reveals a structured source (metrics.json-backed metric, direct GitHub link)", async ({
     page,
   }) => {
@@ -31,12 +68,6 @@ test.describe("Case-study metric provenance", () => {
 
     await trigger.click();
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
-
-    // A real desktop cursor sits on the trigger right after `.click()` —
-    // the hover-preview layer (`group-hover/prov`) legitimately keeps the
-    // panel open under a real mouse even though the click-toggle state is
-    // now closed. Move away to observe the actual closed state.
-    await page.mouse.move(0, 0);
     await expect(panel).toHaveCSS("opacity", "0");
   });
 

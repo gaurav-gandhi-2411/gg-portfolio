@@ -9,7 +9,7 @@ import { StepCurve } from "@/components/step-curve";
 import { availability } from "@/content/availability";
 import { products as allProducts } from "@/content/products";
 import { site } from "@/content/site";
-import { CATEGORIES, type CaseStudy, type Product } from "@/content/types";
+import type { CaseStudy, Product } from "@/content/types";
 import { getCaseStudyLastUpdated } from "@/lib/last-updated";
 import { projectHue } from "@/lib/project-rhythm";
 import { getProvenance } from "@/lib/provenance";
@@ -36,17 +36,17 @@ function SectionHeading({ index, title }: { index: number; title: string }) {
     <h2
       id={headingId(title)}
       data-case-heading
-      /* Alternating rhythm. Odd sections hang their numeral out in the
-       * margin under a hue rule; even ones keep it inline. Walking down a
-       * page of identically stacked blocks is most of why these read as
-       * documents rather than as a piece of work, and the eye needs
-       * something to count by. */
+      /* Alternating rhythm. Odd sections get a hue rule and a touch more
+       * top margin; even ones stay plain. Walking down a page of
+       * identically stacked blocks is most of why these read as documents
+       * rather than as a piece of work, and the eye needs something to
+       * break the run — a rule is enough; a numeral isn't information the
+       * reader needs (GG, production audit 2026-08-22: no numbering on
+       * sections that aren't a real sequence, this round's regression of
+       * an already-settled call). */
       data-rhythm={index % 2 === 0 ? "even" : "odd"}
       className="case-heading"
     >
-      <span aria-hidden="true" className="case-heading-index">
-        {String(index).padStart(2, "0")}
-      </span>
       {title}
     </h2>
   );
@@ -247,10 +247,15 @@ export function CaseStudyPage({
                   return (
                     <div
                       key={result.sourceRef + result.label}
-                      className="case-result"
+                      // Positioning root for MetricProvenance's disclosure
+                      // panel (selfAnchor={false} below): anchoring here,
+                      // not to the value alone, means the panel opens below
+                      // the whole result — value AND label — instead of
+                      // landing on top of the label immediately beneath it.
+                      className="case-result relative"
                     >
-                      <dd className="case-result-value">
-                        <MetricProvenance info={provenance} label={result.label}>
+                      <dd className="case-result-value" data-format={result.format ?? "stat"}>
+                        <MetricProvenance info={provenance} label={result.label} selfAnchor={false}>
                           {result.value}
                         </MetricProvenance>
                       </dd>
@@ -400,7 +405,7 @@ export function CaseStudyPage({
                   Related projects
                 </h2>
                 <ul className="mt-[var(--space-3)] flex flex-col gap-[var(--space-3)]">
-                  {related.map(({ product: relatedProduct, sharedCategories }) => (
+                  {related.map(({ product: relatedProduct }) => (
                     <li key={relatedProduct.slug}>
                       <Link
                         href={`/work/${relatedProduct.slug}`}
@@ -408,15 +413,17 @@ export function CaseStudyPage({
                       >
                         {relatedProduct.name}
                       </Link>
-                      <p className="mt-[var(--space-1)] flex flex-wrap gap-[var(--space-1-5)]">
-                        {sharedCategories.map((categoryId) => (
-                          <span
-                            key={categoryId}
-                            className="border-border/40 text-muted-foreground rounded-full border px-2 py-[var(--space-0-5)] font-mono text-caption"
-                          >
-                            {CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId}
-                          </span>
-                        ))}
+                      {/* Production audit (2026-08-22): this used to list
+                          every shared category as a chip row, but "related"
+                          is computed from shared categories in the first
+                          place — on a page with three related projects that
+                          all share the SAME single category, every chip
+                          read identically ("LLM & Agents" ×3), telling a
+                          reader nothing about which one to actually click.
+                          The tagline is a real per-project differentiator
+                          that already exists in content/products.ts. */}
+                      <p className="text-muted-foreground mt-[var(--space-1)] line-clamp-2 text-caption leading-snug">
+                        {relatedProduct.tagline}
                       </p>
                     </li>
                   ))}

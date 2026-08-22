@@ -58,10 +58,6 @@
  * rhythm comes from the rule instead.
  */
 .case-heading {
-  position: relative;
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-4);
   margin-top: var(--space-14);
   scroll-margin-top: 6rem;
   color: var(--foreground);
@@ -71,25 +67,10 @@
   line-height: var(--text-title--line-height);
 }
 
-.case-heading-index {
-  color: oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277));
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
 .case-heading[data-rhythm="odd"] {
   margin-top: var(--space-16);
   border-top: 1px solid oklch(var(--accent-l) var(--accent-c) var(--case-hue, 277) / 0.28);
   padding-top: var(--space-6);
-}
-
-@media (min-width: 1024px) {
-  .case-heading[data-rhythm="odd"] .case-heading-index {
-    position: absolute;
-    top: var(--space-6);
-    left: -3.5rem;
-  }
 }
 
 /*
@@ -132,6 +113,25 @@
   line-height: 1.1;
   letter-spacing: -0.02em;
   text-wrap: pretty;
+}
+
+/*
+ * Production audit (2026-08-22): a real finding, not a short number, was
+ * being set at the same huge display size as an actual number — reads like
+ * a fabricated metric ("Deterministic replay suite, per-run cost
+ * accounting" typeset exactly like "89.8%"). content/types.ts's optional
+ * `format: "prose"` on a result row switches it to readable body type: the
+ * body face, no numeral-tuned font-variation-settings, normal tracking and
+ * line-height. Everything else about the row (the label, the source
+ * disclosure, the layout) stays identical.
+ */
+.case-result-value[data-format="prose"] {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-lg);
+  font-weight: 500;
+  font-variation-settings: normal;
+  line-height: var(--text-body-lg--line-height);
+  letter-spacing: normal;
 }
 
 .case-result-label {
