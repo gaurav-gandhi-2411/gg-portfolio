@@ -29,8 +29,38 @@ jobs:
   canary:
     runs-on: ubuntu-latest
     steps:
+      # Missing for the job's entire life until now (PR #163 added the `node
+      # scripts/chatbot/check-canary-verdict.mjs` call below without adding
+      # this) — every scheduled run since 2026-08-21 failed with "Cannot
+      # find module .../check-canary-verdict.mjs" on a bare runner with no
+      # repo checked out, and reported that identically to a real /api/chat
+      # outage. canary-verdict.smoketest.mjs (wired into ci.yml's build job,
+      # which does check out the repo) has been green the entire time
+      # regardless, because it imports canary-verdict.mjs directly — it
+      # exercises the verdict LOGIC, never this job's own wiring. That gap
+      # is why the step below exists as a second, independent guard: even if
+      # a future edit removes this checkout again, the job fails loudly and
+      # distinctly instead of silently reporting a bad chat verdict.
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Fails fast, loud, and DIFFERENTLY from a real verdict failure — see
+      # the two separate "Open/update" issue steps below, which read
+      # steps.tooling.outcome specifically so an operator never has to open
+      # the Actions log to tell "our CI is broken" apart from "the chatbot
+      # is actually down." A silent identical-looking failure for both is
+      # exactly what let this specific bug run unnoticed for two days.
+      - name: Verify canary tooling is present
+        id: tooling
+        run: |
+          if [ ! -f scripts/chatbot/check-canary-verdict.mjs ]; then
+            echo "::error::scripts/chatbot/check-canary-verdict.mjs not found after checkout. This means the canary's own tooling is broken (moved/deleted/checkout misconfigured) — NOT that /api/chat is down. Do not treat this as a production chat outage."
+            exit 1
+          fi
+
       - name: Ask the production chatbot a real, answerable question
         id: probe
+        if: steps.tooling.outcome == 'success'
         run: |
           RESPONSE_FILE=$(mktemp)
           HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
@@ -102,8 +132,50 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           exit "$VERDICT_EXIT"
 
-      - name: Open/update the failure issue
-        if: failure()
+      # Only fires when the tooling check itself failed — a broken CI
+      # wiring, never touches production, gets its own title so it can
+      # never be conflated with (or silently satisfy/close) a real chat
+      # outage tracked under the other title below.
+      - name: Open/update the failure issue (canary tooling broken)
+        if: steps.tooling.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="Chat canary tooling broken (not a chat outage)"
+          BODY=$(cat <<EOF
+          The scheduled canary (.github/workflows/chat-canary.yml) could not
+          even run its verdict check: scripts/chatbot/check-canary-verdict.mjs
+          was not found after checkout.
+
+          - **When:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          This means the canary's own CI wiring is broken (the file was
+          moved/deleted, or the checkout step was removed/misconfigured
+          again) — it says NOTHING about whether /api/chat itself is
+          working. Do not read this as a production outage.
+
+          Fix by restoring the checkout step and/or the script at its
+          expected path, then re-run this workflow (workflow_dispatch) to
+          confirm both this issue and the real canary path close cleanly.
+          Closing this issue is fine once fixed; the next scheduled run
+          reopens it automatically if it's still broken.
+          EOF
+          )
+
+          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      # Only fires once the tooling check passed and the probe itself then
+      # failed — a real signal about /api/chat, never conflated with a
+      # broken canary (the step above owns that case, under a different
+      # title, so the two can never merge into one ambiguous thread).
+      - name: Open/update the failure issue (chatbot not answering)
+        if: steps.tooling.outcome == 'success' && steps.probe.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -147,15 +219,22 @@ jobs:
             gh issue create --title "$TITLE" --body "$BODY"
           fi
 
-      - name: Auto-close the failure issue if this run succeeded
+      # Closes whichever of the two issue titles is open — a run only
+      # reaches `success()` when both the tooling check and the probe
+      # passed, so both problems (if either was open) are actually resolved.
+      - name: Auto-close the failure issue(s) if this run succeeded
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          TITLE="Chat canary failing: /api/chat is not answering"
-          existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body "Canary run succeeded — /api/chat is answering again. Closing."
-            gh issue close "$existing"
-          fi
+          for TITLE in \
+            "Chat canary failing: /api/chat is not answering" \
+            "Chat canary tooling broken (not a chat outage)"
+          do
+            existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body "Canary run succeeded — /api/chat is answering again and the canary's own tooling is intact. Closing."
+              gh issue close "$existing"
+            fi
+          done
