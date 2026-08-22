@@ -176,7 +176,7 @@ export const agentgauge: CaseStudy = {
     {
       label: "Measurement artifacts found during this project",
       value: "10",
-      detail: "each now an automated detector — including the two below, catalogued in the methods paper as its core contribution",
+      detail: "each now an automated detector, including the two below, catalogued in the methods paper as its core contribution",
       sourceRef: "agentgauge:artifact-taxonomy",
     },
   ],

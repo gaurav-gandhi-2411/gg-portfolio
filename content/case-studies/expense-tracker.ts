@@ -58,7 +58,7 @@ export const expenseTracker: CaseStudy = {
     },
     {
       label: "Local ML features",
-      value: "Categorizer, anomaly detection, forecasting — each with documented fallback behavior",
+      value: "Categorizer, anomaly detection, forecasting: each with documented fallback behavior",
       detail: "evaluated with manual scripts (scripts/eval_parser.py, scripts/eval_ml.py), not gated in CI",
       sourceRef: "expense-tracker:ml-features",
       format: "prose",

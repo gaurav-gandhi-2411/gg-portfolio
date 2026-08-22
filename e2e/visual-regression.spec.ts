@@ -101,10 +101,21 @@ test.describe("Visual regression baselines (390px / 1440px)", () => {
         await page.setViewportSize({ width, height });
         await page.goto(route.path);
         await page.waitForLoadState("networkidle");
+        // Production audit follow-up (2026-08-22): `mask` only paints over a
+        // region's PIXELS — it does nothing about the region's SIZE. These
+        // are ISR-refreshed strings (a freshness dateline, PyPI download
+        // counts) that legitimately change length over time ("shipped 2
+        // days ago" vs "shipped 3 weeks ago"), which can shift a flex-wrap
+        // point and change the page's total height — a real, reproduced CI
+        // failure (1440x1107 baseline vs 1440x1154 actual on /projects and
+        // three category views) that `mask` alone could never catch, since
+        // it hides content, not layout. Removing the element from flow
+        // entirely, before the screenshot, freezes both.
+        await page.addStyleTag({ content: "[data-live-value]{display:none!important}" });
         await expect(page).toHaveScreenshot(`${route.name}-${label}.png`, {
           fullPage: true,
           animations: "disabled",
-          mask: [page.locator("canvas"), page.locator("[data-live-value]")],
+          mask: [page.locator("canvas")],
           maxDiffPixelRatio: 0.01,
         });
       });

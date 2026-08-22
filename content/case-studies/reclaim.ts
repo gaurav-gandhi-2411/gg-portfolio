@@ -102,7 +102,7 @@ export const reclaim: CaseStudy = {
     {
       label: "Exact-duplicate reclaimable estimate, across 3 correctness fixes",
       value: "~48GB → 23.09GB → 4.26GB → 3.92GB",
-      detail: "never corrected upward — 3.92GB is net of 186 files restored after the capstone incident below; still pending in the Recycle Bin, not yet freed",
+      detail: "never corrected upward. 3.92GB is net of 186 files restored after the capstone incident below; still pending in the Recycle Bin, not yet freed",
       sourceRef: "reclaim:honesty-arc",
     },
     {

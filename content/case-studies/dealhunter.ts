@@ -101,7 +101,7 @@ export const dealhunter: CaseStudy = {
     {
       label: "Early self-audit score",
       value: "6/10",
-      detail: "prototype-to-production readiness — the honest starting point the project then spent several phases closing",
+      detail: "prototype-to-production readiness, the honest starting point the project then spent several phases closing",
       sourceRef: "dealhunter:audit",
     },
   ],

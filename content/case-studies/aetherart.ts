@@ -124,7 +124,7 @@ export const aetherart: CaseStudy = {
     {
       label: "Measurement-defect methodology finding",
       value: "5",
-      detail: "silent evaluation-validity defects found and fixed — context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score, full writeup linked below.",
+      detail: "silent evaluation-validity defects found and fixed: context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score, full writeup linked below.",
       sourceRef: "aetherart:measurement-defects",
     },
   ],
