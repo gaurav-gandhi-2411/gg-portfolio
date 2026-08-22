@@ -89,8 +89,9 @@ export const goldRateTracker: CaseStudy = {
   results: [
     {
       label: "Naive flat-hold vs. Chronos-Bolt-Tiny (204-fold backtest, horizon 5 days)",
-      value: "MAE 251.99 vs. 293.10, naive wins by ~16%",
-      detail: "Wilcoxon signed-rank p=0.0001, the naive baseline's advantage is real, not noise",
+      value: "251.99 vs. 293.10",
+      detail:
+        "MAE, naive wins by ~16% (Wilcoxon signed-rank p=0.0001, the naive baseline's advantage is real, not noise)",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
@@ -101,9 +102,10 @@ export const goldRateTracker: CaseStudy = {
     },
     {
       label: "Direction-signal promotion gate",
-      value: "DARK at both horizons tested",
+      value: "Held DARK at both horizons tested",
       detail: "h=1: logistic model 48.5% vs. 50.8% base rate (p=0.63, n=130); h=2: 60.9% vs. 57.8% base rate (p=0.45, n=128)",
       sourceRef: "gold:direction-baseline",
+      format: "prose",
     },
     {
       label: "Infrastructure cost",

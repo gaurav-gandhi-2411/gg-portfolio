@@ -111,9 +111,10 @@ export const mmfr: CaseStudy = {
     },
     {
       label: "Honest caveat: new-brand personalization",
-      value: "illustrative only, not yet validated",
+      value: "Illustrative only, not yet validated",
       detail: "for a brand new to the platform, the personalized /recommend endpoint runs on synthetic users because the user tower never saw that brand's real purchase history; only the content-based /similar endpoint is a validated day-one capability",
       sourceRef: "mmfr:brand-caveat",
+      format: "prose",
     },
   ],
   story: {

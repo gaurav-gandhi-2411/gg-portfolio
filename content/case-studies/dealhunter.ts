@@ -84,6 +84,7 @@ export const dealhunter: CaseStudy = {
       value: "Deterministic replay suite, per-run cost accounting",
       detail: "no committed, current whole-repo test count exists to cite, the live count has moved with no matching committed artifact at the new figure, so this page states what's actually verifiable instead of a number",
       sourceRef: "dealhunter:ci-gates",
+      format: "prose",
     },
     {
       label: "Planner baseline, correct archetype selection",
@@ -95,11 +96,12 @@ export const dealhunter: CaseStudy = {
       value: "demo-haiku: 24/24, coherence 5.0/5 · demo-llama: 21/24, coherence 4.881",
       detail: "the llama run's lower completion count is free-tier quota exhaustion, not a quality failure",
       sourceRef: "dealhunter:optimizer-baseline",
+      format: "prose",
     },
     {
       label: "Early self-audit score",
-      value: "6/10 on prototype-to-production readiness",
-      detail: "the honest starting point the project then spent several phases closing",
+      value: "6/10",
+      detail: "prototype-to-production readiness — the honest starting point the project then spent several phases closing",
       sourceRef: "dealhunter:audit",
     },
   ],

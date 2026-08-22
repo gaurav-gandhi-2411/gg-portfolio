@@ -101,8 +101,8 @@ export const reclaim: CaseStudy = {
     },
     {
       label: "Exact-duplicate reclaimable estimate, across 3 correctness fixes",
-      value: "~48GB → 23.09GB → 4.26GB → 3.92GB, never corrected upward",
-      detail: "3.92GB is net of 186 files restored after the capstone incident below; still pending in the Recycle Bin, not yet freed",
+      value: "~48GB → 23.09GB → 4.26GB → 3.92GB",
+      detail: "never corrected upward — 3.92GB is net of 186 files restored after the capstone incident below; still pending in the Recycle Bin, not yet freed",
       sourceRef: "reclaim:honesty-arc",
     },
     {
@@ -110,18 +110,21 @@ export const reclaim: CaseStudy = {
       value: "7.64% (Copydays \"strong\" adversarial split) vs. 100.00% (realistic resave/resize/messaging-app duplicates)",
       detail: "both numbers are real and measured at the same threshold, the low one was answering the wrong question, and it's reported anyway rather than only the flattering one",
       sourceRef: "reclaim:phash-measurement",
+      format: "prose",
     },
     {
       label: "Clutter-likelihood ranker, cross-LLM-labeled, permanently provisional",
       value: "Fleiss' κ = 0.6768 (N=120); trained on the 79/120 (65.8%) unanimous subset only",
       detail: "NDCG@5 0.9763 / precision@3 1.0000 on held-out batches, but the eval gate refuses to ever call this MEASURED, the labels are LLM-consensus on synthetic data, not real user decisions",
       sourceRef: "reclaim:ranker-consensus",
+      format: "prose",
     },
     {
       label: "Filename-driven XSS in the review UI, found and closed",
       value: "0 innerHTML assignments carry a path field anywhere in the codebase today",
       detail: "the one bug in this project's own review UI, not the deletion engine, the screen a human is supposed to trust before confirming a delete was itself exploitable via a maliciously-named file",
       sourceRef: "reclaim:xss-finding",
+      format: "prose",
     },
   ],
   story: {

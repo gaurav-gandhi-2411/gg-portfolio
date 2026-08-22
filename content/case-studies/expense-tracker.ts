@@ -54,12 +54,14 @@ export const expenseTracker: CaseStudy = {
       detail:
         "backend found down 2026-07-18, root-caused and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one, /health returns 200 as of this writing); the frontend's Vercel deployment 404s (DEPLOYMENT_NOT_FOUND), a separate, still-open outage, said here rather than a dead link on the product card; 9/9 Playwright auth E2E scenarios pass locally",
       sourceRef: "expense-tracker:state",
+      format: "prose",
     },
     {
       label: "Local ML features",
-      value: "categorizer, anomaly detection, forecasting, each with documented fallback behavior",
+      value: "Categorizer, anomaly detection, forecasting — each with documented fallback behavior",
       detail: "evaluated with manual scripts (scripts/eval_parser.py, scripts/eval_ml.py), not gated in CI",
       sourceRef: "expense-tracker:ml-features",
+      format: "prose",
     },
   ],
   closing: [
