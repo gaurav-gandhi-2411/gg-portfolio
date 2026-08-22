@@ -781,6 +781,17 @@ p {
  * Fades at both ends so it reads as a mark rather than a border. A hard
  * 72px bar centered under a serif title looked like a rule the layout had
  * failed to stretch; the fade removes the question of where it should end.
+ *
+ * Ambient-motion pass (GG, 2026-08-22): this used to be static on purpose
+ * ("small enough that a draw-in would be motion nobody asked for"). That
+ * verdict was about a one-shot draw-in triggered by scroll, which is still
+ * right — this is a different claim. GG's diagnosis of the whole site was
+ * that every animation on it, including this rule, only ever moves in
+ * response to scroll or pointer position; nothing has its own life. The
+ * shimmer below runs on a plain infinite timer, independent of both, so the
+ * mark reads as alive on a page nobody is touching. Reduced-motion visitors
+ * still get the identical resting composition (background-position: 50%),
+ * never a flattened one.
  */
 .section-rule {
   display: block;
@@ -794,6 +805,141 @@ p {
     var(--accent) 65%,
     transparent 100%
   );
+  background-size: 200% 100%;
+  animation: rule-shimmer 7s var(--ease-in-out-soft) infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-rule {
+    animation: none;
+    background-position: 50% 0%;
+  }
+}
+
+/*
+ * ── Ambient / idle motion (GG, 2026-08-22) ──────────────────────────────
+ * "Everything on the site responds to scroll position or pointer position.
+ * Both are reactive. Give the page ambient motion that exists when nobody
+ * is doing anything." Three plain CSS timers, each gated the same way
+ * every other animation on this site already is: identical resting
+ * composition under prefers-reduced-motion, never a flattened one.
+ *
+ * `rule-shimmer` — consumed by .section-rule above and
+ * .case-heading-modular-rule (app/case-study.css); a light gradient slowly
+ * traveling inside the mark rather than the mark itself moving.
+ *
+ * `ambient-breathe` — consumed by .ambient-plane below (home sections via
+ * .section-plane, case studies via .case-study-modular, and /projects'
+ * <main>), a slow opacity breath on a background glow that already existed
+ * everywhere except /projects as a static or pointer/scroll-reactive layer.
+ *
+ * `mark-idle-ring-breathe` — consumed by ProjectMark's IdentityRing
+ * (components/project-mark.tsx): the shared background ring breathes,
+ * the foreground glyph never does, so the identity is alive without the
+ * thing a visitor actually reads ever going soft.
+ */
+@keyframes rule-shimmer {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 0%;
+  }
+}
+
+@keyframes ambient-breathe {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.11;
+  }
+}
+
+.ambient-plane {
+  position: relative;
+}
+.ambient-plane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    var(--ambient-plane-size, 44rem 32rem) at var(--ambient-plane-pos, 50% 15%),
+    var(--ambient-plane-color-1, var(--glow-soft)) 0%,
+    var(--ambient-plane-color-2, var(--glow-faint)) 45%,
+    transparent 72%
+  );
+  animation: ambient-breathe 9s var(--ease-in-out-soft) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-plane::before {
+    animation: none;
+    opacity: 0.08;
+  }
+}
+
+@keyframes mark-idle-ring-breathe {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+.mark-idle .mark-idle-ring {
+  animation: mark-idle-ring-breathe 6s var(--ease-in-out-soft) infinite;
+  animation-delay: var(--mark-idle-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mark-idle .mark-idle-ring {
+    animation: none;
+    opacity: 0.22;
+  }
+}
+
+/*
+ * A value settling into place on mount rather than popping into existence —
+ * plain animation-on-render, no IntersectionObserver, so it never becomes a
+ * fourth scroll-reactive effect. --ease-spring is the same damped spring
+ * hover/press states already use, so the number has a touch of the same
+ * physical weight everything else in the design system has; its overshoot
+ * on opacity (briefly >1%, silently clamped to 1 by the browser) is what
+ * reads as "settling" rather than a linear fade.
+ *
+ * Opacity only, deliberately no `transform`. Two real regressions came from
+ * animating transform on .case-chip-value, one after the other:
+ * (1) `scale(0.94)` shrank MetricProvenance's disclosure trigger (this same
+ * element IS its trigger) below the 44px tap-target minimum for the
+ * animation's duration — caught by mobile-viewport.spec.ts failing at
+ * 41.96px mid-settle.
+ * (2) `translateY(6px)` alone, once scale() was removed, still broke
+ * route-transitions.spec.ts's mobile click on an unrelated link far below
+ * the fold in the same page — a persistent (not transient) hit-test
+ * failure, reproduced 3/3 on a clean rebuild and gone 2/2 the moment
+ * `transform` was removed entirely (bisected by toggling ambient-plane,
+ * then value-settle's transform, independently). The animated property was
+ * the common thread both times; opacity alone never touches an element's
+ * box or any ancestor's stacking/containing-block behaviour, so it can't
+ * reproduce either failure mode.
+ */
+@keyframes value-settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.value-settle {
+  animation: value-settle 640ms var(--ease-spring) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .value-settle {
+    animation: none;
+  }
 }
 
 /*

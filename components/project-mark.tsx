@@ -122,6 +122,12 @@ const GLYPHS: Record<ProjectMarkId, React.ReactNode> = {
  * (public/logo-mark.svg), reused as a low-opacity ring behind every
  * project's own glyph so the family resemblance is a real shared shape,
  * not just a shared stroke width.
+ *
+ * `mark-idle-ring` (app/globals.css) gives this ring its own idle life — a
+ * slow opacity breathe, gated behind the parent `.mark-idle` class and
+ * running on a plain timer, never on scroll or pointer position. Only the
+ * ring breathes; the glyph inside it (the thing actually being read) never
+ * dims, so the mark stays fully legible while still being alive.
  */
 function IdentityRing() {
   return (
@@ -130,6 +136,7 @@ function IdentityRing() {
       cy="32"
       r="15.5"
       opacity="0.22"
+      className="mark-idle-ring"
       style={{ stroke: "var(--mark-accent)" }}
     />
   );
@@ -168,6 +175,13 @@ export function ProjectMark({
       style={
         {
           "--mark-accent": `oklch(var(--accent-l) var(--accent-c) ${hue})`,
+          // Desyncs this instance's idle breathe from every other mark on the
+          // same page (a related-projects entry and its own card, say) — a
+          // negative delay starts the animation already partway through its
+          // cycle instead of every mark visibly pulsing in lockstep.
+          // Deterministic from the project's own hue, not Math.random(), so
+          // server and client render the same value.
+          "--mark-idle-delay": `${-((hue % 12) * 0.5)}s`,
         } as React.CSSProperties
       }
     >
