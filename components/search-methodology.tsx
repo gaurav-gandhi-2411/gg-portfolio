@@ -83,7 +83,7 @@ export function SearchMethodology() {
                     {row.value}
                   </MetricProvenance>
                 </dd>
-                <dt className="text-muted-foreground text-xs leading-relaxed">{row.label}</dt>
+                <dt className="text-muted-foreground text-caption leading-relaxed">{row.label}</dt>
               </div>
             );
           })}
@@ -138,11 +138,11 @@ export function SearchMethodology() {
           .
         </p>
 
-        <p className="text-muted-foreground mt-5 text-xs">
+        <p className="text-muted-foreground mt-5 text-caption">
           Full comparison, every command, every measurement:{" "}
           <InlineLink
             href="https://github.com/gaurav-gandhi-2411/gg-portfolio/blob/main/reports/BL-9-round5-static-embedding-and-decision.md"
-            className="text-xs"
+            className="text-caption"
           >
             reports/BL-9-round5-static-embedding-and-decision.md ↗
           </InlineLink>

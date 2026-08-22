@@ -42,7 +42,7 @@
       transparent 68%
     ),
     linear-gradient(to bottom, var(--plane-far) 0%, transparent 82%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 46%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 46%, transparent 100%);
 }
 
 /*

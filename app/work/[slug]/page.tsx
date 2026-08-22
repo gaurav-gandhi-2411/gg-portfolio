@@ -114,7 +114,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           aria-label="The fix, made visible"
           className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
         >
-          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+          <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
             The fix, made visible
           </p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
@@ -147,7 +147,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           aria-label="Try Warmer's matching engine"
           className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
         >
-          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+          <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
             Try the engine
             {puzzle ? (
               <span className="font-mono normal-case tracking-normal">
@@ -173,7 +173,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           aria-label="Try an illustrative TriageIQ classifier"
           className="border-border/40 mt-16 flex flex-col gap-2 border-t pt-10"
         >
-          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+          <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">Try it</p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
             The same technique as stage 1, running live in your browser on a small sample of
             real GitHub issues:
@@ -185,7 +185,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
           aria-label="Which already-solved issues look like this one"
           className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
         >
-          <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+          <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
             The second question, in the space it is answered in
           </p>
           <p className="max-w-measure text-base leading-relaxed text-foreground">
@@ -236,7 +236,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
         aria-label="Power to catch a cost rise, by noise shape and eval-set size"
         className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
       >
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+        <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">Try it</p>
         <p className="max-w-measure text-base leading-relaxed text-foreground">
           The story above is that one power figure turned out to depend on an assumption nobody
           had named. Pick a noise shape, a variance level, and an eval-set size below, and see
@@ -254,7 +254,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
         aria-label="Items landing near each other in the shared space"
         className="border-border/40 mt-16 flex flex-col gap-4 border-t pt-10"
       >
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Try it</p>
+        <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">Try it</p>
         <p className="max-w-measure text-base leading-relaxed text-foreground">
           {mmfr.n_points} real items from {mmfr.brand}&apos;s live catalogue, fused by the
           trained item tower this project actually ships and laid out in three dimensions. Pick

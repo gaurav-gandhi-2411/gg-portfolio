@@ -31,7 +31,7 @@ export function PowerGridStatic() {
       />
 
       <div className="border-accent/40 bg-accent/10 flex flex-col gap-[var(--space-2)] rounded-md border px-[var(--space-4)] py-[var(--space-3)]">
-        <p className="text-accent text-xs tracking-eyebrow uppercase">
+        <p className="text-accent text-caption tracking-eyebrow uppercase">
           One real evalset, run twice
         </p>
         <p className="text-sm leading-relaxed text-foreground">{POWER_GRID.realMeasured.detail}</p>

@@ -29,7 +29,7 @@ export default function ProjectsPage() {
           All projects
         </h1>
         {/* Both counts derived, never hand-typed (rule 65b). */}
-        <p className="text-muted-foreground mt-3 font-mono text-xs">
+        <p className="text-muted-foreground mt-3 font-mono text-caption">
           {products.length} projects · {liveProductCount(products)} live today
         </p>
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
