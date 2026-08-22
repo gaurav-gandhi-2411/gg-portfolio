@@ -109,9 +109,10 @@ export const tracegauge: CaseStudy = {
     },
     {
       label: "Two features built and deliberately not shipped live",
-      value: "community-corpus feature held dormant; habit-coach feature unshipped",
+      value: "Community-corpus feature held dormant; habit-coach feature unshipped",
       detail: "\"a community corpus with zero contributors delivers no user value\"; habit-coach recommendations judged too thin at pre-publish review",
       sourceRef: "tracegauge:held-features",
+      format: "prose",
     },
   ],
   story: {

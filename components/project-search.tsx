@@ -266,7 +266,7 @@ export function ProjectSearch({ products }: { products: Product[] }) {
               <span className="block text-sm font-medium">{r.product.name}</span>
               <span
                 className={cn(
-                  "block text-xs leading-snug",
+                  "block text-caption leading-snug",
                   i === activeIndex ? "text-accent-foreground/85" : "text-muted-foreground"
                 )}
               >

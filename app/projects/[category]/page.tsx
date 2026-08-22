@@ -56,7 +56,7 @@ export default async function CategoryProjectsPage({
       className="mx-auto w-full max-w-3xl flex-1 px-6 pt-12 pb-20 md:pt-16 lg:max-w-5xl"
     >
       <div className="flex flex-col items-center text-center">
-        <p className="text-muted-foreground font-mono text-xs tracking-eyebrow uppercase">
+        <p className="text-muted-foreground font-mono text-caption tracking-eyebrow uppercase">
           <Link
             href="/projects"
             className="focus-visible:outline-ring -my-2.5 inline-flex min-h-11 items-center transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -68,7 +68,7 @@ export default async function CategoryProjectsPage({
           {cat.label}
         </h1>
         {/* Count derived, never hand-typed (rule 65b). */}
-        <p className="text-muted-foreground mt-3 font-mono text-xs">
+        <p className="text-muted-foreground mt-3 font-mono text-caption">
           {matching.length} {matching.length === 1 ? "project" : "projects"}
         </p>
       </div>

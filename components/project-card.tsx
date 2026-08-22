@@ -71,7 +71,14 @@ export function ProjectCard({
               </Link>
             </Heading>
             {dateline && (
-              <span className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption">
+              // data-live-value: masked out of visual-regression screenshots
+              // (e2e/visual-regression.spec.ts) — this is ISR-refreshed
+              // live data, not layout, so it must never be what a baseline
+              // diff fails on.
+              <span
+                data-live-value
+                className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption"
+              >
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -102,7 +109,7 @@ export function ProjectCard({
                   package whose registry lookup failed shows the install
                   line alone rather than a zero or a stale version. */}
               {pypiStats?.version !== undefined && (
-                <span className="text-muted-foreground font-mono text-caption">
+                <span data-live-value className="text-muted-foreground font-mono text-caption">
                   v{pypiStats.version}
                   {pypiStats.releaseCount !== undefined && pypiStats.releaseCount > 1
                     ? ` · ${pypiStats.releaseCount} releases`
@@ -110,7 +117,7 @@ export function ProjectCard({
                 </span>
               )}
               {pypiStats?.lastWeek !== undefined && (
-                <span className="text-muted-foreground font-mono text-caption">
+                <span data-live-value className="text-muted-foreground font-mono text-caption">
                   {pypiStats.lastWeek.toLocaleString()} downloads last week
                 </span>
               )}

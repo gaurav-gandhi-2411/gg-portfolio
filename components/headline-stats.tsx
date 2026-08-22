@@ -35,12 +35,17 @@ export function HeadlineStats() {
           return (
             <div
               key={stat.label}
-              className="flex flex-col gap-[var(--space-1)] text-center sm:text-left"
+              // Positioning root for MetricProvenance's panel
+              // (selfAnchor={false}) — see components/case-study-page.tsx's
+              // identical comment; here dt is sr-only so there's no visible
+              // label to protect, but the same anchor keeps both usages
+              // consistent rather than one being a special case.
+              className="relative flex flex-col gap-[var(--space-1)] text-center sm:text-left"
             >
               <dt className="sr-only">{stat.label}</dt>
               <dd className="flex flex-col gap-[var(--space-1)]">
                 <span className="font-heading text-heading font-semibold text-foreground">
-                  <MetricProvenance info={provenance} label={stat.label}>
+                  <MetricProvenance info={provenance} label={stat.label} selfAnchor={false}>
                     {stat.value}
                   </MetricProvenance>
                 </span>

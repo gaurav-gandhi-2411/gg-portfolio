@@ -111,6 +111,7 @@ export const agentgauge: CaseStudy = {
       value: "No, falsified by its own pre-registered rule",
       detail: "partial ρ=0.262, p=0.089 (not significant, uncorrected) once description length is controlled for, no axis beats a free len() heuristic after correction",
       sourceRef: "agentgauge:predictive-validity",
+      format: "prose",
     },
     {
       label: "Minimum detectable effect, full 253-task corpus, 80% power",
@@ -170,11 +171,12 @@ export const agentgauge: CaseStudy = {
       value: "No, killed by its own 70% ship bar",
       detail: "58.33% top-1 at the below-detection-floor band; shipped disabled behind --experimental",
       sourceRef: "agentgauge:attribution-kill",
+      format: "prose",
     },
     {
       label: "Measurement artifacts found during this project",
-      value: "10, each now an automated detector",
-      detail: "including the two below, catalogued in the methods paper as its core contribution",
+      value: "10",
+      detail: "each now an automated detector, including the two below, catalogued in the methods paper as its core contribution",
       sourceRef: "agentgauge:artifact-taxonomy",
     },
   ],

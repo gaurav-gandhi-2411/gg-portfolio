@@ -136,6 +136,21 @@ jobs:
       - name: No em dash in rendered copy
         run: node scripts/check-no-em-dash.mjs
 
+      # Production audit, 2026-08-22 — GG asked for this after finding the
+      # same mistake made twice in one session (a bare duration-150/ease-out
+      # in place of this project's own --dur-fast/--ease-out-soft tokens,
+      # caught only by manually diffing a file against its prior committed
+      # version). Fails on raw hex colors, Tailwind's default font-size
+      # scale outside the two sizes this project deliberately kept
+      # (text-sm/text-base — see the script's own header), Tailwind's
+      # default transition duration/easing utilities, and arbitrary spacing
+      # values that don't route through a --space-* token. Ships green: the
+      # pre-existing violations it found (19 text-xs regressions, 2 raw
+      # #000s, one dead --ease-out fallback) were fixed or explicitly
+      # allowlisted, not silently exempted by narrowing the check's scope.
+      - name: Design tokens — no raw hex, off-scale type, or default motion
+        run: node scripts/check-token-usage.mjs
+
       # chat-canary.yml's own verdict logic broke twice in the same file, in
       # the same way (an apostrophe inside a bash-single-quoted `node -e`
       # block, PR #149 and again in the fix that named the first one). Both

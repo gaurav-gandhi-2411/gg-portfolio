@@ -71,6 +71,27 @@ test.describe("/ask", () => {
     await expect(launcher).toHaveCount(0);
   });
 
+  /**
+   * Production audit (2026-08-22): the same fixed-corner-over-scrolling-
+   * content mechanism, found on /projects at 390px — a real-scroll walk
+   * caught the launcher sitting over a project card's own description
+   * text. /projects has no other persistent path to /ask (no nav-bar
+   * link), so unlike /work/[slug] this isn't hidden outright: the project
+   * grid is single-column below `lg` (tight stacking, real overlap risk)
+   * and two columns with real breathing room at `lg`+, so the hide is
+   * scoped to exactly that breakpoint instead.
+   */
+  test("the chat launcher hides on narrow /projects, but is back at lg+", async ({ page }) => {
+    await page.goto("/projects");
+    const launcher = page.getByRole("link", { name: "Ask about my work" });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(launcher).toBeHidden();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(launcher).toBeVisible();
+  });
+
   test("suggested-question chips are visible, clickable, and populate the input", async ({
     page,
   }) => {

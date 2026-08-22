@@ -47,7 +47,7 @@ export default function PowerGridClient() {
   return (
     <div className="flex flex-col gap-[var(--space-6)]">
       <div className="flex flex-col gap-[var(--space-2)]">
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+        <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
           Pick a noise shape
         </p>
         <div className="flex flex-wrap gap-[var(--space-2)]" role="group" aria-label="Noise regime">
@@ -72,7 +72,7 @@ export default function PowerGridClient() {
       </div>
 
       <div className="flex flex-col gap-[var(--space-2)]">
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">
+        <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">
           {rowLabel}
         </p>
         <div className="flex flex-wrap gap-[var(--space-2)]" role="group" aria-label={rowLabel}>
@@ -89,7 +89,7 @@ export default function PowerGridClient() {
       </div>
 
       <div className="flex flex-col gap-[var(--space-2)]">
-        <p className="text-muted-foreground text-xs tracking-eyebrow uppercase">Eval-set size</p>
+        <p className="text-muted-foreground text-caption tracking-eyebrow uppercase">Eval-set size</p>
         <div className="flex flex-wrap gap-[var(--space-2)]" role="group" aria-label="Sample size n">
           {POWER_GRID.n_values.map((nOption) => (
             <ToggleButton key={nOption} pressed={nOption === n} onClick={() => setN(nOption)}>
@@ -136,7 +136,7 @@ export default function PowerGridClient() {
 
       {showRealPoint ? (
         <div className="border-accent/40 bg-accent/10 flex flex-col gap-[var(--space-2)] rounded-md border px-[var(--space-4)] py-[var(--space-3)]">
-          <p className="text-accent text-xs tracking-eyebrow uppercase">
+          <p className="text-accent text-caption tracking-eyebrow uppercase">
             Where one real evalset actually landed
           </p>
           <p className="text-sm leading-relaxed text-foreground">

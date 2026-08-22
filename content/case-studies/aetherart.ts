@@ -90,9 +90,10 @@ export const aetherart: CaseStudy = {
     },
     {
       label: "Scheduler vs. prompt sensitivity (360-run benchmark)",
-      value: "prompt choice moves CLIP score 18× more than scheduler choice",
+      value: "Prompt choice moves CLIP score 18× more than scheduler choice",
       detail: "range 0.130 (prompt) vs. 0.007 (scheduler)",
       sourceRef: "aetherart:360-sweep",
+      format: "prose",
     },
     {
       label: "Test suite",
@@ -102,9 +103,10 @@ export const aetherart: CaseStudy = {
     },
     {
       label: "Honest caveats",
-      value: "underfitting paradox + an unresolved artifact",
+      value: "An underfitting paradox, plus an unresolved artifact",
       detail: "a rank-4 LoRA scores higher on CLIP than rank-8, and 20 training images beat 80, read as CLIP rewarding literal keyword matching, not real quality; a calligraphy-cartouche artifact baked in from WikiArt caption text remains unresolved, only mitigated by negative prompting",
       sourceRef: "aetherart:caveats",
+      format: "prose",
     },
     {
       label: "HF LoRA adapters, 3 live, downloads last 30 days (HF API)",
@@ -117,11 +119,12 @@ export const aetherart: CaseStudy = {
       value: "Withdrawn under corrected scoring",
       detail: "3.18×SEM under single-call judging fell to 0.58×SEM, below the promotion bar, once independent per-axis scoring removed a halo-effect risk; the published checkpoint was not re-promoted.",
       sourceRef: "aetherart:ukiyo-promotion-withdrawn",
+      format: "prose",
     },
     {
       label: "Measurement-defect methodology finding",
-      value: "5 silent evaluation-validity defects found and fixed",
-      detail: "context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score, full writeup linked below.",
+      value: "5",
+      detail: "silent evaluation-validity defects found and fixed: context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score, full writeup linked below.",
       sourceRef: "aetherart:measurement-defects",
     },
   ],

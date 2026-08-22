@@ -115,9 +115,9 @@ export const styleMaitri: CaseStudy = {
     },
     {
       label: "Adversarial live-site audit",
-      value: "15 of 32 skeptical-shopper queries judged disappointing",
+      value: "15 of 32",
       detail:
-        "6 subagents role-playing wedding shoppers on the live production site found 2 trust-destroying bugs no offline eval had caught",
+        "skeptical-shopper queries judged disappointing: 6 subagents role-playing wedding shoppers on the live production site found 2 trust-destroying bugs no offline eval had caught",
       sourceRef: "style-maitri:live-audit",
     },
   ],

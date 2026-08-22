@@ -58,7 +58,13 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
     slug: "dealhunter",
     name: "DealHunter",
     healthUrl: "https://agentic-travel-booking-api-prod-646079085526.asia-south1.run.app/health",
-    destinationUrl: "https://agentic-travel-booking-system.vercel.app",
+    // Production audit (2026-08-22): this pointed at the bare Vercel domain,
+    // which is the site's marketing/waitlist splash ("Building in public",
+    // no search box) — not the actual interactive demo. The real agent demo
+    // lives at /demo (apps/web/app/demo/page.tsx, DemoClient.tsx), branded
+    // "DealHunter" same as this portfolio. GG's launch review: "Try
+    // DealHunter" led nowhere useful even before the retired-model bug.
+    destinationUrl: "https://agentic-travel-booking-system.vercel.app/demo",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-travel-booking-system",
     expectedWakeSeconds: 20,
     gpuBacked: false,

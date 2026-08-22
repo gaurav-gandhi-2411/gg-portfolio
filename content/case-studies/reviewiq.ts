@@ -83,6 +83,7 @@ export const reviewiq: CaseStudy = {
       value: "hi/hi-en gold labels are LLM-generated, called \"not published-credible\" in the spec",
       detail: "a follow-up investigation attributed most of the apparent hi-en gap to benchmark-label noise, not model failure",
       sourceRef: "reviewiq:gold-label-caveat",
+      format: "prose",
     },
   ],
   story: {

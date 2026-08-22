@@ -587,7 +587,7 @@ body::after {
     calc(var(--space-2) - var(--nav-shrink) * var(--space-1)) var(--space-6);
   backdrop-filter: blur(calc(6px + var(--nav-shrink) * 10px)) saturate(140%);
   box-shadow: 0 calc(var(--nav-shrink) * 18px) calc(var(--nav-shrink) * 40px)
-    calc(var(--nav-shrink) * -22px) color-mix(in oklab, #000 60%, transparent);
+    calc(var(--nav-shrink) * -22px) color-mix(in oklab, black 60%, transparent);
   pointer-events: auto;
 }
 
