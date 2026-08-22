@@ -824,6 +824,15 @@ p {
   transform: translateX(-100%);
   animation: rule-shimmer-sweep 7s var(--ease-in-out-soft) infinite alternate;
 }
+/* AmbientVisibilityGate (components/motion/ambient-visibility-gate.tsx)
+ * pauses this while .section-rule is off-screen — an animation nobody can
+ * see still costs real main-thread work every frame it ticks, and this is
+ * exactly the shape of cost that inflated home's Lighthouse score (see the
+ * "Ambient / idle motion" block below). Additive: runs normally until JS
+ * confirms the host is out of view. */
+.section-rule[data-out-of-view]::after {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
   .section-rule::after {
     animation: none;
@@ -848,26 +857,43 @@ p {
  * runs. Tried and confirmed NOT the cause, each isolated individually
  * against a live preview: the animated property (background-position vs.
  * transform/opacity), .ambient-plane's element size (unbounded vs.
- * height-capped), and `will-change` layer-promotion hints — none of these
- * recovered the score on their own. A consolidation attempt (all three
- * effects reduced to one shared, inherited, animated custom property on
- * :root) made it drastically WORSE (perf 52, main-thread ~9950ms) — an
- * inherited custom property changing on :root forces a full-document style
- * recalculation every frame, which costs far more than N independent
- * per-element animations ever did. What actually worked:
- * `content-visibility: auto` on .section-plane (app/sections-motion.css) —
- * most of these animations were running on sections below the fold, doing
- * real, continuous, invisible-to-anyone work for their entire time
- * off-screen. Skipping that work while a section isn't near the viewport
- * (native platform behavior, not a hand-rolled IntersectionObserver) took
- * main-thread work back to a 4083ms median — verified not to break the
- * existing GSAP scroll-parallax (.section-ambient's translateY still
- * tracks scroll position correctly on a content-visibility-skipped-then-
- * revealed section) or introduce layout shift (CLS stayed 0 across every
- * run). The property/size/will-change changes stay anyway — they're
- * independently better practice — but content-visibility is what actually
- * closed the gap.
+ * height-capped), and `will-change` layer-promotion hints. A consolidation
+ * attempt (all three effects reduced to one shared, inherited, animated
+ * custom property on :root) made it drastically WORSE (perf 52,
+ * main-thread ~9950ms) — an inherited custom property changing on :root
+ * forces a full-document style recalculation every frame, far more
+ * expensive than N independent per-element animations. `content-visibility:
+ * auto` on .section-plane DID recover the score (~4083ms median) but was
+ * reverted: its `contain-intrinsic-size` estimate stands in for a
+ * section's real height until first render, and getting that estimate
+ * wrong at any of the widths this site's own e2e suite tests broke three
+ * different already-shipped things in succession (a generic estimate broke
+ * site-nav.tsx's scroll-position indicator; a desktop-tuned per-section fix
+ * then produced a real, measured CLS event under mobile emulation; a
+ * mobile-tuned follow-up then broke a different test at a third tested
+ * width). Too fragile to carry for this effect.
  *
+ * What shipped instead: the root cause was the COUNT of concurrently-
+ * ticking animations (~24 on home — 5 ambient-plane, 5 rule shimmers, up to
+ * 14 project-mark rings), not what any one of them animates or how big it
+ * is. Measured directly: at page load, before any scroll, 0 of those 24
+ * are visible at all (confirmed via getBoundingClientRect against the
+ * viewport) — the hero fills the initial viewport, every Section-based
+ * block sits below it. AmbientVisibilityGate (components/motion/ambient-
+ * visibility-gate.tsx) pauses each animation's `animation-play-state`
+ * while its host is off-screen via a single shared IntersectionObserver,
+ * and resumes it once back in view. Unlike content-visibility, this
+ * touches nothing about layout or box size — it cannot produce a CLS event
+ * or feed a wrong estimate to anything measuring geometry, because no box
+ * ever changes size. Verified, same-session n=5 against the same
+ * pre-ambient-motion baseline preview used for every measurement above:
+ * performance median 82 — identical to the baseline's own 82 median, range
+ * 81-92 with no outliers below the 81-94 band; TBT median 134ms, identical
+ * to baseline's 134ms; main-thread work 3679ms median (down from 6728ms
+ * unmitigated, some residual overhead remains vs. baseline's 2854ms but
+ * the score itself is fully recovered); CLS 0 across every run, both sides.
+ *
+
  * `rule-shimmer-sweep` — consumed by .section-rule above and
  * .case-heading-modular-rule (app/case-study.css); a light traveling
  * inside the mark rather than the mark itself moving.
@@ -925,6 +951,10 @@ p {
   );
   animation: ambient-breathe 9s var(--ease-in-out-soft) infinite;
 }
+/* AmbientVisibilityGate — see .section-rule's own comment above. */
+.ambient-plane[data-out-of-view]::before {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
   .ambient-plane::before {
     animation: none;
@@ -944,6 +974,12 @@ p {
 .mark-idle .mark-idle-ring {
   animation: mark-idle-ring-breathe 6s var(--ease-in-out-soft) infinite;
   animation-delay: var(--mark-idle-delay, 0s);
+}
+/* AmbientVisibilityGate — see .section-rule's own comment above. Gated on
+ * the parent .mark-idle host (the <svg> AmbientVisibilityGate actually
+ * observes), not .mark-idle-ring itself. */
+.mark-idle[data-out-of-view] .mark-idle-ring {
+  animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
   .mark-idle .mark-idle-ring {

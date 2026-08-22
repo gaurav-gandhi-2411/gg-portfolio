@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
 import { ChatLauncher } from "@/components/chatbot/chat-launcher";
 import { PersonJsonLd } from "@/components/json-ld";
+import { AmbientVisibilityGate } from "@/components/motion/ambient-visibility-gate";
 import { ScrollDriver } from "@/components/motion/scroll-driver";
 import { SectionDepth } from "@/components/motion/section-depth";
 import { PointerField } from "@/components/pointer-field";
@@ -140,7 +141,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BootLoader />
-        {/* All four render nothing and all four no-op for reduced-motion
+        {/* All five render nothing, and all five no-op for reduced-motion
             visitors. PointerField writes the shared pointer position every
             layer that acknowledges the cursor reads (the hero's spotlight,
             now also each section's `.section-ambient` and, per-card, each
@@ -148,15 +149,20 @@ export default function RootLayout({
             the single clock scroll-linked motion runs on; SectionDepth is
             the scroll-scrubbed depth/entrance tween for About/Experience/
             Work/Contact/Research; SectionCardMotion is the one delegated
-            listener behind those sections' card tilt. They sit in the root
-            layout rather than lower down because a second listener or a
-            second clock added later is how a site ends up fighting itself
-            — the same reasoning that already put PointerField/ScrollDriver
-            here, extended rather than repeated. */}
+            listener behind those sections' card tilt; AmbientVisibilityGate
+            pauses the ambient-motion CSS animations (breathing glows, rule
+            shimmers, logo-mark idle rings) while their host is off-screen —
+            see its own header for why this exists and what it does and
+            does not touch. They sit in the root layout rather than lower
+            down because a second listener or a second clock added later is
+            how a site ends up fighting itself — the same reasoning that
+            already put PointerField/ScrollDriver here, extended rather
+            than repeated. */}
         <PointerField />
         <ScrollDriver />
         <SectionDepth />
         <SectionCardMotion />
+        <AmbientVisibilityGate />
         <SiteNav />
         {children}
         <ChatLauncher />

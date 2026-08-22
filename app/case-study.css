@@ -78,6 +78,11 @@
   transform: translateX(-100%);
   animation: rule-shimmer-sweep 7s var(--ease-in-out-soft) infinite alternate;
 }
+/* AmbientVisibilityGate (components/motion/ambient-visibility-gate.tsx) —
+ * see app/globals.css's .section-rule for the full explanation. */
+.case-heading-modular-rule[data-out-of-view]::after {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
   .case-heading-modular-rule::after {
     animation: none;
