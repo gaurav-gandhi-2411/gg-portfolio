@@ -1192,6 +1192,15 @@ confidently about the wrong thing rather than failing.
   `resolveSlug`'s prefix convention is checked against the loaded case-study
   modules and reports `NO_SLUG_MAPPING` when it fails — but an inference whose
   failure has no reporting path is not.
+- **A flag's name describes what it overrides for the case you reached for it,
+  not the full set.** `git worktree remove --force` was invoked to get past
+  what looked like a file-lock error. It does that, but the same flag also
+  overrides the uncommitted-changes safety check — with no separate warning —
+  and it deleted an entire working directory of uncommitted, unreported edits
+  in the process. The fix that was actually needed (commit as WIP first, per
+  the repo's own standing rule) was skipped because the flag read as narrower
+  than it is. Read what a flag actually disables before reaching for it under
+  a different, more urgent-looking error.
 
 ## The same asymmetry in the dependency tree
 
