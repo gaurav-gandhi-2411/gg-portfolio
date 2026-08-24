@@ -47,3 +47,7 @@ next-env.d.ts
 # if added, is project config and should stay tracked)
 .claude/*.lock
 .claude/scheduled_tasks*
+
+# ops/check_delete_requested_projects.py's own generated report — regenerated daily by
+# the GCP-DeleteRequested-Check scheduled task, never source
+/ops/delete-requested-report.json
