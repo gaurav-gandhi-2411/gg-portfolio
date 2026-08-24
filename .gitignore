@@ -51,3 +51,4 @@ next-env.d.ts
 # ops/check_delete_requested_projects.py's own generated report — regenerated daily by
 # the GCP-DeleteRequested-Check scheduled task, never source
 /ops/delete-requested-report.json
+__pycache__/
