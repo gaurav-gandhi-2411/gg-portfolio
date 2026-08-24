@@ -46,18 +46,33 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
   "style-maitri": {
     slug: "style-maitri",
     name: "Style Maitri",
-    healthUrl: "https://asa-stylist-api-657468372797.asia-south1.run.app/",
+    // URL corrected 2026-08-25: the GCP sole-identity migration (CLAUDE.md rule 55c)
+    // redeployed this service under a new project (stylemaitri-prod-260813), which
+    // changed the Cloud Run URL's project-number segment. The old URL
+    // (asa-stylist-api-657468372797...) now 404s at the GFE level -- confirmed via
+    // direct curl, not assumed. The live stylemaitri.vercel.app frontend already
+    // calls the correct new URL (verified via a real page load, 200 on /api/brand),
+    // so this only affects this bridge page's own probe target, not the actual demo.
+    // expectedWakeSeconds/sourceNote below are carried over from the pre-migration
+    // deployment (same container image) and have NOT been re-measured against this
+    // URL -- flagged, not silently presented as current.
+    healthUrl: "https://asa-stylist-api-631709154646.asia-south1.run.app/",
     destinationUrl: "https://stylemaitri.vercel.app",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentic-shopping-assistant",
     expectedWakeSeconds: 56,
     gpuBacked: false,
     sourceNote:
-      "Checked 2026-08-11: 55.7s cold (confirmed genuinely idle via Cloud Logging, 18m17s since the prior request, no traffic in between), 0.11s warm repeat. An initial attempt the same session exceeded a 60s probe ceiling with 24h prior idle, this is the clean re-measurement.",
+      "Checked 2026-08-11 against the pre-migration URL: 55.7s cold (confirmed genuinely idle via Cloud Logging, 18m17s since the prior request, no traffic in between), 0.11s warm repeat. URL updated 2026-08-25 after the GCP migration moved the service to a new project; not re-measured under the new URL.",
   },
   dealhunter: {
     slug: "dealhunter",
     name: "DealHunter",
-    healthUrl: "https://agentic-travel-booking-api-prod-646079085526.asia-south1.run.app/health",
+    // URL corrected 2026-08-25: same migration-driven project-number change as
+    // style-maitri above (new project dealhunter-prod-260812). The old URL
+    // (agentic-travel-booking-api-prod-646079085526...) now 404s at the GFE level --
+    // confirmed via direct curl. New URL's /health verified live:
+    // {"status":"ok","phase":"C","cache":"ok"}.
+    healthUrl: "https://agentic-travel-booking-api-prod-924018794868.asia-south1.run.app/health",
     // Production audit (2026-08-22): this pointed at the bare Vercel domain,
     // which is the site's marketing/waitlist splash ("Building in public",
     // no search box) — not the actual interactive demo. The real agent demo
@@ -69,7 +84,7 @@ export const warmupConfigs: Record<string, WarmupConfig> = {
     expectedWakeSeconds: 20,
     gpuBacked: false,
     sourceNote:
-      "Checked 2026-08-11: 19.4s cold (confirmed genuinely idle via Cloud Logging, no prior request in the preceding 16 hours), 0.12s warm repeat.",
+      "Checked 2026-08-11 against the pre-migration URL: 19.4s cold (confirmed genuinely idle via Cloud Logging, no prior request in the preceding 16 hours), 0.12s warm repeat. URL updated 2026-08-25 after the GCP migration moved the service to a new project; not re-measured under the new URL.",
   },
 };
 
