@@ -1067,3 +1067,12 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+
+## Wave 15 pipeline proposals — 2026-09-07 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable LLM performance improvement and is directly quoted from the README, but lacks a date so its recency is uncertain.; verifier: The draft accurately reflects all numerical values, comparisons, and contextual notes from the source without introducing unsupported claims or tone drift.)
+  Source: `README.md:124`
+  Draft: "Measured the LLM synthesis regression detector’s baseline score, achieving 10.26 / 15 (68.4%) after cutover—a slight drop of 0.245 points from the previous 10.51 but an accepted trade‑off."
+  Suggested provenance ID: `llm-synthesis-regression-detector`
