@@ -1067,3 +1067,12 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+
+## Wave 15 pipeline proposals — 2026-09-14 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable ML performance improvement and is directly quoted in the README, but lacks a recent timestamp, so it’s not current yet still valuable and not redundant.; verifier: The draft accurately reflects the source's metrics and terminology without introducing unsupported claims or tone drift.)
+  Source: `README.md:121`
+  Draft: "Evaluated the VS Code bucket classifier and found the raw model underperformed the naive‑prior fallback by 22.08 percentage points (confidence ~33%)."
+  Suggested provenance ID: `resolution-predictor`
