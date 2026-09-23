@@ -1,4 +1,3 @@
-import { HeadlineStats } from "@/components/headline-stats";
 import { Section } from "@/components/section";
 import { aboutParagraphs, skillChips } from "@/content/about";
 
@@ -26,12 +25,16 @@ export function About() {
   return (
     <Section id="about" label="About me" width="wide">
       {/*
-       * Above the prose, not inside it. The three numbers are the part of
-       * this section a reader scanning for whether to keep going is actually
-       * looking for, and they were previously three clauses buried in an
-       * Experience bullet 1700px further down.
+       * Direction B (proposal, not merged): HeadlineStats is gone from here.
+       * Two of its three numbers now live in the hero's own impact panel
+       * (components/sections/hero.tsx) — keeping this row too would put the
+       * same $10M+ and ~70% on the page twice, which is exactly the mistake
+       * hero.tsx's own header comment documents retiring the old hero stat
+       * row for (one of them repeating a figure under a different label).
+       * The third number (50M+ documents) is still sourced in
+       * content/stats.ts; it just has no home on this exploration's
+       * homepage yet.
        */}
-      <HeadlineStats />
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-x-14">
         <div className="flex flex-col items-center gap-[var(--space-5)] lg:items-start">

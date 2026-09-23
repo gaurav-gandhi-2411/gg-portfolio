@@ -9,8 +9,18 @@ import { EmbeddingCloud } from "@/components/hero/embedding-cloud";
 import { EmbeddingCloudStatic } from "@/components/hero/embedding-cloud-static";
 import { HeroMotion } from "@/components/hero/hero-motion";
 import { LinkButton } from "@/components/link-button";
+import { MetricProvenance } from "@/components/metric-provenance";
+import { experience } from "@/content/experience";
 import { site } from "@/content/site";
+import { headlineStats } from "@/content/stats";
 import { getEmbeddingProjection } from "@/lib/embedding-projection";
+import { getProvenance } from "@/lib/provenance";
+
+/**
+ * Direction B ("Product showcase") — last checked against
+ * content/provenance.md's "Hero stats" table, same as headline-stats.tsx.
+ */
+const VERIFIED_AT = "2026-08-21";
 
 /**
  * The hero, rebuilt around the field instead of on top of it.
@@ -65,9 +75,26 @@ import { getEmbeddingProjection } from "@/lib/embedding-projection";
  * opacity here after an axe pass once landed mid-fade and read the contrast
  * of a half-transparent heading. Everything that does animate on entrance
  * moves on transform alone.
+ *
+ * refresh-2026-09, Direction B exploration (proposal, not merged) — the copy
+ * column splits into two: identity on the left (name as the LCP headline,
+ * role + employer, the supporting tagline, the résumé CTA) and a bordered
+ * impact panel on the right carrying two of HeadlineStats' three numbers
+ * with the same MetricProvenance disclosure that component uses. The panel
+ * removes those two figures from About's HeadlineStats row rather than
+ * repeating them — see components/sections/about.tsx's own note — for the
+ * exact reason the comment above already gives for the old stat row: two
+ * places stating the same number is the mistake, not a stylistic choice.
+ * Sourced from content/experience.ts (the Uber entry) and content/stats.ts,
+ * never hand-typed, so this exploration can't drift from the numbers the
+ * rest of the site already carries.
  */
 export function Hero() {
   const { points } = getEmbeddingProjection();
+  // Uber Technologies, Uber AI · via Indium Software — experience.ts's own
+  // header comment: "the client first and the vendor second."
+  const [employer] = experience;
+  const impactStats = headlineStats.slice(0, 2);
 
   const socials = [
     { href: site.githubUrl, label: "GitHub", icon: <GitHubIcon /> },
@@ -97,50 +124,83 @@ export function Hero() {
       <div className="hero-scrim" aria-hidden="true" />
 
       <div data-hero-plane="content" className="hero-inner">
-        <div className="hero-copy">
-          <p className="hero-mask" style={{ animationDelay: "0.05s" }}>
-            <a href="#contact" className="hero-status">
-              <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
-              {site.status}
-            </a>
-          </p>
+        <div className="hero-split">
+          {/* Identity — left. The name is the LCP element, unanimated for
+              the same reason the old sentence headline was: it paints on
+              the first frame regardless of what the field is doing. */}
+          <div className="hero-copy">
+            <p className="hero-mask" style={{ animationDelay: "0.05s" }}>
+              <a href="#contact" className="hero-status">
+                <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
+                {site.status}
+              </a>
+            </p>
 
-          <h1 className="hero-headline">
-            I build <span className="hero-headline-accent">AI products</span> and see them
-            through, from the first experiment to real users.
-          </h1>
+            <h1 className="hero-name">{site.name}</h1>
 
-          {/* The rules between these are drawn by CSS, not by markup. At
-              390px the byline stacks and the separators disappear with it;
-              hand-placed ones left dashes dangling off the end of two of the
-              three lines. */}
-          <p className="hero-mask hero-byline" style={{ animationDelay: "0.16s" }}>
-            <span className="hero-byline-name">{site.name}</span>
-            <span>Lead Data Scientist, Applied AI</span>
-            <span>{site.location}</span>
-          </p>
+            <p className="hero-mask hero-role-line" style={{ animationDelay: "0.16s" }}>
+              <span className="hero-role-title">{site.role}</span>
+              <span className="hero-role-company">
+                {employer.company}{" "}
+                <span className="hero-role-detail">({employer.companyDetail})</span>
+              </span>
+            </p>
 
-          <div className="hero-actions" style={{ animationDelay: "0.24s" }}>
-            <LinkButton href={site.resumeUrl} variant="primary" icon={<FileTextIcon />}>
-              View Resume
-            </LinkButton>
-            <ul className="hero-socials">
-              {socials.map((social) => (
-                <li key={social.label}>
-                  <a
-                    href={social.href}
-                    aria-label={social.label}
-                    {...(social.sameTab ? {} : { target: "_blank", rel: "noreferrer" })}
-                    className="hero-social"
-                  >
-                    {social.icon}
-                    <span aria-hidden="true" className="hero-social-tip">
-                      {social.label}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <p className="hero-mask hero-tagline" style={{ animationDelay: "0.2s" }}>
+              {site.tagline}
+            </p>
+
+            <div className="hero-actions" style={{ animationDelay: "0.26s" }}>
+              <LinkButton href={site.resumeUrl} variant="primary" icon={<FileTextIcon />}>
+                Résumé
+              </LinkButton>
+              <ul className="hero-socials">
+                {socials.map((social) => (
+                  <li key={social.label}>
+                    <a
+                      href={social.href}
+                      aria-label={social.label}
+                      {...(social.sameTab ? {} : { target: "_blank", rel: "noreferrer" })}
+                      className="hero-social"
+                    >
+                      {social.icon}
+                      <span aria-hidden="true" className="hero-social-tip">
+                        {social.label}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Impact — right. Two of HeadlineStats' three numbers, same
+              MetricProvenance disclosure component, same sourceRef-checked
+              data — see this file's own header note on why About's row
+              carries only the third number now. */}
+          <div className="hero-mask hero-impact" style={{ animationDelay: "0.3s" }}>
+            <p className="hero-impact-eyebrow">Impact</p>
+            <dl className="hero-impact-stats">
+              {impactStats.map((stat) => {
+                const provenance = getProvenance(stat.sourceRef, undefined, VERIFIED_AT);
+                return (
+                  // relative: the positioning root for MetricProvenance's
+                  // panel (selfAnchor={false}) — same contract as
+                  // components/headline-stats.tsx's identical wrapper.
+                  <div key={stat.label} className="hero-impact-stat relative">
+                    <dt className="sr-only">{stat.label}</dt>
+                    <dd>
+                      <span className="stat-figure hero-impact-value">
+                        <MetricProvenance info={provenance} label={stat.label} selfAnchor={false}>
+                          {stat.value}
+                        </MetricProvenance>
+                      </span>
+                      <span className="hero-impact-label">{stat.label}</span>
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
           </div>
         </div>
       </div>
