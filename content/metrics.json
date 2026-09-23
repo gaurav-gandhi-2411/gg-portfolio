@@ -132,7 +132,7 @@
       "source_file": "eval/report.md",
       "source_line": 5,
       "commit_sha": "e7186c9696d8daa3afc4aab72291ad6e2fa377b4",
-      "measured_at": "2026-09-19",
+      "measured_at": "2026-09-01",
       "note": "Corrected 2026-09-23 (issue #123, genuine drift confirmed; re-verified against source, see content/case-studies/reviewiq.ts's verifiedAt): the eval report was regenerated 2026-09-19 and now reads 78.6% overall / 78.2% en / 79.3% hi-en at a lowered 76% gate; the 'hi' row (previously 80.7%) was removed from the report entirely -- label narrowed from 'en/hi/hi-en' to 'en/hi-en' to match. eval/report.md:5 reads '## Overall: 78.6% PASS (threshold 76%)'; lines 11-12 hold the per-language table. Old value (83.8% overall, threshold 83%, commit 13a4422) was correct as of its own 2026-07-06 measurement -- this is a genuine re-measurement, not a citation error."
     },
     "mmfr:recall10": {
