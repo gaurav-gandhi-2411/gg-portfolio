@@ -1,0 +1,55 @@
+# Manual proof workflow for scripts/relay-dispatched-ci-status.sh, without
+# needing a real bot PR (metrics-refresh.yml's scheduled jobs) to exercise
+# it. Dispatch this with `ref` set to any branch and it runs the exact same
+# two-step sequence metrics-refresh.yml runs on a bot PR branch: `gh
+# workflow run ci.yml --ref <ref>` (the anti-recursion workaround — see the
+# relay script's header) followed by the relay itself, so the relay's
+# behavior against a real dispatched ci.yml run can be checked live on a
+# throwaway branch before trusting it on the next scheduled bot PR.
+#
+# Mirrors metrics-refresh.yml's relay call sites: same GH_TOKEN source
+# (github.token), same two-line sequence, same permissions the relay
+# actually needs (actions: write to dispatch ci.yml, statuses: write to
+# post the relayed result) plus contents: read for the checkout.
+
+name: Relay proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: >-
+          Branch to dispatch ci.yml onto and relay the result for. Must be a
+          real branch with a HEAD SHA you want commit statuses posted
+          against (e.g. a throwaway test branch, or an existing bot PR
+          branch like chore/metrics-refresh).
+        type: string
+        required: true
+
+concurrency:
+  group: relay-proof-${{ inputs.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write # to dispatch ci.yml onto the target ref — see relay's header
+  statuses: write # to relay the dispatched run's result as a commit status
+
+jobs:
+  relay-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Dispatch ci.yml onto the target ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref "${{ inputs.ref }}"
+
+      - name: Relay the dispatched run's result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/relay-dispatched-ci-status.sh "${{ inputs.ref }}"
