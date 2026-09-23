@@ -92,6 +92,10 @@ jobs:
         env:
           SUMMARY_PATH: /tmp/metrics-summary.md
           NEW_REPOS_PATH: /tmp/new-repos.json
+          # Was missing entirely — despite refresh-metrics.mjs's "Wave 21 fix" comment describing
+          # an authenticated call, this step never actually passed a token, so every run has been
+          # unauthenticated (60 req/hr). Found while wiring R3's exit-non-zero-on-API-error fix.
+          GITHUB_TOKEN: ${{ github.token }}
           # A REPOSITORY SECRET, not a repo variable — read by
           # scripts/refresh-metrics.mjs to exclude repos from the
           # new-repo-discovery check without naming them anywhere in this
@@ -110,7 +114,11 @@ jobs:
           PORTFOLIO_EXCLUDED_REPOS: ${{ secrets.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
+      # R3: the step above now exits non-zero on a repo-inventory failure, which would otherwise
+      # skip this step by default — but that failure is independent of whether metrics.json has a
+      # real diff to propose, so this step must still run.
       - name: Open PR if anything changed
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -166,7 +174,10 @@ jobs:
       # changes isn't meaningful. An issue is the right vehicle for a pure
       # notification: update-in-place via a stable title so this doesn't
       # spam a new issue every week the same repo goes unaddressed.
+      # R3: this step's whole job is reacting to a possible repo-inventory failure (the null-vs-[]
+      # distinction below) — it must still run even though the refresh step above can now fail.
       - name: Open/update an issue for newly discovered repos
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -180,11 +191,13 @@ jobs:
             # same fact as "checked, found nothing new," and treating it the
             # same silently is exactly how two unlisted repos (owner
             # decision D3) went unreported for weeks. Surface it
-            # as a visible workflow annotation instead of exiting quietly,
-            # and leave any existing open issue untouched — an unverified
-            # run is not evidence the drift resolved.
-            echo "::warning::Repo inventory check could not verify this run (scripts/refresh-metrics.mjs's repo-inventory step failed — see this run's summary/notes for why). This is NOT the same as 'no new repos found'; a repo published since the last successful run may be missing."
-            exit 0
+            # as a visible workflow annotation, and leave any existing open
+            # issue untouched — an unverified run is not evidence the drift
+            # resolved. R3 (2026-09): `::warning` + `exit 0` let the job report
+            # success on a run whose repo-inventory check never completed —
+            # named as an `::error` + non-zero exit instead now.
+            echo "::error::Repo inventory check could not verify this run (scripts/refresh-metrics.mjs's repo-inventory step failed — see this run's summary/notes for why). This is NOT the same as 'no new repos found'; a repo published since the last successful run may be missing."
+            exit 1
           fi
           if [ "$NEW_REPOS_CONTENT" = "[]" ]; then
             echo "No new repos found this week — closing any stale open issue."
@@ -316,9 +329,15 @@ jobs:
         env:
           DRIFT_SUMMARY_PATH: /tmp/identity-drift-summary.md
           DRIFT_RENAMES_PATH: /tmp/identity-drift-renames.json
+          # Was missing — identity-drift.mjs's repo-metadata lookups ran fully unauthenticated.
+          # Added alongside R3's exit-non-zero-on-API-error fix and its new Authorization header.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/identity-drift.mjs
 
+      # R3: the check above can now exit non-zero, which would otherwise skip this step — but that
+      # failure is independent of whether identity-state.json has a real diff to propose.
       - name: Open PR if anything drifted
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -365,7 +384,9 @@ jobs:
       # updates in place rather than spamming a new issue every week the
       # same rename goes unaddressed (same pattern as the "new repos" issue
       # step in the refresh job above).
+      # R3: same reasoning as "Open PR if anything drifted" above.
       - name: Open/update per-repo issues for README renames
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
