@@ -380,7 +380,7 @@
           "bold": true
         },
         {
-          "text": " — first-author preprint (arXiv ID pending). Built AgentGauge, the statistical harness behind it — its own predictive-validity study falsified the v1 quality score; the rebuilt causal A/B harness measures a BLOCKING description defect at −13.3 to −28.9pp agent task success (3 model families); frozen protocol, CI-enforced. github.com/gaurav-gandhi-2411/agentgauge",
+          "text": " — working paper (draft, not yet submitted). Built AgentGauge, the statistical harness behind it — its own predictive-validity study falsified the v1 quality score; the rebuilt causal A/B harness measures a BLOCKING description defect at −13.3 to −28.9pp agent task success (3 model families); frozen protocol, CI-enforced. github.com/gaurav-gandhi-2411/agentgauge",
           "bold": false
         }
       ],
@@ -390,9 +390,9 @@
         "agents"
       ],
       "priority": 1,
-      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para23; content/provenance.md#agentgauge:paper-md (arXiv status: 'TO FILL after upload' placeholder, no Tier-2 paper found — ships preprint-pending)",
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para23; content/provenance.md#agentgauge:paper-md (not submitted anywhere as of 2026-09-23 — GG-confirmed; ships as a working paper, draft not yet submitted)",
       "surface": null,
-      "research_status": "in_preparation"
+      "research_status": "working_paper"
     },
     {
       "id": "proj:warmer",
@@ -606,7 +606,7 @@
       "project": "tracegauge",
       "text_runs": [
         {
-          "text": "tracegauge — cost and efficiency gauge for AI coding-agent sessions (PyPI) — Scores agent sessions on token economy, trajectory quality, and deterministic waste detection, and gates cost regressions in CI using bootstrap confidence intervals rather than point estimates; contributed two upstream pull requests to google/adk-python.",
+          "text": "tracegauge — cost and efficiency gauge for AI coding-agent sessions (PyPI) — Scores agent sessions on token economy, trajectory quality, and deterministic waste detection, and gates cost regressions in CI using bootstrap confidence intervals rather than point estimates; 2 contributions landed in google/adk-python (#6681, #6939); 1 in keras-team/keras (#23420).",
           "bold": false
         }
       ],

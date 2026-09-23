@@ -73,7 +73,7 @@ assert.strictEqual(
 // --- research status gate: never upgrade ---
 assert.deepStrictEqual(
   lint.lintResearchStatus([
-    makeEntry({ section: "research", research_status: "in_preparation", text_runs: [{ text: "first-author preprint, arXiv pending", bold: false }] }),
+    makeEntry({ section: "research", research_status: "in_preparation", text_runs: [{ text: "first-author working paper, draft not yet submitted", bold: false }] }),
   ]),
   [],
   "honest in_preparation phrasing should pass",

@@ -7,7 +7,7 @@
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 
 export const RESEARCH_STATUS_LABEL = {
-  under_submission: "Under submission",
+  working_paper: "Working paper (draft, not yet submitted)",
   in_preparation: "In preparation",
   published: "Published",
 };

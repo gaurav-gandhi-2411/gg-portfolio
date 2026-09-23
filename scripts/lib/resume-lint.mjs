@@ -54,7 +54,10 @@ export function lintCertifications(certs) {
 // one place free text could smuggle in a stronger claim than the status allows.
 const RESEARCH_STATUS_FORBIDDEN_WORDS = {
   in_preparation: ["published", "under review", "accepted"],
-  under_submission: ["published", "accepted"],
+  // "submitted"/"submission" deliberately excluded here: the honest working_paper
+  // phrasing itself must say "not yet submitted", which contains the substring —
+  // a naive .includes() check can't tell that apart from a claim of submission.
+  working_paper: ["published", "under review", "accepted"],
   published: [],
 };
 
