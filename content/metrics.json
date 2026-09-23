@@ -127,7 +127,7 @@
     },
     "reviewiq:extraction-eval": {
       "label": "Extraction accuracy (en/hi-en)",
-      "value": "78.6% overall",
+      "value": "78.6% overall (threshold 76%)",
       "repo": "gaurav-gandhi-2411/review-iq",
       "source_file": "eval/report.md",
       "source_line": 5,
