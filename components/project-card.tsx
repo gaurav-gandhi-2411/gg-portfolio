@@ -26,6 +26,28 @@ import { cn } from "@/lib/utils";
  * why Live/Source/Case-study need `.card-clickable` to keep landing on
  * themselves.
  */
+
+type ProjectStatus = "Live" | "PyPI" | "Research";
+
+/**
+ * Direction B ("Product showcase") — derived from fields the card already
+ * has, never a hand-typed field on the product: "Live" beats "PyPI" (a live
+ * surface is the stronger claim when a project has both, e.g. AgentGauge),
+ * and everything else reads as "Research" rather than inventing a status
+ * for a repo-only project.
+ */
+function projectStatus(product: Product): ProjectStatus {
+  if (product.liveUrl) return "Live";
+  if (product.pypi) return "PyPI";
+  return "Research";
+}
+
+const STATUS_PILL_CLASS: Record<ProjectStatus, string> = {
+  Live: "border-status-open/40 bg-status-open/10 text-status-open",
+  PyPI: "border-accent/40 bg-accent/10 text-accent",
+  Research: "border-border/60 bg-muted/50 text-muted-foreground",
+};
+
 export function ProjectCard({
   product,
   dateline,
@@ -45,6 +67,7 @@ export function ProjectCard({
   const Heading = headingLevel;
   const size = rhythm?.size ?? "standard";
   const hue = (rhythm?.hueShift ?? 0) + 277;
+  const status = projectStatus(product);
   return (
     <article
       data-cats={product.categories.join(" ")}
@@ -73,18 +96,33 @@ export function ProjectCard({
                 {product.name}
               </Link>
             </Heading>
-            {dateline && (
-              // data-live-value: masked out of visual-regression screenshots
-              // (e2e/visual-regression.spec.ts) — this is ISR-refreshed
-              // live data, not layout, so it must never be what a baseline
-              // diff fails on.
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {/* Direction B ("Product showcase") — status at a glance,
+                  derived from the project's own liveUrl/pypi fields, never
+                  hand-typed (see projectStatus above). */}
               <span
-                data-live-value
-                className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption tracking-eyebrow uppercase",
+                  STATUS_PILL_CLASS[status]
+                )}
               >
+                {status === "Live" && (
+                  <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
+                )}
+                {status}
+              </span>
+              {dateline && (
+                // data-live-value: masked out of visual-regression screenshots
+                // (e2e/visual-regression.spec.ts) — this is ISR-refreshed
+                // live data, not layout, so it must never be what a baseline
+                // diff fails on.
                 <span
-                  aria-hidden="true"
-                  className={cn(
+                  data-live-value
+                  className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
                     "bg-accent inline-block size-1.5 shrink-0 rounded-full",
                     // Design review (2026-07-30): a continuously-pulsing dot
                     // reads as "happening right now" — right for Warmer's
@@ -98,7 +136,8 @@ export function ProjectCard({
                 />
                 {dateline}
               </span>
-            )}
+              )}
+            </div>
           </div>
 
           <p className="text-muted-foreground mt-[var(--space-2)] text-sm leading-relaxed">{product.tagline}</p>
