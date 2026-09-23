@@ -290,14 +290,29 @@ jobs:
             SLUG=$(echo "$entry" | jq -r '.slug')
             TITLE="Identity drift: $SLUG renamed"
             BODY=$(ENTRY_JSON="$entry" node -e '
+              const fs = require("node:fs");
               const entry = JSON.parse(process.env.ENTRY_JSON);
+              // Bug fix (issue #200): this used to assert `entry.oldName` —
+              // identity-state.json'\''s *previously recorded* README value
+              // (e.g. `null`, on a product'\''s first successful check) — as
+              // if it were content/products.ts'\''s current name. That is a
+              // stale-cache claim, not a live read, and produced a false
+              // report ("content/products.ts still lists this product as
+              // \"null\"") for adk-tracegauge, whose products.ts entry had
+              // said "adk-tracegauge" since before the drift run even
+              // happened. Re-read products.ts fresh here instead.
+              const productsSrc = fs.readFileSync("content/products.ts", "utf8").replace(/\r\n/g, "\n");
+              const arrayBody = productsSrc.match(/products: Product\[\] = \[([\s\S]*)\];/)?.[1] ?? "";
+              const blocks = [...arrayBody.matchAll(/^ {2}\{\n([\s\S]*?)\n {2}\},?$/gm)].map((m) => m[1]);
+              const block = blocks.find((b) => new RegExp(`slug:\\s*"${entry.slug}"`).test(b));
+              const currentSiteName = block?.match(/name:\s*"([^"]+)"/)?.[1] ?? "(slug not found in products.ts)";
               console.log([
                 `The weekly identity-drift check (scripts/identity-drift.mjs) found that [\`${entry.repo}\`](${entry.repo})` + "'\''s README H1 changed:",
                 "",
-                `- Was: **${entry.oldName}**`,
+                `- Was: **${entry.oldName ?? "(no prior recorded value)"}**`,
                 `- Now: **${entry.newName}**`,
                 "",
-                `content/products.ts still lists this product as "${entry.oldName}" — decide whether the site name should follow the repo` + "'\''s rename, or whether this is an intentional divergence (several tracked products already use a nicer site name than their raw README, e.g. \"Samidha Reviews\" vs. review-iq" + "'\''s own README). Closing this issue is fine once addressed; it reopens/recreates next time the README name changes again."
+                `content/products.ts currently lists this product as "${currentSiteName}" — decide whether the site name should follow the repo` + "'\''s rename, or whether this is an intentional divergence (several tracked products already use a nicer site name than their raw README, e.g. \"Samidha Reviews\" vs. review-iq" + "'\''s own README). Closing this issue is fine once addressed; it reopens/recreates next time the README name changes again."
               ].join("\n"));
             ')
 
