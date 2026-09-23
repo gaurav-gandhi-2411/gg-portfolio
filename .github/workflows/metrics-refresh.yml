@@ -51,6 +51,17 @@ on:
   schedule:
     - cron: "0 3 * * 1" # Mondays 03:00 UTC
   workflow_dispatch:
+    inputs:
+      run_content_pipeline:
+        description: >-
+          Run the content-pipeline job. It's the only job here that spends
+          Groq API budget — set to false for a manual dispatch that's only
+          testing refresh/identity-drift/metric-freshness or the CI-status
+          relay (scripts/relay-dispatched-ci-status.sh). Defaults to true so
+          the scheduled Monday run (which has no inputs) and any dispatch
+          that doesn't set this explicitly keep today's behavior.
+        type: boolean
+        default: true
 
 concurrency:
   group: metrics-refresh
@@ -195,6 +206,11 @@ jobs:
     # judgment, not a deterministic diff) — see docs/content-pipeline-rubric.md.
     # Kept as its own PR so a reviewer isn't asked to judge a mechanical value
     # bump and an LLM-consensus content proposal in the same review.
+    #
+    # `if`: schedule runs (no `inputs` context) always run this job; a manual
+    # workflow_dispatch runs it too unless the operator explicitly opts out
+    # via `run_content_pipeline=false` (see the input's own description).
+    if: github.event_name != 'workflow_dispatch' || inputs.run_content_pipeline
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
