@@ -45,6 +45,19 @@ use an import pipeline instead of GitHub's native merge (see rule 85a's "surface
 advertised" pattern). Original F19 text below is struck through, not deleted, so the mistake and
 its correction both stay in the record.
 
+**F14/§6's "pypistats has no dedicated mirror-exclusion filter" claim (below and in §10) was also
+wrong and is retracted.** Re-verified via direct `curl` on 2026-09-23: `GET
+/api/packages/<pkg>/overall?mirrors=false` returns genuine per-day rows tagged
+`"category":"without_mirrors"`, with real numbers distinct from the `with_mirrors` rows — e.g.
+`adk-tracegauge` on 2026-08-16: `with_mirrors` 1,301 vs. `without_mirrors` 409. That endpoint *is*
+a dedicated, official mirror-exclusion filter. What actually has no mirror-exclusion filter is the
+`/recent` endpoint §6's "raw" last-week figures were pulled from: `mirrors=true`, `mirrors=false`,
+and no param all returned the identical `{"last_day":30,"last_month":839,"last_week":589}` for
+`adk-tracegauge`, confirmed by direct curl of all three. §6's "OS-attributed proxy" column was an
+invented workaround for a filter that already existed, natively, on a different endpoint. The PyPI
+truth table's numbers themselves are unchanged by this correction — only the F14 finding's claim
+about filter availability is wrong.
+
 ---
 
 ## 1. Top findings (impact-ranked)
@@ -192,11 +205,11 @@ All fetched fresh via `pypi.org`/`pypistats.org` public JSON APIs, zero cost, 20
 exactly; the **README's** "8 releases, v0.4.1" is confirmed stale (more than half the release count
 behind, 5 minor versions behind).
 
-**Mirror/CI labelling (F14):** pypistats has no dedicated mirror-exclusion filter. 74–82% of
+~~**Mirror/CI labelling (F14):** pypistats has no dedicated mirror-exclusion filter. 74–82% of
 downloads across all three packages fall in the unattributed `null`-OS bucket — a reasonable proxy
 for CI/mirror traffic, but not an official classification. Recommendation: show both raw and
 OS-attributed figures side by side, explicitly labelled; never present either as the verified "real"
-install count.
+install count.~~ **Retracted — see Erratum.**
 
 ---
 
@@ -294,6 +307,6 @@ Deferred per spec.md §7 — **Phase C/D decisions, not blocking Phase B:**
 
 - ~~**The 2 Copybara-landed `google/adk-python` PRs (#6939, #6681).** GitHub's own API shows both as `CLOSED` / `mergedAt: null` forever (Copybara import never flips this). Landed status is sourced to `oss-contrib/CONTRIBUTIONS.md`'s own `git merge-base --is-ancestor` checks — not independently re-run this session (would require cloning/fetching the upstream repo, out of scope for a zero-cost `gh`-only sweep).~~ **Retracted — see Erratum.** Now verified via commit SHA ancestry on the upstream default branch (`023f45c3e5846c3e72525b53f16ef018b5ecdaa6` for #6681, `85e08686f8310e00b2b031a042db86405920b4b2` for #6939), independently re-verified 2026-09-23.
 - **`oss-contrib` ledger's outcome descriptions** for the 5 closed-not-merged PRs (e.g. "closed silently by assignee," "rejected as intentional," "superseded by an independent upstream commit") — cross-checked for state/outcome match only, not independently re-verified narrative-by-narrative this session.
-- **pypistats' "OS-attributed" download figures as a mirror-exclusion proxy.** This is explicitly an approximation (74–82% of traffic is unattributed `null`-OS, a reasonable-but-unofficial proxy for CI/mirror traffic) — pypistats has no dedicated mirror-exclusion endpoint, so this number must never be presented as a verified "real" install count.
+- ~~**pypistats' "OS-attributed" download figures as a mirror-exclusion proxy.** This is explicitly an approximation (74–82% of traffic is unattributed `null`-OS, a reasonable-but-unofficial proxy for CI/mirror traffic) — pypistats has no dedicated mirror-exclusion endpoint, so this number must never be presented as a verified "real" install count.~~ **Retracted — see Erratum.**
 - **The specific trigger for #122's HTTP 403** (believed to be concurrent anonymous `api.github.com` calls across the workflow's 4 parallel jobs tripping GitHub's 60/hour anonymous rate limit) — the 403 itself and the missing `Authorization` header are directly verified; the exact request-volume mechanism was not reproduced.
 - **8 Warmer/mindmeld metric claims in issue #123** — genuinely unverifiable by this audit (private source repo, no credential in scope); flagged as "not covered," not "passing," per the issue's own labelling.
