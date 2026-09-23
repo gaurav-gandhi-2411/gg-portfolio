@@ -64,6 +64,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # PLANTED DEFECT for the relay R1 live proof (test/relay-proof-red) --
+      # do not merge. Guarantees this job's conclusion is `failure`, so the
+      # relay script (dispatched via relay-proof.yml onto this branch) has a
+      # real failing job to relay as a "failure" commit status.
+      - name: Planted failure for relay R1 proof (do not merge)
+        run: exit 1
+
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
