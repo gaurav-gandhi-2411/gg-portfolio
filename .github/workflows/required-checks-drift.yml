@@ -1,0 +1,51 @@
+# Dispatch harness (see relay-proof.yml's header, added in this same commit,
+# for the full reasoning) — this workflow_dispatch-only shell lets
+# scripts/check-required-checks-drift.sh be proven live on an unmerged
+# branch before the branch carrying the script (feat/required-checks-drift)
+# lands. `workflow_dispatch` only works for a workflow file that already
+# exists on the default branch, so this minimal version has to merge to
+# `main` first just to make the workflow ID dispatchable at all — after
+# that, `gh workflow run required-checks-drift.yml --ref <branch>` runs
+# THAT branch's version of both this file and the script (unlike
+# relay-proof.yml, this has no separate `ref` input — its checkout step
+# below has no explicit `ref:`, so it always resolves to whichever ref the
+# dispatch itself targeted).
+#
+# Inert on `main` right now in the sense that matters: this workflow can be
+# dispatched today, but scripts/check-required-checks-drift.sh and
+# .github/required-checks.json don't exist on `main` yet (they land in
+# fix/relay-config-driven-v2 and feat/required-checks-drift) — a dispatch
+# with `--ref main` fails on "file not found," and that is the expected,
+# correct outcome, not a bug. Dispatch with `--ref feat/required-checks-drift`
+# (or any branch built on it) to exercise the real script.
+#
+# No `schedule:` trigger yet — feat/required-checks-drift adds that back
+# once the script it needs to run daily is real. Scheduled triggers only
+# ever fire from the version of the workflow file on the default branch, so
+# adding `schedule:` here before the script exists would just be a
+# guaranteed-red cron job with nothing to fix it until the next branch
+# lands anyway.
+
+name: Required checks drift
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: required-checks-drift
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check required-checks config against live branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/check-required-checks-drift.sh
