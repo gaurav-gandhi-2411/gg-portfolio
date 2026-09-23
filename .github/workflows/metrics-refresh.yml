@@ -92,13 +92,22 @@ jobs:
         env:
           SUMMARY_PATH: /tmp/metrics-summary.md
           NEW_REPOS_PATH: /tmp/new-repos.json
-          # Repo variable, not a secret — read by scripts/refresh-metrics.mjs
-          # to exclude repos from the new-repo-discovery check without
-          # naming them anywhere in this public repo (owner decision D3).
-          # Comma-separated repo names. `gh variable list` to confirm what's
-          # set; missing/empty = no exclusions, and the script logs that
-          # fact (count only, never names) rather than staying silent.
-          PORTFOLIO_EXCLUDED_REPOS: ${{ vars.PORTFOLIO_EXCLUDED_REPOS }}
+          # A REPOSITORY SECRET, not a repo variable — read by
+          # scripts/refresh-metrics.mjs to exclude repos from the
+          # new-repo-discovery check without naming them anywhere in this
+          # public repo (owner decision D3). Comma-separated repo names.
+          # Deliberately a secret rather than `vars.*`: GitHub Actions
+          # auto-masks `secrets.*` values in every log (including this
+          # step's own auto-echoed `env:` block, the same place `GH_TOKEN`
+          # shows as `***`) but does NOT mask `vars.*` — a first attempt at
+          # this using `vars.PORTFOLIO_EXCLUDED_REPOS` printed both names in
+          # plaintext in this workflow's own public Actions log the moment
+          # it ran, defeating the entire point of not committing them.
+          # `gh secret list` to confirm what's set (value itself is never
+          # readable back); missing/empty = no exclusions, and the script
+          # logs that fact (count only, never names) rather than staying
+          # silent.
+          PORTFOLIO_EXCLUDED_REPOS: ${{ secrets.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
       - name: Open PR if anything changed
