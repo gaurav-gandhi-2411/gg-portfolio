@@ -61,6 +61,9 @@ permissions:
   pull-requests: write
   actions: write # to dispatch ci.yml onto the PR branch (see below)
   issues: write # wave 19 fix — see header comment; was silently missing
+  statuses: write # to relay the dispatched ci.yml run's result as a commit
+    # status branch protection will actually see — see
+    # scripts/relay-dispatched-ci-status.sh's header for why this is needed
 
 jobs:
   refresh:
@@ -115,6 +118,10 @@ jobs:
           # explicitly — the check run lands on the same SHA the PR points
           # at, which satisfies branch protection.
           gh workflow run ci.yml --ref "$BRANCH"
+          # ...but a dispatched run still doesn't register against branch
+          # protection's required-status-check bookkeeping on its own — see
+          # scripts/relay-dispatched-ci-status.sh's header for the mechanism.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
       # Wave 14: new-repo discovery doesn't change any tracked file (it's
       # "GG published something and didn't tell us," not a value drift), so
@@ -216,6 +223,8 @@ jobs:
           # job above — PRs opened with GITHUB_TOKEN don't trigger
           # pull_request-triggered workflows, so dispatch ci.yml explicitly.
           gh workflow run ci.yml --ref "$BRANCH"
+          # Same required-status-check relay as the refresh job above.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
   identity-drift:
     # Wave 16 — pure deterministic fact-check, no LLM: does the README still
@@ -269,6 +278,8 @@ jobs:
           # job above — PRs opened with GITHUB_TOKEN don't trigger
           # pull_request-triggered workflows, so dispatch ci.yml explicitly.
           gh workflow run ci.yml --ref "$BRANCH"
+          # Same required-status-check relay as the refresh job above.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
       # A README rename is a real content decision, but the PR above is a
       # weekly-rotating chore branch that can sit unmerged (or unaddressed)
