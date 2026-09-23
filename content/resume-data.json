@@ -1,5 +1,5 @@
 {
-  "_readme": "Bullet-level resume content, separated from layout (scripts/build_resume.mjs + scripts/lib/resume-layout.mjs render this). Extracted from the master docx (.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx, gitignored) 2026-08-01, cross-referenced against content/provenance.md and content/metrics.json for project metrics. text_runs omit the leading bullet glyph and trailing tab/date formatting present in the source docx — those are layout, added by the renderer, not content. 5 project entries (shelfsense, reclaim, agentgauge, expense-tracker, adk-tracegauge) are NOT in the current docx; they're added here, in the same voice/format as the existing project bullets, sourced entirely to already-verified case-study/metrics.json content, so the variant selector has the full 14-project pool to choose from rather than only the 9 the static resume already features. adk-tracegauge added 2026-08-20, after content/products.ts grew a 14th product and this pool's own count went stale against it (see scripts/check-resume-project-coverage.mjs). Flagged explicitly in reports/resume-variants-build-2026-08-01.md.",
+  "_readme": "Bullet-level resume content, separated from layout (scripts/build_resume.mjs + scripts/lib/resume-layout.mjs render this). Extracted from the master docx (.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx, gitignored) 2026-08-01, cross-referenced against content/provenance.md and content/metrics.json for project metrics. text_runs omit the leading bullet glyph and trailing tab/date formatting present in the source docx — those are layout, added by the renderer, not content. 5 project entries (shelfsense, reclaim, agentgauge, expense-tracker, adk-tracegauge) are NOT in the current docx; they're added here, in the same voice/format as the existing project bullets, sourced entirely to already-verified case-study/metrics.json content, so the variant selector has the full 14-project pool to choose from rather than only the 9 the static resume already features. adk-tracegauge added 2026-08-20, after content/products.ts grew a 14th product and this pool's own count went stale against it (see scripts/check-resume-project-coverage.mjs). eval-defect-bench added 2026-09-23 (F12), same reason, for the same check, after content/products.ts grew a 15th product. Flagged explicitly in reports/resume-variants-build-2026-08-01.md.",
   "entries": [
     {
       "id": "header:name",
@@ -799,6 +799,32 @@
       "technical_depth": 2,
       "metric_strength": 2,
       "headline_metric": "Supabase auth, per-user isolation"
+    },
+    {
+      "id": "proj:eval-defect-bench",
+      "section": "project",
+      "company": null,
+      "project": "eval-defect-bench",
+      "text_runs": [
+        {
+          "text": "eval-defect-bench — benchmark for silent-verdict-degradation bugs in agent-evaluation code — Built a frozen 60-record benchmark (30 real merged bug-fix commits + 30 verified-untouched controls from google/adk-python) and tested 3 independent detectors (AST scanner, local Ollama LLM consensus, frontier-model judge) against 2 pre-registered viability gates; none passed either gate, published as a reusable negative result rather than a shipped detector.",
+          "bold": false
+        }
+      ],
+      "tags": [
+        "evals-research",
+        "experimentation"
+      ],
+      "priority": 4,
+      "verified_source": "NOT in current docx — added 2026-09-23, after the docx extraction date. content/case-studies/eval-defect-bench.ts; content/provenance.md's eval-defect-bench section (source: gaurav-gandhi-2411/eval-defect-bench README.md, fetched via gh api)",
+      "surface": "repo_only",
+      "artifact_url": null,
+      "research_status": null,
+      "demo_quality": 1,
+      "role_relevance": 4,
+      "technical_depth": 4,
+      "metric_strength": 3,
+      "headline_metric": "0/3 detectors passed the pre-registered gate"
     },
     {
       "id": "skills:llm-genai",
