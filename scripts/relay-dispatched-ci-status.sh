@@ -63,6 +63,30 @@ fi
 # failure status) rather than treat as a reason to abort early.
 gh run watch "$RUN_ID" --repo "$REPO" --exit-status || true
 
+# Bug fix (2026-09-23 operational test, PR #124): this used to read straight
+# from `< <(gh run view ... --jq ...)` — a process substitution. `set -e`
+# does NOT see failures inside a process substitution; if that `gh run view`
+# call hit a transient hiccup (e.g. the run API not yet reflecting per-job
+# conclusions in the instant right after `gh run watch` reports completion)
+# it silently produced zero lines, the while loop below ran zero iterations,
+# and the whole script exited 0 having posted nothing — a real dispatch
+# (run 35826364013) did exactly this: build/e2e both genuinely passed, but
+# no commit status was ever posted and no error appeared anywhere in the
+# log. Capturing into a variable first, with a retry, makes a transient miss
+# recoverable and a persistent one loud (rule 98a: "couldn't verify" must
+# fail closed, not silently pass).
+JOBS_TSV=""
+for _ in $(seq 1 5); do
+  JOBS_TSV=$(gh run view "$RUN_ID" --repo "$REPO" --json jobs --jq '.jobs[] | [.name, .conclusion] | @tsv')
+  [ -n "$JOBS_TSV" ] && break
+  sleep 5
+done
+
+if [ -z "$JOBS_TSV" ]; then
+  echo "::error::gh run view $RUN_ID returned no jobs after the run completed — cannot relay build/e2e status for $BRANCH@$SHA. Required checks will stay unregistered; branch protection will block this PR until this is retried."
+  exit 1
+fi
+
 while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
   MATCHED=false
   while IFS= read -r CONTEXT; do
@@ -80,4 +104,4 @@ while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
     -f target_url="https://github.com/$REPO/actions/runs/$RUN_ID" \
     >/dev/null
   echo "Relayed $JOB_NAME=$STATE for $SHA (source run $RUN_ID)"
-done < <(gh run view "$RUN_ID" --repo "$REPO" --json jobs --jq '.jobs[] | [.name, .conclusion] | @tsv')
+done <<<"$JOBS_TSV"
