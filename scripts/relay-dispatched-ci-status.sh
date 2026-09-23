@@ -25,37 +25,98 @@
 # contexts, which means branch protection accepts a plain status from any
 # source as satisfying the check — it does not require the status/check-run
 # to come from the same GitHub App identity as the original `pull_request`-
-# triggered run. Reads the required context list from branch protection at
-# call time rather than hardcoding ["build","e2e"], so this keeps working if
-# the required checks ever change.
+# triggered run.
+#
+# History — three failed attempts, all silent:
+#   1. Original version read required contexts live from `gh api
+#      repos/OWNER/REPO/branches/main/protection`. That endpoint needs admin;
+#      GITHUB_TOKEN inside Actions cannot read it, and `gh api ... --jq`
+#      writes the HTTP error BODY to stdout even when --jq is given, so a 403
+#      became a single non-empty JSON line. It passed an `[ -z "$CONTEXTS" ]`
+#      emptiness check, matched nothing against real job names, and the
+#      script exited 0 having posted no statuses at all (rule 98a: a
+#      "couldn't verify" response was treated as data, not a denial).
+#   2. A branch (`fix/relay-required-contexts`, unmerged) replaced that read
+#      with a `RELAY_REQUIRED_CONTEXTS` env var the caller had to set and
+#      keep in sync with branch protection by hand — a second place to edit
+#      every time the required checks change, with no enforcement that the
+#      two stay matched.
+#   3. This version: required contexts are read from a checked-in config
+#      file, `.github/required-checks.json` — one file, versioned, reviewable
+#      in the same PR as any branch-protection change. This script no longer
+#      touches branch protection at all (live or cross-check); a separate
+#      scheduled job, .github/workflows/required-checks-drift.yml (which CAN
+#      read branch protection, via GET /branches/main rather than the
+#      admin-only /branches/main/protection sub-resource), is the thing that
+#      keeps the config file honest.
 #
 # Usage: relay-dispatched-ci-status.sh <branch>
 # Preconditions: currently checked out on <branch> with the SHA to relay as
-# HEAD; GH_TOKEN in env with `actions: write` and `statuses: write`.
+# HEAD; GH_TOKEN in env with `actions: write` and `statuses: write`;
+# .github/required-checks.json present and valid (relative to this script's
+# own directory, not the caller's cwd).
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="$SCRIPT_DIR/../.github/required-checks.json"
+CONTEXT_RE='^[A-Za-z0-9 ._/-]+$'
 
 BRANCH="${1:?usage: relay-dispatched-ci-status.sh <branch>}"
 SHA=$(git rev-parse HEAD)
 REPO="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY must be set (set automatically inside GitHub Actions)}"
 
-CONTEXTS=$(gh api "repos/$REPO/branches/main/protection" --jq '.required_status_checks.contexts[]?' 2>/dev/null || true)
-if [ -z "$CONTEXTS" ]; then
-  echo "::warning::Could not read required status check contexts for main — skipping CI-status relay for $BRANCH@$SHA."
-  exit 0
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "::error::Required-checks config not found at $CONFIG_FILE -- cannot determine which contexts to relay."
+  exit 1
 fi
 
+if ! CONFIG_JSON=$(jq -c '.' "$CONFIG_FILE" 2>&1); then
+  echo "::error::$CONFIG_FILE did not parse as JSON: $CONFIG_JSON"
+  exit 1
+fi
+
+CONTEXTS_TYPE=$(printf '%s' "$CONFIG_JSON" | jq -r '.contexts | type')
+if [ "$CONTEXTS_TYPE" != "array" ]; then
+  echo "::error::$CONFIG_FILE's .contexts must be a JSON array of strings (got: $CONTEXTS_TYPE)."
+  exit 1
+fi
+
+CONTEXTS=$(printf '%s' "$CONFIG_JSON" | jq -r '.contexts[]?')
+if [ -z "$CONTEXTS" ]; then
+  echo "::error::$CONFIG_FILE's .contexts array is empty -- refusing to relay with no required checks named."
+  exit 1
+fi
+
+while IFS= read -r CONTEXT; do
+  if ! [[ "$CONTEXT" =~ $CONTEXT_RE ]]; then
+    echo "::error::$CONFIG_FILE contains an invalid context name: '$CONTEXT' (expected letters/digits/spaces/._/- only) -- refusing to use it."
+    exit 1
+  fi
+done <<<"$CONTEXTS"
+
+echo "Required contexts (from $CONFIG_FILE): $(printf '%s' "$CONTEXTS" | tr '\n' ',' | sed 's/,$//')"
+
+# Retry loop: `gh run list` can transiently miss the dispatched run before
+# GitHub's API reflects it. Captured via `&&`/`||` rather than a bare
+# assignment so a `gh` failure doesn't trip `set -e` mid-loop (which would
+# abort on the first transient miss instead of retrying) while still being
+# loud about the last failure if every attempt is exhausted.
 RUN_ID=""
+LAST_RUN_LIST_ERR=""
 for _ in $(seq 1 30); do
   RUN_ID=$(gh run list --repo "$REPO" --workflow ci.yml --branch "$BRANCH" \
     --event workflow_dispatch --limit 5 --json databaseId,headSha \
-    --jq "[.[] | select(.headSha == \"$SHA\")][0].databaseId // empty")
+    --jq "[.[] | select(.headSha == \"$SHA\")][0].databaseId // empty" 2>&1) && LAST_RUN_LIST_ERR="" || {
+    LAST_RUN_LIST_ERR="$RUN_ID"
+    RUN_ID=""
+  }
   [ -n "$RUN_ID" ] && break
   sleep 5
 done
 
 if [ -z "$RUN_ID" ]; then
-  echo "::warning::No workflow_dispatch ci.yml run found for $BRANCH@$SHA within 150s — required checks will stay unregistered for this PR."
-  exit 0
+  echo "::error::No workflow_dispatch ci.yml run found for $BRANCH@$SHA within 150s -- required checks will stay unregistered for this PR.${LAST_RUN_LIST_ERR:+ Last gh error: $LAST_RUN_LIST_ERR}"
+  exit 1
 fi
 
 # Block until the dispatched run finishes. `|| true`: a failing CI run is a
@@ -76,17 +137,26 @@ gh run watch "$RUN_ID" --repo "$REPO" --exit-status || true
 # recoverable and a persistent one loud (rule 98a: "couldn't verify" must
 # fail closed, not silently pass).
 JOBS_TSV=""
+LAST_RUN_VIEW_ERR=""
 for _ in $(seq 1 5); do
-  JOBS_TSV=$(gh run view "$RUN_ID" --repo "$REPO" --json jobs --jq '.jobs[] | [.name, .conclusion] | @tsv')
+  JOBS_TSV=$(gh run view "$RUN_ID" --repo "$REPO" --json jobs --jq '.jobs[] | [.name, .conclusion] | @tsv' 2>&1) && LAST_RUN_VIEW_ERR="" || {
+    LAST_RUN_VIEW_ERR="$JOBS_TSV"
+    JOBS_TSV=""
+  }
   [ -n "$JOBS_TSV" ] && break
   sleep 5
 done
 
 if [ -z "$JOBS_TSV" ]; then
-  echo "::error::gh run view $RUN_ID returned no jobs after the run completed — cannot relay build/e2e status for $BRANCH@$SHA. Required checks will stay unregistered; branch protection will block this PR until this is retried."
+  echo "::error::gh run view $RUN_ID returned no jobs after the run completed — cannot relay build/e2e status for $BRANCH@$SHA. Required checks will stay unregistered; branch protection will block this PR until this is retried.${LAST_RUN_VIEW_ERR:+ Last gh error: $LAST_RUN_VIEW_ERR}"
   exit 1
 fi
 
+JOB_NAMES_SEEN=$(printf '%s\n' "$JOBS_TSV" | cut -f1 | tr '\n' ',' | sed 's/,$//')
+
+POSTED_COUNT=0
+ANY_FAILURE=false
+MATCHED_CONTEXTS=""
 while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
   MATCHED=false
   while IFS= read -r CONTEXT; do
@@ -95,13 +165,52 @@ while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
   [ "$MATCHED" = true ] || continue
 
   STATE="failure"
-  [ "$JOB_CONCLUSION" = "success" ] && STATE="success"
+  if [ "$JOB_CONCLUSION" = "success" ]; then
+    STATE="success"
+  else
+    ANY_FAILURE=true
+  fi
 
-  gh api "repos/$REPO/statuses/$SHA" \
+  if ! POST_ERR=$(gh api "repos/$REPO/statuses/$SHA" \
     -f state="$STATE" \
     -f context="$JOB_NAME" \
     -f description="Relayed from workflow_dispatch run (bot-PR required-check workaround)" \
-    -f target_url="https://github.com/$REPO/actions/runs/$RUN_ID" \
-    >/dev/null
+    -f target_url="https://github.com/$REPO/actions/runs/$RUN_ID" 2>&1); then
+    echo "::error::Failed to post commit status for $JOB_NAME=$STATE on $SHA: $POST_ERR"
+    exit 1
+  fi
+
+  POSTED_COUNT=$((POSTED_COUNT + 1))
+  MATCHED_CONTEXTS="$MATCHED_CONTEXTS
+$JOB_NAME"
   echo "Relayed $JOB_NAME=$STATE for $SHA (source run $RUN_ID)"
 done <<<"$JOBS_TSV"
+
+if [ "$POSTED_COUNT" -eq 0 ]; then
+  echo "::error::Posted zero commit statuses for $BRANCH@$SHA. Required contexts: $(printf '%s' "$CONTEXTS" | tr '\n' ',' | sed 's/,$//'). Job names seen in run $RUN_ID: $JOB_NAMES_SEEN. Branch protection will block this PR until this is retried."
+  exit 1
+fi
+
+# Every required context has to have actually matched a job in this run —
+# a context present in the config but absent from the run's job names would
+# otherwise silently leave that one check unregistered while the script
+# still exits 0 because *some* statuses posted.
+MISSING=""
+while IFS= read -r CONTEXT; do
+  [ -z "$CONTEXT" ] && continue
+  if ! printf '%s\n' "$MATCHED_CONTEXTS" | grep -qx "$CONTEXT"; then
+    MISSING="$MISSING $CONTEXT"
+  fi
+done <<<"$CONTEXTS"
+
+if [ -n "$MISSING" ]; then
+  echo "::error::Required context(s) not found among run $RUN_ID's job names ($JOB_NAMES_SEEN), so were never posted:$MISSING"
+  exit 1
+fi
+
+if [ "$ANY_FAILURE" = true ]; then
+  echo "::error::At least one relayed status was 'failure' for $BRANCH@$SHA -- see the Relayed lines above for which."
+  exit 1
+fi
+
+echo "All required contexts relayed successfully for $BRANCH@$SHA."
