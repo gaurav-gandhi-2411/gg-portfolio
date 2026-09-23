@@ -97,6 +97,10 @@ jobs:
       - name: Open PR if anything changed
         env:
           GH_TOKEN: ${{ github.token }}
+          # Must mirror main's required_status_checks.contexts (branch
+          # protection) -- see scripts/relay-dispatched-ci-status.sh's header
+          # for why this can't just be read live from the API instead.
+          RELAY_REQUIRED_CONTEXTS: "build,e2e"
         run: |
           BRANCH="chore/metrics-refresh"
 
@@ -231,6 +235,10 @@ jobs:
       - name: Open PR if any proposal passed all three stages
         env:
           GH_TOKEN: ${{ github.token }}
+          # Must mirror main's required_status_checks.contexts (branch
+          # protection) -- see scripts/relay-dispatched-ci-status.sh's header
+          # for why this can't just be read live from the API instead.
+          RELAY_REQUIRED_CONTEXTS: "build,e2e"
         run: |
           BRANCH="chore/content-pipeline"
 
@@ -305,6 +313,10 @@ jobs:
       - name: Open PR if anything drifted
         env:
           GH_TOKEN: ${{ github.token }}
+          # Must mirror main's required_status_checks.contexts (branch
+          # protection) -- see scripts/relay-dispatched-ci-status.sh's header
+          # for why this can't just be read live from the API instead.
+          RELAY_REQUIRED_CONTEXTS: "build,e2e"
         run: |
           BRANCH="chore/identity-drift"
 

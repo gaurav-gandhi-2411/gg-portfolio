@@ -25,23 +25,90 @@
 # contexts, which means branch protection accepts a plain status from any
 # source as satisfying the check — it does not require the status/check-run
 # to come from the same GitHub App identity as the original `pull_request`-
-# triggered run. Reads the required context list from branch protection at
-# call time rather than hardcoding ["build","e2e"], so this keeps working if
-# the required checks ever change.
+# triggered run.
+#
+# Bug fix (2026-09-23, live run 35839553875, bot PR #216): required contexts
+# used to come from a live `gh api .../branches/main/protection` read. Inside
+# Actions, GITHUB_TOKEN almost certainly cannot read branch protection (that
+# endpoint needs admin) — and `gh api ... --jq` writes the HTTP error BODY to
+# stdout even when --jq is given, so a 403 became a single non-empty JSON
+# line ('{"message":"Resource not accessible by integration",...}'). That
+# line passed the old `[ -z "$CONTEXTS" ]` emptiness check, the job-name
+# match loop below matched nothing against it, and the script exited 0
+# having posted no statuses at all — silent, not loud (rule 98a: "couldn't
+# verify" must fail closed, never be treated as data). Required contexts now
+# come from RELAY_REQUIRED_CONTEXTS, a plain comma-separated env var set by
+# the caller (metrics-refresh.yml) — keep it in sync with `main`'s
+# required_status_checks.contexts by hand. The old branch-protection read is
+# kept below, but only as a best-effort cross-check that warns on drift; a
+# malformed or unreadable response is logged and otherwise ignored, never
+# substituted in as the real context list.
 #
 # Usage: relay-dispatched-ci-status.sh <branch>
 # Preconditions: currently checked out on <branch> with the SHA to relay as
-# HEAD; GH_TOKEN in env with `actions: write` and `statuses: write`.
+# HEAD; GH_TOKEN in env with `actions: write` and `statuses: write`;
+# RELAY_REQUIRED_CONTEXTS set (comma-separated, e.g. "build,e2e").
 set -euo pipefail
 
 BRANCH="${1:?usage: relay-dispatched-ci-status.sh <branch>}"
 SHA=$(git rev-parse HEAD)
 REPO="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY must be set (set automatically inside GitHub Actions)}"
 
-CONTEXTS=$(gh api "repos/$REPO/branches/main/protection" --jq '.required_status_checks.contexts[]?' 2>/dev/null || true)
+# A valid context name is letters/digits/spaces/._/- only. Anything starting
+# with `{` is unambiguously not a context name — it's the shape of a JSON
+# error body, which is exactly what a permission-denied API response looks
+# like once fed through this script's old (buggy) path.
+CONTEXT_RE='^[A-Za-z0-9 ._/-]+$'
+
+# NOTE: a literal apostrophe inside a ${VAR:?word} default-message breaks
+# bash's parser even though the whole expression is double-quoted (word
+# undergoes quote removal too, so a lone `'` here reads as an unterminated
+# single-quoted string) -- keep this message apostrophe-free.
+REQUIRED_RAW="${RELAY_REQUIRED_CONTEXTS:?RELAY_REQUIRED_CONTEXTS must be set (comma-separated required context names, e.g. build,e2e) -- see the header comment above}"
+CONTEXTS=$(printf '%s' "$REQUIRED_RAW" | tr ',' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | sed '/^$/d')
+
 if [ -z "$CONTEXTS" ]; then
-  echo "::warning::Could not read required status check contexts for main — skipping CI-status relay for $BRANCH@$SHA."
-  exit 0
+  echo "::error::RELAY_REQUIRED_CONTEXTS ('$REQUIRED_RAW') did not contain any context names after parsing."
+  exit 1
+fi
+
+while IFS= read -r CONTEXT; do
+  if [[ "$CONTEXT" == \{* ]] || ! [[ "$CONTEXT" =~ $CONTEXT_RE ]]; then
+    echo "::error::RELAY_REQUIRED_CONTEXTS contains an invalid context name: '$CONTEXT' (expected letters/digits/spaces/._/- only) -- refusing to use it."
+    exit 1
+  fi
+done <<<"$CONTEXTS"
+
+echo "Required contexts (from RELAY_REQUIRED_CONTEXTS): $(printf '%s' "$CONTEXTS" | tr '\n' ',' | sed 's/,$//')"
+
+# Best-effort cross-check only — never authoritative. GITHUB_TOKEN inside
+# Actions is expected not to be able to read branch protection; a clean
+# response that disagrees with RELAY_REQUIRED_CONTEXTS is worth a warning,
+# anything else (error body, empty, malformed) is logged and ignored.
+PROTECTION_EXIT=0
+PROTECTION_RAW=$(gh api "repos/$REPO/branches/main/protection" --jq '.required_status_checks.contexts[]?' 2>&1) || PROTECTION_EXIT=$?
+echo "Branch protection cross-check: gh api exit=$PROTECTION_EXIT"
+
+PROTECTION_CLEAN=true
+if [ "$PROTECTION_EXIT" -ne 0 ] || [ -z "$PROTECTION_RAW" ]; then
+  PROTECTION_CLEAN=false
+else
+  while IFS= read -r LINE; do
+    if [[ "$LINE" == \{* ]] || ! [[ "$LINE" =~ $CONTEXT_RE ]]; then
+      PROTECTION_CLEAN=false
+      break
+    fi
+  done <<<"$PROTECTION_RAW"
+fi
+
+if [ "$PROTECTION_CLEAN" = true ]; then
+  if [ "$(printf '%s' "$PROTECTION_RAW" | sort)" != "$(printf '%s' "$CONTEXTS" | sort)" ]; then
+    echo "::warning::Branch protection's live required contexts ($(printf '%s' "$PROTECTION_RAW" | tr '\n' ',' | sed 's/,$//')) differ from RELAY_REQUIRED_CONTEXTS ($REQUIRED_RAW) -- update the workflow's env var to match."
+  else
+    echo "Branch protection cross-check agrees with RELAY_REQUIRED_CONTEXTS."
+  fi
+else
+  echo "Branch protection cross-check was not a clean list of context names (expected — GITHUB_TOKEN inside Actions cannot read branch protection); raw response: $PROTECTION_RAW"
 fi
 
 RUN_ID=""
@@ -54,8 +121,8 @@ for _ in $(seq 1 30); do
 done
 
 if [ -z "$RUN_ID" ]; then
-  echo "::warning::No workflow_dispatch ci.yml run found for $BRANCH@$SHA within 150s — required checks will stay unregistered for this PR."
-  exit 0
+  echo "::error::No workflow_dispatch ci.yml run found for $BRANCH@$SHA within 150s -- required checks will stay unregistered for this PR."
+  exit 1
 fi
 
 # Block until the dispatched run finishes. `|| true`: a failing CI run is a
@@ -87,6 +154,9 @@ if [ -z "$JOBS_TSV" ]; then
   exit 1
 fi
 
+JOB_NAMES_SEEN=$(printf '%s\n' "$JOBS_TSV" | cut -f1 | tr '\n' ',' | sed 's/,$//')
+
+POSTED_COUNT=0
 while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
   MATCHED=false
   while IFS= read -r CONTEXT; do
@@ -103,5 +173,11 @@ while IFS=$'\t' read -r JOB_NAME JOB_CONCLUSION; do
     -f description="Relayed from workflow_dispatch run (bot-PR required-check workaround)" \
     -f target_url="https://github.com/$REPO/actions/runs/$RUN_ID" \
     >/dev/null
+  POSTED_COUNT=$((POSTED_COUNT + 1))
   echo "Relayed $JOB_NAME=$STATE for $SHA (source run $RUN_ID)"
 done <<<"$JOBS_TSV"
+
+if [ "$POSTED_COUNT" -eq 0 ]; then
+  echo "::error::Posted zero commit statuses for $BRANCH@$SHA. Required contexts: $(printf '%s' "$CONTEXTS" | tr '\n' ',' | sed 's/,$//'). Job names seen in run $RUN_ID: $JOB_NAMES_SEEN. Branch protection will block this PR until this is retried."
+  exit 1
+fi
