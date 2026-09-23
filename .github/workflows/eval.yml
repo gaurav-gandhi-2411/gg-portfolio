@@ -36,12 +36,28 @@ on:
       - "app/api/chat/**"
       - "lib/chatbot/**"
       - "evals/chatbot/**"
+      # content/** feeds the index the chatbot retrieves from, so a copy change
+      # alters retrieval. Without this, a copy pass or a new project changed what
+      # the chatbot could answer and fired no eval at all: the filter was
+      # narrower than its subject, which made the exemption wider than anyone
+      # intended. scripts/check-eval-trigger-covers-index-sources.mjs compares
+      # this list against what build-index.mjs actually reads, on every CI run,
+      # so the next source added cannot drift out of it in silence.
+      - "content/**"
   pull_request:
     branches: [main]
     paths:
       - "app/api/chat/**"
       - "lib/chatbot/**"
       - "evals/chatbot/**"
+      # content/** feeds the index the chatbot retrieves from, so a copy change
+      # alters retrieval. Without this, a copy pass or a new project changed what
+      # the chatbot could answer and fired no eval at all: the filter was
+      # narrower than its subject, which made the exemption wider than anyone
+      # intended. scripts/check-eval-trigger-covers-index-sources.mjs compares
+      # this list against what build-index.mjs actually reads, on every CI run,
+      # so the next source added cannot drift out of it in silence.
+      - "content/**"
   workflow_dispatch:
 
 concurrency:

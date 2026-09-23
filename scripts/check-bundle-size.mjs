@@ -68,14 +68,64 @@
 // to block a PR.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { platform } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE_URL = process.env.BASE_URL_OVERRIDE ?? "http://localhost:3000";
-const ROUTE = process.env.ROUTE_OVERRIDE ?? "/";
+/**
+ * Routes measured, and why more than one.
+ *
+ * This defaulted to "/" alone, so every other route was exempt by omission.
+ * That is how 52,795 bytes of eager JS stayed invisible: the wave imported GSAP
+ * and Lenis from the root layout, which loads on every route, and the gate only
+ * ever asked the home page. A route-type the gate never visits cannot regress
+ * as far as the gate is concerned.
+ *
+ * Four route shapes, one per kind the app actually has: the home page, the
+ * grid, a case study, and the chat surface. The case study is derived from the
+ * case-studies directory rather than named here, so adding or renaming projects
+ * cannot leave this pointing at a route that no longer exists.
+ *
+ * ROUTE_OVERRIDE still measures exactly one route, for probing a single page.
+ */
+function representativeRoutes() {
+  const fixed = ["/", "/projects", "/ask"];
+  let caseStudy = null;
+  try {
+    const dir = join(ROOT, "content", "case-studies");
+    const slugs = readdirSync(dir)
+      .filter((f) => f.endsWith(".ts") && f !== "index.ts")
+      .map((f) => f.slice(0, -3))
+      .sort();
+    if (slugs.length > 0) caseStudy = `/work/${slugs[0]}`;
+  } catch {
+    /* reported below rather than silently dropped */
+  }
+  return { routes: caseStudy ? [...fixed, caseStudy] : fixed, caseStudyFound: Boolean(caseStudy) };
+}
+
+/**
+ * How many routes the site has in total, so the sample is stated as a fraction
+ * rather than implied to be everything. Coverage loss then shows as a number
+ * moving, which is the property check-metric-freshness.mjs has and this did not.
+ */
+function totalRouteCount() {
+  try {
+    const src = readFileSync(join(ROOT, "app", "sitemap.ts"), "utf8");
+    const caseStudies = readdirSync(join(ROOT, "content", "case-studies")).filter(
+      (f) => f.endsWith(".ts") && f !== "index.ts"
+    ).length;
+    const categories = (src.match(/CATEGORIES/g) || []).length > 0 ? null : 0;
+    return { caseStudies, categoriesUnknown: categories === null };
+  } catch {
+    return { caseStudies: 0, categoriesUnknown: true };
+  }
+}
+
+const ROUTE_OVERRIDE = process.env.ROUTE_OVERRIDE ?? null;
 const BUILD_MANIFEST_PATH = process.env.BUILD_MANIFEST_PATH_OVERRIDE ?? join(ROOT, ".next", "build-manifest.json");
 
 // Ceiling: reports/wave3-budget-reratification-2026-07-13.md. 215 KiB =
@@ -188,30 +238,21 @@ async function fetchServedChunkPaths(baseUrl, route) {
   return new Set(relative);
 }
 
-async function main() {
-  console.log(`scripts/check-bundle-size.mjs: route=${ROUTE} base=${BASE_URL}`);
-
-  let manifest;
-  try {
-    assertCurlAvailable();
-    manifest = loadManifest();
-  } catch (err) {
-    console.error(`\nFAIL — ${err.state}: ${err.message}`);
-    process.exitCode = 1;
-    return;
-  }
-
-  const manifestEagerChunks = [...manifest.rootMainFiles, ...manifest.polyfillFiles];
-
+/**
+ * Measures one route. Returns {route, total, ok, reason} rather than setting
+ * process.exitCode itself, so the caller can measure every route and report all
+ * of them: a gate that stopped at the first failure would tell you one route is
+ * over and leave the others unmeasured, which is the same shape of partial
+ * coverage this change exists to remove.
+ */
+async function measureRoute(route, manifest, manifestEagerChunks) {
   let servedChunks;
   try {
-    servedChunks = await fetchServedChunkPaths(BASE_URL, ROUTE);
+    servedChunks = await fetchServedChunkPaths(BASE_URL, route);
   } catch (err) {
-    console.error(`\nFAIL — ${err.state}: ${err.message}`);
-    process.exitCode = 1;
-    return;
+    return { route, total: 0, ok: false, reason: `${err.state}: ${err.message}` };
   }
-  console.log(`${ROUTE} served ${servedChunks.size} script/preload chunk(s) — this is the set being summed`);
+  console.log(`  ${route}: served ${servedChunks.size} script/preload chunk(s), this is the set being summed`);
 
   // Cross-check: every chunk the manifest calls "loaded on every route"
   // must actually appear in what THIS route served — a manifest/reality
@@ -221,11 +262,10 @@ async function main() {
   if (missingFromHtml.length > 0) {
     console.error(
       `\nFAIL — MANIFEST_HTML_MISMATCH: build-manifest.json lists ${missingFromHtml.length} eager chunk(s) not ` +
-        `found in ${ROUTE}'s actual served <script>/<link preload> tags: ${missingFromHtml.join(", ")} — the ` +
+        `found in ${route}'s actual served <script>/<link preload> tags: ${missingFromHtml.join(", ")} — the ` +
         "manifest and the live server disagree about what ships; investigate before trusting either total."
     );
-    process.exitCode = 1;
-    return;
+    return { route, total: 0, ok: false, reason: "MANIFEST_HTML_MISMATCH" };
   }
 
   const polyfillSet = new Set(manifest.polyfillFiles);
@@ -240,9 +280,7 @@ async function main() {
       breakdown.push({ chunk, bytes, isPolyfill: polyfillSet.has(chunk), isRoot: manifest.rootMainFiles.includes(chunk) });
     }
   } catch (err) {
-    console.error(`\nFAIL — ${err.state}: ${err.message}`);
-    process.exitCode = 1;
-    return;
+    return { route, total: 0, ok: false, reason: `${err.state}: ${err.message}` };
   }
 
   // The explicit, named assertion this script's header promises: a total
@@ -256,8 +294,7 @@ async function main() {
         "reference: 39,627 bytes) — this is the same shape as the 2026-07-12 wave-2 bug: a total that silently " +
         "omits the core-js polyfill's real weight."
     );
-    process.exitCode = 1;
-    return;
+    return { route, total, ok: false, reason: "POLYFILL_MISSING" };
   }
 
   breakdown.sort((a, b) => b.bytes - a.bytes);
@@ -267,22 +304,74 @@ async function main() {
     console.log(`  [${tag.padEnd(8)}] ${String(b.bytes).padStart(7)} bytes  ${b.chunk}`);
   }
 
-  const deltaFromBaseline = total - BASELINE_BYTES;
   const headroom = CEILING_BYTES - total;
-  console.log(`\nTotal: ${total} bytes gzip (baseline ${BASELINE_BYTES}, delta ${deltaFromBaseline >= 0 ? "+" : ""}${deltaFromBaseline})`);
-  console.log(`Ceiling: ${CEILING_BYTES} bytes (215 KiB) — headroom ${headroom} bytes`);
+  console.log(
+    `  ${route}: ${total} bytes gzip, headroom ${headroom} ` +
+      `(baseline ${BASELINE_BYTES}, delta ${total - BASELINE_BYTES >= 0 ? "+" : ""}${total - BASELINE_BYTES})`
+  );
+  return { route, total, ok: total <= CEILING_BYTES, reason: total > CEILING_BYTES ? "OVER_CEILING" : null };
+}
 
-  if (total > CEILING_BYTES) {
+async function main() {
+  const { routes: derived, caseStudyFound } = representativeRoutes();
+  const routes = ROUTE_OVERRIDE ? [ROUTE_OVERRIDE] : derived;
+  const counts = totalRouteCount();
+
+  console.log(`scripts/check-bundle-size.mjs: base=${BASE_URL}`);
+  console.log(`Measuring ${routes.length} route(s): ${routes.join(", ")}`);
+  if (!ROUTE_OVERRIDE && !caseStudyFound) {
     console.error(
-      `\nFAIL — ${total} bytes exceeds the ${CEILING_BYTES}-byte (215 KiB) ceiling by ${total - CEILING_BYTES} ` +
-        "bytes. Per reports/wave3-budget-reratification-2026-07-13.md's own escalation rule: dynamic-import the " +
-        "new cost or cut it — do not re-ratify this ceiling a third time."
+      "\nFAIL — NO_CASE_STUDY_ROUTE: could not derive a case-study route from content/case-studies/. " +
+        "That route shape would go unmeasured, and an unmeasured route shape is how 52,795 bytes of eager " +
+        "JS stayed invisible on every route but the home page."
+    );
+    process.exitCode = 1;
+    return;
+  }
+  console.log(
+    `Route shapes covered: home, grid, case study (1 of ${counts.caseStudies} sharing one template), chat. ` +
+      "Sampled, not exhaustive, and stated as a sample on purpose."
+  );
+
+  let manifest;
+  try {
+    assertCurlAvailable();
+    manifest = loadManifest();
+  } catch (err) {
+    console.error(`\nFAIL — ${err.state}: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  const manifestEagerChunks = [...manifest.rootMainFiles, ...manifest.polyfillFiles];
+
+  console.log("");
+  const results = [];
+  for (const route of routes) {
+    results.push(await measureRoute(route, manifest, manifestEagerChunks));
+  }
+
+  const failed = results.filter((r) => !r.ok);
+  console.log(`\nPer-route eager JS against the ${CEILING_BYTES}-byte (${(CEILING_BYTES / 1024).toFixed(0)} KiB) ceiling:`);
+  for (const r of results) {
+    const verdict = r.ok ? "OK  " : "FAIL";
+    const detail = r.ok
+      ? `${r.total} bytes, ${CEILING_BYTES - r.total} under`
+      : `${r.reason}${r.total ? `, ${r.total} bytes, ${r.total - CEILING_BYTES} over` : ""}`;
+    console.log(`  [${verdict}] ${r.route.padEnd(24)} ${detail}`);
+  }
+  console.log(`\n--> ${results.length - failed.length}/${results.length} route(s) within the ceiling.`);
+
+  if (failed.length > 0) {
+    console.error(
+      `\nFAIL — ${failed.length} of ${results.length} measured route(s) over the ${CEILING_BYTES}-byte ceiling. ` +
+        "Per reports/wave3-budget-reratification-2026-07-13.md's own escalation rule: dynamic-import the new " +
+        "cost or cut it — do not re-ratify this ceiling a third time."
     );
     process.exitCode = 1;
     return;
   }
 
-  console.log(`\nOK — ${total} bytes is within the ${CEILING_BYTES}-byte ceiling.`);
+  console.log(`\nOK — every measured route is within the ${CEILING_BYTES}-byte ceiling.`);
 }
 
 await main();
