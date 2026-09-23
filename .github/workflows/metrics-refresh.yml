@@ -87,15 +87,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/metrics-refresh"
+
           if git diff --quiet content/metrics.json; then
             echo "No metric changes — no PR this week."
+            # A prior week's PR may still be open with nothing left to
+            # propose (its underlying drift already landed some other way,
+            # or reverted on its own) — close it rather than leaving a stale
+            # bot PR sitting open with no diff to review.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's refresh found nothing to propose — closing. Reopens automatically (as a fresh PR) if drift shows up again."
+            fi
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/metrics-refresh"
           git checkout -B "$BRANCH"
           git add content/metrics.json
           git commit -m "chore(metrics): weekly metric refresh from source repos"
@@ -133,12 +143,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          TITLE="New public repos not yet on the portfolio site"
+
           if [ ! -s /tmp/new-repos.json ] || [ "$(cat /tmp/new-repos.json)" = "[]" ]; then
-            echo "No new repos found this week."
+            echo "No new repos found this week — closing any stale open issue."
+            existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Latest run found no new repos — closing. Reopens automatically if a new one shows up unaddressed."
+            fi
             exit 0
           fi
 
-          TITLE="New public repos not yet on the portfolio site"
           BODY=$(node -e '
             const repos = require("/tmp/new-repos.json");
             const lines = repos.map(r => `- [\`${r.name}\`](${r.url})${r.description ? ` — ${r.description}` : ""}`);
@@ -187,8 +202,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/content-pipeline"
+
           if git diff --quiet content/provenance.md; then
             echo "No proposals reached the PR bar this week."
+            # See the identical close-on-clean comment in the refresh job
+            # above — same reasoning, same fixed-branch-per-job pattern.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's run found no proposals reaching the PR bar — closing. Reopens automatically (as a fresh PR) if a new proposal clears all three stages."
+            fi
             exit 0
           fi
 
@@ -206,7 +230,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/content-pipeline"
           git checkout -B "$BRANCH"
           git add content/provenance.md content/chatbot/index.json
           git commit -m "chore(content): weekly curated content proposals (LLM-consensus)"
@@ -253,15 +276,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/identity-drift"
+
           if git diff --quiet content/identity-state.json; then
             echo "No identity drift this week."
+            # See the identical close-on-clean comment in the refresh job
+            # above — same reasoning, same fixed-branch-per-job pattern.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's run found no identity drift — closing. Reopens automatically (as a fresh PR) if drift is found again."
+            fi
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/identity-drift"
           git checkout -B "$BRANCH"
           git add content/identity-state.json
           git commit -m "chore(identity): weekly identity-drift check"
@@ -292,6 +323,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          CURRENT_SLUGS=$(jq -r '.[]?.slug' /tmp/identity-drift-renames.json 2>/dev/null || true)
+
+          # Close any previously-opened "Identity drift: <slug> renamed"
+          # issue whose slug isn't in this week's renames list — the name
+          # matched again, or the repo dropped out of tracking. Runs
+          # unconditionally (including when this week's list is empty), so a
+          # resolved drift doesn't sit open forever.
+          gh issue list --search 'in:title "Identity drift:" in:title "renamed"' --state open --json number,title --jq '.[] | [(.number|tostring), .title] | @tsv' |
+          while IFS=$'\t' read -r NUM ISSUE_TITLE; do
+            SLUG=$(echo "$ISSUE_TITLE" | sed -E 's/^Identity drift: (.*) renamed$/\1/')
+            if [ -n "$CURRENT_SLUGS" ] && echo "$CURRENT_SLUGS" | grep -qxF "$SLUG"; then
+              continue # still drifted this week — the loop below updates it
+            fi
+            gh issue close "$NUM" --comment "No longer drifted (name matches again, or the repo dropped out of tracking) — closing. Reopens automatically if this rename shows up again."
+          done
+
           if [ ! -s /tmp/identity-drift-renames.json ] || [ "$(cat /tmp/identity-drift-renames.json)" = "[]" ]; then
             echo "No README renames found this week."
             exit 0
