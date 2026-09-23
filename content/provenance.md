@@ -209,7 +209,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 83.8% overall extraction accuracy (threshold 83%, PASS) | `review-iq/eval/report.md:5,11-13`, generated 2026-07-06 |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -220,6 +220,17 @@ live, dated eval artifact (`eval/report.md`, generated 2026-07-06) shows the cur
 (2026-07-06) — documented rationale in `review-iq/eval/runner.py:23-28` ("free-tier reality...
 every per-language gate still holds ≥80%"). Used the current, live-eval-sourced 83.8% figure,
 not the superseded table row.
+
+**Correction 2026-09-23 (issue #123, genuine drift confirmed by the weekly metric-freshness
+check):** `eval/report.md` was regenerated 2026-09-19 (commit `e7186c9`) and its current content
+no longer matches the 83.8%/86.2%/80.7%/80.9% figures above at all — the report now reads
+"## Overall: 78.6% PASS (threshold 76%)" (line 5) and a two-row per-language table, "en 78.2%"
+/ "hi-en 79.3%" (lines 11-12); the `hi` row (previously 80.7%) has been removed from the report
+entirely. This is a genuine re-measurement on review-iq's side, not a citation error on this
+repo's part — the 2026-07-06 figures were correct as of that date. `content/metrics.json`,
+`content/case-studies/reviewiq.ts` (results row + `verifiedAt`), and `content/products.ts`'s
+homepage card figure were all updated to the current numbers; the per-language label narrowed
+from "en/hi/hi-en" to "en/hi-en" to match the report's own current shape.
 
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root

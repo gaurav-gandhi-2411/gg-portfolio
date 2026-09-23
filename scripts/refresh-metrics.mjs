@@ -86,6 +86,25 @@ async function fetchJson(url) {
   return res.json();
 }
 
+// Wave 21 fix (issue #122) — api.github.com is rate-limited to 60 req/hr
+// unauthenticated, shared across every concurrent job in this same
+// workflow run (this script's repo-inventory call below, plus
+// check-metric-freshness.mjs's SHA-reachability and cited-line checks, plus
+// identity-drift.mjs's repo-metadata fetches, all in the same scheduled
+// run). An authenticated call raises the ceiling to 5,000 req/hr.
+// GITHUB_TOKEN is always present in Actions (the default token, no extra
+// secret needed); a local run without one just falls back to the same
+// unauthenticated limit as before. Same GH_TOKEN convention as
+// check-metric-freshness.mjs's githubApi().
+const GH_TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null;
+async function fetchGithubApi(url) {
+  const headers = { Accept: "application/vnd.github+json" };
+  if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
+  const res = await fetchWithTimeout(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 function daysSince(iso) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 }
@@ -261,10 +280,25 @@ const referencedRepoSlugs = new Set(
   [...productsSrc.matchAll(/github\.com\/[^/"]+\/([^/"]+)/g)].map((m) => m[1])
 );
 const newRepos = [];
+// Wave 21 fix (issue #122, rule 98a shape): this used to fetch
+// unauthenticated and, on a 403 (rate limit), fall into the catch below
+// while `newRepos` stayed at its initial `[]` — indistinguishable
+// downstream from "checked, found nothing new." That's exactly what
+// happened: a rate-limited run silently produced a clean-looking empty
+// result, the "new repos" issue step took `[]` at face value, and
+// `next-season-styles` / `poi-intelligence-ranking` (both real, both
+// already existing) went unreported for weeks. `newRepoCheckFailed` makes
+// that failure loud: NEW_REPOS_PATH is written as JSON `null` (never `[]`)
+// on failure, and the workflow step that reads it treats `null` as "could
+// not verify," never as "empty" — see that step's own comment.
+let newRepoCheckFailed = false;
 try {
-  const repos = await fetchJson(
+  const repos = await fetchGithubApi(
     `https://api.github.com/users/${GITHUB_AUTHOR}/repos?per_page=100&type=public`
   );
+  if (!Array.isArray(repos)) {
+    throw new Error("GitHub API did not return an array of repos (malformed or error response)");
+  }
   for (const repo of repos) {
     if (repo.fork || repo.archived) continue;
     if (KNOWN_NON_PRODUCT_REPOS.has(repo.name)) continue;
@@ -272,7 +306,10 @@ try {
     newRepos.push({ name: repo.name, url: repo.html_url, description: repo.description ?? "" });
   }
 } catch (err) {
-  notes.push(`Repo inventory check unavailable this run (${err.message}).`);
+  newRepoCheckFailed = true;
+  notes.push(
+    `**Repo inventory check COULD NOT VERIFY this run** (${err.message}) — this is NOT the same as "no new repos found"; a repo published since the last successful run may be silently missing from this report. See issue #122's resolution for the incident this guards against.`
+  );
 }
 
 // ── 5. Resume drift (wave-13 follow-up: the resume shouldn't silently rot
@@ -419,7 +456,12 @@ lines.push(
 );
 
 writeFileSync(SUMMARY_PATH, lines.join("\n") + "\n");
-writeFileSync(NEW_REPOS_PATH, JSON.stringify(newRepos, null, 2) + "\n");
+// `null` (not `[]`) when the check itself failed — see newRepoCheckFailed's
+// definition above for why that distinction matters (issue #122).
+writeFileSync(
+  NEW_REPOS_PATH,
+  (newRepoCheckFailed ? "null" : JSON.stringify(newRepos, null, 2)) + "\n"
+);
 console.log(lines.join("\n"));
 console.log(
   `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${staleManifests.length} manifest(s) held, ${rejectedRegressions.length} regression(s) rejected, ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
