@@ -312,7 +312,7 @@ const newRepos = [];
 // downstream from "checked, found nothing new." That's exactly what
 // happened: a rate-limited run silently produced a clean-looking empty
 // result, the "new repos" issue step took `[]` at face value, and
-// `next-season-styles` / `poi-intelligence-ranking` (both real, both
+// two unlisted repos (owner decision D3, both real, both
 // already existing) went unreported for weeks. `newRepoCheckFailed` makes
 // that failure loud: NEW_REPOS_PATH is written as JSON `null` (never `[]`)
 // on failure, and the workflow step that reads it treats `null` as "could

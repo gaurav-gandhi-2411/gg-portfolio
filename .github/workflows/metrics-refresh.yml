@@ -178,8 +178,8 @@ jobs:
             # writes `null` here (never `[]`) when the repo-inventory check
             # itself failed (e.g. a GitHub API rate limit) — that is NOT the
             # same fact as "checked, found nothing new," and treating it the
-            # same silently is exactly how next-season-styles and
-            # poi-intelligence-ranking went unreported for weeks. Surface it
+            # same silently is exactly how two unlisted repos (owner
+            # decision D3) went unreported for weeks. Surface it
             # as a visible workflow annotation instead of exiting quietly,
             # and leave any existing open issue untouched — an unverified
             # run is not evidence the drift resolved.
