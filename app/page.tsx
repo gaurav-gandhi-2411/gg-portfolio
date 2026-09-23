@@ -1,10 +1,10 @@
+import { HeroA } from "@/components/directions/a/hero-a";
+import { OpenSourceLedgerA } from "@/components/directions/a/open-source-ledger-a";
+import { WorkLedgerA } from "@/components/directions/a/work-ledger-a";
 import { About } from "@/components/sections/about";
 import { Contact, Footer } from "@/components/sections/contact";
 import { Experience } from "@/components/sections/experience";
-import { Hero } from "@/components/sections/hero";
-import { OpenSource } from "@/components/sections/open-source";
 import { Research } from "@/components/sections/research";
-import { Work } from "@/components/sections/work";
 
 /**
  * Section order, at GG's direction: hero, about, professional experience,
@@ -26,15 +26,21 @@ import { Work } from "@/components/sections/work";
  * after Work, still ahead of Research and still short of Contact for the
  * same reason Research is: it is part of the case being made, not a coda
  * after the reader has already been asked to get in touch.
+ *
+ * explore/refresh-d-direction-a — proposal only, never merged: Hero, Work
+ * and OpenSource swap for their Direction A ("editorial / credibility-
+ * first") counterparts (components/directions/a/*). About, Experience,
+ * Research and Contact are the shipped components, unchanged — the section
+ * order above (Research below Work and Open source) is unchanged too.
  */
 export default function Home() {
   return (
     <main id="main" className="flex flex-1 flex-col">
-      <Hero />
+      <HeroA />
       <About />
       <Experience />
-      <Work />
-      <OpenSource />
+      <WorkLedgerA />
+      <OpenSourceLedgerA />
       <Research />
       <Contact />
       <Footer />
