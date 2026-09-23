@@ -1,0 +1,76 @@
+# Dispatch harness (registered here so R1 live proofs can target unmerged
+# branches) — paired with required-checks-drift.yml in this same commit;
+# see that file's header for why both need to land on `main` before
+# workflow_dispatch can target either of them at all. `workflow_dispatch`
+# only works for workflows GitHub already knows about, and a workflow only
+# gets registered by existing on the default branch — a workflow file that
+# lives solely on a feature branch can't be dispatched via the API/CLI, full
+# stop. Once this file is on `main`, `gh workflow run relay-proof.yml -f
+# ref=<any-branch>` (dispatched from `main`, since that is the only place
+# the workflow is registered) runs its steps against whatever `ref` input
+# you give it — see the checkout-by-input-ref note below — so
+# fix/relay-config-driven-v2 (the branch carrying the actual relay script
+# this proves) never has to merge first just to be testable.
+#
+# Manual proof workflow for scripts/relay-dispatched-ci-status.sh, without
+# needing a real bot PR (metrics-refresh.yml's scheduled jobs) to exercise
+# it. Dispatch this with `ref` set to any branch and it runs the exact same
+# two-step sequence metrics-refresh.yml runs on a bot PR branch: `gh
+# workflow run ci.yml --ref <ref>` (the anti-recursion workaround — see the
+# relay script's header) followed by the relay itself, so the relay's
+# behavior against a real dispatched ci.yml run can be checked live on a
+# throwaway branch before trusting it on the next scheduled bot PR.
+#
+# Mirrors metrics-refresh.yml's relay call sites: same GH_TOKEN source
+# (github.token), same two-line sequence, same permissions the relay
+# actually needs (actions: write to dispatch ci.yml, statuses: write to
+# post the relayed result) plus contents: read for the checkout.
+#
+# This workflow's own checkout step always uses the `ref` INPUT (not the
+# ref it was dispatched from), so once this file is merged to `main` a
+# dispatch of `ref: main` runs whatever's on `main`, but `ref:
+# fix/relay-config-driven-v2` (or any branch built on it) runs THAT
+# branch's relay script — proving the fix live without it having to merge
+# first.
+
+name: Relay proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: >-
+          Branch to dispatch ci.yml onto and relay the result for. Must be a
+          real branch with a HEAD SHA you want commit statuses posted
+          against (e.g. a throwaway test branch, or an existing bot PR
+          branch like chore/metrics-refresh).
+        type: string
+        required: true
+
+concurrency:
+  group: relay-proof-${{ inputs.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write # to dispatch ci.yml onto the target ref — see relay's header
+  statuses: write # to relay the dispatched run's result as a commit status
+
+jobs:
+  relay-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Dispatch ci.yml onto the target ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref "${{ inputs.ref }}"
+
+      - name: Relay the dispatched run's result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/relay-dispatched-ci-status.sh "${{ inputs.ref }}"
