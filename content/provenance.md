@@ -65,7 +65,7 @@ sources: `reports/resume-rework-2026-07-17.md`.
 | `resume:indium-senior-vit` | "~70%" | Resume PDF p.1, Indium Software → Senior Data Scientist (Uber AI via Indium), ViT dual-threshold verification bullet: "Automated roughly 70% of earner document verification". |
 | `derived:products-live-count` | "N live AI products" (currently 9) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Now computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` OR `pypi` field (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded, though still shown as a card). One function is the single source of truth — the number can never drift from the array again. **Retired from the hero at GG's launch review** — the hero's own stat row duplicated `/projects`' "N projects · N live today" line and, worse, sat alongside `HeadlineStats`' $10M+/~70%/50M+ row with no explanation of why two stat rows disagreed. `liveProductCount()` stays; it is still what `/projects` and `app/projects/page.tsx` read. |
 | `derived:warmer-puzzle-count` | "N+ daily Warmer puzzles shipped" (wave 5, replaces the retired 50M+/$10M+ employer-derived hero stats) | Live server fetch, not a hand-typed number: `getWarmerPuzzleNumber()` (`lib/live-data.ts`) reads the public `mindmeld-payloads` manifest (`raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json`), same source and function already used and verified in wave 3 (`reports/wave3-live-stats-budget-2026-07-12.md` — confirmed Puzzle #31 on 2026-07-12). ISR-revalidated every 6h, fails soft to `"—"` in `components/sections/hero.tsx` if the manifest is unreachable — never a stale or fabricated number. |
-| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `preprint-pending`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
+| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `working-paper`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
 | `derived:career-years` | "N years in data science & ML" (currently 5) | Computed at build/ISR time in `components/sections/hero.tsx` `careerYears()`: whole years elapsed since Jul 2021, the start of the first data-science role on the resume (TCS Data Engineer, "Jul 2021 – Jul 2022" — `content/experience.ts` dateRange, itself resume-sourced via `resume:tcs-pipelines`). Same drift-proofing rationale as `derived:products-live-count`: a computed floor, never a hand-typed number that ages. **Retired from the hero at GG's launch review**, same PR as `derived:products-live-count` above — explicitly named in his feedback as a number that was agreed to be dropped and came back. `careerYears()` is deleted with its only caller rather than kept for reuse; nothing else on the site states career length as a number. |
 
 ## About / skills
@@ -97,7 +97,7 @@ Experience" section.
 
 | ID | Claim | Source |
 |---|---|---|
-| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16` — ships as `preprint-pending`; no Tier-2 paper found anywhere in the repo) |
+| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16`, and neither paper has been submitted anywhere — ships as `working-paper`; no Tier-2 paper found anywhere in the repo) |
 
 ## Products
 
@@ -947,8 +947,9 @@ fails closed on any per-project internal disagreement — see that script's own 
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
-- **arXiv IDs for both AgentGauge papers:** not yet assigned for either — Research section ships
-  both entries with `status: "preprint-pending"`, no live arXiv/Scholar link. Flip each
+- **arXiv IDs for both AgentGauge papers:** not yet assigned for either, and neither paper has
+  been submitted anywhere — Research section ships both entries with `status: "working-paper"`,
+  rendered as "Working paper (draft, not yet submitted)", no live arXiv/Scholar link. Flip each
   independently when assigned (separate from Wave 3 "Living portfolio," which is the current
   wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
