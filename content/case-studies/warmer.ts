@@ -113,7 +113,7 @@ export const warmer: CaseStudy = {
       label: "Public Hinglish relatedness benchmark vs. 7 off-the-shelf alternatives",
       value: "0.675 Spearman [95% CI 0.601, 0.741], 0.740 cross-language pass-rate [0.62, 0.86]",
       detail:
-        "leads all 7 tested alternatives (including 2 released after the original bake-off) on both metrics, CI-significant in all 14 comparisons, on a public 34-secret benchmark published alongside the model",
+        "leads all 7 tested alternatives (including 2 released after the original bake-off) on both metrics, CI-significant in all 14 comparisons, per the model card's own reported eval set; the companion dataset published alongside the model describes its own contents as 34 secrets and reports a close but distinct 0.657 for the same metric, a source discrepancy noted rather than resolved (see provenance.md)",
       sourceRef: "warmer:hinglish-public-benchmark",
       format: "prose",
     },

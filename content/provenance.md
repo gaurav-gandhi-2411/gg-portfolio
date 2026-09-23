@@ -1103,14 +1103,21 @@ fetched 2026-09-23). No other file in either repo was read.
 
 | ID | Claim | Source |
 |---|---|---|
-| `warmer:hinglish-public-benchmark` | On the public `hinglish-relatedness-benchmark` (34 secrets, 7 domains, dev/test split seed=42, dev↔test Pearson r=0.920), `hinglish-relatedness-sbert` leads all 7 tested off-the-shelf alternatives (including 2 released after the project's original bake-off) on both metrics, CI-significant in all 14 comparisons: dim1 semantic-ranking Spearman **0.675** [95% CI 0.601, 0.741] (full 34-secret set; 0.657 [0.569, 0.736] per the benchmark card's own headline reporting — both cards' numbers are shown as each card states them, not reconciled into one), dim2 cross-language pass-rate **0.740** [0.62, 0.86] | Model card `README.md:50-56` ("Evaluation" section, field-leading claim); dataset card `README.md:79-90` (headline dim1 metric, dev↔test Pearson r) — both fetched 2026-09-23 (verified: 2026-09-23) |
+| `warmer:hinglish-public-benchmark` | The model card's own field-leading claim: `hinglish-relatedness-sbert` leads all 7 tested off-the-shelf alternatives (including 2 released after the project's original bake-off) on both metrics, CI-significant in all 14 comparisons, on what the model card itself describes as a "public, scrubbed, 50-secret held-out set" (42 dim1-eligible secrets): dim1 semantic-ranking Spearman **0.675** [95% CI 0.601, 0.741], dim2 cross-language pass-rate **0.740** [0.62, 0.86] | Model card `README.md:50-56,82` ("Evaluation" section, field-leading claim) — fetched 2026-09-23 (verified: 2026-09-23) |
 
-**Model card vs. dataset card, same claim, two numbers — disclosed, not hidden:** the model card's
-"Evaluation" section states dim1 Spearman 0.675 [0.601, 0.741] for the field-leading claim; the
-dataset card's own headline section states 0.657 [0.569, 0.736] for the same reference model on the
-same benchmark. Both are read directly from their respective cards as of the fetch date above; this
-provenance row reports both rather than picking one, since resolving the discrepancy would require
-reading the benchmark's own scoring script, out of scope for this addition.
+**Model card vs. dataset card — a genuine source discrepancy, disclosed, not reconciled:** the model
+card's "Evaluation" section attributes its field-leading 0.675/0.740 numbers to a "public, scrubbed,
+50-secret held-out set" (`README.md:52`, 42 dim1-eligible secrets per `README.md:82`). The published
+dataset it names as that benchmark, `hinglish-relatedness-benchmark`, describes its own contents as
+**34 secret words across 7 domains** (`README.md:21,36`) and states its own headline dim1 Spearman for
+the same reference model as **0.657** [95% CI 0.569, 0.736] (`README.md:88-90`), not 0.675 — a
+different set size AND a different number, not just a rounding difference. Both cards were fetched in
+full this session (2026-09-23) and neither was edited or reconciled; this row reports the model card's
+own field-leading claim as it states it, and flags rather than resolves the mismatch against the
+dataset card's self-description, since resolving it would require reading the benchmark's own scoring
+script and possibly an unpublished 50-secret superset — out of scope for this addition. The site's
+result row (`content/case-studies/warmer.ts`) discloses the same discrepancy rather than picking a
+side.
 
 **Not added:** the model card's "Production wrapper" section (a build-time, non-fine-tuning generator
 mitigation layered on top of the raw model, already summarized in `mindmeld`'s own docs) was read but
