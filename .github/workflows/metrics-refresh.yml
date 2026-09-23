@@ -61,6 +61,9 @@ permissions:
   pull-requests: write
   actions: write # to dispatch ci.yml onto the PR branch (see below)
   issues: write # wave 19 fix — see header comment; was silently missing
+  statuses: write # to relay the dispatched ci.yml run's result as a commit
+    # status branch protection will actually see — see
+    # scripts/relay-dispatched-ci-status.sh's header for why this is needed
 
 jobs:
   refresh:
@@ -84,15 +87,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/metrics-refresh"
+
           if git diff --quiet content/metrics.json; then
             echo "No metric changes — no PR this week."
+            # A prior week's PR may still be open with nothing left to
+            # propose (its underlying drift already landed some other way,
+            # or reverted on its own) — close it rather than leaving a stale
+            # bot PR sitting open with no diff to review.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's refresh found nothing to propose — closing. Reopens automatically (as a fresh PR) if drift shows up again."
+            fi
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/metrics-refresh"
           git checkout -B "$BRANCH"
           git add content/metrics.json
           git commit -m "chore(metrics): weekly metric refresh from source repos"
@@ -115,6 +128,10 @@ jobs:
           # explicitly — the check run lands on the same SHA the PR points
           # at, which satisfies branch protection.
           gh workflow run ci.yml --ref "$BRANCH"
+          # ...but a dispatched run still doesn't register against branch
+          # protection's required-status-check bookkeeping on its own — see
+          # scripts/relay-dispatched-ci-status.sh's header for the mechanism.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
       # Wave 14: new-repo discovery doesn't change any tracked file (it's
       # "GG published something and didn't tell us," not a value drift), so
@@ -126,12 +143,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ ! -s /tmp/new-repos.json ] || [ "$(cat /tmp/new-repos.json)" = "[]" ]; then
-            echo "No new repos found this week."
+          TITLE="New public repos not yet on the portfolio site"
+
+          NEW_REPOS_CONTENT=$(cat /tmp/new-repos.json 2>/dev/null || echo "")
+          if [ -z "$NEW_REPOS_CONTENT" ] || [ "$NEW_REPOS_CONTENT" = "null" ]; then
+            # Bug fix (issue #122, rule 98a shape): scripts/refresh-metrics.mjs
+            # writes `null` here (never `[]`) when the repo-inventory check
+            # itself failed (e.g. a GitHub API rate limit) — that is NOT the
+            # same fact as "checked, found nothing new," and treating it the
+            # same silently is exactly how next-season-styles and
+            # poi-intelligence-ranking went unreported for weeks. Surface it
+            # as a visible workflow annotation instead of exiting quietly,
+            # and leave any existing open issue untouched — an unverified
+            # run is not evidence the drift resolved.
+            echo "::warning::Repo inventory check could not verify this run (scripts/refresh-metrics.mjs's repo-inventory step failed — see this run's summary/notes for why). This is NOT the same as 'no new repos found'; a repo published since the last successful run may be missing."
+            exit 0
+          fi
+          if [ "$NEW_REPOS_CONTENT" = "[]" ]; then
+            echo "No new repos found this week — closing any stale open issue."
+            existing=$(gh issue list --search "in:title \"$TITLE\"" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Latest run found no new repos — closing. Reopens automatically if a new one shows up unaddressed."
+            fi
             exit 0
           fi
 
-          TITLE="New public repos not yet on the portfolio site"
           BODY=$(node -e '
             const repos = require("/tmp/new-repos.json");
             const lines = repos.map(r => `- [\`${r.name}\`](${r.url})${r.description ? ` — ${r.description}` : ""}`);
@@ -180,8 +216,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/content-pipeline"
+
           if git diff --quiet content/provenance.md; then
             echo "No proposals reached the PR bar this week."
+            # See the identical close-on-clean comment in the refresh job
+            # above — same reasoning, same fixed-branch-per-job pattern.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's run found no proposals reaching the PR bar — closing. Reopens automatically (as a fresh PR) if a new proposal clears all three stages."
+            fi
             exit 0
           fi
 
@@ -199,7 +244,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/content-pipeline"
           git checkout -B "$BRANCH"
           git add content/provenance.md content/chatbot/index.json
           git commit -m "chore(content): weekly curated content proposals (LLM-consensus)"
@@ -216,6 +260,8 @@ jobs:
           # job above — PRs opened with GITHUB_TOKEN don't trigger
           # pull_request-triggered workflows, so dispatch ci.yml explicitly.
           gh workflow run ci.yml --ref "$BRANCH"
+          # Same required-status-check relay as the refresh job above.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
   identity-drift:
     # Wave 16 — pure deterministic fact-check, no LLM: does the README still
@@ -244,15 +290,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          BRANCH="chore/identity-drift"
+
           if git diff --quiet content/identity-state.json; then
             echo "No identity drift this week."
+            # See the identical close-on-clean comment in the refresh job
+            # above — same reasoning, same fixed-branch-per-job pattern.
+            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+            if [ -n "$existing" ]; then
+              gh pr close "$existing" --delete-branch \
+                --comment "This week's run found no identity drift — closing. Reopens automatically (as a fresh PR) if drift is found again."
+            fi
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="chore/identity-drift"
           git checkout -B "$BRANCH"
           git add content/identity-state.json
           git commit -m "chore(identity): weekly identity-drift check"
@@ -269,6 +323,8 @@ jobs:
           # job above — PRs opened with GITHUB_TOKEN don't trigger
           # pull_request-triggered workflows, so dispatch ci.yml explicitly.
           gh workflow run ci.yml --ref "$BRANCH"
+          # Same required-status-check relay as the refresh job above.
+          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
 
       # A README rename is a real content decision, but the PR above is a
       # weekly-rotating chore branch that can sit unmerged (or unaddressed)
@@ -281,6 +337,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          CURRENT_SLUGS=$(jq -r '.[]?.slug' /tmp/identity-drift-renames.json 2>/dev/null || true)
+
+          # Close any previously-opened "Identity drift: <slug> renamed"
+          # issue whose slug isn't in this week's renames list — the name
+          # matched again, or the repo dropped out of tracking. Runs
+          # unconditionally (including when this week's list is empty), so a
+          # resolved drift doesn't sit open forever.
+          gh issue list --search 'in:title "Identity drift:" in:title "renamed"' --state open --json number,title --jq '.[] | [(.number|tostring), .title] | @tsv' |
+          while IFS=$'\t' read -r NUM ISSUE_TITLE; do
+            SLUG=$(echo "$ISSUE_TITLE" | sed -E 's/^Identity drift: (.*) renamed$/\1/')
+            if [ -n "$CURRENT_SLUGS" ] && echo "$CURRENT_SLUGS" | grep -qxF "$SLUG"; then
+              continue # still drifted this week — the loop below updates it
+            fi
+            gh issue close "$NUM" --comment "No longer drifted (name matches again, or the repo dropped out of tracking) — closing. Reopens automatically if this rename shows up again."
+          done
+
           if [ ! -s /tmp/identity-drift-renames.json ] || [ "$(cat /tmp/identity-drift-renames.json)" = "[]" ]; then
             echo "No README renames found this week."
             exit 0
@@ -290,14 +362,29 @@ jobs:
             SLUG=$(echo "$entry" | jq -r '.slug')
             TITLE="Identity drift: $SLUG renamed"
             BODY=$(ENTRY_JSON="$entry" node -e '
+              const fs = require("node:fs");
               const entry = JSON.parse(process.env.ENTRY_JSON);
+              // Bug fix (issue #200): this used to assert `entry.oldName` —
+              // identity-state.json'\''s *previously recorded* README value
+              // (e.g. `null`, on a product'\''s first successful check) — as
+              // if it were content/products.ts'\''s current name. That is a
+              // stale-cache claim, not a live read, and produced a false
+              // report ("content/products.ts still lists this product as
+              // \"null\"") for adk-tracegauge, whose products.ts entry had
+              // said "adk-tracegauge" since before the drift run even
+              // happened. Re-read products.ts fresh here instead.
+              const productsSrc = fs.readFileSync("content/products.ts", "utf8").replace(/\r\n/g, "\n");
+              const arrayBody = productsSrc.match(/products: Product\[\] = \[([\s\S]*)\];/)?.[1] ?? "";
+              const blocks = [...arrayBody.matchAll(/^ {2}\{\n([\s\S]*?)\n {2}\},?$/gm)].map((m) => m[1]);
+              const block = blocks.find((b) => new RegExp(`slug:\\s*"${entry.slug}"`).test(b));
+              const currentSiteName = block?.match(/name:\s*"([^"]+)"/)?.[1] ?? "(slug not found in products.ts)";
               console.log([
                 `The weekly identity-drift check (scripts/identity-drift.mjs) found that [\`${entry.repo}\`](${entry.repo})` + "'\''s README H1 changed:",
                 "",
-                `- Was: **${entry.oldName}**`,
+                `- Was: **${entry.oldName ?? "(no prior recorded value)"}**`,
                 `- Now: **${entry.newName}**`,
                 "",
-                `content/products.ts still lists this product as "${entry.oldName}" — decide whether the site name should follow the repo` + "'\''s rename, or whether this is an intentional divergence (several tracked products already use a nicer site name than their raw README, e.g. \"Samidha Reviews\" vs. review-iq" + "'\''s own README). Closing this issue is fine once addressed; it reopens/recreates next time the README name changes again."
+                `content/products.ts currently lists this product as "${currentSiteName}" — decide whether the site name should follow the repo` + "'\''s rename, or whether this is an intentional divergence (several tracked products already use a nicer site name than their raw README, e.g. \"Samidha Reviews\" vs. review-iq" + "'\''s own README). Closing this issue is fine once addressed; it reopens/recreates next time the README name changes again."
               ].join("\n"));
             ')
 

@@ -1,0 +1,51 @@
+# Phase B, refresh-2026-09 — auto-merge dependabot patch/minor bumps once
+# required checks pass. Major bumps are never auto-merged (a major version
+# can carry breaking changes ci.yml's own gates can't fully catch — e.g. #135
+# / #137 in the PR triage table were both major action/package bumps that
+# needed a human look).
+#
+# `gh pr merge --auto --merge` only ENABLES GitHub's native auto-merge on the
+# PR — it does not merge immediately. GitHub itself holds the merge until
+# every required status check (branch protection: build, e2e) reports
+# success, which is what satisfies "only once all required checks report
+# success" without this workflow needing to poll anything. Repo setting
+# `allow_auto_merge` is already `true` (confirmed via `gh api repos/OWNER/
+# REPO --jq .allow_auto_merge`), so no repo-setting change was needed here.
+#
+# `pull_request` (not `pull_request_target`) is correct and sufficient:
+# dependabot-authored PRs are opened by the `dependabot[bot]`/`app/dependabot`
+# identity, not the repo's own default GITHUB_TOKEN, so they don't hit the
+# GITHUB_TOKEN recursive-workflow-prevention gap that metrics-refresh.yml's
+# bot PRs do (verified: PR #208's `build`/`e2e` checks ran and reported
+# SUCCESS normally, author `app/dependabot`) — no relay workaround needed.
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  pull-requests: write
+  contents: write
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Enable auto-merge for patch/minor updates
+        if: >
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --merge "$PR_URL"
