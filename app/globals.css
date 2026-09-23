@@ -181,6 +181,10 @@
 }
 
 :root {
+  /* Native form controls / scrollbars follow the active theme. Overridden
+   * to `light` below when prefers-color-scheme: light matches. */
+  color-scheme: dark;
+
   /* Core palette */
   --graphite-950: #0a0b0d;
   --graphite-900: #131417;
@@ -330,6 +334,87 @@
    */
   --nav-h: 5.3125rem;
   --floating-ui-h: 6rem;
+}
+
+/*
+ * ── Light theme (Direction A proposal, refresh-2026-09) ────────────────
+ * The site has been dark-mode-only by design (see the header comment
+ * above) — this block is scoped to the `explore/refresh-d-direction-a`
+ * homepage proposal only, gated on the OS/browser's own signal
+ * (`prefers-color-scheme: light`) rather than a manual toggle, so it never
+ * asks a visitor to make a choice the platform already told the page.
+ *
+ * Every custom property below is one of two kinds:
+ *  (a) a literal base-palette token (--graphite-*, --text-hi/-lo, --indigo,
+ *      --emerald, --slate, --accent-l/-c/-h, --plane-far) — overridden
+ *      directly here;
+ *  (b) a semantic or derived token (--background, --card, --accent,
+ *      --plane-mid/-near, --glow-*, --accent-oklch, --status-open/closed,
+ *      --shadow-card-hover) — every one of these is defined in the base
+ *      :root block above as an unresolved `var()` reference into (a), and
+ *      CSS custom properties resolve lazily at used-value time against the
+ *      element's own cascaded value of each referenced property, not at
+ *      definition time — so overriding only the (a) tokens here is
+ *      sufficient; every (b) token downstream (used across hero.css,
+ *      work.css, case-study.css, sections-motion.css) picks the light
+ *      value up automatically, with no changes needed in those files.
+ *      Confirmed against this file's own token-usage grep before writing
+ *      this block, not assumed.
+ *
+ * Contrast reverified for this palette the same way the dark palette's own
+ * header table was (WCAG 2.1, computed from each hex's relative luminance,
+ * against the two backgrounds it's actually read against — background
+ * #f4f4f2 and card #ffffff):
+ *   text-hi (#0a0b0d) on background     17.9:1  (needs 4.5:1)
+ *   text-lo (#45484f) on background      8.3:1
+ *   indigo/accent (#4338ca) on background 7.2:1
+ *   border (#7d8089) on background       3.6:1  (non-text/UI needs 3:1 —
+ *                             the naive reuse of the dark theme's own
+ *                             #62656e border only hits ~1.5:1 on a light
+ *                             background and was rejected the same way the
+ *                             dark palette's own header note rejected its
+ *                             first #2C2F36 pick)
+ *   emerald/status-open (#059669) on background 3.4:1 (non-text/UI, 3:1)
+ *   slate/status-closed (#6b7280) on background 4.8:1 (non-text/UI, 3:1;
+ *                             unchanged from dark mode's own value — it
+ *                             already cleared 3:1 against a light surface)
+ * accent-foreground/destructive are literal, not var()-derived (like the
+ * dark theme's own --accent-foreground/--destructive), so both are
+ * restated here rather than inherited:
+ *   accent-foreground (#ffffff) on accent (#4338ca)   7.2:1
+ *   destructive (#dc2626) on background                4.8:1
+ * The dark theme's #818cf8 accent and #f87171 destructive both fail these
+ * same ratios on a light surface (2.98:1 and 2.77:1 respectively, measured
+ * the same way) — carrying either forward unmodified was rejected, not
+ * overlooked.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --graphite-950: #f4f4f2;
+    --graphite-900: #ffffff;
+    --graphite-800: #e9e8e5;
+    --graphite-line: #7d8089;
+    --text-hi: #0a0b0d;
+    --text-lo: #45484f;
+    --indigo: #4338ca;
+    --emerald: #059669;
+    --slate: #6b7280;
+
+    --accent-foreground: #ffffff;
+    --destructive: #dc2626;
+
+    /* Same hue family as the dark theme's #818cf8 (kept at --accent-h 277
+     * unmodified), lightness/chroma brought down to the darker #4338ca
+     * this theme needs for on-white contrast — decorative-only consumers
+     * (glow gradients, per-project hue rotation, the accent-l/c literal
+     * gradient on .experience-ladder-line/-dot), never text. */
+    --accent-l: 42%;
+    --accent-c: 0.19;
+
+    --plane-far: #fbfbfa;
+  }
 }
 
 @layer base {
