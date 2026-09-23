@@ -196,6 +196,9 @@ jobs:
       - name: refresh-metrics.mjs forced-error self-test
         run: node scripts/refresh-metrics.forced-error.smoketest.mjs
 
+      - name: content-pipeline extractor.mjs forced-error self-test
+        run: node scripts/content-pipeline/extractor.smoketest.mjs
+
       - name: Build
         run: npm run build
 
