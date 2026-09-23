@@ -184,6 +184,13 @@ jobs:
       - name: Required-checks drift script regression test
         run: bash scripts/check-required-checks-drift.test.sh
 
+      # Regression coverage for issues #200 and #214: a first-ever
+      # observation of a field (no prior recorded value) must never be
+      # reported as identity drift, and a README-name change that already
+      # matches content/products.ts must never open a rename issue.
+      - name: Identity-drift diff logic self-test
+        run: node scripts/lib/identity-drift-diff.smoketest.mjs
+
       - name: Build
         run: npm run build
 

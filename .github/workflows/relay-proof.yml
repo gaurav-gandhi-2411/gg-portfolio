@@ -68,9 +68,11 @@ jobs:
       - name: Dispatch ci.yml onto the target ref
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run ci.yml --ref "${{ inputs.ref }}"
+          TARGET_REF: ${{ inputs.ref }}
+        run: gh workflow run ci.yml --ref "$TARGET_REF"
 
       - name: Relay the dispatched run's result
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/relay-dispatched-ci-status.sh "${{ inputs.ref }}"
+          TARGET_REF: ${{ inputs.ref }}
+        run: bash scripts/relay-dispatched-ci-status.sh "$TARGET_REF"
