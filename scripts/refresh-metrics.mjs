@@ -65,6 +65,32 @@ const KNOWN_NON_PRODUCT_REPOS = new Set([
   "gaurav-gandhi-2411", // GitHub profile README repo, not a product
 ]);
 
+// Owner decision D3: some real repos are deliberately not named on any
+// public surface of this repo. Unlike KNOWN_NON_PRODUCT_REPOS above (a
+// committed allowlist — fine for non-sensitive support repos), these names
+// must never land in a public commit OR a public log, so they're read at
+// runtime from a GitHub Actions REPOSITORY SECRET (not a repo variable —
+// GitHub Actions auto-masks `secrets.*` in every log, including the
+// workflow step's own auto-echoed `env:` block; a repo variable does NOT
+// get that masking and leaked both names in plaintext into this exact
+// workflow's public Actions log on first attempt) rather than from source.
+// Set via `gh secret set PORTFOLIO_EXCLUDED_REPOS --body "name1,name2"`;
+// missing or empty is a valid, silent-safe state (no exclusions) — but
+// "silent" here only means "no names printed," not "unlogged": see the
+// count-only log line right after this Set is built, so an empty/
+// misconfigured secret is still visible in the job log.
+const EXCLUDED_REPOS = new Set(
+  (process.env.PORTFOLIO_EXCLUDED_REPOS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+console.log(
+  EXCLUDED_REPOS.size > 0
+    ? `PORTFOLIO_EXCLUDED_REPOS: ${EXCLUDED_REPOS.size} repo(s) excluded from new-repo discovery this run (names withheld from logs by design).`
+    : "PORTFOLIO_EXCLUDED_REPOS: not set (or empty) — 0 exclusions active this run."
+);
+
 const changes = []; // { id, field, old, new, source }
 const notes = []; // free-form markdown bullets
 const staleFlags = []; // { id, measured_at }
@@ -287,7 +313,7 @@ const newRepos = [];
 // downstream from "checked, found nothing new." That's exactly what
 // happened: a rate-limited run silently produced a clean-looking empty
 // result, the "new repos" issue step took `[]` at face value, and
-// `next-season-styles` / `poi-intelligence-ranking` (both real, both
+// two unlisted repos (owner decision D3, both real, both
 // already existing) went unreported for weeks. `newRepoCheckFailed` makes
 // that failure loud: NEW_REPOS_PATH is written as JSON `null` (never `[]`)
 // on failure, and the workflow step that reads it treats `null` as "could
@@ -303,6 +329,7 @@ try {
   for (const repo of repos) {
     if (repo.fork || repo.archived) continue;
     if (KNOWN_NON_PRODUCT_REPOS.has(repo.name)) continue;
+    if (EXCLUDED_REPOS.has(repo.name)) continue;
     if (referencedRepoSlugs.has(repo.name)) continue;
     newRepos.push({ name: repo.name, url: repo.html_url, description: repo.description ?? "" });
   }
