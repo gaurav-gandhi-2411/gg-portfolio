@@ -144,10 +144,10 @@ myself (not trusting the issue's list) gives **four** repos today, not the two t
 |---|---|---|---|
 | `eval-defect-bench` | Yes | 2026-08-30 | Real, unaddressed |
 | `gaurav-gandhi-2411` (profile repo) | Yes | 2026-08-10 | Real, unaddressed |
-| `next-season-styles` | **No** | 2026-09-19 | Real, missing from the issue |
-| `poi-intelligence-ranking` | **No** | 2026-09-18 | Real, missing from the issue |
+| unlisted repo 1 (owner decision D3) | **No** | 2026-09-19 | Real, missing from the issue |
+| unlisted repo 2 (owner decision D3) | **No** | 2026-09-18 | Real, missing from the issue |
 
-Both `next-season-styles` and `poi-intelligence-ranking` are the repos spec.md's constraints
+Both unlisted repo 1 and unlisted repo 2 (owner decision D3) are the repos spec.md's constraints
 section already names ("Konnect / fashion take-home repos... not listed publicly unless GG
 approves (D3)") — so their *absence from the site* is intentional per D3, but their absence from
 this bot issue is not a decision anyone made; it's a live automation defect (see below), and it
@@ -172,7 +172,7 @@ The 2026-09-21 run log (`gh run view 35577982002 --log`) literally contains:
 ```
 — **verified**, grepped directly out of the run log; this line is absent from the 09-07 and 09-14
 run logs (also verified by grep), so this is not a permanent/every-run failure, it's specific to
-the most recent run. `next-season-styles` (created 2026-09-19) and `poi-intelligence-ranking`
+the most recent run. Unlisted repo 1 (owner decision D3, created 2026-09-19) and unlisted repo 2
 (created 2026-09-18) both existed before this run executed (2026-09-21T08:27), so a working
 inventory fetch should have caught them.
 
@@ -207,7 +207,7 @@ failure silently renders as "no new repos" — the exact fail-open shape, not fa
 2. `gaurav-gandhi-2411` (profile repo) — this will permanently exist and is never itself a
    "product" to case-study. Recommend adding it to `KNOWN_NON_PRODUCT_REPOS` in
    `scripts/refresh-metrics.mjs` so this line item stops recurring every week.
-3. `next-season-styles`, `poi-intelligence-ranking` — real, currently invisible to the automation
+3. Unlisted repo 1, unlisted repo 2 (owner decision D3) — real, currently invisible to the automation
    due to the 403 above, and covered by spec's D3 (not listed publicly pending GG's decision on the
    take-home-adjacent status). Recommend: once D3 is decided, either add both to
    `KNOWN_NON_PRODUCT_REPOS` with a comment citing D3 (if the decision is "never list"), or leave
@@ -388,5 +388,5 @@ nobody drains." That framing is correct for #123's staleness backlog and for #20
 noise, but **incomplete** for #122: this audit found a live, verifiable automation defect (the
 silent-pass-on-HTTP-403 shape in `scripts/refresh-metrics.mjs`'s repo-inventory check) that means
 #122 is not just undrained, it is currently **incomplete** — two real repos
-(`next-season-styles`, `poi-intelligence-ranking`) exist and are invisible to the bot today. Both
+(unlisted repo 1, unlisted repo 2 — owner decision D3) exist and are invisible to the bot today. Both
 findings (drain the backlog, AND fix the fail-open repo-inventory check) should go into Phase B.
