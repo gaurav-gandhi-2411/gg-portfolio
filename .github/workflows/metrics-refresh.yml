@@ -92,6 +92,13 @@ jobs:
         env:
           SUMMARY_PATH: /tmp/metrics-summary.md
           NEW_REPOS_PATH: /tmp/new-repos.json
+          # Repo variable, not a secret — read by scripts/refresh-metrics.mjs
+          # to exclude repos from the new-repo-discovery check without
+          # naming them anywhere in this public repo (owner decision D3).
+          # Comma-separated repo names. `gh variable list` to confirm what's
+          # set; missing/empty = no exclusions, and the script logs that
+          # fact (count only, never names) rather than staying silent.
+          PORTFOLIO_EXCLUDED_REPOS: ${{ vars.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
       - name: Open PR if anything changed

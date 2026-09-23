@@ -64,6 +64,30 @@ const KNOWN_NON_PRODUCT_REPOS = new Set([
   "triage-iq-ui", // triage-iq's frontend companion, same product/live URL
 ]);
 
+// Owner decision D3: some real repos are deliberately not named on any
+// public surface of this repo. Unlike KNOWN_NON_PRODUCT_REPOS above (a
+// committed allowlist — fine for non-sensitive support repos), these names
+// must never land in a public commit, so they're read at runtime from a
+// GitHub Actions REPOSITORY VARIABLE (not a secret — repo variables aren't
+// encrypted, but they also aren't rendered on any public page the way a
+// committed file would be) rather than from source. Set via
+// `gh variable set PORTFOLIO_EXCLUDED_REPOS --body "name1,name2"`; missing
+// or empty is a valid, silent-safe state (no exclusions) — but "silent" here
+// only means "no names printed," not "unlogged": see the count-only log
+// line right after this Set is built, so an empty/misconfigured variable is
+// still visible in the job log.
+const EXCLUDED_REPOS = new Set(
+  (process.env.PORTFOLIO_EXCLUDED_REPOS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+console.log(
+  EXCLUDED_REPOS.size > 0
+    ? `PORTFOLIO_EXCLUDED_REPOS: ${EXCLUDED_REPOS.size} repo(s) excluded from new-repo discovery this run (names withheld from logs by design).`
+    : "PORTFOLIO_EXCLUDED_REPOS: not set (or empty) — 0 exclusions active this run."
+);
+
 const changes = []; // { id, field, old, new, source }
 const notes = []; // free-form markdown bullets
 const staleFlags = []; // { id, measured_at }
@@ -302,6 +326,7 @@ try {
   for (const repo of repos) {
     if (repo.fork || repo.archived) continue;
     if (KNOWN_NON_PRODUCT_REPOS.has(repo.name)) continue;
+    if (EXCLUDED_REPOS.has(repo.name)) continue;
     if (referencedRepoSlugs.has(repo.name)) continue;
     newRepos.push({ name: repo.name, url: repo.html_url, description: repo.description ?? "" });
   }
