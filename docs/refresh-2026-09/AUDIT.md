@@ -16,15 +16,60 @@ determination in this document.
 
 ---
 
+## Erratum (2026-09-23)
+
+**F19 (below, §1 finding #1 and §7) was wrong and is retracted.** F19 judged the résumé's claim
+"contributed two upstream pull requests to google/adk-python" as an overclaim because 0 of 8
+`google/adk-python` PRs by this author had a non-null GitHub `mergedAt`. That was the wrong piece
+of evidence: `google/adk-python` lands external contributions via a Copybara import, which closes
+the PR without ever setting `mergedAt` — a GitHub-native "merged" flag simply does not exist for
+those landings. Re-checked with commit evidence on 2026-09-23, and independently re-verified by a
+separate verifier: two of the résumé's two claimed adk-python PRs did land, each as a commit that
+is an ancestor of the upstream default branch.
+
+| Repo | PR | Landed as commit | Ancestor of | First released in |
+|---|---|---|---|---|
+| google/adk-python | [#6681](https://github.com/google/adk-python/pull/6681) | `023f45c3e5846c3e72525b53f16ef018b5ecdaa6` ("Merge #6681", PiperOrigin-RevId) | `main` | v2.8.0 |
+| google/adk-python | [#6939](https://github.com/google/adk-python/pull/6939) | `85e08686f8310e00b2b031a042db86405920b4b2` ("Merge #6939") | `main` | not yet tagged |
+| keras-team/keras | [#23420](https://github.com/keras-team/keras/pull/23420) | `f3b31e4f4667849d98c1e230e142c9f445f2eed0` (native merge) | `master` | not yet tagged |
+
+Not landed: adk-python #6678, #6682, #6710, #7000 (closed), #6739, #6740 (open); google/adk-docs
+#2128 (closed). Totals across all non-own repos: 10 upstream PRs (8 adk-python + 1 keras + 1
+adk-docs), 3 landed (2 adk-python + 1 keras). The résumé's "two upstream pull requests to
+google/adk-python" claim is **accurate**, not an overclaim.
+
+**Lesson:** `mergedAt` is not landing evidence for Copybara-import repos. Landing is proven by a
+commit SHA that is an ancestor of the upstream default branch, not by the host platform's own
+"merged" flag — a control that only checks `mergedAt` silently under-covers exactly the repos that
+use an import pipeline instead of GitHub's native merge (see rule 85a's "surface narrower than
+advertised" pattern). Original F19 text below is struck through, not deleted, so the mistake and
+its correction both stay in the record.
+
+**F14/§6's "pypistats has no dedicated mirror-exclusion filter" claim (below and in §10) was also
+wrong and is retracted.** Re-verified via direct `curl` on 2026-09-23: `GET
+/api/packages/<pkg>/overall?mirrors=false` returns genuine per-day rows tagged
+`"category":"without_mirrors"`, with real numbers distinct from the `with_mirrors` rows — e.g.
+`adk-tracegauge` on 2026-08-16: `with_mirrors` 1,301 vs. `without_mirrors` 409. That endpoint *is*
+a dedicated, official mirror-exclusion filter. What actually has no mirror-exclusion filter is the
+`/recent` endpoint §6's "raw" last-week figures were pulled from: `mirrors=true`, `mirrors=false`,
+and no param all returned the identical `{"last_day":30,"last_month":839,"last_week":589}` for
+`adk-tracegauge`, confirmed by direct curl of all three. §6's "OS-attributed proxy" column was an
+invented workaround for a filter that already existed, natively, on a different endpoint. The PyPI
+truth table's numbers themselves are unchanged by this correction — only the F14 finding's claim
+about filter availability is wrong.
+
+---
+
 ## 1. Top findings (impact-ranked)
 
-1. **F19 — Résumé overclaims an upstream OSS contribution (highest severity).** The résumé
+1. ~~**F19 — Résumé overclaims an upstream OSS contribution (highest severity).** The résumé
    (`resume.pdf`, hosted on the live site) states *"contributed two upstream pull requests to
    google/adk-python."* Verified: of 8 total PRs by this author against `google/adk-python`,
    **0 have `mergedAt` non-null** (2 open, 6 closed-without-merging). This is a factual overclaim on
    a recruiter-facing document — independently re-confirmed by the verifier as "CONFIRMED
    INACCURATE." Recommend reword to "submitted"/"under review," or land one of the two still-open
-   PRs (`#6740`, `#6739`) before shipping any Phase C "Open source" section.
+   PRs (`#6740`, `#6739`) before shipping any Phase C "Open source" section.~~ **Retracted — see
+   Erratum.**
 2. **Issue #200 is a false bot report — safe to close.** The "adk-tracegauge renamed" claim is
    incorrect: the repo was never renamed (no redirect, live 200, matching GitHub API `full_name`),
    and `content/products.ts` has read `name: "adk-tracegauge"` since a commit 6 days *before* the
@@ -39,8 +84,8 @@ determination in this document.
 4. **#122's repo-inventory check silently fails open (rule-98a shape).** On HTTP 403 (unauthenticated
    GitHub API rate-limited by concurrent job calls), the script's `catch` block logs a note but
    leaves `newRepos = []` — indistinguishable downstream from a genuine "nothing new" result. This
-   caused issue #122 to miss 2 real, currently-existing repos (`next-season-styles`,
-   `poi-intelligence-ranking`, both created before the failed run).
+   caused issue #122 to miss two unlisted repos (owner decision D3), both created before the
+   failed run.
 5. **F13 — site claims "12 live" projects; actual is 9, not 12.** 14 project cards exist (count is
    correct), but only 9 carry a "Live ↗" link. Independently re-verified by the verifier: "site
    overstates by 3."
@@ -95,7 +140,7 @@ against 2026-09-23.
 
 | Issue | Summary | Proposed resolution |
 |---|---|---|
-| #122 | New public repos not yet on the portfolio site | Real items: `eval-defect-bench` (case-study candidate, Phase C) and `gaurav-gandhi-2411` profile repo (add to `KNOWN_NON_PRODUCT_REPOS`). **Also found, missing from the issue itself:** `next-season-styles`, `poi-intelligence-ranking` (both covered by D3, invisible to the bot due to the fail-open 403 defect above). Separately: fix `scripts/refresh-metrics.mjs`'s repo-inventory `catch` block to distinguish fetch-failure from genuine-empty (rule 98a shape). |
+| #122 | New public repos not yet on the portfolio site | Real items: `eval-defect-bench` (case-study candidate, Phase C) and `gaurav-gandhi-2411` profile repo (add to `KNOWN_NON_PRODUCT_REPOS`). **Also found, missing from the issue itself:** two unlisted repos (owner decision D3), invisible to the bot due to the fail-open 403 defect above. Separately: fix `scripts/refresh-metrics.mjs`'s repo-inventory `catch` block to distinguish fetch-failure from genuine-empty (rule 98a shape). |
 | #123 | Weekly metric freshness check: drift, unverifiable, overdue | 2 of 3 flagged drifts are **false positives** from the checker's own documented `CHANGELOG_TRANSITION_PATTERN` exclusion (`style-maitri:catalogue-size`, `warmer:hinglish-fix` SVGs) — both values are genuinely present in source, no content fix needed. 1 is **confirmed real drift**: `reviewiq:extraction-eval` is stale at 83.8%/86.2%/80.7%/80.9%; current source (`review-iq/eval/report.md`, generated 2026-09-19) reports 78.6% overall / 78.2% en / 79.3% hi-en, with the `hi` row removed entirely. Update `content/metrics.json` + any case-study copy, fresh `verified` date, per rule 65c. 14-item staleness list and 8 private-repo (Warmer/mindmeld) unchecked claims are legitimate backlog for Phase C, not per-item fixes here. |
 | #200 | "adk-tracegauge renamed" | **False report — close.** Repo never renamed (live 200, no redirect, matching API `full_name`); `content/products.ts` already correct since before the issue opened. Root cause: `metrics-refresh.yml`'s issue-body template asserts a stale cache value as `products.ts`'s live content without re-reading the file. Fix the template separately (Phase B hygiene, non-blocking). |
 
@@ -112,8 +157,10 @@ against 2026-09-23.
 |---|---|---|---|---|
 | keras-team/keras | [#23420](https://github.com/keras-team/keras/pull/23420) | fix: R2Score returns NaN instead of 1.0 for a perfect prediction on zero-variance data | 2026-09-15T16:38:09Z | 64,330 |
 
-**Merged, believed via Copybara import (GitHub shows CLOSED / `mergedAt: null`, sourced to
-`oss-contrib`'s own ancestry check, not re-verified this session):**
+~~**Merged, believed via Copybara import (GitHub shows CLOSED / `mergedAt: null`, sourced to
+`oss-contrib`'s own ancestry check, not re-verified this session):**~~ **Retracted — see Erratum.**
+**Merged via Copybara import (GitHub shows CLOSED / `mergedAt: null` forever by design; verified
+via commit SHA ancestry on the upstream default branch, independently re-verified 2026-09-23):**
 
 | Repo | PR | Title | Believed landed via |
 |---|---|---|---|
@@ -158,11 +205,11 @@ All fetched fresh via `pypi.org`/`pypistats.org` public JSON APIs, zero cost, 20
 exactly; the **README's** "8 releases, v0.4.1" is confirmed stale (more than half the release count
 behind, 5 minor versions behind).
 
-**Mirror/CI labelling (F14):** pypistats has no dedicated mirror-exclusion filter. 74–82% of
+~~**Mirror/CI labelling (F14):** pypistats has no dedicated mirror-exclusion filter. 74–82% of
 downloads across all three packages fall in the unattributed `null`-OS bucket — a reasonable proxy
 for CI/mirror traffic, but not an official classification. Recommendation: show both raw and
 OS-attributed figures side by side, explicitly labelled; never present either as the verified "real"
-install count.
+install count.~~ **Retracted — see Erratum.**
 
 ---
 
@@ -191,7 +238,7 @@ carried over from the spec's own baseline without independent re-check.
 | F16 | GH profile email (`gaurav.gandhi2411@`) differs from resume/README (`gauravgandhi429@`) | **New, open, low-medium severity.** Not incorrect, but a second identity on a "every number sourced" page. |
 | F17 | Style Maitri catalogue size: site/README exact "52,494" vs. resume rounded "52,000" | **New, open, minor.** Compatible, not contradictory; worth normalizing for consistency. |
 | F18 | GH profile `company` field says "Uber" only, omitting "via Indium Software" (site/README both name it) | **New, open, low severity.** Not false, an acceptable simplification candidate. |
-| F19 | Resume claims "contributed two upstream pull requests to google/adk-python"; verified 0 of 8 merged | **New, open, highest severity of F16–F19** — see §1 finding #1 above. |
+| F19 | ~~Resume claims "contributed two upstream pull requests to google/adk-python"; verified 0 of 8 merged~~ | ~~**New, open, highest severity of F16–F19** — see §1 finding #1 above.~~ **Retracted — see Erratum.** |
 
 ---
 
@@ -242,13 +289,14 @@ Deferred per spec.md §7 — **Phase C/D decisions, not blocking Phase B:**
 
 - **D1** — Paper status wording: "under submission to \<venue\>" or "preprint, arXiv pending"?
 - **D2** — Demote Research on the site homepage too (recommended: yes, below Work and Open source; keep a `/research` page)?
-- **D3** — List `next-season-styles` / `poi-intelligence-ranking` publicly? (recommended: not until those processes close). Directly affects issue #122's resolution for those 2 repos.
+- **D3** — List two unlisted repos (owner decision D3) publicly? (recommended: not until those processes close). Directly affects issue #122's resolution for those 2 repos.
 - **D4** — Pick 1 of 2 Phase D visual directions once proposed.
 - **T1** — Pin 6 repos on GitHub profile (GG hands-on, after Phase C confirms final repo names).
 
 **Other items needing a human call, flagged by individual sections:**
 
-- F19 (résumé overclaim) — reword or land a PR before Phase C ships any "Open source" section.
+- ~~F19 (résumé overclaim) — reword or land a PR before Phase C ships any "Open source" section.~~
+  **Retracted — see Erratum.**
 - OSS acceptance criterion #3 vs. the 2 Copybara-landed PRs — GG needs to decide whether a labelled exception (with ancestry evidence) is acceptable, or whether only GitHub-native `mergedAt` counts.
 - #206's resume-drift warning list (6 metrics where `resume.pdf` disagrees with the site) — regenerating `resume.pdf` is an explicit human step per repo convention (`.assets/resume-sources/`), not something Phase B should automate away.
 - F16/F18 — whether the GH profile's `email`/`company` fields should be updated to match the résumé/README, or left as acceptable simplifications.
@@ -257,8 +305,8 @@ Deferred per spec.md §7 — **Phase C/D decisions, not blocking Phase B:**
 
 ## 10. Believed-but-unverified items
 
-- **The 2 Copybara-landed `google/adk-python` PRs (#6939, #6681).** GitHub's own API shows both as `CLOSED` / `mergedAt: null` forever (Copybara import never flips this). Landed status is sourced to `oss-contrib/CONTRIBUTIONS.md`'s own `git merge-base --is-ancestor` checks — not independently re-run this session (would require cloning/fetching the upstream repo, out of scope for a zero-cost `gh`-only sweep).
+- ~~**The 2 Copybara-landed `google/adk-python` PRs (#6939, #6681).** GitHub's own API shows both as `CLOSED` / `mergedAt: null` forever (Copybara import never flips this). Landed status is sourced to `oss-contrib/CONTRIBUTIONS.md`'s own `git merge-base --is-ancestor` checks — not independently re-run this session (would require cloning/fetching the upstream repo, out of scope for a zero-cost `gh`-only sweep).~~ **Retracted — see Erratum.** Now verified via commit SHA ancestry on the upstream default branch (`023f45c3e5846c3e72525b53f16ef018b5ecdaa6` for #6681, `85e08686f8310e00b2b031a042db86405920b4b2` for #6939), independently re-verified 2026-09-23.
 - **`oss-contrib` ledger's outcome descriptions** for the 5 closed-not-merged PRs (e.g. "closed silently by assignee," "rejected as intentional," "superseded by an independent upstream commit") — cross-checked for state/outcome match only, not independently re-verified narrative-by-narrative this session.
-- **pypistats' "OS-attributed" download figures as a mirror-exclusion proxy.** This is explicitly an approximation (74–82% of traffic is unattributed `null`-OS, a reasonable-but-unofficial proxy for CI/mirror traffic) — pypistats has no dedicated mirror-exclusion endpoint, so this number must never be presented as a verified "real" install count.
+- ~~**pypistats' "OS-attributed" download figures as a mirror-exclusion proxy.** This is explicitly an approximation (74–82% of traffic is unattributed `null`-OS, a reasonable-but-unofficial proxy for CI/mirror traffic) — pypistats has no dedicated mirror-exclusion endpoint, so this number must never be presented as a verified "real" install count.~~ **Retracted — see Erratum.**
 - **The specific trigger for #122's HTTP 403** (believed to be concurrent anonymous `api.github.com` calls across the workflow's 4 parallel jobs tripping GitHub's 60/hour anonymous rate limit) — the 403 itself and the missing `Authorization` header are directly verified; the exact request-volume mechanism was not reproduced.
 - **8 Warmer/mindmeld metric claims in issue #123** — genuinely unverifiable by this audit (private source repo, no credential in scope); flagged as "not covered," not "passing," per the issue's own labelling.

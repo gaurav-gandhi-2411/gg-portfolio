@@ -31,6 +31,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { computeFieldDiffs } from "./lib/identity-drift-diff.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PRODUCTS_PATH = join(ROOT, "content", "products.ts");
@@ -39,23 +40,9 @@ const DRIFT_SUMMARY_PATH = process.env.DRIFT_SUMMARY_PATH ?? "/tmp/identity-drif
 const DRIFT_RENAMES_PATH = process.env.DRIFT_RENAMES_PATH ?? "/tmp/identity-drift-renames.json";
 
 const FETCH_TIMEOUT_MS = 20_000;
-// Fields compared run-over-run to decide whether anything drifted.
-// "checkedAt" is deliberately excluded — it's internal bookkeeping (this
-// run's timestamp), not an externally-sourced value, so it would make
-// every single run look like a diff (see refresh-metrics.mjs's measured_at
-// field for the contrast: that one IS diff-worthy because it's sourced from
-// the repo's own manifest, not stamped by this script).
-const DIFF_FIELDS = [
-  "name",
-  "liveUrl",
-  "demoUrl",
-  "httpStatus",
-  "demoStatus",
-  "repoVisibility",
-  "repoArchived",
-  "hfPresence",
-  "pypiPresence",
-];
+// Per-field diff decision (which fields are compared, and which diffs are
+// actionable vs. baseline-only) lives in scripts/lib/identity-drift-diff.mjs
+// — extracted for unit testing (scripts/lib/identity-drift-diff.smoketest.mjs).
 
 const diffs = []; // { slug, field, old, new }
 const notes = []; // free-form markdown bullets
@@ -249,19 +236,17 @@ for (const product of products) {
     }
   }
 
-  // Per-field diff against the previous run.
+  // Per-field diff against the previous run (see
+  // scripts/lib/identity-drift-diff.mjs for the two false-positive fixes:
+  // null-prior baselines skipped, and name diffs that already match
+  // products.ts skipped — root cause of issues #200 and #214).
   if (storeExisted) {
-    for (const field of DIFF_FIELDS) {
-      const oldVal = previous[field] ?? null;
-      const newVal = current[field] ?? null;
-      if (oldVal !== newVal) {
-        diffs.push({ slug, field, old: oldVal, new: newVal });
-        if (field === "repoArchived" && newVal === true) {
-          notes.push(
-            `**\`${slug}\`** just went archived on GitHub while still linked live on the site — this is a regression against a live claim, not noise; needs a human look.`
-          );
-        }
-      }
+    const { diffs: fieldDiffs, justArchived } = computeFieldDiffs(previous, current, product.name);
+    for (const d of fieldDiffs) diffs.push({ slug, ...d });
+    if (justArchived) {
+      notes.push(
+        `**\`${slug}\`** just went archived on GitHub while still linked live on the site — this is a regression against a live claim, not noise; needs a human look.`
+      );
     }
   }
 
