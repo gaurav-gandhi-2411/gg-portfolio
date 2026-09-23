@@ -1078,3 +1078,43 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+
+## F12 (2026-09-23) — Hinglish SBERT linked to Warmer; eval-defect-bench added
+
+Two entries missing from the site (finding F12), added following the wave-14 reclaim precedent
+(add, source strictly to what was actually read, disclose what wasn't).
+
+### Warmer — Hinglish SBERT model + public benchmark linked, not duplicated
+
+`gauravgandhi2411/hinglish-relatedness-sbert` (the LoRA fine-tune the warmer case study's story
+already narrates — see `warmer:lora-reframe` above) and its companion dataset
+`gauravgandhi2411/hinglish-relatedness-benchmark` are the same model/benchmark already covered by
+Warmer's case study, so no new product card was created — the two Hugging Face pages were added to
+`content/case-studies/warmer.ts`'s `links`, and one new result row cites a claim from the model
+card that wasn't yet on the site: the model's comparison against 7 off-the-shelf alternatives on
+the public benchmark (superseding the older, smaller-sample "leading 7 comparators" mention already
+in `warmer:lora-reframe` with the actual field-leading numbers).
+
+Sources read in full this session: `gauravgandhi2411/hinglish-relatedness-sbert`'s model card
+(`https://huggingface.co/gauravgandhi2411/hinglish-relatedness-sbert/raw/main/README.md`, fetched
+2026-09-23) and `gauravgandhi2411/hinglish-relatedness-benchmark`'s dataset card
+(`https://huggingface.co/datasets/gauravgandhi2411/hinglish-relatedness-benchmark/raw/main/README.md`,
+fetched 2026-09-23). No other file in either repo was read.
+
+| ID | Claim | Source |
+|---|---|---|
+| `warmer:hinglish-public-benchmark` | On the public `hinglish-relatedness-benchmark` (34 secrets, 7 domains, dev/test split seed=42, dev↔test Pearson r=0.920), `hinglish-relatedness-sbert` leads all 7 tested off-the-shelf alternatives (including 2 released after the project's original bake-off) on both metrics, CI-significant in all 14 comparisons: dim1 semantic-ranking Spearman **0.675** [95% CI 0.601, 0.741] (full 34-secret set; 0.657 [0.569, 0.736] per the benchmark card's own headline reporting — both cards' numbers are shown as each card states them, not reconciled into one), dim2 cross-language pass-rate **0.740** [0.62, 0.86] | Model card `README.md:50-56` ("Evaluation" section, field-leading claim); dataset card `README.md:79-90` (headline dim1 metric, dev↔test Pearson r) — both fetched 2026-09-23 (verified: 2026-09-23) |
+
+**Model card vs. dataset card, same claim, two numbers — disclosed, not hidden:** the model card's
+"Evaluation" section states dim1 Spearman 0.675 [0.601, 0.741] for the field-leading claim; the
+dataset card's own headline section states 0.657 [0.569, 0.736] for the same reference model on the
+same benchmark. Both are read directly from their respective cards as of the fetch date above; this
+provenance row reports both rather than picking one, since resolving the discrepancy would require
+reading the benchmark's own scoring script, out of scope for this addition.
+
+**Not added:** the model card's "Production wrapper" section (a build-time, non-fine-tuning generator
+mitigation layered on top of the raw model, already summarized in `mindmeld`'s own docs) was read but
+not added as a new claim — Warmer's case study already covers the fine-tune's story at case-study
+depth, and the wrapper is an implementation detail of the generator pipeline, not a new claim this
+site doesn't already make in substance.
+
