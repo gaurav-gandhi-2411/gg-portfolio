@@ -62,6 +62,7 @@ const KNOWN_NON_PRODUCT_REPOS = new Set([
   "gg-portfolio", // this site
   "mindmeld-payloads", // Warmer's public data mirror; mindmeld itself is private
   "triage-iq-ui", // triage-iq's frontend companion, same product/live URL
+  "gaurav-gandhi-2411", // GitHub profile README repo, not a product
 ]);
 
 const changes = []; // { id, field, old, new, source }

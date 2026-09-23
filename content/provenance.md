@@ -1118,3 +1118,47 @@ not added as a new claim — Warmer's case study already covers the fine-tune's 
 depth, and the wrapper is an implementation detail of the generator pipeline, not a new claim this
 site doesn't already make in substance.
 
+### eval-defect-bench (new project card + case study)
+
+`gaurav-gandhi-2411/eval-defect-bench` — "A held-out benchmark for a class of silent-verdict-
+degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all
+failed a pre-registered viability gate." Given a project card (repo-only, no liveUrl/pypi, so it
+never counts toward `liveProductCount()`) and a full case study, the same treatment every other
+product gets, rather than folding it into the Research section — the Research section's card is
+hardcoded to a paper's arXiv/abstract shape and a single `/work/agentgauge` case-study link
+(`components/sections/research.tsx`), neither of which fits a GitHub benchmark repo with no paper.
+
+Source read in full this session: the repo's `README.md`
+(`gh api repos/gaurav-gandhi-2411/eval-defect-bench/readme --jq .content | base64 -d`, fetched
+2026-09-23). `METHODOLOGY.md`, `TAXONOMY.md`, and the `benchmark/`/`results/` files it references
+were **not** independently read this session — every number below is exactly as the README states
+it, including numbers the README itself attributes to those other files.
+
+| ID | Claim | Source |
+|---|---|---|
+| `eval-defect-bench:gate` | Two pass/fail gates pre-registered before the frontier-judge baseline ran: mechanism-naming (EXACT localization ≥40% AND adjudicated FPR ≤20%) and triage (balanced accuracy ≥70% AND adjudicated FPR ≤15%); 0 of 3 detectors passed either | `README.md:35-38` |
+| `eval-defect-bench:ast` | AST scanner (5 hand-built detectors): 0% recall (0/30 held-out positives), never run against the control set; its 75% training-set recall (the 4 examples it was hand-built from) is explicitly flagged by the README as not a valid generalization comparison | `README.md:25,29-33` |
+| `eval-defect-bench:llm-consensus` | Local LLM consensus (llama3.1:8b + gemma2:9b + qwen2.5:7b, majority vote): 53.3% recall, 36.7% adjudicated FPR, 58.3% balanced accuracy, d-prime 0.42 | `README.md:26` (leaderboard table) |
+| `eval-defect-bench:frontier-judge` | Frontier single judge (blind, isolated function body): 13.3% recall, 6.7% adjudicated FPR, 53.3% balanced accuracy, d-prime 0.39; raw numbers (13.3%/10.0% raw FPR/51.7%/0.17) independently reproduced by transforming `frontier_judge_answers.jsonl` into `scripts/score.py`'s input format and re-running it | `README.md:27` (leaderboard), `README.md:85-107` ("Verification" section, reproduced output block) |
+| `eval-defect-bench:taxonomy` | In-class coverage of the benchmark's own target class (silent verdict degradation): 15/30 (50%), across 3 primary shapes (silent accumulation loss n=6, value not consulted n=5, boundary strips attached data n=4), each cross-referenced against real external `google/adk-python` PRs/issues; one cross-reference, `keras#23420`, merged 2026-09-15 after a contested review resolved with a cross-backend regression test | `README.md:109-135` (defect taxonomy table), `README.md:145-157` (keras#23420 merge detail) |
+
+**Categories:** `evals-research` (primary — the whole repo is a benchmark/methodology artifact),
+`llm-agents` (the evaluated codebase is `google/adk-python`'s agent-evaluation module and two of the
+three baselines are LLM-based detectors), `tooling` (ships a standalone, reusable `scripts/score.py`)
+— the same three-tag pattern AgentGauge already uses for a comparable meta-evaluation/research repo.
+
+**Not scored against the wave-13 four-axis depth rubric** (`reports/wave13-autonomy-density-2026-07-25.md`)
+— appended at the end of `content/products.ts` rather than re-running that comparative exercise
+against the other 14 products, which is out of scope for this addition; a future wave can place it
+properly if the ordering should reflect it.
+
+**Resume pool:** `content/resume-data.json` gained a `proj:eval-defect-bench` entry (not in the
+current docx, same pattern as `shelfsense`/`reclaim`/`agentgauge`/`expense-tracker`/`adk-tracegauge`)
+so `scripts/check-resume-project-coverage.mjs` stays green against the 15-product pool.
+
+**`scripts/refresh-metrics.mjs`:** `eval-defect-bench` is no longer flagged as a new/untracked repo
+now that `content/products.ts` references its `github.com` URL (the script's own
+`referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
+added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
+would otherwise have started flagging.
+
