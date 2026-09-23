@@ -5,7 +5,7 @@ Repos:
 - Profile README: `gaurav-gandhi-2411/gaurav-gandhi-2411` → https://github.com/gaurav-gandhi-2411
 - OSS contributions working repo: `C:\Users\gaura\ml-projects\oss-contrib`
 
-Owner: GG. Orchestrator: Opus 4.7 (Claude Code). Subagents: executor + verifier at `C:\Users\gaura\.claude\agents\`.
+Owner: GG. Orchestrator: Opus 5.5 (Claude Code). Subagents: executor + verifier at `C:\Users\gaura\.claude\agents\`.
 
 ## 1. Goal
 
