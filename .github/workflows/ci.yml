@@ -176,6 +176,14 @@ jobs:
       - name: Chat canary verdict self-test
         run: node scripts/chatbot/canary-verdict.smoketest.mjs
 
+      # scripts/check-required-checks-drift.sh is the thing that keeps
+      # .github/required-checks.json (which scripts/relay-dispatched-ci-
+      # status.sh trusts) honest against live branch protection -- stubbed-
+      # gh regression test covering the API-error, protection-missing,
+      # mismatch, and match cases.
+      - name: Required-checks drift script regression test
+        run: bash scripts/check-required-checks-drift.test.sh
+
       - name: Build
         run: npm run build
 
