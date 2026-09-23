@@ -176,6 +176,23 @@ jobs:
       - name: Chat canary verdict self-test
         run: node scripts/chatbot/canary-verdict.smoketest.mjs
 
+      # scripts/relay-dispatched-ci-status.sh's history is three silent
+      # failures in a row (see its header) -- this runs the current version
+      # against a stubbed `gh` covering the config-missing, malformed,
+      # gh-API-error, POST-error, all-success, one-job-failure, and missing-
+      # required-context cases, so a future edit can't reintroduce any of
+      # those shapes unnoticed.
+      - name: Relay script regression test
+        run: bash scripts/relay-dispatched-ci-status.test.sh
+
+      # scripts/check-required-checks-drift.sh is the thing that keeps
+      # .github/required-checks.json (which the relay test above exercises)
+      # honest against live branch protection -- same stubbed-gh pattern,
+      # covering the API-error, protection-missing, mismatch, and match
+      # cases.
+      - name: Required-checks drift script regression test
+        run: bash scripts/check-required-checks-drift.test.sh
+
       - name: Build
         run: npm run build
 
