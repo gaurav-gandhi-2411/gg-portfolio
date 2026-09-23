@@ -15,7 +15,6 @@
 
 /*
  * GG Portfolio design tokens (rule 15b).
- * Single theme by design (spec non-goal: no dark-mode toggle ceremony).
  * Dark, high-contrast: deep graphite base + one vivid accent (indigo,
  * ratified 2026-07-12).
  *
@@ -40,6 +39,18 @@
  *                             outlines stay visible, not just decorative)
  *   status-open on background    10.24:1 (AA non-text/UI needs 3:1)
  *   status-closed on background   4.08:1
+ *
+ * refresh-2026-09, Direction B exploration (proposal, not merged) — this was
+ * "single theme by design (spec non-goal: no dark-mode toggle ceremony)"
+ * until this branch. The `:root` block below is now this dark palette's
+ * *default* value (unchanged, still the numbers above), and a
+ * `prefers-color-scheme: light` override further down replaces every
+ * palette primitive with a light equivalent — see that block's own header
+ * for its own contrast table. No toggle: the OS/browser preference drives
+ * it, per the task brief, not a client-side switch with its own state to
+ * manage. Every component still reads the same semantic custom properties
+ * (--background, --foreground, --border, …); none of them hardcode a hex
+ * value, so the override is the entire mechanism.
  */
 @theme inline {
   --color-background: var(--background);
@@ -181,6 +192,13 @@
 }
 
 :root {
+  /* Tells the UA which palette native widgets (scrollbars, form controls,
+   * the default page background before this stylesheet paints) should
+   * follow — both, since this branch now actually supports both; the OS
+   * preference (prefers-color-scheme, read above and below) decides which
+   * one a given visitor gets. */
+  color-scheme: light dark;
+
   /* Core palette */
   --graphite-950: #0a0b0d;
   --graphite-900: #131417;
@@ -330,6 +348,67 @@
    */
   --nav-h: 5.3125rem;
   --floating-ui-h: 6rem;
+}
+
+/*
+ * ── Light theme override ────────────────────────────────────────────────
+ * Direction B exploration only (proposal, not merged) — every palette
+ * primitive :root defines above, replaced for a visitor whose OS/browser
+ * prefers light. Nothing else in this file changes: every component reads
+ * --background/--foreground/--border/etc., never a literal hex, so
+ * redefining the primitives here is the whole mechanism (rule 15b).
+ *
+ * Contrast checked the same way as the dark palette's own header table
+ * above (scripts: scratch node script, WCAG 2.1 relative-luminance
+ * formula — not the repo's own script, since this exploration doesn't add
+ * one; recheck with a committed script before this direction ships):
+ *   text-hi on background     17.04:1  (AA normal text needs 4.5:1)
+ *   text-lo on background      6.85:1
+ *   accent (indigo) on background   5.88:1
+ *   border on background       3.22:1  (AA non-text/UI needs 3:1)
+ *   border on card              3.44:1
+ *   status-open on background  5.13:1  (AA non-text/UI needs 3:1)
+ *   status-closed on background 7.08:1
+ *   accent-foreground on accent 6.29:1 (white on the light theme's indigo —
+ *                               the dark theme's near-black accent-foreground
+ *                               only hits 3.02:1 against this lighter indigo,
+ *                               so it's overridden too, not reused)
+ *
+ * --indigo is darkened from the dark theme's #818cf8 (tuned to read on a
+ * near-black background) to #4f46e5 (indigo-600) — the same hue, deep
+ * enough to clear 4.5:1 as body text/links on a light background.
+ * --accent-l follows it down for the same reason: every project's card
+ * border/hover-glow/chip is this project's own hue at --accent-l lightness
+ * (lib/project-rhythm.ts), and 68% lightness (tuned for a dark background)
+ * reads as washed-out on white; 52% keeps the same per-project hue spread
+ * legible as a border/glow on a light surface.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    --graphite-950: #f7f7f9;
+    --graphite-900: #ffffff;
+    --graphite-800: #edeef2;
+    --graphite-line: #868a97;
+    --text-hi: #14151a;
+    --text-lo: #53565f;
+    --indigo: #4f46e5;
+    --emerald: #047857;
+    --slate: #475569;
+
+    --accent-foreground: #ffffff;
+    --destructive: #dc2626;
+
+    --accent-l: 52%;
+
+    /* The far plane behind the hero's point field. Hardcoded rather than
+     * derived from --graphite-950 in the dark palette too (see that
+     * variable's own definition above), so it needs its own light value:
+     * a shade darker than --background rather than lighter, so the
+     * vignette (hero.css's .hero-vignette) still reads as a soft recede
+     * at the frame edges instead of a lit-up ring. */
+    --plane-far: #eeeef2;
+    --plane-near: color-mix(in oklab, var(--graphite-800) 82%, var(--indigo) 4%);
+  }
 }
 
 @layer base {
