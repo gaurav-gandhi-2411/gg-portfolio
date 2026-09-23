@@ -71,8 +71,8 @@ its correction both stay in the record.
 4. **#122's repo-inventory check silently fails open (rule-98a shape).** On HTTP 403 (unauthenticated
    GitHub API rate-limited by concurrent job calls), the script's `catch` block logs a note but
    leaves `newRepos = []` — indistinguishable downstream from a genuine "nothing new" result. This
-   caused issue #122 to miss 2 real, currently-existing repos (`next-season-styles`,
-   `poi-intelligence-ranking`, both created before the failed run).
+   caused issue #122 to miss two unlisted repos (owner decision D3), both created before the
+   failed run.
 5. **F13 — site claims "12 live" projects; actual is 9, not 12.** 14 project cards exist (count is
    correct), but only 9 carry a "Live ↗" link. Independently re-verified by the verifier: "site
    overstates by 3."
@@ -127,7 +127,7 @@ against 2026-09-23.
 
 | Issue | Summary | Proposed resolution |
 |---|---|---|
-| #122 | New public repos not yet on the portfolio site | Real items: `eval-defect-bench` (case-study candidate, Phase C) and `gaurav-gandhi-2411` profile repo (add to `KNOWN_NON_PRODUCT_REPOS`). **Also found, missing from the issue itself:** `next-season-styles`, `poi-intelligence-ranking` (both covered by D3, invisible to the bot due to the fail-open 403 defect above). Separately: fix `scripts/refresh-metrics.mjs`'s repo-inventory `catch` block to distinguish fetch-failure from genuine-empty (rule 98a shape). |
+| #122 | New public repos not yet on the portfolio site | Real items: `eval-defect-bench` (case-study candidate, Phase C) and `gaurav-gandhi-2411` profile repo (add to `KNOWN_NON_PRODUCT_REPOS`). **Also found, missing from the issue itself:** two unlisted repos (owner decision D3), invisible to the bot due to the fail-open 403 defect above. Separately: fix `scripts/refresh-metrics.mjs`'s repo-inventory `catch` block to distinguish fetch-failure from genuine-empty (rule 98a shape). |
 | #123 | Weekly metric freshness check: drift, unverifiable, overdue | 2 of 3 flagged drifts are **false positives** from the checker's own documented `CHANGELOG_TRANSITION_PATTERN` exclusion (`style-maitri:catalogue-size`, `warmer:hinglish-fix` SVGs) — both values are genuinely present in source, no content fix needed. 1 is **confirmed real drift**: `reviewiq:extraction-eval` is stale at 83.8%/86.2%/80.7%/80.9%; current source (`review-iq/eval/report.md`, generated 2026-09-19) reports 78.6% overall / 78.2% en / 79.3% hi-en, with the `hi` row removed entirely. Update `content/metrics.json` + any case-study copy, fresh `verified` date, per rule 65c. 14-item staleness list and 8 private-repo (Warmer/mindmeld) unchecked claims are legitimate backlog for Phase C, not per-item fixes here. |
 | #200 | "adk-tracegauge renamed" | **False report — close.** Repo never renamed (live 200, no redirect, matching API `full_name`); `content/products.ts` already correct since before the issue opened. Root cause: `metrics-refresh.yml`'s issue-body template asserts a stale cache value as `products.ts`'s live content without re-reading the file. Fix the template separately (Phase B hygiene, non-blocking). |
 
@@ -276,7 +276,7 @@ Deferred per spec.md §7 — **Phase C/D decisions, not blocking Phase B:**
 
 - **D1** — Paper status wording: "under submission to \<venue\>" or "preprint, arXiv pending"?
 - **D2** — Demote Research on the site homepage too (recommended: yes, below Work and Open source; keep a `/research` page)?
-- **D3** — List `next-season-styles` / `poi-intelligence-ranking` publicly? (recommended: not until those processes close). Directly affects issue #122's resolution for those 2 repos.
+- **D3** — List two unlisted repos (owner decision D3) publicly? (recommended: not until those processes close). Directly affects issue #122's resolution for those 2 repos.
 - **D4** — Pick 1 of 2 Phase D visual directions once proposed.
 - **T1** — Pin 6 repos on GitHub profile (GG hands-on, after Phase C confirms final repo names).
 
