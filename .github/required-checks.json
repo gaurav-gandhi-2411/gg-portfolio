@@ -1,0 +1,5 @@
+{
+  "_comment": "PLANTED DEFECT for the drift-check R1 live proof (test/drift-proof-red) -- do not merge. `planted-missing-check` deliberately does not exist in main's live branch protection, so scripts/check-required-checks-drift.sh must report a mismatch and exit 1 when dispatched against this branch.",
+  "branch": "main",
+  "contexts": ["build", "e2e", "planted-missing-check"]
+}
