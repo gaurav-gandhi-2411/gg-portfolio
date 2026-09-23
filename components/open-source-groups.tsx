@@ -13,10 +13,18 @@ import type { PypiStatsByPackage } from "@/lib/live-data";
  * shared by the home Work section and /projects. `headingLevel` follows that
  * component's own contract: h3 under the homepage section's h2, h2 under the
  * dedicated page's own h1.
+ *
+ * Direction B ("Product showcase", proposal, not merged) — LandedUpstreamGroup
+ * moves from a single-column stack to a two-up grid at md, each item getting
+ * the same "Landed" status pill treatment components/project-card.tsx's
+ * status pill uses, so the two grids on the page (Work, Open source) read as
+ * one visual language rather than two.
  */
 
 const cardClass =
   "section-card border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 md:p-8";
+
+const STATUS_PILL_CLASS = "border-status-open/40 bg-status-open/10 text-status-open";
 
 export function LandedUpstreamGroup({
   items,
@@ -27,14 +35,22 @@ export function LandedUpstreamGroup({
 }) {
   const Heading = headingLevel;
   return (
-    <div className="flex flex-col gap-[var(--space-4)]">
+    <div className="grid gap-[var(--space-4)] md:grid-cols-2">
       {items.map((item) => (
         <article key={item.sourceRef} className={cardClass}>
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <Heading className="font-heading text-lead font-semibold text-foreground">
               {item.repo}
             </Heading>
-            <span className="text-muted-foreground font-mono text-caption">#{item.prNumber}</span>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption tracking-eyebrow uppercase ${STATUS_PILL_CLASS}`}
+              >
+                <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
+                Landed
+              </span>
+              <span className="text-muted-foreground font-mono text-caption">#{item.prNumber}</span>
+            </span>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">{item.whatChanged}</p>
           {item.viaCopybara && (
@@ -94,9 +110,14 @@ export function OwnPackagesGroup({
         const stats = pypiStats[pkg.packageName];
         return (
           <article key={pkg.sourceRef} className={cardClass}>
-            <Heading className="font-heading text-lead font-semibold text-foreground">
-              {pkg.name}
-            </Heading>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <Heading className="font-heading text-lead font-semibold text-foreground">
+                {pkg.name}
+              </Heading>
+              <span className="border-accent/40 bg-accent/10 text-accent inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption tracking-eyebrow uppercase">
+                PyPI
+              </span>
+            </div>
             {/* Fails soft: a package whose registry lookup didn't come back at
                 build/ISR time shows the name and links with no numbers, never
                 a stale or fabricated version. */}
