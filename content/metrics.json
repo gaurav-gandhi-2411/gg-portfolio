@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-10",
+  "updated_at": "2026-09-23",
   "_readme": "Machine-refreshable metric store (wave 13). Keys are provenance IDs (content/provenance.md). Values are refreshed weekly by .github/workflows/metrics-refresh.yml from each source repo's .portfolio/metrics.json — via a reviewed PR, never a direct commit. Hand-edit only to correct an error; the narrative provenance record stays in content/provenance.md.",
   "metrics": {
     "warmer:hinglish-fix": {
@@ -126,13 +126,13 @@
       "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The naive-seasonal reference this is measured against, at leaderboard.md:221. Same shape as warmer:hinglish-fix / warmer:hinglish-baseline. "
     },
     "reviewiq:extraction-eval": {
-      "label": "Extraction accuracy (en/hi-en)",
-      "value": "78.6% overall (threshold 76%)",
+      "label": "Extraction accuracy (en/hi/hi-en)",
+      "value": "78.6% overall (passes its own 76% gate), en 78.2%, hi-en 79.3% -- measured under openai/gpt-oss-20b / openai/gpt-oss-120b",
       "repo": "gaurav-gandhi-2411/review-iq",
-      "source_file": "eval/report.md",
-      "source_line": 5,
-      "commit_sha": "e7186c9696d8daa3afc4aab72291ad6e2fa377b4",
-      "measured_at": "2026-09-01",
+      "source_file": "eval/results/latest.json",
+      "source_line": 1,
+      "commit_sha": "5c5c8e0205e97ffbb1e4d3a6dd3d174fed7e3f3b",
+      "measured_at": "2026-09-19",
       "note": "TEST-STALE (R1 relay proof, test/relay-proof-2026-09-23): measured_at deliberately backdated from 2026-09-19 to 2026-09-01 so scripts/refresh-metrics.mjs's regression guard doesn't reject the live review-iq manifest's (unchanged) 2026-09-19 entry, forcing a real diff. This PR is a controlled test of the CI-status relay (PR #215) and must not be merged. Corrected 2026-09-23 (issue #123, genuine drift confirmed; re-verified against source, see content/case-studies/reviewiq.ts's verifiedAt): the eval report was regenerated 2026-09-19 and now reads 78.6% overall / 78.2% en / 79.3% hi-en at a lowered 76% gate; the 'hi' row (previously 80.7%) was removed from the report entirely -- label narrowed from 'en/hi/hi-en' to 'en/hi-en' to match. eval/report.md:5 reads '## Overall: 78.6% PASS (threshold 76%)'; lines 11-12 hold the per-language table. Old value (83.8% overall, threshold 83%, commit 13a4422) was correct as of its own 2026-07-06 measurement -- this is a genuine re-measurement, not a citation error."
     },
     "mmfr:recall10": {
@@ -247,9 +247,9 @@
   "informational": {
     "hf:downloads-alltime": {
       "label": "Hugging Face cumulative model downloads",
-      "value": 1033,
+      "value": 1417,
       "source": "https://huggingface.co/api/models?author=gauravgandhi2411&expand[]=downloadsAllTime",
-      "measured_at": "2026-08-10",
+      "measured_at": "2026-09-23",
       "note": "Not displayed on the site — below the agreed low-thousands bar for a headline stat (wave 13). Tracked here so the weekly refresh PR surfaces growth."
     }
   }
