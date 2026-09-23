@@ -51,6 +51,7 @@ const WIDTHS = [
 const STATIC_ROUTES = [
   { name: "home", path: "/" },
   { name: "projects", path: "/projects" },
+  { name: "open-source", path: "/open-source" },
   { name: "ask", path: "/ask" },
 ];
 
