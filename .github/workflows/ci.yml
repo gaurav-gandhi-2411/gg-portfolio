@@ -211,6 +211,9 @@ jobs:
       - name: refresh-metrics.mjs forced-error self-test
         run: node scripts/refresh-metrics.forced-error.smoketest.mjs
 
+      - name: identity-drift.mjs forced-error self-test
+        run: node scripts/identity-drift.forced-error.smoketest.mjs
+
       - name: Build
         run: npm run build
 
