@@ -5,7 +5,7 @@ import type { CaseStudy } from "../types";
 // review-iq-closeout-roadmap.md) — see provenance.md's ReviewIQ section.
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
-  verifiedAt: "2026-09-24", // issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1)
+  verifiedAt: "2026-09-24", // issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1). Step 2 (same day): standardized the public display to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" per GG's decision, dropped the en/hi-en per-language accuracy breakdown from public copy, and moved "gate 76%" so it only ever renders next to the CI, never alone -- no underlying number changed, this is a wording/format correction only.
   title: "Samidha Reviews",
   dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
@@ -68,8 +68,8 @@ export const reviewiq: CaseStudy = {
   results: [
     {
       label: "Overall extraction accuracy",
-      value: "78.6% vs. a 76% CI gate, PASS",
-      detail: "n=43 (27 en, 16 hi-en); per-language: en 78.2% / hi-en 79.3% (2026-09-19 eval run; the 'hi' row was removed when the report was regenerated)",
+      value: "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)",
+      detail: "gate 76%, PASS",
       sourceRef: "reviewiq:extraction-eval",
     },
     {
