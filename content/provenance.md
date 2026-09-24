@@ -348,8 +348,8 @@ used the HF Space URL as the card's live link, not an aspirational Cloud Run URL
 
 | ID | Claim | Source |
 |---|---|---|
-| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE 251.99 vs. 293.10 (naive wins by ~16%), Wilcoxon p=0.0001, direction accuracy 51.96%, 204-fold backtest | `gold-rate-tracker/data/backtest.json@d41372a` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`) and had already moved to 209 folds/different numbers by the time issue #45 was filed, causing a false POSSIBLE_DRIFT against the pinned claim's actual numbers. Commit `d41372a` (2026-07-26T05:26:23Z, `chore: update backtest results [skip ci] (#436)`): `mae_5d_avg_naive: 251.99` vs `mae_5d_avg_chronos: 293.1`, `wilcoxon_signed_rank_p: 0.0001`, `dir_acc_5d_chronos: 0.5196` |
-| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 204-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
+| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE (₹/g) 249.24 vs. 292.14 (naive wins by ~17%), Wilcoxon p≈0 (rendered `p < 0.001`), direction accuracy 51.2%, 209-fold backtest | `gold-rate-tracker/data/backtest.json@ad42160` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`, 243 folds as of 2026-09-23) so an unpinned number goes stale within days. Repinned wave refresh-2026-09 (F3/F4, 2026-09-23) to `ad4216086d10a63bb93ed3107c9ccee429cb5fa0` — the exact commit the product repo's own README now cites as its frozen headline citation, so every surface (this row, `content/metrics.json`, the case study) agrees with the same artifact instead of three different snapshots. Commit `ad42160` (`backtest_run_at` 2026-08-02T05:18:28Z): `mae_5d_avg_naive: 249.24` vs `mae_5d_avg_chronos: 292.14`, `wilcoxon_signed_rank_p: 0.0`, `dir_acc_5d_chronos: 0.512` |
+| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 209-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
 
 This project's own design principle is to ship the honest baseline over a model that loses to
 it (direction signal is still flagged "DARK" at both horizons in
@@ -414,7 +414,7 @@ for that one stat, never a broken build or a stale number presented as current.
 | Live stat | Source | Verified behavior |
 |---|---|---|
 | Warmer "Puzzle #N live today" | `raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json` — 1-indexed position of today's UTC date in the `en.days` array | Confirmed 2026-07-12: manifest shows 60 precomputed days from 2026-06-12; today's index computes to **Puzzle #31**, matching the launch-date math (30 days elapsed + 1) |
-| Per-package "vX.Y.Z · N releases · N downloads last week" on any card with a `pypi` entry | `pypi.org/pypi/{package}/json` (`info.version`, `Object.keys(releases).length`) and `pypistats.org/api/packages/{package}/recent` (`data.last_week`), keyed by that product's own `pypi.packageName` | Confirmed 2026-07-12 for tracegauge: `last_week: 32`, matching the rendered build. **Re-confirmed 2026-08-18 with two packages present, which is the case the first version got wrong:** `getTracegaugeDownloads()` fetched one hard-coded package and the call site rendered it for any product with a `pypi` field, so adk-tracegauge's card would have shown tracegauge's download count. Rendered output after the per-package fix: tracegauge `v0.12.0 · 14 releases · 457 downloads`, adk-tracegauge `v0.5.0 · 9 releases · 824 downloads`, each matching its own endpoint |
+| Per-package "vX.Y.Z · N releases · ≈N downloads/week (pypistats, excl. mirrors)" on any card with a `pypi` entry | `pypi.org/pypi/{package}/json` (`info.version`, `Object.keys(releases).length`) and `pypistats.org/api/packages/{package}/overall?mirrors=false` (trailing 7 complete UTC days of the `without_mirrors` series, summed by `lib/live-data.ts`'s `sumTrailingCompleteDays`), keyed by that product's own `pypi.packageName` | Confirmed 2026-07-12 for tracegauge: `last_week: 32`, matching the rendered build. **Re-confirmed 2026-08-18 with two packages present, which is the case the first version got wrong:** `getTracegaugeDownloads()` fetched one hard-coded package and the call site rendered it for any product with a `pypi` field, so adk-tracegauge's card would have shown tracegauge's download count. Rendered output after the per-package fix: tracegauge `v0.12.0 · 14 releases · 457 downloads`, adk-tracegauge `v0.5.0 · 9 releases · 824 downloads`, each matching its own endpoint. **F14 (2026-09-23): the figure was unlabelled raw traffic from `/recent`.** `/recent` has no `mirrors` query argument (confirmed against pypistats' own API docs) and its default is undocumented, so the card now sums pypistats' own documented `without_mirrors` series from `/overall?mirrors=false` instead, and labels the card with which figure it got. If that series is ever empty for a package, the card falls back to `/recent`'s `last_week` and labels it "may include CI" rather than rendering an unlabelled number. Verified live 2026-09-23 (window 2026-09-16 to 2026-09-22 UTC): tracegauge 16, adk-tracegauge 589, agentgauge-harness 36, each summed from `/overall?mirrors=false`'s `without_mirrors` rows |
 | Per-product "shipped Nd/mo/y ago" freshness badge | `api.github.com/repos/{owner}/{repo}/commits?per_page=1` — latest commit's `commit.committer.date`, per public repo referenced in `content/products.ts` | Only computed for products with a public `repoUrl` (Warmer excluded — private repo, uses its puzzle number as the live signal instead) |
 | Shipping log (merged PRs across public repos) | `api.github.com/users/gaurav-gandhi-2411/events/public` — `PullRequestEvent` entries with `payload.action === "merged"` | **Correction during build-testing:** the events API's `PushEvent` payload has no commit-message array in this response shape (just refs/SHAs), and a merged PR's signal is `payload.action === "merged"`, not a `pull_request.merged` boolean as the docs might suggest — verified against the actual live payload, not assumed. Restricted to merged-PR entries only, matching "notable merges" rather than raw pushes |
 
@@ -571,7 +571,7 @@ serves.
 
 | ID | Claim | Source |
 |---|---|---|
-| `adk-tracegauge:pypi` | Installable from PyPI; the displayed version and release count are fetched live, not asserted here | `lib/live-data.ts`'s `getPypiStats` reads `pypi.org/pypi/adk-tracegauge/json` at ISR time (6h) for `info.version` and `Object.keys(releases).length`, and `pypistats.org/api/packages/adk-tracegauge/recent` for `data.last_week`. **Why no version is written down here:** the same endpoint returned `0.4.1` / 8 releases at 2026-08-18T09:10Z and `0.5.0` / 9 releases at 09:16Z, six minutes apart, during the session that added this project. A hand-written version on a package that releases this often is stale on arrival, which is exactly what happened to `tracegauge:pypi` below. Snapshot at the time of writing, for the record only: v0.5.0, 9 releases, first release `0.1.0rc1` uploaded 2026-08-13T16:47Z, 824 downloads in the last week |
+| `adk-tracegauge:pypi` | Installable from PyPI; the displayed version, release count and weekly downloads are fetched live, not asserted here | `lib/live-data.ts`'s `getPypiStats` reads `pypi.org/pypi/adk-tracegauge/json` at ISR time (6h) for `info.version` and `Object.keys(releases).length`, and `pypistats.org/api/packages/adk-tracegauge/overall?mirrors=false` for the trailing 7 complete UTC days of the `without_mirrors` series (falls back to `pypistats.org/api/packages/adk-tracegauge/recent`'s `data.last_week` if that series is ever empty, labelled accordingly on the card, see F14 in the row above). **Why no version is written down here:** the same endpoint returned `0.4.1` / 8 releases at 2026-08-18T09:10Z and `0.5.0` / 9 releases at 09:16Z, six minutes apart, during the session that added this project. A hand-written version on a package that releases this often is stale on arrival, which is exactly what happened to `tracegauge:pypi` below. Snapshot at the time of writing, for the record only: v0.5.0, 9 releases, first release `0.1.0rc1` uploaded 2026-08-13T16:47Z, 589 without-mirrors downloads in the trailing week (2026-09-16 to 2026-09-22 UTC, verified live 2026-09-23) |
 | `adk-tracegauge:quickstart` | 78.2s wall clock from a fresh `pip install --user` to a printed regression verdict, on a bundled demo agent, no API key and no network call | `README.md:19` |
 | `adk-tracegauge:achieved-power` | Every `check` run prints the smallest effect it could reliably (80% power) detect given that run's own observed variance and n, plus an explicit WARNING when the configured floor sits below it | `README.md:41,52,129,338`; `src/adk_tracegauge/_regression.py`'s `minimum_detectable_effect_usd` and its "Achieved statistical power" section |
 | `adk-tracegauge:power-retraction` | A published "99.22% at n=30" power figure was withdrawn after an audit found it rested on one unmeasured cost-variance assumption, and an equally plausible alternative put the same cell near 5%; replaced by two regime-labelled grids rather than a different single number | `README.md:81-83,88-90`; `docs/audit/AC1_SKEW_SENSITIVITY.md`; `docs/audit/Q1A_RECONCILIATION.md` |
@@ -1177,6 +1177,39 @@ Each proposal below passed all three stages (curator score against `docs/content
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
 
+## Wave refresh-2026-09 Phase C, step 2.4 (2026-09-23) — Gold Rate Tracker cross-surface repin (F3/F4)
+
+**F3 — the fold count disagreed across every surface citing it.** `content/metrics.json`
+(`gold-rate-tracker:headline`) was pinned at 199 folds (its own note already flagged it as
+stale relative to the live file); the case study said 204 folds and "naive wins by ~16%"; the
+profile README said 204 folds with MAE 251.99 vs. 293.10; the product repo's own README had
+moved on to a FROZEN, SHA-pinned citation of 209 walk-forward folds @ commit
+`ad4216086d10a63bb93ed3107c9ccee429cb5fa0` (naive flat-hold ₹249/g avg error vs.
+Chronos-Bolt-Tiny ₹292/g, 17% worse, p≈0). Fetched that exact artifact
+(`data/backtest.json` @ `ad42160`, `backtest_run_at` 2026-08-02T05:18:28Z) directly via the
+GitHub contents API and confirmed it matches the repo README's frozen citation exactly:
+`n_folds: 209`, `mae_5d_avg_naive: 249.24`, `mae_5d_avg_chronos: 292.14` (a 17.21% gap, rounds
+to the README's "17%"), `wilcoxon_signed_rank_p: 0.0`. No discrepancy found, so every site
+surface (`content/metrics.json`, this file's Gold Rate Tracker section above, the case study's
+Results row and inline comment) is now repinned to this same commit with identical numbers —
+the same fix wave-18 (2026-07-31 entry above) applied once already for an internal p-value/
+direction-accuracy mismatch, now applied across surfaces instead of within one file. Left the
+profile README's own 204-fold citation unedited — out of scope for this PR, tracked separately
+for the next profile-README pass, which should reuse the canonical citation block from this
+PR's description verbatim.
+
+**F4 — the site tagline claimed the product predicts prices; it deliberately doesn't.** The
+product repo's README says "No price prediction… Refuses to predict tomorrow's direction" and
+its GitHub description reads "honest flat-hold range (no fake predictions)" — the shipped
+headline forecast is a naive flat-hold (tomorrow = today), not a prediction. `content/products.ts`'s
+tagline said "…tracks 22K gold rates in India and predicts tomorrow's, shipping the plain
+baseline because the model I trained never beat it," which contradicts the product's own
+documented behavior. Reworded to lead with what it does for the user (today's price, tracked)
+and keep the honest-negative-result framing, with no "predicts". Site-wide grep for
+`predicts tomorrow`, `199-fold`, `204-fold`, and the `~16%` gold figure found no other
+occurrences outside the three files fixed here — see this PR's description for the exact grep
+commands and their (clean) output.
+
 ## refresh-2026-09 Phase C — Open source contributions
 
 New `content/open-source.ts`, rendered on the homepage's Open source section and on the
@@ -1291,4 +1324,3 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
-
