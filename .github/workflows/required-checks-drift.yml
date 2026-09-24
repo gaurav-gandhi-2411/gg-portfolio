@@ -1,0 +1,54 @@
+# Scheduled guard for .github/required-checks.json, the config
+# scripts/relay-dispatched-ci-status.sh trusts for which commit-status
+# contexts to post onto bot-PR SHAs (see that script's header for why it
+# reads a checked-in file instead of branch protection directly). This
+# config has no enforcement keeping it in sync with the real thing it
+# describes — a branch-protection change made in the GitHub UI, or a config
+# edit that isn't also made in branch protection, would otherwise go
+# unnoticed until a bot PR's relay silently mis-covers a required check.
+#
+# scripts/check-required-checks-drift.sh does the actual comparison — see
+# its header for the endpoint used and why it fails closed on any read
+# problem rather than passing "unverified" as "no drift."
+#
+# History: this file started as a workflow_dispatch-only shell
+# (chore/relay-proof-harness) so it could be registered on `main` and
+# dispatched against an unmerged branch to prove the script live before
+# either landed for real — workflow_dispatch only works for workflows that
+# already exist on the default branch. This change (feat/required-checks-
+# drift) adds the actual script this workflow runs and the daily
+# `schedule:` trigger below, now that there's a real script for it to run.
+#
+# Merge-order note: this branch does not add .github/required-checks.json
+# itself (that lands in fix/relay-config-driven-v2) — if this merges to
+# `main` before that branch does, the scheduled run below will fail daily
+# on "config not found" until it does. Same fail-closed behavior as any
+# other missing-config case, not a new failure mode, but worth landing
+# fix/relay-config-driven-v2 first (or same-day) to avoid a red cron job.
+
+name: Required checks drift
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # daily, 04:00 UTC — after metrics-refresh's Monday
+      # 03:00 run so a same-day config edit has settled before this checks it
+  workflow_dispatch:
+
+concurrency:
+  group: required-checks-drift
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check required-checks config against live branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/check-required-checks-drift.sh

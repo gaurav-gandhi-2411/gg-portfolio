@@ -63,9 +63,9 @@ sources: `reports/resume-rework-2026-07-17.md`.
 |---|---|---|
 | `resume:indium-ds-docunderstanding` | "50M+ documents", "144 A100 GPUs", "$10M+ in annual cost savings", "95%+ field accuracy" | Resume PDF p.1, Indium Software → Data Scientist (Jun 2024–May 2025), bullet "Document-Understanding Transformer at Production Scale" |
 | `resume:indium-senior-vit` | "~70%" | Resume PDF p.1, Indium Software → Senior Data Scientist (Uber AI via Indium), ViT dual-threshold verification bullet: "Automated roughly 70% of earner document verification". |
-| `derived:products-live-count` | "N live AI products" (currently 9) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Now computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` OR `pypi` field (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded, though still shown as a card). One function is the single source of truth — the number can never drift from the array again. **Retired from the hero at GG's launch review** — the hero's own stat row duplicated `/projects`' "N projects · N live today" line and, worse, sat alongside `HeadlineStats`' $10M+/~70%/50M+ row with no explanation of why two stat rows disagreed. `liveProductCount()` stays; it is still what `/projects` and `app/projects/page.tsx` read. |
+| `derived:products-live-count` | "N projects · N live" (currently 14 projects · 9 live) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` field only — the exact field `components/project-card.tsx` checks to render a card's "Live ↗" link, so the count and the visible links can never disagree. ShelfSense and pypi-only entries (AgentGauge, tracegauge, adk-tracegauge) are repo/install-only and excluded, though still shown as a card. **F13 (2026-09-23):** the definition previously also counted a set `pypi` field ("liveUrl OR pypi"), which was correct when only one product (AgentGauge) had a pypi field (8 web demos + 1 package = 9, matching 9 real "Live ↗" links at the time) but silently drifted to "12 live" against 9 cards once tracegauge and adk-tracegauge shipped as pypi-only packages with no liveUrl — pypi packages get an install-command box on the card, never a "Live ↗" link. Fixed to count `liveUrl` alone, the single field both the stat and the card's link read. One function is the single source of truth — the number can never drift from the array again. **Retired from the hero at GG's launch review** — the hero's own stat row duplicated `/projects`' "N projects · N live today" line and, worse, sat alongside `HeadlineStats`' $10M+/~70%/50M+ row with no explanation of why two stat rows disagreed. `liveProductCount()` stays; it is still what `/projects`, `app/projects/page.tsx`, and `components/sections/work.tsx` read. |
 | `derived:warmer-puzzle-count` | "N+ daily Warmer puzzles shipped" (wave 5, replaces the retired 50M+/$10M+ employer-derived hero stats) | Live server fetch, not a hand-typed number: `getWarmerPuzzleNumber()` (`lib/live-data.ts`) reads the public `mindmeld-payloads` manifest (`raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json`), same source and function already used and verified in wave 3 (`reports/wave3-live-stats-budget-2026-07-12.md` — confirmed Puzzle #31 on 2026-07-12). ISR-revalidated every 6h, fails soft to `"—"` in `components/sections/hero.tsx` if the manifest is unreachable — never a stale or fabricated number. |
-| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `preprint-pending`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
+| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `working-paper`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
 | `derived:career-years` | "N years in data science & ML" (currently 5) | Computed at build/ISR time in `components/sections/hero.tsx` `careerYears()`: whole years elapsed since Jul 2021, the start of the first data-science role on the resume (TCS Data Engineer, "Jul 2021 – Jul 2022" — `content/experience.ts` dateRange, itself resume-sourced via `resume:tcs-pipelines`). Same drift-proofing rationale as `derived:products-live-count`: a computed floor, never a hand-typed number that ages. **Retired from the hero at GG's launch review**, same PR as `derived:products-live-count` above — explicitly named in his feedback as a number that was agreed to be dropped and came back. `careerYears()` is deleted with its only caller rather than kept for reuse; nothing else on the site states career length as a number. |
 
 ## About / skills
@@ -97,7 +97,7 @@ Experience" section.
 
 | ID | Claim | Source |
 |---|---|---|
-| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16` — ships as `preprint-pending`; no Tier-2 paper found anywhere in the repo) |
+| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16`, and neither paper has been submitted anywhere — ships as `working-paper`; no Tier-2 paper found anywhere in the repo) |
 
 ## Products
 
@@ -947,8 +947,9 @@ fails closed on any per-project internal disagreement — see that script's own 
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
-- **arXiv IDs for both AgentGauge papers:** not yet assigned for either — Research section ships
-  both entries with `status: "preprint-pending"`, no live arXiv/Scholar link. Flip each
+- **arXiv IDs for both AgentGauge papers:** not yet assigned for either, and neither paper has
+  been submitted anywhere — Research section ships both entries with `status: "working-paper"`,
+  rendered as "Working paper (draft, not yet submitted)", no live arXiv/Scholar link. Flip each
   independently when assigned (separate from Wave 3 "Living portfolio," which is the current
   wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
@@ -1078,3 +1079,94 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+
+## F12 (2026-09-23) — Hinglish SBERT linked to Warmer; eval-defect-bench added
+
+Two entries missing from the site (finding F12), added following the wave-14 reclaim precedent
+(add, source strictly to what was actually read, disclose what wasn't).
+
+### Warmer — Hinglish SBERT model + public benchmark linked, not duplicated
+
+`gauravgandhi2411/hinglish-relatedness-sbert` (the LoRA fine-tune the warmer case study's story
+already narrates — see `warmer:lora-reframe` above) and its companion dataset
+`gauravgandhi2411/hinglish-relatedness-benchmark` are the same model/benchmark already covered by
+Warmer's case study, so no new product card was created — the two Hugging Face pages were added to
+`content/case-studies/warmer.ts`'s `links`, and one new result row cites a claim from the model
+card that wasn't yet on the site: the model's comparison against 7 off-the-shelf alternatives on
+the public benchmark (superseding the older, smaller-sample "leading 7 comparators" mention already
+in `warmer:lora-reframe` with the actual field-leading numbers).
+
+Sources read in full this session: `gauravgandhi2411/hinglish-relatedness-sbert`'s model card
+(`https://huggingface.co/gauravgandhi2411/hinglish-relatedness-sbert/raw/main/README.md`, fetched
+2026-09-23) and `gauravgandhi2411/hinglish-relatedness-benchmark`'s dataset card
+(`https://huggingface.co/datasets/gauravgandhi2411/hinglish-relatedness-benchmark/raw/main/README.md`,
+fetched 2026-09-23). No other file in either repo was read.
+
+| ID | Claim | Source |
+|---|---|---|
+| `warmer:hinglish-public-benchmark` | The model card's own field-leading claim: `hinglish-relatedness-sbert` leads all 7 tested off-the-shelf alternatives (including 2 released after the project's original bake-off) on both metrics, CI-significant in all 14 comparisons, on what the model card itself describes as a "public, scrubbed, 50-secret held-out set" (42 dim1-eligible secrets): dim1 semantic-ranking Spearman **0.675** [95% CI 0.601, 0.741], dim2 cross-language pass-rate **0.740** [0.62, 0.86] | Model card `README.md:50-56,82` ("Evaluation" section, field-leading claim) — fetched 2026-09-23 (verified: 2026-09-23) |
+
+**Model card vs. dataset card — a genuine source discrepancy, disclosed, not reconciled:** the model
+card's "Evaluation" section attributes its field-leading 0.675/0.740 numbers to a "public, scrubbed,
+50-secret held-out set" (`README.md:52`, 42 dim1-eligible secrets per `README.md:82`). The published
+dataset it names as that benchmark, `hinglish-relatedness-benchmark`, describes its own contents as
+**34 secret words across 7 domains** (`README.md:21,36`) and states its own headline dim1 Spearman for
+the same reference model as **0.657** [95% CI 0.569, 0.736] (`README.md:88-90`), not 0.675 — a
+different set size AND a different number, not just a rounding difference. Both cards were fetched in
+full this session (2026-09-23) and neither was edited or reconciled; this row reports the model card's
+own field-leading claim as it states it, and flags rather than resolves the mismatch against the
+dataset card's self-description, since resolving it would require reading the benchmark's own scoring
+script and possibly an unpublished 50-secret superset — out of scope for this addition. The site's
+result row (`content/case-studies/warmer.ts`) discloses the same discrepancy rather than picking a
+side.
+
+**Not added:** the model card's "Production wrapper" section (a build-time, non-fine-tuning generator
+mitigation layered on top of the raw model, already summarized in `mindmeld`'s own docs) was read but
+not added as a new claim — Warmer's case study already covers the fine-tune's story at case-study
+depth, and the wrapper is an implementation detail of the generator pipeline, not a new claim this
+site doesn't already make in substance.
+
+### eval-defect-bench (new project card + case study)
+
+`gaurav-gandhi-2411/eval-defect-bench` — "A held-out benchmark for a class of silent-verdict-
+degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all
+failed a pre-registered viability gate." Given a project card (repo-only, no liveUrl/pypi, so it
+never counts toward `liveProductCount()`) and a full case study, the same treatment every other
+product gets, rather than folding it into the Research section — the Research section's card is
+hardcoded to a paper's arXiv/abstract shape and a single `/work/agentgauge` case-study link
+(`components/sections/research.tsx`), neither of which fits a GitHub benchmark repo with no paper.
+
+Source read in full this session: the repo's `README.md`
+(`gh api repos/gaurav-gandhi-2411/eval-defect-bench/readme --jq .content | base64 -d`, fetched
+2026-09-23). `METHODOLOGY.md`, `TAXONOMY.md`, and the `benchmark/`/`results/` files it references
+were **not** independently read this session — every number below is exactly as the README states
+it, including numbers the README itself attributes to those other files.
+
+| ID | Claim | Source |
+|---|---|---|
+| `eval-defect-bench:gate` | Two pass/fail gates pre-registered before the frontier-judge baseline ran: mechanism-naming (EXACT localization ≥40% AND adjudicated FPR ≤20%) and triage (balanced accuracy ≥70% AND adjudicated FPR ≤15%); 0 of 3 detectors passed either | `README.md:35-38` |
+| `eval-defect-bench:ast` | AST scanner (5 hand-built detectors): 0% recall (0/30 held-out positives), never run against the control set; its 75% training-set recall (the 4 examples it was hand-built from) is explicitly flagged by the README as not a valid generalization comparison | `README.md:25,29-33` |
+| `eval-defect-bench:llm-consensus` | Local LLM consensus (llama3.1:8b + gemma2:9b + qwen2.5:7b, majority vote): 53.3% recall, 36.7% adjudicated FPR, 58.3% balanced accuracy, d-prime 0.42 | `README.md:26` (leaderboard table) |
+| `eval-defect-bench:frontier-judge` | Frontier single judge (blind, isolated function body): 13.3% recall, 6.7% adjudicated FPR, 53.3% balanced accuracy, d-prime 0.39; raw numbers (13.3%/10.0% raw FPR/51.7%/0.17) independently reproduced by transforming `frontier_judge_answers.jsonl` into `scripts/score.py`'s input format and re-running it | `README.md:27` (leaderboard), `README.md:85-107` ("Verification" section, reproduced output block) |
+| `eval-defect-bench:taxonomy` | In-class coverage of the benchmark's own target class (silent verdict degradation): 15/30 (50%), across 3 primary shapes (silent accumulation loss n=6, value not consulted n=5, boundary strips attached data n=4), each cross-referenced against real external `google/adk-python` PRs/issues; one cross-reference, `keras#23420`, merged 2026-09-15 after a contested review resolved with a cross-backend regression test | `README.md:109-135` (defect taxonomy table), `README.md:145-157` (keras#23420 merge detail) |
+
+**Categories:** `evals-research` (primary — the whole repo is a benchmark/methodology artifact),
+`llm-agents` (the evaluated codebase is `google/adk-python`'s agent-evaluation module and two of the
+three baselines are LLM-based detectors), `tooling` (ships a standalone, reusable `scripts/score.py`)
+— the same three-tag pattern AgentGauge already uses for a comparable meta-evaluation/research repo.
+
+**Not scored against the wave-13 four-axis depth rubric** (`reports/wave13-autonomy-density-2026-07-25.md`)
+— appended at the end of `content/products.ts` rather than re-running that comparative exercise
+against the other 14 products, which is out of scope for this addition; a future wave can place it
+properly if the ordering should reflect it.
+
+**Resume pool:** `content/resume-data.json` gained a `proj:eval-defect-bench` entry (not in the
+current docx, same pattern as `shelfsense`/`reclaim`/`agentgauge`/`expense-tracker`/`adk-tracegauge`)
+so `scripts/check-resume-project-coverage.mjs` stays green against the 15-product pool.
+
+**`scripts/refresh-metrics.mjs`:** `eval-defect-bench` is no longer flagged as a new/untracked repo
+now that `content/products.ts` references its `github.com` URL (the script's own
+`referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
+added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
+would otherwise have started flagging.
+

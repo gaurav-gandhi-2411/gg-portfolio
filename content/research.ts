@@ -16,7 +16,7 @@ export const researchPapers: ResearchPaper[] = [
     abstractExcerpt:
       "Tool-description quality is widely treated as a broadly-applicable lever for agent tool-use, but it is not a single better/worse axis: the precision that helps an agent disambiguate within a family of confusable tools is orthogonal to, or actively harmful for, context-rich selection and for tool retrieval.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
-    status: "preprint-pending",
+    status: "working-paper",
     sourceRef: "agentgauge:paper-md",
   },
   {
@@ -27,7 +27,7 @@ export const researchPapers: ResearchPaper[] = [
     abstractExcerpt:
       "Agent evaluations are routinely reported without a power analysis, without a stated detection floor, and without screening for measurement artifacts.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/agentgauge",
-    status: "preprint-pending",
+    status: "working-paper",
     sourceRef: "agentgauge:paper2",
   },
 ];
