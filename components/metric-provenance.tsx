@@ -141,7 +141,17 @@ export function MetricProvenance({
       // window.innerWidth makes the panel's own width agree with the same
       // measurement this effect already uses for position, on every
       // platform — the CSS class stays as the no-JS/SSR fallback only.
-      panel.style.maxWidth = `${window.innerWidth - 48}px`;
+      //
+      // -64 rather than the CSS class's original -48 (3rem): on
+      // /work/multimodal-fashion-recommender specifically, this component's
+      // own shift-correction below (measured against this same maxWidth)
+      // still left documentElement.scrollWidth exactly 1px over on the
+      // Ubuntu CI runner even with the -48 value, deterministically and
+      // reproducibly (identical on retry, not a timing flake) — the same
+      // font-metric-variance class as the nav fix elsewhere in this PR, on
+      // this citation's own text. An extra 16px of margin closes it with
+      // real headroom rather than chasing an exact second number.
+      panel.style.maxWidth = `${window.innerWidth - 64}px`;
       panel.style.transform = "";
       const rect = panel.getBoundingClientRect();
       const overflowRight = rect.right - window.innerWidth;
