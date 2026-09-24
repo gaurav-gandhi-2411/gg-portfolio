@@ -165,7 +165,7 @@ export const products: Product[] = [
     categories: ["llm-agents"],
     techChips: ["FastAPI", "Groq", "Tiered routing"],
     metric: refreshableMetric("reviewiq:extraction-eval"),
-    figure: { kind: "bar", pct: 78.6, valueText: "78.6% (threshold 76%)" },
+    figure: { kind: "bar", pct: 78.6, valueText: "78.6%" },
   },
   {
     slug: "gold-rate-tracker",

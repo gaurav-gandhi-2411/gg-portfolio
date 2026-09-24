@@ -243,6 +243,26 @@ n=43 count and the 2026-09-19 eval date are now stated directly in the rendered 
 (`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
 result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
 
+**Step 2 (2026-09-24, GG's explicit display-wording decision):** the public display for this
+metric is standardized site-wide to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)", with
+"gate 76%" permitted only when it renders alongside that CI, never alone. Re-verified against
+`review-iq/eval/results.json` directly (`overall_ci_95.lower: 0.7323872930973655`,
+`.upper: 0.8293967579473885`, rounded to 73%/83%) -- unchanged from Step 1's source, this is a
+wording/format correction, not a re-measurement. Three changes: (1)
+`content/case-studies/reviewiq.ts`'s results row now reads the exact string above, and its
+per-language accuracy breakdown ("en 78.2% / hi-en 79.3%") is removed from public copy
+entirely -- per-language accuracy numbers no longer appear on any public page; (2)
+`content/metrics.json`'s `label` for `reviewiq:extraction-eval` was rewritten from
+"en/hi-en, n=43, 2026-09-19" to "95% CI 73-83%, n=43, 2026-09-19" (the "en/hi-en" per-language
+marker dropped, the CI added) -- `value` itself is untouched, still anchored to
+`eval/report.md:5`'s exact tokens for the cited-line freshness check; (3)
+`content/products.ts`'s homepage bar-figure `valueText` was narrowed from
+"78.6% (threshold 76%)" to "78.6%" -- that figure is a fixed-width SVG label with no room for
+the CI text, and `scripts/check-card-consistency.mjs`'s Check B requires its numbers to stay a
+subset of `metrics.json`'s own `value`, so the gate reference was dropped there rather than
+risk it rendering alone; the full CI/gate context is still one tap away via the row's own
+provenance disclosure and stated in full on the case-study page.
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
