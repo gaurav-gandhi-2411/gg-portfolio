@@ -291,6 +291,21 @@ affected Linux baselines (`projects-390`, `projects-1440`, `projects-llm-agents-
 regenerated in this PR via the same Docker mechanism; the full 54-test visual-regression suite
 was re-run afterward and passed clean.
 
+**Step 4 (PR #242, 2026-09-24, coordinator correction):** the U+2011 non-breaking hyphen
+substitution in Step 3 was reverted. `content/metrics.json` is a data source, not a rendering
+detail -- its `label` field feeds the chatbot index, is copy-pastable by anyone reading the
+JSON directly, and is the intended target of an exact-string gate for the canonical
+"78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" string; a non-ASCII hyphen there makes those
+surfaces byte-for-byte different from the plain-ASCII case-study string even though the two
+render and sound identical. This is the same failure class that hit gg-portfolio PR #225,
+where a PDF text-extraction step (poppler) silently dropped a U+2011 from the word
+"sentence-transformers". `label` is back to plain ASCII hyphens throughout. The mid-date wrap
+is now prevented at the rendering layer instead: `components/eval-figure.tsx`'s caption
+renderer wraps any ISO-date token (`/\d{4}-\d{2}-\d{2}/`) in a `<span
+className="whitespace-nowrap">`, generically, for every card's caption text -- no
+per-metric special-casing, and the sibling `<svg role="img">`'s `aria-label` content is
+unaffected (still the plain, unwrapped string). Linux baselines regenerated again to match.
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
