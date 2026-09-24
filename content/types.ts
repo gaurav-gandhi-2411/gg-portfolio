@@ -227,3 +227,48 @@ export interface ResearchPaper {
   status: "working-paper" | "live";
   sourceRef: string;
 }
+
+/**
+ * refresh-2026-09 Phase C — a PR whose fix landed on an upstream repo's
+ * default branch, independent of GG's own products. `commitUrl`/`commitSha`
+ * are the actual landing commit, not the PR itself: Google's adk-python
+ * imports external PRs through Copybara, so the PR page shows "Closed"
+ * rather than "Merged" even though the change is live in the repo under a
+ * different commit — `viaCopybara` renders the note that explains the gap
+ * so a reader who clicks through doesn't read "Closed" as "rejected".
+ */
+export interface OpenSourceLandedItem {
+  /** e.g. "google/adk-python" */
+  repo: string;
+  repoUrl: string;
+  /** The pull request's own title, verbatim. */
+  title: string;
+  /** One line, plain language, what the fix actually does. */
+  whatChanged: string;
+  prNumber: number;
+  prUrl: string;
+  commitSha: string;
+  commitUrl: string;
+  viaCopybara?: boolean;
+  /** Only set once the change has actually shipped in a tagged release, e.g. "v2.8.0". */
+  releasedIn?: string;
+  sourceRef: string;
+}
+
+/** A repo with one or more open, not-yet-landed pull requests — never counted as "landed". */
+export interface OpenSourceInReviewEntry {
+  repo: string;
+  repoUrl: string;
+  pulls: { number: number; url: string; title: string }[];
+  sourceRef: string;
+}
+
+/** One of GG's own published PyPI packages — version/release count are fetched live, never hand-typed. */
+export interface OpenSourcePackage {
+  name: string;
+  /** The PyPI project name: both the install command and the live-lookup key. */
+  packageName: string;
+  pypiUrl: string;
+  repoUrl: string;
+  sourceRef: string;
+}
