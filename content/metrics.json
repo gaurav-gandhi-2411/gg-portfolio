@@ -126,7 +126,7 @@
       "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The naive-seasonal reference this is measured against, at leaderboard.md:221. Same shape as warmer:hinglish-fix / warmer:hinglish-baseline. "
     },
     "reviewiq:extraction-eval": {
-      "label": "Extraction accuracy (en/hi-en)",
+      "label": "en/hi-en, n=43, 2026-09-19",
       "value": "78.6% overall (threshold 76%)",
       "repo": "gaurav-gandhi-2411/review-iq",
       "source_file": "eval/report.md",
