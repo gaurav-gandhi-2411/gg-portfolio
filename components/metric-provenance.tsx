@@ -114,7 +114,13 @@ export function MetricProvenance({
    * trigger that already fits, which is the overwhelming majority.
    * useLayoutEffect so this resolves before paint, not after a visible
    * jump; re-measured on resize since the overflow amount is a function of
-   * viewport width.
+   * viewport width, and again once web fonts finish loading — the trigger
+   * text reflows under a fallback font first, and a font-load-driven
+   * reflow after this effect's first measurement (heavier under CPU load,
+   * e.g. the full e2e suite's 800+ concurrent tests) can shift a trigger a
+   * few px further right than it measured at mount, which is exactly the
+   * intermittent failure this second listener closes. Same pattern
+   * site-nav.tsx already uses for its own post-hydration measurement.
    */
   useLayoutEffect(() => {
     const panel = panelRef.current;
@@ -130,6 +136,7 @@ export function MetricProvenance({
     }
     clamp();
     window.addEventListener("resize", clamp);
+    if (document.fonts?.ready) void document.fonts.ready.then(clamp);
     return () => window.removeEventListener("resize", clamp);
   });
 
