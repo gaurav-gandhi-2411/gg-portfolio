@@ -7,6 +7,7 @@ import { forceWebGLCapability } from "./fixtures/force-webgl";
 const ROUTES = [
   "/",
   "/projects",
+  "/open-source",
   "/ask",
   ...categoryIds.map((id) => `/projects/${id}`),
   ...caseStudySlugs.map((slug) => `/work/${slug}`),

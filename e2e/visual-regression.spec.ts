@@ -56,6 +56,7 @@ const WIDTHS = [
 const STATIC_ROUTES = [
   { name: "home", path: "/" },
   { name: "projects", path: "/projects" },
+  { name: "open-source", path: "/open-source" },
   { name: "ask", path: "/ask" },
 ];
 
@@ -70,8 +71,8 @@ const ALL_ROUTES = [...STATIC_ROUTES, ...CATEGORY_ROUTES, ...WORK_ROUTES, ...WAR
 
 // Fail closed, not silently: a route list derived wrong (an empty import, a
 // broken path) must not read as "every route passed" because there were no
-// routes to fail. 20 is comfortably under the current real count (3 static +
-// 6 categories + 14 case studies + 3 warmup = 26) with room for either list
+// routes to fail. 20 is comfortably under the current real count (4 static +
+// 6 categories + 15 case studies + 3 warmup = 28) with room for either list
 // to grow or shrink a little without this tripping on noise.
 if (ALL_ROUTES.length < 20) {
   throw new Error(

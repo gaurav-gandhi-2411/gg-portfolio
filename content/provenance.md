@@ -209,7 +209,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -232,6 +232,17 @@ repo's part — the 2026-07-06 figures were correct as of that date. `content/me
 homepage card figure were all updated to the current numbers; the per-language label narrowed
 from "en/hi/hi-en" to "en/hi-en" to match the report's own current shape.
 
+**Step 1 (2026-09-24, single source of truth):** cross-checked `eval/report.md` against
+`review-iq/eval/results.json` (`generated_at: 2026-09-19T21:59:11Z`, `git_sha 5c5c8e0`) --
+both agree: `overall_score: 0.7859851844649027` (78.6%), `threshold: 0.76`, `passed: true`,
+`overall_ci_95.n: 43` (`per_language.en.n: 27`, `per_language.hi-en.n: 16`). The retired
+83.8% figure referenced above is review-iq's own v2.3/llama-era measurement from
+2026-07-06 (n=49, superseded by the 2026-09-19 gpt-oss re-record) -- not a citation error,
+a genuine re-measurement, and not to be conflated with the current 78.6%/n=43 headline. The
+n=43 count and the 2026-09-19 eval date are now stated directly in the rendered card
+(`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
+result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
@@ -251,8 +262,8 @@ used the HF Space URL as the card's live link, not an aspirational Cloud Run URL
 
 | ID | Claim | Source |
 |---|---|---|
-| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE 251.99 vs. 293.10 (naive wins by ~16%), Wilcoxon p=0.0001, direction accuracy 51.96%, 204-fold backtest | `gold-rate-tracker/data/backtest.json@d41372a` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`) and had already moved to 209 folds/different numbers by the time issue #45 was filed, causing a false POSSIBLE_DRIFT against the pinned claim's actual numbers. Commit `d41372a` (2026-07-26T05:26:23Z, `chore: update backtest results [skip ci] (#436)`): `mae_5d_avg_naive: 251.99` vs `mae_5d_avg_chronos: 293.1`, `wilcoxon_signed_rank_p: 0.0001`, `dir_acc_5d_chronos: 0.5196` |
-| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 204-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
+| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE (₹/g) 249.24 vs. 292.14 (naive wins by ~17%), Wilcoxon p≈0 (rendered `p < 0.001`), direction accuracy 51.2%, 209-fold backtest | `gold-rate-tracker/data/backtest.json@ad42160` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`, 243 folds as of 2026-09-23) so an unpinned number goes stale within days. Repinned wave refresh-2026-09 (F3/F4, 2026-09-23) to `ad4216086d10a63bb93ed3107c9ccee429cb5fa0` — the exact commit the product repo's own README now cites as its frozen headline citation, so every surface (this row, `content/metrics.json`, the case study) agrees with the same artifact instead of three different snapshots. Commit `ad42160` (`backtest_run_at` 2026-08-02T05:18:28Z): `mae_5d_avg_naive: 249.24` vs `mae_5d_avg_chronos: 292.14`, `wilcoxon_signed_rank_p: 0.0`, `dir_acc_5d_chronos: 0.512` |
+| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 209-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
 
 This project's own design principle is to ship the honest baseline over a model that loses to
 it (direction signal is still flagged "DARK" at both horizons in
@@ -1080,6 +1091,64 @@ Each proposal below passed all three stages (curator score against `docs/content
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
 
+## Wave refresh-2026-09 Phase C, step 2.4 (2026-09-23) — Gold Rate Tracker cross-surface repin (F3/F4)
+
+**F3 — the fold count disagreed across every surface citing it.** `content/metrics.json`
+(`gold-rate-tracker:headline`) was pinned at 199 folds (its own note already flagged it as
+stale relative to the live file); the case study said 204 folds and "naive wins by ~16%"; the
+profile README said 204 folds with MAE 251.99 vs. 293.10; the product repo's own README had
+moved on to a FROZEN, SHA-pinned citation of 209 walk-forward folds @ commit
+`ad4216086d10a63bb93ed3107c9ccee429cb5fa0` (naive flat-hold ₹249/g avg error vs.
+Chronos-Bolt-Tiny ₹292/g, 17% worse, p≈0). Fetched that exact artifact
+(`data/backtest.json` @ `ad42160`, `backtest_run_at` 2026-08-02T05:18:28Z) directly via the
+GitHub contents API and confirmed it matches the repo README's frozen citation exactly:
+`n_folds: 209`, `mae_5d_avg_naive: 249.24`, `mae_5d_avg_chronos: 292.14` (a 17.21% gap, rounds
+to the README's "17%"), `wilcoxon_signed_rank_p: 0.0`. No discrepancy found, so every site
+surface (`content/metrics.json`, this file's Gold Rate Tracker section above, the case study's
+Results row and inline comment) is now repinned to this same commit with identical numbers —
+the same fix wave-18 (2026-07-31 entry above) applied once already for an internal p-value/
+direction-accuracy mismatch, now applied across surfaces instead of within one file. Left the
+profile README's own 204-fold citation unedited — out of scope for this PR, tracked separately
+for the next profile-README pass, which should reuse the canonical citation block from this
+PR's description verbatim.
+
+**F4 — the site tagline claimed the product predicts prices; it deliberately doesn't.** The
+product repo's README says "No price prediction… Refuses to predict tomorrow's direction" and
+its GitHub description reads "honest flat-hold range (no fake predictions)" — the shipped
+headline forecast is a naive flat-hold (tomorrow = today), not a prediction. `content/products.ts`'s
+tagline said "…tracks 22K gold rates in India and predicts tomorrow's, shipping the plain
+baseline because the model I trained never beat it," which contradicts the product's own
+documented behavior. Reworded to lead with what it does for the user (today's price, tracked)
+and keep the honest-negative-result framing, with no "predicts". Site-wide grep for
+`predicts tomorrow`, `199-fold`, `204-fold`, and the `~16%` gold figure found no other
+occurrences outside the three files fixed here — see this PR's description for the exact grep
+commands and their (clean) output.
+
+## refresh-2026-09 Phase C — Open source contributions
+
+New `content/open-source.ts`, rendered on the homepage's Open source section and on the
+dedicated `/open-source` page. Every "landed" claim is checked against the upstream repo's
+default-branch commit history directly (the GitHub API's `/commits/<sha>` endpoint), not against
+the PR's own merged/closed status — two of the three entries below land via Google's Copybara
+import pipeline, which closes the PR on GitHub without ever marking it "Merged" even though the
+change is live in the repo under a different commit. Checked 2026-09-23.
+
+| ID | Claim | Source |
+|---|---|---|
+| `oss:adk-python-6681` | google/adk-python PR #6681, "fix(cli): resolve NameError in legacy create-eval-set route", landed via Copybara as commit `023f45c3e5846c3e72525b53f16ef018b5ecdaa6`, first released in v2.8.0 | `https://github.com/google/adk-python/commit/023f45c3e5846c3e72525b53f16ef018b5ecdaa6` (commit message and content confirmed via `GET /repos/google/adk-python/commits/023f45c...`); release containment confirmed via `GET /repos/google/adk-python/compare/v2.8.0...023f45c...` returning `status: behind, ahead_by: 0` (the commit is an ancestor of the v2.8.0 tag) |
+| `oss:adk-python-6939` | google/adk-python PR #6939, "fix(evaluation): reject num_samples=0 in JudgeModelOptions at construction time", landed via Copybara as commit `85e08686f8310e00b2b031a042db86405920b4b2`, not yet in a tagged release | `https://github.com/google/adk-python/commit/85e08686f8310e00b2b031a042db86405920b4b2` (commit message and content confirmed via `GET /repos/google/adk-python/commits/85e0868...`) |
+| `oss:keras-23420` | keras-team/keras PR #23420, "fix: R2Score returns NaN instead of 1.0 for a perfect prediction on zero-variance data", merged as commit `f3b31e4f4667849d98c1e230e142c9f445f2eed0`, not yet in a tagged release | `https://github.com/keras-team/keras/commit/f3b31e4f4667849d98c1e230e142c9f445f2eed0`; `GET /repos/keras-team/keras/pulls/23420` returns `state: closed, merged: true, merge_commit_sha` matching this commit exactly |
+| `oss:adk-python-in-review` | google/adk-python #6739 ("fix(evaluation): honor each metric's own eval_status in AgentEvaluator.evaluate()") and #6740 ("fix(cli): adk eval process exit code now reflects PASSED/FAILED"), both OPEN, not counted as landed | `GET /repos/google/adk-python/pulls/6739` and `.../pulls/6740` both return `state: open` |
+| `oss:tracegauge-repo` | tracegauge's source repo is `gaurav-gandhi-2411/token-efficiency-scorer` (the PyPI package name differs from the repo name) | `https://pypi.org/pypi/tracegauge/json`, `info.project_urls.Repository` |
+| `oss:adk-tracegauge-repo` | adk-tracegauge's source repo is `gaurav-gandhi-2411/adk-tracegauge` | `https://pypi.org/pypi/adk-tracegauge/json`, `info.project_urls.Repository` |
+| `oss:agentgauge-harness-repo` | agentgauge-harness's source repo is `gaurav-gandhi-2411/agentgauge` | `https://pypi.org/pypi/agentgauge-harness/json`, `info.project_urls.Repository` |
+
+Own-package version and release-count figures shown on the site are **not** in this table on
+purpose: they are live numbers fetched from the PyPI JSON API at build/ISR time
+(`getPypiStats()` in `lib/live-data.ts`, the same function and fetch already used by every
+product card's PyPI badge), never hand-typed, so there is no static claim here to source — the
+fetch itself is the provenance, and it fails soft to no number rather than a stale one.
+
 ## F12 (2026-09-23) — Hinglish SBERT linked to Warmer; eval-defect-bench added
 
 Two entries missing from the site (finding F12), added following the wave-14 reclaim precedent
@@ -1169,4 +1238,3 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
-
