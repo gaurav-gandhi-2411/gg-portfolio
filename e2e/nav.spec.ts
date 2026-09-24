@@ -8,6 +8,10 @@ test.describe("site navigation", () => {
     await expect(page).toHaveURL(/\/projects$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("All projects");
 
+    await page.getByRole("link", { name: "Open source", exact: true }).click();
+    await expect(page).toHaveURL(/\/open-source$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Open source");
+
     await page.getByRole("link", { name: "Gaurav Gandhi, home" }).click();
     await expect(page).toHaveURL(/\/$/);
 
@@ -49,5 +53,14 @@ test.describe("site navigation", () => {
       exact: true,
     });
     await expect(projectsLink).toHaveAttribute("aria-current", "page");
+  });
+
+  test("nav shows an active state on /open-source", async ({ page }) => {
+    await page.goto("/open-source");
+    const openSourceLink = page.getByRole("navigation", { name: "Site" }).getByRole("link", {
+      name: "Open source",
+      exact: true,
+    });
+    await expect(openSourceLink).toHaveAttribute("aria-current", "page");
   });
 });
