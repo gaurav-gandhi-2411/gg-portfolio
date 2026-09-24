@@ -304,7 +304,30 @@ is now prevented at the rendering layer instead: `components/eval-figure.tsx`'s 
 renderer wraps any ISO-date token (`/\d{4}-\d{2}-\d{2}/`) in a `<span
 className="whitespace-nowrap">`, generically, for every card's caption text -- no
 per-metric special-casing, and the sibling `<svg role="img">`'s `aria-label` content is
-unaffected (still the plain, unwrapped string). Linux baselines regenerated again to match.
+unaffected (still the plain, unwrapped string).
+
+**Step 5 (PR #242, 2026-09-24):** Step 4's own claim that "Linux baselines regenerated again
+to match" was premature -- local Docker-based regeneration was attempted but blocked by a
+severe, pre-existing host disk-space condition (the local machine's `C:` drive at 100%
+capacity, ~5-9GB free of 952GB throughout this session), which caused `npm ci` inside a
+throwaway Docker copy to either silently truncate or run for 19+ minutes without completing
+(vs. ~6 minutes measured earlier in the same session before the disk filled). Rather than
+guess the baselines were still correct, this PR was pushed as-is and its own `e2e` CI check
+(GitHub Actions, disk-unconstrained) was used as the real verification -- it failed on exactly
+three routes: `projects @ 390px`, `projects-llm-agents @ 390px`, `work-reviewiq @ 390px`. That
+failure also surfaced a SECOND, independent bug: this branch's merge of `origin/main` (bringing
+in PR #241/#243) had resolved a binary conflict on `work-reviewiq-390-desktop-linux.png` by
+taking `origin/main`'s side -- but `main` has never had this branch's `reviewiq.ts` content
+fix at all, so its baseline still showed the pre-Step-1 wording ("78.6% vs. a 76% CI gate,
+PASS" with the full en/hi-en per-language breakdown), not this PR's canonical string. Fixed by
+downloading the failed CI run's own `playwright-report` artifact (`gh run download`), decoding
+its embedded base64 zip (`<template id="playwrightReportBase64">`) to get `report.json`'s
+attachment map, and using the run's own "-actual.png" images (the real, correct, Linux-rendered
+current code) directly as the new committed baselines for all three routes -- verified visually
+before committing (the case-study page's actual image now reads the exact canonical string;
+`/projects` and `/projects/llm-agents`'s actual heights, 6074px and 3436px, match a completely
+independent verification earlier in this same session using the U+2011-era rendering, which is
+the expected cross-check since both approaches force an identical line-break point).
 
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
