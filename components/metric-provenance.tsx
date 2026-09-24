@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import {
   getOpenProvenance,
   getServerOpenProvenance,
@@ -62,6 +62,7 @@ export function MetricProvenance({
 }) {
   const panelId = useId();
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  const panelRef = useRef<HTMLSpanElement>(null);
   const openId = useSyncExternalStore(
     subscribeProvenance,
     getOpenProvenance,
@@ -88,6 +89,49 @@ export function MetricProvenance({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [open, panelId]);
+
+  /*
+   * Horizontal viewport clamp (overflow audit, 2026-09-24).
+   *
+   * The panel is `absolute left-0` under its trigger, with `w-72
+   * max-w-[calc(100vw-3rem)]` capping its own width — but that width clamp
+   * has nothing to say about *position*: a trigger sitting far enough right
+   * in a line of prose still anchors an 18rem-wide panel that runs past the
+   * viewport's right edge, regardless of how narrow the clamp makes it look
+   * elsewhere. This is a real, if small (2-4px measured), *scrollable*
+   * overflow — document.documentElement.scrollWidth exceeds innerWidth, and
+   * window.scrollTo(10000, 0) genuinely moves scrollX, even though the
+   * panel is invisible (opacity-0/pointer-events-none) while closed and the
+   * site's own `overflow-x: clip` guard on `html` does not suppress it (that
+   * guard is documented as unreliable for exactly this shape on the root
+   * element — see app/globals.css's "Mobile viewport-expansion guard").
+   *
+   * Rather than guess a container to clip at (this component is shared
+   * across every case study, headline-stats, and search-methodology), clamp
+   * the panel's own geometry directly: measure it against the real
+   * viewport and shift it back on-screen by exactly the overflow amount, in
+   * either direction. Zero shift — and zero visual change — on every
+   * trigger that already fits, which is the overwhelming majority.
+   * useLayoutEffect so this resolves before paint, not after a visible
+   * jump; re-measured on resize since the overflow amount is a function of
+   * viewport width.
+   */
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    function clamp(): void {
+      if (!panel) return;
+      panel.style.transform = "";
+      const rect = panel.getBoundingClientRect();
+      const overflowRight = rect.right - window.innerWidth;
+      const overflowLeft = -rect.left;
+      const shift = overflowRight > 0 ? -overflowRight : overflowLeft > 0 ? overflowLeft : 0;
+      if (shift !== 0) panel.style.transform = `translateX(${shift}px)`;
+    }
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  });
 
   if (!info) return <>{children}</>;
 
@@ -118,6 +162,7 @@ export function MetricProvenance({
         <span className="sr-only">, show source for {label}</span>
       </button>
       <span
+        ref={panelRef}
         id={panelId}
         role="group"
         aria-label={`Source for ${label}`}
