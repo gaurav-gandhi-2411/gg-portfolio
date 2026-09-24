@@ -54,7 +54,7 @@ const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true 
   let calls = 0;
   globalThis.fetch = async () => {
     calls++;
-    return { ok: false, status: 429, headers: new Headers(), json: async () => ({}) };
+    return { ok: false, status: 429, headers: new Headers(), text: async () => "" };
   };
   try {
     const result = await callLlm("verifier", "sys", "user", { sleepFn: noopSleep });
@@ -75,7 +75,7 @@ const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true 
   let calls = 0;
   globalThis.fetch = async () => {
     calls++;
-    return { ok: false, status: 404, headers: new Headers(), json: async () => ({}) };
+    return { ok: false, status: 404, headers: new Headers(), text: async () => "" };
   };
   try {
     const result = await callLlm("verifier", "sys", "user", { sleepFn: noopSleep });
@@ -95,7 +95,7 @@ const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true 
   let calls = 0;
   globalThis.fetch = async () => {
     calls++;
-    return { ok: false, status: 401, headers: new Headers(), json: async () => ({}) };
+    return { ok: false, status: 401, headers: new Headers(), text: async () => "" };
   };
   try {
     const result = await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
@@ -103,6 +103,56 @@ const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true 
     assert.strictEqual(calls, 1, "an auth error must never be retried");
     assert.strictEqual(apiErrors.length, 1);
     assert.ok(apiErrors[0].message.includes("401"), "recorded message must name the HTTP status");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// --- 400 (bad request, e.g. a payload the model rejects): no retry, body echoed in the message,
+// so a future "context length exceeded"-style failure is diagnosable from the log alone --------
+{
+  apiErrors.length = 0;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return {
+      ok: false,
+      status: 400,
+      headers: new Headers(),
+      text: async () => '{"error":{"message":"model does not support this request"}}',
+    };
+  };
+  try {
+    const result = await callLlm("verifier", "sys", "user", { sleepFn: noopSleep });
+    assert.strictEqual(result, null);
+    assert.strictEqual(calls, 1, "a 400 must never be retried");
+    assert.strictEqual(apiErrors.length, 1);
+    assert.ok(apiErrors[0].message.includes("400"), "recorded message must name the HTTP status");
+    assert.ok(
+      apiErrors[0].message.includes("model does not support this request"),
+      "recorded message must include the response body for diagnosis"
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// --- error body unreadable: must not throw, just omits the extra detail --------------------
+{
+  apiErrors.length = 0;
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 500,
+    headers: new Headers(),
+    text: async () => {
+      throw new Error("body already consumed");
+    },
+  });
+  try {
+    const result = await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    assert.strictEqual(result, null);
+    assert.strictEqual(apiErrors.length, 1);
+    assert.strictEqual(apiErrors[0].message, "HTTP 500", "an unreadable body must not throw or add junk");
   } finally {
     globalThis.fetch = realFetch;
   }

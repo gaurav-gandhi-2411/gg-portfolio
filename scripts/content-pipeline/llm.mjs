@@ -81,6 +81,19 @@ function backoffDelayMs(attempt, retryAfterHeader) {
   return Math.random() * cap;
 }
 
+// Best-effort: a bare HTTP status alone doesn't say WHY a request failed (e.g. Groq's 400 for a
+// bad request body vs. a 400 for a context-length overflow read completely differently) — rule
+// 104, errors are part of the API. Never throws; an unreadable body just yields no suffix. Bounded
+// to 300 chars so one verbose error page can't blow out the workflow log.
+async function errorBodySuffix(res) {
+  try {
+    const body = await res.text();
+    return body ? ` — ${body.slice(0, 300)}` : "";
+  } catch {
+    return "";
+  }
+}
+
 // R1 live-proof knob only (fix/content-pipeline-groq-model): metrics-refresh.yml's
 // verifier_model_override input, when set, swaps the verifier stage's model id at call time —
 // used to force a real 404 (RED) without hand-editing MODELS. Never set on the scheduled run.
@@ -152,15 +165,16 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
       }
       apiErrors.push({
         context: `llm ${stage} (${model})`,
-        message: `HTTP 429 — exhausted ${MAX_429_RETRIES} retries`,
+        message: `HTTP 429 — exhausted ${MAX_429_RETRIES} retries${await errorBodySuffix(res)}`,
       });
       console.error(`[llm] ${stage}: groq (${model}) still 429 after ${MAX_429_RETRIES} retries`);
       return null;
     }
 
     if (!res.ok) {
-      apiErrors.push({ context: `llm ${stage} (${model})`, message: `HTTP ${res.status}` });
-      console.error(`[llm] ${stage}: groq returned HTTP ${res.status} for ${model}`);
+      const detail = await errorBodySuffix(res);
+      apiErrors.push({ context: `llm ${stage} (${model})`, message: `HTTP ${res.status}${detail}` });
+      console.error(`[llm] ${stage}: groq returned HTTP ${res.status} for ${model}${detail}`);
       return null;
     }
 
