@@ -32,10 +32,14 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { computeFieldDiffs } from "./lib/identity-drift-diff.mjs";
+import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PRODUCTS_PATH = join(ROOT, "content", "products.ts");
-const IDENTITY_STATE_PATH = join(ROOT, "content", "identity-state.json");
+// Overridable (was hardcoded) so a forced-error test can point both the read source and the
+// read/write store at scratch fixtures — see identity-drift.forced-error.smoketest.mjs.
+const PRODUCTS_PATH = process.env.PRODUCTS_PATH ?? join(ROOT, "content", "products.ts");
+const IDENTITY_STATE_PATH =
+  process.env.IDENTITY_STATE_PATH ?? join(ROOT, "content", "identity-state.json");
 const DRIFT_SUMMARY_PATH = process.env.DRIFT_SUMMARY_PATH ?? "/tmp/identity-drift-summary.md";
 const DRIFT_RENAMES_PATH = process.env.DRIFT_RENAMES_PATH ?? "/tmp/identity-drift-renames.json";
 
@@ -46,6 +50,11 @@ const FETCH_TIMEOUT_MS = 20_000;
 
 const diffs = []; // { slug, field, old, new }
 const notes = []; // free-form markdown bullets
+// GitHub REST API (api.github.com) failures only — R3. Distinct from `notes`: a note alone is
+// easy to lose (the summary only reaches a human when the store diffed — an all-failures run with
+// zero diffs would otherwise stay silent). raw.githubusercontent.com (the README fetch below) is
+// an unauthenticated content CDN, not the REST API R3 is about, so its failures stay note-only.
+const apiErrors = []; // { context, message }
 // Derived after the per-product loop below from diffs where field === "name"
 // — see the comment above extractDemoUrl for why it's diff-based, not a
 // direct compare against products.ts.
@@ -58,12 +67,6 @@ async function fetchWithTimeout(url, init = {}) {
   } finally {
     clearTimeout(timer);
   }
-}
-
-async function fetchJson(url) {
-  const res = await fetchWithTimeout(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
 }
 
 async function fetchText(url) {
@@ -97,7 +100,7 @@ async function fetchReadme(owner, repo) {
 }
 
 async function fetchRepoMeta(owner, repo) {
-  const meta = await fetchJson(`https://api.github.com/repos/${owner}/${repo}`);
+  const meta = await githubApiGet(`/repos/${owner}/${repo}`);
   return {
     visibility: meta.visibility ?? (meta.private ? "private" : "public"),
     archived: Boolean(meta.archived),
@@ -200,6 +203,7 @@ for (const product of products) {
       current.repoVisibility = meta.visibility;
       current.repoArchived = meta.archived;
     } catch (err) {
+      apiErrors.push({ context: `${slug}: repo metadata (${owner}/${repo})`, message: err.message });
       notes.push(`**\`${slug}\`**: repo metadata fetch failed (${err.message}) — kept previous values.`);
     }
   }
@@ -316,3 +320,12 @@ console.log(lines.join("\n"));
 console.log(
   `\n--> ${shouldWrite ? "content/identity-state.json updated" : "no store change"}; ${diffs.length} field diff(s), ${renames.length} name mismatch(es), ${notes.length} note(s).`
 );
+
+// R3: the run above always finishes and writes its summary/store even when some checks failed (a
+// single transient failure must not blank the report) — but a GitHub API failure must never be
+// silent. Exit non-zero and name every failed call, after everything else is already written, so
+// a step that doesn't check this exit code still gets its artifacts, while one that does finds out.
+if (apiErrors.length > 0) {
+  for (const line of formatApiErrorLines(apiErrors)) console.error(line);
+  process.exitCode = 1;
+}
