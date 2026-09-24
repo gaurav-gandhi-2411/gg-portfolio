@@ -17,9 +17,12 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const METRICS_PATH = join(ROOT, "content", "metrics.json");
+// Overridable (was hardcoded) so a forced-error test can point the read/write store at a scratch
+// fixture — see refresh-metrics.forced-error.smoketest.mjs.
+const METRICS_PATH = process.env.METRICS_PATH ?? join(ROOT, "content", "metrics.json");
 const PRODUCTS_PATH = join(ROOT, "content", "products.ts");
 const RESUME_MANIFEST_PATH = join(ROOT, "content", "resume-metrics.json");
 const RESUME_PDF_PATH = join(ROOT, "public", "resume.pdf");
@@ -64,11 +67,40 @@ const KNOWN_NON_PRODUCT_REPOS = new Set([
   "triage-iq-ui", // triage-iq's frontend companion, same product/live URL
 ]);
 
+// Owner decision D3: some real repos are deliberately not named on any
+// public surface of this repo. Unlike KNOWN_NON_PRODUCT_REPOS above (a
+// committed allowlist — fine for non-sensitive support repos), these names
+// must never land in a public commit OR a public log, so they're read at
+// runtime from a GitHub Actions REPOSITORY SECRET (not a repo variable —
+// GitHub Actions auto-masks `secrets.*` in every log, including the
+// workflow step's own auto-echoed `env:` block; a repo variable does NOT
+// get that masking and leaked both names in plaintext into this exact
+// workflow's public Actions log on first attempt) rather than from source.
+// Set via `gh secret set PORTFOLIO_EXCLUDED_REPOS --body "name1,name2"`;
+// missing or empty is a valid, silent-safe state (no exclusions) — but
+// "silent" here only means "no names printed," not "unlogged": see the
+// count-only log line right after this Set is built, so an empty/
+// misconfigured secret is still visible in the job log.
+const EXCLUDED_REPOS = new Set(
+  (process.env.PORTFOLIO_EXCLUDED_REPOS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+console.log(
+  EXCLUDED_REPOS.size > 0
+    ? `PORTFOLIO_EXCLUDED_REPOS: ${EXCLUDED_REPOS.size} repo(s) excluded from new-repo discovery this run (names withheld from logs by design).`
+    : "PORTFOLIO_EXCLUDED_REPOS: not set (or empty) — 0 exclusions active this run."
+);
+
 const changes = []; // { id, field, old, new, source }
 const notes = []; // free-form markdown bullets
 const staleFlags = []; // { id, measured_at }
 const staleManifests = []; // { repo, ids, freshestMeasuredAt, ageDays } — wave 19, item 9
 const rejectedRegressions = []; // { id, repo, currentValue, currentMeasuredAt, incomingValue, incomingMeasuredAt } — wave 19, item 10
+// GitHub REST API (api.github.com) failures only — R3. `.portfolio/metrics.json` manifest
+// fetches above are raw.githubusercontent.com (not the REST API) and stay note-only, as-is.
+const apiErrors = []; // { context, message }
 
 async function fetchWithTimeout(url, init = {}) {
   const controller = new AbortController();
@@ -94,16 +126,9 @@ async function fetchJson(url) {
 // run). An authenticated call raises the ceiling to 5,000 req/hr.
 // GITHUB_TOKEN is always present in Actions (the default token, no extra
 // secret needed); a local run without one just falls back to the same
-// unauthenticated limit as before. Same GH_TOKEN convention as
-// check-metric-freshness.mjs's githubApi().
-const GH_TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null;
-async function fetchGithubApi(url) {
-  const headers = { Accept: "application/vnd.github+json" };
-  if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
-  const res = await fetchWithTimeout(url, { headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
+// unauthenticated limit as before. Auth + the fetch itself now live in
+// scripts/lib/github-api.mjs's githubApiGet, shared with identity-drift.mjs
+// and content-pipeline/extractor.mjs.
 
 function daysSince(iso) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
@@ -286,27 +311,27 @@ const newRepos = [];
 // downstream from "checked, found nothing new." That's exactly what
 // happened: a rate-limited run silently produced a clean-looking empty
 // result, the "new repos" issue step took `[]` at face value, and
-// `next-season-styles` / `poi-intelligence-ranking` (both real, both
+// two unlisted repos (owner decision D3, both real, both
 // already existing) went unreported for weeks. `newRepoCheckFailed` makes
 // that failure loud: NEW_REPOS_PATH is written as JSON `null` (never `[]`)
 // on failure, and the workflow step that reads it treats `null` as "could
 // not verify," never as "empty" — see that step's own comment.
 let newRepoCheckFailed = false;
 try {
-  const repos = await fetchGithubApi(
-    `https://api.github.com/users/${GITHUB_AUTHOR}/repos?per_page=100&type=public`
-  );
+  const repos = await githubApiGet(`/users/${GITHUB_AUTHOR}/repos?per_page=100&type=public`);
   if (!Array.isArray(repos)) {
     throw new Error("GitHub API did not return an array of repos (malformed or error response)");
   }
   for (const repo of repos) {
     if (repo.fork || repo.archived) continue;
     if (KNOWN_NON_PRODUCT_REPOS.has(repo.name)) continue;
+    if (EXCLUDED_REPOS.has(repo.name)) continue;
     if (referencedRepoSlugs.has(repo.name)) continue;
     newRepos.push({ name: repo.name, url: repo.html_url, description: repo.description ?? "" });
   }
 } catch (err) {
   newRepoCheckFailed = true;
+  apiErrors.push({ context: "repo inventory (GET /users/.../repos)", message: err.message });
   notes.push(
     `**Repo inventory check COULD NOT VERIFY this run** (${err.message}) — this is NOT the same as "no new repos found"; a repo published since the last successful run may be silently missing from this report. See issue #122's resolution for the incident this guards against.`
   );
@@ -466,3 +491,11 @@ console.log(lines.join("\n"));
 console.log(
   `\n--> ${shouldWrite ? "content/metrics.json updated" : "no store change"}; ${metricChanges.length} metric change(s), ${staleFlags.length} stale flag(s), ${staleManifests.length} manifest(s) held, ${rejectedRegressions.length} regression(s) rejected, ${brokenLinks.length} broken link(s), ${resumeDrift.length} resume drift(s)${resumeHashNote ? " + resume-hash mismatch" : ""}.`
 );
+
+// R3: the run above always finishes and writes its summary/store (a transient failure must not
+// blank the report) — but a GitHub API failure must never be silent. Exit non-zero and name every
+// failed call, after everything else is already written.
+if (apiErrors.length > 0) {
+  for (const line of formatApiErrorLines(apiErrors)) console.error(line);
+  process.exitCode = 1;
+}

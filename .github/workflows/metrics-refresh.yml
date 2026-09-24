@@ -62,6 +62,48 @@ on:
           that doesn't set this explicitly keep today's behavior.
         type: boolean
         default: true
+      content_pipeline_force_invalid_token:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob: when true, the
+          content-pipeline job's run step gets a deliberately invalid
+          GITHUB_TOKEN instead of the real github.token, so extractor.mjs's
+          commit-SHA lookup gets a real 401 from api.github.com — a live,
+          forced R3 failure without touching a real credential. Never set on
+          the scheduled run (no `inputs` context there); defaults to false so
+          an explicit dispatch that doesn't set this keeps today's behavior.
+        type: boolean
+        default: false
+      content_pipeline_dry_run:
+        description: >-
+          workflow_dispatch-only: when true, the content-pipeline job's
+          "Open PR" step exits immediately, before creating, updating, or
+          closing anything — for a live proof run (forced-error or normal)
+          that must not write a real PR/branch/comment. Defaults to false so
+          the scheduled Monday run keeps opening real PRs.
+        type: boolean
+        default: false
+      run_refresh:
+        description: >-
+          Run the refresh job. Set to false for a dispatch that's only
+          testing content-pipeline (e.g. content_pipeline_dry_run above) and
+          must not touch the real chore/metrics-refresh PR or the "New
+          public repos" issue. Defaults to true so the scheduled Monday run
+          and any dispatch that doesn't set this explicitly keep today's
+          behavior.
+        type: boolean
+        default: true
+      run_identity_drift:
+        description: >-
+          Run the identity-drift job. Same reasoning as run_refresh, for the
+          chore/identity-drift PR and per-repo rename issues.
+        type: boolean
+        default: true
+      run_metric_freshness:
+        description: >-
+          Run the metric-freshness job. Same reasoning as run_refresh, for
+          the "Weekly metric freshness check" issue.
+        type: boolean
+        default: true
 
 concurrency:
   group: metrics-refresh
@@ -78,6 +120,10 @@ permissions:
 
 jobs:
   refresh:
+    # `if`: schedule runs (no `inputs` context) always run this job; a manual
+    # workflow_dispatch runs it too unless the operator explicitly opts out
+    # via `run_refresh=false` (see the input's own description).
+    if: github.event_name != 'workflow_dispatch' || inputs.run_refresh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,9 +138,33 @@ jobs:
         env:
           SUMMARY_PATH: /tmp/metrics-summary.md
           NEW_REPOS_PATH: /tmp/new-repos.json
+          # Was missing entirely — despite refresh-metrics.mjs's "Wave 21 fix" comment describing
+          # an authenticated call, this step never actually passed a token, so every run has been
+          # unauthenticated (60 req/hr). Found while wiring R3's exit-non-zero-on-API-error fix.
+          GITHUB_TOKEN: ${{ github.token }}
+          # A REPOSITORY SECRET, not a repo variable — read by
+          # scripts/refresh-metrics.mjs to exclude repos from the
+          # new-repo-discovery check without naming them anywhere in this
+          # public repo (owner decision D3). Comma-separated repo names.
+          # Deliberately a secret rather than `vars.*`: GitHub Actions
+          # auto-masks `secrets.*` values in every log (including this
+          # step's own auto-echoed `env:` block, the same place `GH_TOKEN`
+          # shows as `***`) but does NOT mask `vars.*` — a first attempt at
+          # this using `vars.PORTFOLIO_EXCLUDED_REPOS` printed both names in
+          # plaintext in this workflow's own public Actions log the moment
+          # it ran, defeating the entire point of not committing them.
+          # `gh secret list` to confirm what's set (value itself is never
+          # readable back); missing/empty = no exclusions, and the script
+          # logs that fact (count only, never names) rather than staying
+          # silent.
+          PORTFOLIO_EXCLUDED_REPOS: ${{ secrets.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
+      # R3: the step above now exits non-zero on a repo-inventory failure, which would otherwise
+      # skip this step by default — but that failure is independent of whether metrics.json has a
+      # real diff to propose, so this step must still run.
       - name: Open PR if anything changed
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -150,7 +220,10 @@ jobs:
       # changes isn't meaningful. An issue is the right vehicle for a pure
       # notification: update-in-place via a stable title so this doesn't
       # spam a new issue every week the same repo goes unaddressed.
+      # R3: this step's whole job is reacting to a possible repo-inventory failure (the null-vs-[]
+      # distinction below) — it must still run even though the refresh step above can now fail.
       - name: Open/update an issue for newly discovered repos
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -162,13 +235,15 @@ jobs:
             # writes `null` here (never `[]`) when the repo-inventory check
             # itself failed (e.g. a GitHub API rate limit) — that is NOT the
             # same fact as "checked, found nothing new," and treating it the
-            # same silently is exactly how next-season-styles and
-            # poi-intelligence-ranking went unreported for weeks. Surface it
-            # as a visible workflow annotation instead of exiting quietly,
-            # and leave any existing open issue untouched — an unverified
-            # run is not evidence the drift resolved.
-            echo "::warning::Repo inventory check could not verify this run (scripts/refresh-metrics.mjs's repo-inventory step failed — see this run's summary/notes for why). This is NOT the same as 'no new repos found'; a repo published since the last successful run may be missing."
-            exit 0
+            # same silently is exactly how two unlisted repos (owner
+            # decision D3) went unreported for weeks. Surface it
+            # as a visible workflow annotation, and leave any existing open
+            # issue untouched — an unverified run is not evidence the drift
+            # resolved. R3 (2026-09): `::warning` + `exit 0` let the job report
+            # success on a run whose repo-inventory check never completed —
+            # named as an `::error` + non-zero exit instead now.
+            echo "::error::Repo inventory check could not verify this run (scripts/refresh-metrics.mjs's repo-inventory step failed — see this run's summary/notes for why). This is NOT the same as 'no new repos found'; a repo published since the last successful run may be missing."
+            exit 1
           fi
           if [ "$NEW_REPOS_CONTENT" = "[]" ]; then
             echo "No new repos found this week — closing any stale open issue."
@@ -226,12 +301,33 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
+          # Was missing — content-pipeline/extractor.mjs's commit-SHA lookup ran unauthenticated.
+          # Added alongside R3's exit-non-zero-on-API-error fix (fix/github-api-scripts-fail-loud).
+          # `content_pipeline_force_invalid_token` (workflow_dispatch-only R1 live-proof knob)
+          # swaps in a deliberately bad token instead — real 401 from api.github.com, no live
+          # network host needed and no real credential ever touched. False/unset (every
+          # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
+          GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
         run: node scripts/content-pipeline/run.mjs
 
+      # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would
+      # otherwise skip this step — but that's independent of whether any proposal reached the PR
+      # bar this run.
       - name: Open PR if any proposal passed all three stages
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          # workflow_dispatch-only R1 live-proof knob — see content_pipeline_dry_run's own
+          # description above. A real proposal (or a stale open PR with nothing left to propose)
+          # both write publicly below (push, gh pr create/edit/close); this must short-circuit
+          # before either branch, not just the "nothing changed" one.
+          CONTENT_PIPELINE_DRY_RUN: ${{ inputs.content_pipeline_dry_run }}
         run: |
+          if [ "$CONTENT_PIPELINE_DRY_RUN" = "true" ]; then
+            echo "Dry run (content_pipeline_dry_run input) — skipping PR create/update/close entirely; nothing public written this run."
+            exit 0
+          fi
+
           BRANCH="chore/content-pipeline"
 
           if git diff --quiet content/provenance.md; then
@@ -286,6 +382,9 @@ jobs:
     # content/identity-state.json (same machine-owned-JSON convention as
     # content/metrics.json), its own PR for the same reason content-pipeline
     # gets one (see that job's header comment).
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_identity_drift`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_identity_drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -300,9 +399,15 @@ jobs:
         env:
           DRIFT_SUMMARY_PATH: /tmp/identity-drift-summary.md
           DRIFT_RENAMES_PATH: /tmp/identity-drift-renames.json
+          # Was missing — identity-drift.mjs's repo-metadata lookups ran fully unauthenticated.
+          # Added alongside R3's exit-non-zero-on-API-error fix and its new Authorization header.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/identity-drift.mjs
 
+      # R3: the check above can now exit non-zero, which would otherwise skip this step — but that
+      # failure is independent of whether identity-state.json has a real diff to propose.
       - name: Open PR if anything drifted
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -349,7 +454,9 @@ jobs:
       # updates in place rather than spamming a new issue every week the
       # same rename goes unaddressed (same pattern as the "new repos" issue
       # step in the refresh job above).
+      # R3: same reasoning as "Open PR if anything drifted" above.
       - name: Open/update per-repo issues for README renames
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -429,6 +536,9 @@ jobs:
     # whether any numeric drift was separately detected. Added after
     # triageiq's case study went stale despite a recent-looking commit —
     # see that field's own doc comment for the incident.
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_metric_freshness`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_metric_freshness
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -442,9 +552,19 @@ jobs:
       - name: Run metric freshness check
         env:
           FRESHNESS_SUMMARY_PATH: /tmp/metric-freshness-summary.md
+          # Was missing — checkShaReachability's repo-metadata/compare calls ran fully
+          # unauthenticated. Added alongside R3's exit-non-zero-on-API-error fix.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-metric-freshness.mjs
+        # R3: a real GitHub API error now exits this step non-zero. Metric STALENESS
+        # (drift, overdue verification, etc.) stays report-only via the summary file —
+        # see the script's own comment on that split.
 
+      # R3: the check above can now exit non-zero on a real API error, which would
+      # otherwise skip this step — but the summary is already written by then (see
+      # the script's own comment), and this step's whole job is reacting to it.
       - name: Open/update an issue if anything needs a look
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

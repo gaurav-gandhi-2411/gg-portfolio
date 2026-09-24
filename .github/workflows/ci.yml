@@ -176,6 +176,50 @@ jobs:
       - name: Chat canary verdict self-test
         run: node scripts/chatbot/canary-verdict.smoketest.mjs
 
+      # scripts/relay-dispatched-ci-status.sh's history is three silent
+      # failures in a row (see its header) -- this runs the current version
+      # against a stubbed `gh` covering the config-missing, malformed,
+      # gh-API-error, POST-error, all-success, one-job-failure, and missing-
+      # required-context cases, so a future edit can't reintroduce any of
+      # those shapes unnoticed.
+      - name: Relay script regression test
+        run: bash scripts/relay-dispatched-ci-status.test.sh
+
+      # scripts/check-required-checks-drift.sh is the thing that keeps
+      # .github/required-checks.json (which scripts/relay-dispatched-ci-
+      # status.sh trusts) honest against live branch protection -- stubbed-
+      # gh regression test covering the API-error, protection-missing,
+      # mismatch, and match cases.
+      - name: Required-checks drift script regression test
+        run: bash scripts/check-required-checks-drift.test.sh
+
+      # Regression coverage for issues #200 and #214: a first-ever
+      # observation of a field (no prior recorded value) must never be
+      # reported as identity drift, and a README-name change that already
+      # matches content/products.ts must never open a rename issue.
+      - name: Identity-drift diff logic self-test
+        run: node scripts/lib/identity-drift-diff.smoketest.mjs
+
+      # R3 (owner rule, 2026-09): "no silent failure — every script touching the GitHub API must
+      # exit non-zero on any API error." This is the shared fetch helper — see its own header for
+      # the api.github.com/raw.githubusercontent.com distinction and the apiErrors/exit-code
+      # convention. identity-drift.mjs and refresh-metrics.mjs get their own forced-error
+      # self-tests wired in here by follow-up PRs stacked on this one.
+      - name: GitHub API helper self-test (fetch stubbed)
+        run: node scripts/lib/github-api.smoketest.mjs
+
+      - name: refresh-metrics.mjs forced-error self-test
+        run: node scripts/refresh-metrics.forced-error.smoketest.mjs
+
+      - name: identity-drift.mjs forced-error self-test
+        run: node scripts/identity-drift.forced-error.smoketest.mjs
+
+      - name: check-metric-freshness.mjs forced-error self-test
+        run: node scripts/check-metric-freshness.forced-error.smoketest.mjs
+
+      - name: content-pipeline extractor.mjs forced-error self-test
+        run: node scripts/content-pipeline/extractor.smoketest.mjs
+
       - name: Build
         run: npm run build
 
