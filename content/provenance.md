@@ -209,7 +209,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -231,6 +231,17 @@ repo's part — the 2026-07-06 figures were correct as of that date. `content/me
 `content/case-studies/reviewiq.ts` (results row + `verifiedAt`), and `content/products.ts`'s
 homepage card figure were all updated to the current numbers; the per-language label narrowed
 from "en/hi/hi-en" to "en/hi-en" to match the report's own current shape.
+
+**Step 1 (2026-09-24, single source of truth):** cross-checked `eval/report.md` against
+`review-iq/eval/results.json` (`generated_at: 2026-09-19T21:59:11Z`, `git_sha 5c5c8e0`) --
+both agree: `overall_score: 0.7859851844649027` (78.6%), `threshold: 0.76`, `passed: true`,
+`overall_ci_95.n: 43` (`per_language.en.n: 27`, `per_language.hi-en.n: 16`). The retired
+83.8% figure referenced above is review-iq's own v2.3/llama-era measurement from
+2026-07-06 (n=49, superseded by the 2026-09-19 gpt-oss re-record) -- not a citation error,
+a genuine re-measurement, and not to be conflated with the current 78.6%/n=43 headline. The
+n=43 count and the 2026-09-19 eval date are now stated directly in the rendered card
+(`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
+result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
 
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
