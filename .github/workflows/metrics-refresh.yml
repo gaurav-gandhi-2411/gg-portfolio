@@ -316,9 +316,15 @@ jobs:
         env:
           DRIFT_SUMMARY_PATH: /tmp/identity-drift-summary.md
           DRIFT_RENAMES_PATH: /tmp/identity-drift-renames.json
+          # Was missing — identity-drift.mjs's repo-metadata lookups ran fully unauthenticated.
+          # Added alongside R3's exit-non-zero-on-API-error fix and its new Authorization header.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/identity-drift.mjs
 
+      # R3: the check above can now exit non-zero, which would otherwise skip this step — but that
+      # failure is independent of whether identity-state.json has a real diff to propose.
       - name: Open PR if anything drifted
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -365,7 +371,9 @@ jobs:
       # updates in place rather than spamming a new issue every week the
       # same rename goes unaddressed (same pattern as the "new repos" issue
       # step in the refresh job above).
+      # R3: same reasoning as "Open PR if anything drifted" above.
       - name: Open/update per-repo issues for README renames
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
