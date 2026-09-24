@@ -142,6 +142,25 @@ resume-metrics.json, or public/resume.pdf, so this change has no effect on
 it (verified by reading the script, not assumed).
 
 =====================================================================
+6b. D1 working-paper wording — cross-surface grep
+=====================================================================
+Orchestrator-requested check: grep -i for "under submission", "preprint",
+"arxiv" across every surface this PR touches. Zero hits everywhere:
+  content/resume-data.json                          : 0 hits
+  reports/resume/approved-2026-09-24.txt             : 0 hits
+  .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx (python-docx text) : 0 hits
+  new PDF text, pdftotext (no -layout)               : 0 hits
+  new PDF text, pdftotext -layout                    : 0 hits
+RESEARCH section reads, consistently, everywhere: "Two first-author
+working papers (drafts, not yet submitted):" — D1's wording, not
+"under submission" and not "preprint (arXiv ID pending)". (Main still
+carries the old wording as of this writing, per the orchestrator's note —
+that's PR #225's own unmerged D1 fix (commit 48233ac), not something this
+session needed to touch; this session's job was only to confirm the
+branch's docx/PDF/JSON stayed consistent with it while resyncing the
+docx master, which they do.)
+
+=====================================================================
 7. Screenshots
 =====================================================================
 reports/screenshots/resume-step4/{old,new}-p{1,2}.png — rendered via this
