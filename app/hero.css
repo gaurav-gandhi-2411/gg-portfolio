@@ -772,6 +772,22 @@ body::after {
    * link's `getBoundingClientRect()` at 375px after each change, not by
    * eyeballing it. Wrapping is still ruled out by the sticky band's fixed
    * height (see .site-nav's comment).
+   *
+   * CI-only overflow (2026-09-25, fix/horizontal-overflow-375-768): the
+   * six-item measurement above (Contact's right edge at 364px, an 11px
+   * margin) was taken on this repo's Windows dev machine. GitHub Actions'
+   * Ubuntu runner renders the same nav text a few px wider per link
+   * (different font-hinting/substitution under headless Linux Chrome), and
+   * six links compound that into documentElement.scrollWidth landing 9px
+   * over at 375px in real CI — an e2e/no-horizontal-overflow.spec.ts
+   * failure on every single route (the nav is shared site-wide), not
+   * reproducible on Windows regardless of how many times it's measured
+   * there. `.site-nav`'s own horizontal inset is cut further here (12px ->
+   * 4px per side) rather than shaving the pill's already-near-zero internal
+   * spacing again, specifically to rebuild a much larger cross-platform
+   * safety margin (not just enough for this one measured 9px) against
+   * font-metric variance in general, since that variance has no fixed,
+   * predictable size.
    */
   .site-nav-pill {
     gap: var(--space-1);
@@ -793,7 +809,7 @@ body::after {
   }
 
   .site-nav {
-    padding-inline: var(--space-3);
+    padding-inline: var(--space-1);
   }
 }
 
