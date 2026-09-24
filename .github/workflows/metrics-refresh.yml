@@ -355,6 +355,16 @@ jobs:
           VERIFIER_MODEL_OVERRIDE: ${{ inputs.verifier_model_override }}
         run: node scripts/content-pipeline/run.mjs
 
+      # Diagnostic only — the run step above only console.logs a proposal count, never the actual
+      # drafts (those go to PIPELINE_SUMMARY_PATH, which otherwise never appears in this job's log
+      # unless a real, non-dry-run PR gets opened below). `if: always()` so a run that exited
+      # non-zero still shows whatever partial summary was written before the failure.
+      - name: Show pipeline summary
+        if: always()
+        run: cat "$PIPELINE_SUMMARY_PATH" 2>/dev/null || echo "(no summary file written this run)"
+        env:
+          PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
+
       # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would
       # otherwise skip this step — but that's independent of whether any proposal reached the PR
       # bar this run.
