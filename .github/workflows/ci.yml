@@ -217,6 +217,9 @@ jobs:
       - name: check-metric-freshness.mjs forced-error self-test
         run: node scripts/check-metric-freshness.forced-error.smoketest.mjs
 
+      - name: content-pipeline extractor.mjs forced-error self-test
+        run: node scripts/content-pipeline/extractor.smoketest.mjs
+
       - name: Build
         run: npm run build
 
