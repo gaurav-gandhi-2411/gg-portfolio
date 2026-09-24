@@ -116,6 +116,15 @@ on:
           normal jobs instead.
         type: boolean
         default: false
+      verifier_model_override:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob (fix/content-pipeline-groq-model, 2026-09):
+          when non-empty, overrides scripts/content-pipeline/llm.mjs's verifier stage model id for
+          this run only — e.g. a deliberately bad id to force a live 404 and prove the R3
+          exit-non-zero path without hand-editing MODELS. Empty string (the default) keeps the
+          pinned model; never set on the scheduled run.
+        type: string
+        default: ""
 
 concurrency:
   group: metrics-refresh
@@ -340,6 +349,10 @@ jobs:
           # network host needed and no real credential ever touched. False/unset (every
           # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
           GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
+          # R1 live-proof knob — see verifier_model_override's own description above. Empty/unset
+          # (every scheduled run, and any dispatch that doesn't set it) keeps llm.mjs's pinned
+          # verifier model, since llm.mjs only honours this when the env var is non-empty.
+          VERIFIER_MODEL_OVERRIDE: ${{ inputs.verifier_model_override }}
         run: node scripts/content-pipeline/run.mjs
 
       # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would

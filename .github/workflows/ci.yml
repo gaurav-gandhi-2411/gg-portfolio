@@ -220,6 +220,14 @@ jobs:
       - name: content-pipeline extractor.mjs forced-error self-test
         run: node scripts/content-pipeline/extractor.smoketest.mjs
 
+      # R3 (owner rule, 2026-09): "no silent failure — every script touching an external API must
+      # exit non-zero on any API error." Covers callLlm()'s 429-retry-then-success, 429-exhausted,
+      # 404 (a dead/retired model id — see llm.mjs's header for why this exists), 401, network
+      # error, missing GROQ_API_KEY, and the malformed-response-stays-fail-soft case — all against
+      # a stubbed fetch, no live Groq calls in CI.
+      - name: content-pipeline llm.mjs forced-error self-test
+        run: node scripts/content-pipeline/llm.smoketest.mjs
+
       - name: Build
         run: npm run build
 

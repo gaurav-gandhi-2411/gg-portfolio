@@ -7,12 +7,43 @@
 // path was tried first for the verifier specifically to get a different PROVIDER, not just a
 // different family, but the available key (reused from another project) turned out to be dead
 // ("User not found") — rather than provision a new account for this, Groq's own Qwen model
-// (`qwen/qwen3.6-27b`, confirmed available via `GET /openai/v1/models`) gives the same
-// cross-family independence property this pipeline actually needs, with zero new credentials.
+// gives the same cross-family independence property this pipeline actually needs, with zero new
+// credentials.
+//
+// R3 (owner rule, 2026-09): "no silent failure — every script touching an external API must exit
+// non-zero on any API error." Groq retired `qwen/qwen3.6-27b` (the verifier's original pin,
+// confirmed dead via a live 404 — see the fix/content-pipeline-groq-model PR that added this
+// comment) without callLlm() ever recording it: the old fail-soft design swallowed EVERY error
+// (missing key, any non-2xx, network failure) into a bare `null`, which run.mjs's callers treat
+// as "this one candidate didn't pass" — a whole model retirement looked identical to "the curator
+// rejected this line." That's the same shape as extractor.mjs's pre-R3 commit-SHA lookup: fail-soft
+// per-candidate is correct (one bad draft must never kill the run), but a systemic API failure
+// must still surface. Fixed the same way extractor.mjs/github-api.mjs already do it: real errors
+// (after retry, where retry applies) are recorded into the exported `apiErrors` array; run.mjs
+// checks it after every repo is processed and sets a non-zero exit code — the per-candidate
+// null-return behavior callers rely on is unchanged.
+//
+// Missing GROQ_API_KEY is now an apiErrors entry too, not a quiet skip: metrics-refresh.yml's
+// content-pipeline job always sets this env var from a repo secret (never conditionally), so an
+// empty/missing key here means the secret is unset or the workflow is misconfigured — not "no
+// LLM available this run." A context that requires LLM output should fail loud on that, same as
+// any other misconfiguration R3 already covers.
 //
 // Zero dependencies, same convention as scripts/refresh-metrics.mjs — global fetch only.
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+// Bounded retry for 429 (rate limit) only — every other non-2xx (401/403/404/5xx) and every
+// network error is NOT retried; those are either not transient (a dead model id, a bad key) or
+// not worth the extra Groq-quota spend guessing at, so they fail loud on the first attempt.
+const MAX_429_RETRIES = 5;
+const BASE_DELAY_MS = 1_000;
+const MAX_DELAY_MS = 30_000;
+
+/** Errors recorded here, one per failed callLlm() invocation, checked by run.mjs after every repo
+ * has been processed (formatApiErrorLines from lib/github-api.mjs renders them). A per-candidate
+ * `null` return is unchanged for callers — only the array's length affects the process exit code. */
+export const apiErrors = [];
 
 export const MODELS = {
   // Groq retired llama-3.3-70b-versatile on 2026-08-16. Both stages moved to
@@ -21,54 +52,127 @@ export const MODELS = {
   // unaffected by the swap.
   curator: { model: "openai/gpt-oss-120b" },
   framer: { model: "openai/gpt-oss-120b" },
-  // Different model family than curator/framer (Meta Llama) — Qwen (Alibaba), for genuine
+  // Different model family than curator/framer (OpenAI OSS) — Qwen (Alibaba), for genuine
   // independence on the verifier's re-check, not a second vote from the same family.
-  verifier: { model: "qwen/qwen3.6-27b" },
+  // qwen/qwen3.6-27b (the previous pin) started 404ing — retired/renamed by Groq with no
+  // announcement this repo tracked. Replaced with qwen/qwen3.8-27b, the only Qwen model Groq's
+  // GET /openai/v1/models actually lists as of this fix (confirmed live via the list_models
+  // dispatch input added in this same PR — run
+  // https://github.com/gaurav-gandhi-2411/gg-portfolio/actions/runs/36058065170 — full list:
+  // allam-2-7b, canopylabs/orpheus-arabic-saudi, canopylabs/orpheus-v1-english,
+  // meta-llama/llama-prompt-guard-2-22m, meta-llama/llama-prompt-guard-2-86m,
+  // openai/gpt-oss-120b, openai/gpt-oss-20b, openai/gpt-oss-safeguard-20b, qwen/qwen3.8-27b,
+  // whisper-large-v3, whisper-large-v3-turbo — all reported active=true, none flagged preview).
+  verifier: { model: "qwen/qwen3.8-27b" },
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Full jitter (AWS backoff literature): a uniformly random delay between 0 and the exponential
+// cap, not the cap itself — spreads retries out instead of every failed caller retrying in lockstep.
+function backoffDelayMs(attempt, retryAfterHeader) {
+  if (retryAfterHeader) {
+    const seconds = Number(retryAfterHeader);
+    if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  }
+  const cap = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt);
+  return Math.random() * cap;
+}
+
+// R1 live-proof knob only (fix/content-pipeline-groq-model): metrics-refresh.yml's
+// verifier_model_override input, when set, swaps the verifier stage's model id at call time —
+// used to force a real 404 (RED) without hand-editing MODELS. Never set on the scheduled run.
+function modelFor(stage) {
+  if (stage === "verifier" && process.env.VERIFIER_MODEL_OVERRIDE) {
+    return process.env.VERIFIER_MODEL_OVERRIDE;
+  }
+  return MODELS[stage].model;
+}
+
 /**
- * Calls a chat completion endpoint and parses the response as JSON (the prompt always
- * instructs "respond with JSON only"). Fails soft: returns null on any error (missing key,
- * network failure, non-JSON response) rather than throwing — a single bad call must never
- * fail the whole pipeline run, same fail-soft discipline as lib/live-data.ts.
+ * Calls a chat completion endpoint and parses the response as JSON (the prompt always instructs
+ * "respond with JSON only"). Returns null for a single bad candidate the same way it always has
+ * (missing key, exhausted retries, any non-2xx, network failure, or an unparseable response) — a
+ * single bad call must never fail the whole pipeline run, same fail-soft discipline as
+ * lib/live-data.ts. But except for an unparseable/empty response body (a response-shape problem,
+ * not an API failure), every one of those cases is now also recorded into `apiErrors` — see this
+ * file's header comment for why a systemic failure must surface even though the per-call return
+ * value doesn't change.
+ *
+ * `sleepFn` is a test-only seam (default: the real `sleep` above) — llm.smoketest.mjs injects a
+ * no-op so 429-retry coverage doesn't actually wait out a real exponential backoff; no production
+ * caller passes it, so real runs always use the real timer.
  */
-export async function callLlm(stage, systemPrompt, userPrompt) {
-  const { model } = MODELS[stage];
+export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep } = {}) {
+  const model = modelFor(stage);
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.warn(`[llm] ${stage}: no GROQ_API_KEY — skipping (fail-soft)`);
+    apiErrors.push({ context: `llm ${stage} (${model})`, message: "missing GROQ_API_KEY" });
+    console.error(`[llm] ${stage}: no GROQ_API_KEY — recorded as an API error (R3), not skipped`);
     return null;
   }
-  const url = GROQ_URL;
-  const provider = "groq";
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.2,
-        response_format: { type: "json_object" },
-      }),
-    });
-    if (!res.ok) {
-      console.warn(`[llm] ${stage}: ${provider} returned ${res.status}`);
+  for (let attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
+    let res;
+    try {
+      res = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+        }),
+      });
+    } catch (err) {
+      // Network error — not retried (see this file's header comment on retry scope).
+      apiErrors.push({ context: `llm ${stage} (${model})`, message: `network error — ${err.message}` });
+      console.error(`[llm] ${stage}: network error calling groq (${model}) — ${err.message}`);
       return null;
     }
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) return null;
-    return JSON.parse(content);
-  } catch (err) {
-    console.warn(`[llm] ${stage}: call failed — ${err.message}`);
-    return null;
+
+    if (res.status === 429) {
+      if (attempt < MAX_429_RETRIES) {
+        const delay = backoffDelayMs(attempt, res.headers.get("retry-after"));
+        console.warn(
+          `[llm] ${stage}: 429 from groq (${model}), retrying in ${Math.round(delay)}ms ` +
+            `(attempt ${attempt + 1}/${MAX_429_RETRIES})`
+        );
+        await sleepFn(delay);
+        continue;
+      }
+      apiErrors.push({
+        context: `llm ${stage} (${model})`,
+        message: `HTTP 429 — exhausted ${MAX_429_RETRIES} retries`,
+      });
+      console.error(`[llm] ${stage}: groq (${model}) still 429 after ${MAX_429_RETRIES} retries`);
+      return null;
+    }
+
+    if (!res.ok) {
+      apiErrors.push({ context: `llm ${stage} (${model})`, message: `HTTP ${res.status}` });
+      console.error(`[llm] ${stage}: groq returned HTTP ${res.status} for ${model}`);
+      return null;
+    }
+
+    try {
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) return null; // response-shape problem, not an API failure — see doc comment above
+      return JSON.parse(content);
+    } catch (err) {
+      console.warn(`[llm] ${stage}: could not parse groq (${model}) response — ${err.message}`);
+      return null;
+    }
   }
+  return null; // unreachable — the loop above always returns before falling off the end
 }
