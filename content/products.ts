@@ -237,4 +237,21 @@ export const products: Product[] = [
     techChips: ["Groq", "Prophet", "IsolationForest"],
     metric: refreshableMetric("expense-tracker:tests"),
   },
+  {
+    // F12 (2026-09-23): appended at the end, not re-scored against the
+    // wave-13 four-axis depth rubric (reports/wave13-autonomy-density-
+    // 2026-07-25.md) — out of scope for this addition, see provenance.md.
+    slug: "eval-defect-bench",
+    name: "eval-defect-bench",
+    tagline:
+      "A held-out benchmark for a class of silent-verdict-degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all failed a pre-registered viability gate.",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/eval-defect-bench",
+    categories: ["evals-research", "llm-agents", "tooling"],
+    techChips: ["AST", "Ollama", "Frontier judge"],
+    // No metric badge: the honest numbers (0/3 detectors passed the
+    // pre-registered gate) have no `.portfolio/metrics.json` manifest in
+    // that repo for the weekly refresh to read — same reasoning as
+    // DealHunter's own "no metric badge" note above. Sourced instead in
+    // the case study's results rows.
+  },
 ];

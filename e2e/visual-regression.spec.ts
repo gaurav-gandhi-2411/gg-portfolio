@@ -33,21 +33,18 @@ import { warmupConfigs } from "../content/warmup";
  *
  * Baselines were generated inside the same Playwright Docker image this
  * repo's CI resolves to (mcr.microsoft.com/playwright:v1.63.0-jammy — pin
- * this to whatever @playwright/test resolves to in package.json; a
- * mismatched image fails every test in this file with "Executable doesn't
- * exist", not a pixel diff, which reads as a real regression until you
- * notice the version-mismatch banner in the error) rather than on a local
- * machine — Playwright's own screenshot comparison is sensitive to
+ * this to match whatever @playwright/test resolves to in package.json;
+ * a stale tag fails fast with an explicit version-mismatch error from
+ * browserType.launch, not a silent wrong-browser run) rather than on a
+ * local machine — Playwright's own screenshot comparison is sensitive to
  * OS-level font rasterization, and a Windows-generated baseline does not
  * match an Ubuntu CI runner's actual pixels, gate or no gate. Regenerate
- * the same way after any intentional visual change. CI=1 is required, not
- * optional: this file's own beforeEach skips every test when it is unset
- * (see the Linux-baseline comment below), so without it the command below
- * exits 0 having silently updated nothing — no error, no diff, just a
- * "2 skipped" that reads as success if you don't check the count.
- *   docker run --rm -v "$PWD:/work" -w /work \
+ * the same way after any intentional visual change (CI=1 is required —
+ * the `test.skip(!process.env.CI, ...)` above means this spec silently
+ * no-ops, "0 failed" and 0 baselines written, without it):
+ *   docker run --rm -e CI=1 -v "$PWD:/work" -w /work \
  *     mcr.microsoft.com/playwright:v1.63.0-jammy \
- *     sh -c "export CI=1 && npm ci && npm run build && npx playwright test \
+ *     sh -c "npm ci && npm run build && npx playwright test \
  *       e2e/visual-regression.spec.ts --project=desktop --update-snapshots"
  */
 
