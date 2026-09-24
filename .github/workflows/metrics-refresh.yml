@@ -82,6 +82,28 @@ on:
           the scheduled Monday run keeps opening real PRs.
         type: boolean
         default: false
+      run_refresh:
+        description: >-
+          Run the refresh job. Set to false for a dispatch that's only
+          testing content-pipeline (e.g. content_pipeline_dry_run above) and
+          must not touch the real chore/metrics-refresh PR or the "New
+          public repos" issue. Defaults to true so the scheduled Monday run
+          and any dispatch that doesn't set this explicitly keep today's
+          behavior.
+        type: boolean
+        default: true
+      run_identity_drift:
+        description: >-
+          Run the identity-drift job. Same reasoning as run_refresh, for the
+          chore/identity-drift PR and per-repo rename issues.
+        type: boolean
+        default: true
+      run_metric_freshness:
+        description: >-
+          Run the metric-freshness job. Same reasoning as run_refresh, for
+          the "Weekly metric freshness check" issue.
+        type: boolean
+        default: true
 
 concurrency:
   group: metrics-refresh
@@ -98,6 +120,10 @@ permissions:
 
 jobs:
   refresh:
+    # `if`: schedule runs (no `inputs` context) always run this job; a manual
+    # workflow_dispatch runs it too unless the operator explicitly opts out
+    # via `run_refresh=false` (see the input's own description).
+    if: github.event_name != 'workflow_dispatch' || inputs.run_refresh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -356,6 +382,9 @@ jobs:
     # content/identity-state.json (same machine-owned-JSON convention as
     # content/metrics.json), its own PR for the same reason content-pipeline
     # gets one (see that job's header comment).
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_identity_drift`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_identity_drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -507,6 +536,9 @@ jobs:
     # whether any numeric drift was separately detected. Added after
     # triageiq's case study went stale despite a recent-looking commit —
     # see that field's own doc comment for the incident.
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_metric_freshness`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_metric_freshness
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
