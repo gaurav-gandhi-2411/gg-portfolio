@@ -62,6 +62,26 @@ on:
           that doesn't set this explicitly keep today's behavior.
         type: boolean
         default: true
+      content_pipeline_force_invalid_token:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob: when true, the
+          content-pipeline job's run step gets a deliberately invalid
+          GITHUB_TOKEN instead of the real github.token, so extractor.mjs's
+          commit-SHA lookup gets a real 401 from api.github.com — a live,
+          forced R3 failure without touching a real credential. Never set on
+          the scheduled run (no `inputs` context there); defaults to false so
+          an explicit dispatch that doesn't set this keeps today's behavior.
+        type: boolean
+        default: false
+      content_pipeline_dry_run:
+        description: >-
+          workflow_dispatch-only: when true, the content-pipeline job's
+          "Open PR" step exits immediately, before creating, updating, or
+          closing anything — for a live proof run (forced-error or normal)
+          that must not write a real PR/branch/comment. Defaults to false so
+          the scheduled Monday run keeps opening real PRs.
+        type: boolean
+        default: false
 
 concurrency:
   group: metrics-refresh
@@ -257,7 +277,11 @@ jobs:
           PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
           # Was missing — content-pipeline/extractor.mjs's commit-SHA lookup ran unauthenticated.
           # Added alongside R3's exit-non-zero-on-API-error fix (fix/github-api-scripts-fail-loud).
-          GITHUB_TOKEN: ${{ github.token }}
+          # `content_pipeline_force_invalid_token` (workflow_dispatch-only R1 live-proof knob)
+          # swaps in a deliberately bad token instead — real 401 from api.github.com, no live
+          # network host needed and no real credential ever touched. False/unset (every
+          # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
+          GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
         run: node scripts/content-pipeline/run.mjs
 
       # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would
@@ -267,7 +291,17 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          # workflow_dispatch-only R1 live-proof knob — see content_pipeline_dry_run's own
+          # description above. A real proposal (or a stale open PR with nothing left to propose)
+          # both write publicly below (push, gh pr create/edit/close); this must short-circuit
+          # before either branch, not just the "nothing changed" one.
+          CONTENT_PIPELINE_DRY_RUN: ${{ inputs.content_pipeline_dry_run }}
         run: |
+          if [ "$CONTENT_PIPELINE_DRY_RUN" = "true" ]; then
+            echo "Dry run (content_pipeline_dry_run input) — skipping PR create/update/close entirely; nothing public written this run."
+            exit 0
+          fi
+
           BRANCH="chore/content-pipeline"
 
           if git diff --quiet content/provenance.md; then
