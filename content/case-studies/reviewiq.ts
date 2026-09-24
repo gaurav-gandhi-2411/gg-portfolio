@@ -5,7 +5,7 @@ import type { CaseStudy } from "../types";
 // review-iq-closeout-roadmap.md) — see provenance.md's ReviewIQ section.
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
-  verifiedAt: "2026-09-23", // issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md
+  verifiedAt: "2026-09-24", // issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1)
   title: "Samidha Reviews",
   dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
@@ -69,7 +69,7 @@ export const reviewiq: CaseStudy = {
     {
       label: "Overall extraction accuracy",
       value: "78.6% vs. a 76% CI gate, PASS",
-      detail: "per-language: en 78.2% / hi-en 79.3% (2026-09-19 eval run; the 'hi' row was removed when the report was regenerated)",
+      detail: "n=43 (27 en, 16 hi-en); per-language: en 78.2% / hi-en 79.3% (2026-09-19 eval run; the 'hi' row was removed when the report was regenerated)",
       sourceRef: "reviewiq:extraction-eval",
     },
     {
