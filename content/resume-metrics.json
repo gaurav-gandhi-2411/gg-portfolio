@@ -1,6 +1,6 @@
 {
   "_readme": "Resume↔site drift guard (wave 13 follow-up). Each claim maps a metric the resume PDF states to its content/metrics.json id, recording the STORE value at the moment the resume was last synced. The weekly metrics-refresh workflow flags any claim whose store value has moved since sync (the resume shouldn't silently rot while the site self-heals), and flags a public/resume.pdf hash change without a manifest update (a resume swap that skipped this file). Regenerate this file whenever the resume is rebuilt: update resume_says/store_value_at_sync per claim, resume_pdf_sha256, and synced_at. Claims derived from site code (e.g. the 'Nine live AI products' count = liveProductCount) are not tracked here — they have no store id.",
-  "resume_pdf_sha256": "1d14373f047c4616d4804eb5d65453a4b048b721b8df94daee082e7ddda0038b",
+  "resume_pdf_sha256": "57be0c9c49f9a4dafc8c3885f9fdf09462a3f9fe580b1f04326c25467f6f6c88",
   "synced_at": "2026-09-24",
   "claims": {
     "warmer:hinglish-fix": {
