@@ -263,6 +263,34 @@ subset of `metrics.json`'s own `value`, so the gate reference was dropped there 
 risk it rendering alone; the full CI/gate context is still one tap away via the row's own
 provenance disclosure and stated in full on the case-study page.
 
+**Step 3 (PR #242, 2026-09-24, GG's explicit call):** Step 2's `content/metrics.json` `label`
+edit dropped the word "eval" before the date -- it shipped as "95% CI 73-83%, n=43,
+2026-09-19" while `content/case-studies/reviewiq.ts`'s own results row (also written in Step
+2, same day) reads "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)". That is a same-project
+wording mismatch between the projects/home card's figcaption (sourced from `label`) and the
+case-study page, invisible to `check-card-consistency.mjs` (numeric-token comparison only,
+does not compare prose) and to `check-metric-freshness.mjs` (`label` is not cited-line-checked).
+`label` corrected to "95% CI 73-83%, n=43, eval 2026-09-19" to match the case study exactly, so
+the two surfaces read identically. No number changed. Also confirmed by direct inspection of
+the built HTML that the fix in question was cosmetic, not a missing-information gap: the bar
+figure's `<svg role="img">` already carries `aria-label="{label}: {valueText}."`, so the full
+CI text was always in the accessible name even while the visible `<figcaption>` sat one word
+short of it (`aria-hidden="true"` on the figcaption is intentional and unrelated to this fix,
+see `components/eval-figure.tsx`'s own comment).
+
+Verified via the repo's Docker Playwright visual-regression procedure (never assumed from char
+count): the corrected 36-char label DID wrap to two lines on Linux CI on `/projects` (both
+widths) and `/projects/llm-agents` at 390px -- `home` stayed under the suite's 1%
+`maxDiffPixelRatio` tolerance. The wrap itself is accepted (GG's exact wording is mandatory,
+and a two-line caption is a normal working layout in this fixed-13rem figure box); what was
+fixed is that the raw wrap split inside the date ("2026-09-\n19"). The three hyphens in
+"2026-09-19" were changed to U+2011 NON-BREAKING HYPHEN (renders and is announced identically
+to "-", invisible to `check-no-em-dash.mjs` and to `check-card-consistency.mjs`'s digit-only
+token extraction) so the wrap now falls on the word boundary before "eval" instead. All three
+affected Linux baselines (`projects-390`, `projects-1440`, `projects-llm-agents-390`) were
+regenerated in this PR via the same Docker mechanism; the full 54-test visual-regression suite
+was re-run afterward and passed clean.
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
