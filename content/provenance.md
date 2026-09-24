@@ -209,7 +209,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -231,6 +231,17 @@ repo's part — the 2026-07-06 figures were correct as of that date. `content/me
 `content/case-studies/reviewiq.ts` (results row + `verifiedAt`), and `content/products.ts`'s
 homepage card figure were all updated to the current numbers; the per-language label narrowed
 from "en/hi/hi-en" to "en/hi-en" to match the report's own current shape.
+
+**Step 1 (2026-09-24, single source of truth):** cross-checked `eval/report.md` against
+`review-iq/eval/results.json` (`generated_at: 2026-09-19T21:59:11Z`, `git_sha 5c5c8e0`) --
+both agree: `overall_score: 0.7859851844649027` (78.6%), `threshold: 0.76`, `passed: true`,
+`overall_ci_95.n: 43` (`per_language.en.n: 27`, `per_language.hi-en.n: 16`). The retired
+83.8% figure referenced above is review-iq's own v2.3/llama-era measurement from
+2026-07-06 (n=49, superseded by the 2026-09-19 gpt-oss re-record) -- not a citation error,
+a genuine re-measurement, and not to be conflated with the current 78.6%/n=43 headline. The
+n=43 count and the 2026-09-19 eval date are now stated directly in the rendered card
+(`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
+result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
 
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
@@ -1112,6 +1123,31 @@ and keep the honest-negative-result framing, with no "predicts". Site-wide grep 
 `predicts tomorrow`, `199-fold`, `204-fold`, and the `~16%` gold figure found no other
 occurrences outside the three files fixed here — see this PR's description for the exact grep
 commands and their (clean) output.
+
+## refresh-2026-09 Phase C — Open source contributions
+
+New `content/open-source.ts`, rendered on the homepage's Open source section and on the
+dedicated `/open-source` page. Every "landed" claim is checked against the upstream repo's
+default-branch commit history directly (the GitHub API's `/commits/<sha>` endpoint), not against
+the PR's own merged/closed status — two of the three entries below land via Google's Copybara
+import pipeline, which closes the PR on GitHub without ever marking it "Merged" even though the
+change is live in the repo under a different commit. Checked 2026-09-23.
+
+| ID | Claim | Source |
+|---|---|---|
+| `oss:adk-python-6681` | google/adk-python PR #6681, "fix(cli): resolve NameError in legacy create-eval-set route", landed via Copybara as commit `023f45c3e5846c3e72525b53f16ef018b5ecdaa6`, first released in v2.8.0 | `https://github.com/google/adk-python/commit/023f45c3e5846c3e72525b53f16ef018b5ecdaa6` (commit message and content confirmed via `GET /repos/google/adk-python/commits/023f45c...`); release containment confirmed via `GET /repos/google/adk-python/compare/v2.8.0...023f45c...` returning `status: behind, ahead_by: 0` (the commit is an ancestor of the v2.8.0 tag) |
+| `oss:adk-python-6939` | google/adk-python PR #6939, "fix(evaluation): reject num_samples=0 in JudgeModelOptions at construction time", landed via Copybara as commit `85e08686f8310e00b2b031a042db86405920b4b2`, not yet in a tagged release | `https://github.com/google/adk-python/commit/85e08686f8310e00b2b031a042db86405920b4b2` (commit message and content confirmed via `GET /repos/google/adk-python/commits/85e0868...`) |
+| `oss:keras-23420` | keras-team/keras PR #23420, "fix: R2Score returns NaN instead of 1.0 for a perfect prediction on zero-variance data", merged as commit `f3b31e4f4667849d98c1e230e142c9f445f2eed0`, not yet in a tagged release | `https://github.com/keras-team/keras/commit/f3b31e4f4667849d98c1e230e142c9f445f2eed0`; `GET /repos/keras-team/keras/pulls/23420` returns `state: closed, merged: true, merge_commit_sha` matching this commit exactly |
+| `oss:adk-python-in-review` | google/adk-python #6739 ("fix(evaluation): honor each metric's own eval_status in AgentEvaluator.evaluate()") and #6740 ("fix(cli): adk eval process exit code now reflects PASSED/FAILED"), both OPEN, not counted as landed | `GET /repos/google/adk-python/pulls/6739` and `.../pulls/6740` both return `state: open` |
+| `oss:tracegauge-repo` | tracegauge's source repo is `gaurav-gandhi-2411/token-efficiency-scorer` (the PyPI package name differs from the repo name) | `https://pypi.org/pypi/tracegauge/json`, `info.project_urls.Repository` |
+| `oss:adk-tracegauge-repo` | adk-tracegauge's source repo is `gaurav-gandhi-2411/adk-tracegauge` | `https://pypi.org/pypi/adk-tracegauge/json`, `info.project_urls.Repository` |
+| `oss:agentgauge-harness-repo` | agentgauge-harness's source repo is `gaurav-gandhi-2411/agentgauge` | `https://pypi.org/pypi/agentgauge-harness/json`, `info.project_urls.Repository` |
+
+Own-package version and release-count figures shown on the site are **not** in this table on
+purpose: they are live numbers fetched from the PyPI JSON API at build/ISR time
+(`getPypiStats()` in `lib/live-data.ts`, the same function and fetch already used by every
+product card's PyPI badge), never hand-typed, so there is no static claim here to source — the
+fetch itself is the provenance, and it fails soft to no number rather than a stale one.
 
 ## F12 (2026-09-23) — Hinglish SBERT linked to Warmer; eval-defect-bench added
 
