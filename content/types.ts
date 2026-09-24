@@ -224,7 +224,7 @@ export interface ResearchPaper {
   arxivUrl?: string;
   repoUrl: string;
   pdfUrl?: string;
-  status: "preprint-pending" | "live";
+  status: "working-paper" | "live";
   sourceRef: string;
 }
 
