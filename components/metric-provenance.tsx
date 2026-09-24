@@ -127,6 +127,21 @@ export function MetricProvenance({
     if (!panel) return;
     function clamp(): void {
       if (!panel) return;
+      // CI-only failure (2026-09-25): the CSS `max-w-[calc(100vw-3rem)]`
+      // class below is not a reliable substitute for this JS-measured
+      // clamp on every platform. `100vw` includes the browser's reserved
+      // scrollbar-gutter width, which window.innerWidth (the yardstick
+      // this effect, e2e/no-horizontal-overflow.spec.ts, and
+      // scripts/measure-overflow.mjs all already use) does not — the gutter
+      // is 0 on this repo's Windows dev machine (Chromium's headless
+      // scrollbar is an overlay there) but nonzero on the Ubuntu CI runner,
+      // so a trigger near the right edge produced a panel genuinely
+      // ~9px wider than the real viewport in CI while measuring clean
+      // locally on every run. Setting an explicit inline maxWidth from
+      // window.innerWidth makes the panel's own width agree with the same
+      // measurement this effect already uses for position, on every
+      // platform — the CSS class stays as the no-JS/SSR fallback only.
+      panel.style.maxWidth = `${window.innerWidth - 48}px`;
       panel.style.transform = "";
       const rect = panel.getBoundingClientRect();
       const overflowRight = rect.right - window.innerWidth;
