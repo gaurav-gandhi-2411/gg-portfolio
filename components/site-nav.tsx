@@ -62,6 +62,7 @@ const LINKS: NavLink[] = [
   { href: "/#about", label: "About", sectionId: "about" },
   { href: "/#experience", label: "Experience", sectionId: "experience" },
   { href: "/projects", label: "Projects" },
+  { href: "/research", label: "Research" },
   { href: "/#contact", label: "Contact", sectionId: "contact" },
 ];
 
@@ -75,6 +76,7 @@ export function SiteNav() {
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
 
   const onProjects = pathname.startsWith("/projects") || pathname.startsWith("/work/");
+  const onResearch = pathname.startsWith("/research");
   const onHome = pathname === "/";
 
   /**
@@ -88,7 +90,11 @@ export function SiteNav() {
    * it is the shape lint rightly flags as cascading renders. Deriving it is
    * both correct and shorter.
    */
-  const routeIndex = onProjects ? LINKS.findIndex((l) => l.label === "Projects") : -1;
+  const routeIndex = onProjects
+    ? LINKS.findIndex((l) => l.label === "Projects")
+    : onResearch
+      ? LINKS.findIndex((l) => l.label === "Research")
+      : -1;
   const [readingIndex, setReadingIndex] = useState(-1);
   const activeIndex = onHome ? readingIndex : routeIndex;
 

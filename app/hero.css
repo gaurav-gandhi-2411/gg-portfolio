@@ -719,8 +719,29 @@ body::after {
 }
 
 @media (max-width: 419px) {
+  /*
+   * Five items (About/Experience/Projects/Research/Contact) plus the
+   * monogram no longer fit at 375px on the padding/gap this block used to
+   * carry alone: "Contact" laid out past the right edge of the viewport,
+   * present in the DOM but with its own centre off-screen — not a visual
+   * clip, a genuinely untappable control (caught by
+   * e2e/mobile-viewport.spec.ts's reachability check, which the Research
+   * nav-link addition broke). Pill and row spacing now shrink alongside
+   * the link padding so the fifth item stays on-screen without wrapping,
+   * which the sticky band's fixed height (see .site-nav's comment) rules
+   * out as an alternative.
+   */
+  .site-nav-pill {
+    gap: var(--space-1-5);
+    padding-right: var(--space-1);
+  }
+
+  .site-nav-links {
+    gap: var(--space-0-5);
+  }
+
   .site-nav-link {
-    padding-inline: var(--space-1-5);
+    padding-inline: var(--space-0-5);
     font-size: var(--text-caption);
   }
 }
