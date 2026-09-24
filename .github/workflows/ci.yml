@@ -208,6 +208,9 @@ jobs:
       - name: GitHub API helper self-test (fetch stubbed)
         run: node scripts/lib/github-api.smoketest.mjs
 
+      - name: check-metric-freshness.mjs forced-error self-test
+        run: node scripts/check-metric-freshness.forced-error.smoketest.mjs
+
       - name: Build
         run: npm run build
 
