@@ -16,11 +16,12 @@
 // scripts/refresh-metrics.mjs.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { extract, wiredRepos } from "./extractor.mjs";
+import { extract, wiredRepos, apiErrors } from "./extractor.mjs";
 import { curate } from "./curator.mjs";
 import { frame } from "./framer.mjs";
 import { verify } from "./verifier.mjs";
 import { callLlm } from "./llm.mjs";
+import { formatApiErrorLines } from "../lib/github-api.mjs";
 
 const METRICS_PATH = "content/metrics.json";
 const PROVENANCE_PATH = "content/provenance.md";
@@ -141,6 +142,16 @@ async function main() {
   writeFileSync(SUMMARY_PATH, summaryLines.join("\n"));
 
   console.log(`Content pipeline: ${proposals.length} proposal(s), ${notes.length} note(s).`);
+
+  // R3: extractor.mjs's api.github.com commit-SHA lookups fail soft per-repo (a candidate still
+  // gets curated with an undefined commit_sha rather than dropping the whole repo) so the run
+  // above always finishes and writes real output — but a GitHub REST API failure must never be
+  // silent. Checked here, after every repo has been processed, rather than inside extract()
+  // itself, so one failed repo can't cut the run short for the rest.
+  if (apiErrors.length > 0) {
+    for (const line of formatApiErrorLines(apiErrors)) console.error(line);
+    process.exitCode = 1;
+  }
 }
 
 main().catch((err) => {

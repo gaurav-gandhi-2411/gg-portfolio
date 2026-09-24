@@ -62,6 +62,48 @@ on:
           that doesn't set this explicitly keep today's behavior.
         type: boolean
         default: true
+      content_pipeline_force_invalid_token:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob: when true, the
+          content-pipeline job's run step gets a deliberately invalid
+          GITHUB_TOKEN instead of the real github.token, so extractor.mjs's
+          commit-SHA lookup gets a real 401 from api.github.com — a live,
+          forced R3 failure without touching a real credential. Never set on
+          the scheduled run (no `inputs` context there); defaults to false so
+          an explicit dispatch that doesn't set this keeps today's behavior.
+        type: boolean
+        default: false
+      content_pipeline_dry_run:
+        description: >-
+          workflow_dispatch-only: when true, the content-pipeline job's
+          "Open PR" step exits immediately, before creating, updating, or
+          closing anything — for a live proof run (forced-error or normal)
+          that must not write a real PR/branch/comment. Defaults to false so
+          the scheduled Monday run keeps opening real PRs.
+        type: boolean
+        default: false
+      run_refresh:
+        description: >-
+          Run the refresh job. Set to false for a dispatch that's only
+          testing content-pipeline (e.g. content_pipeline_dry_run above) and
+          must not touch the real chore/metrics-refresh PR or the "New
+          public repos" issue. Defaults to true so the scheduled Monday run
+          and any dispatch that doesn't set this explicitly keep today's
+          behavior.
+        type: boolean
+        default: true
+      run_identity_drift:
+        description: >-
+          Run the identity-drift job. Same reasoning as run_refresh, for the
+          chore/identity-drift PR and per-repo rename issues.
+        type: boolean
+        default: true
+      run_metric_freshness:
+        description: >-
+          Run the metric-freshness job. Same reasoning as run_refresh, for
+          the "Weekly metric freshness check" issue.
+        type: boolean
+        default: true
 
 concurrency:
   group: metrics-refresh
@@ -78,6 +120,10 @@ permissions:
 
 jobs:
   refresh:
+    # `if`: schedule runs (no `inputs` context) always run this job; a manual
+    # workflow_dispatch runs it too unless the operator explicitly opts out
+    # via `run_refresh=false` (see the input's own description).
+    if: github.event_name != 'workflow_dispatch' || inputs.run_refresh
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -255,12 +301,33 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
+          # Was missing — content-pipeline/extractor.mjs's commit-SHA lookup ran unauthenticated.
+          # Added alongside R3's exit-non-zero-on-API-error fix (fix/github-api-scripts-fail-loud).
+          # `content_pipeline_force_invalid_token` (workflow_dispatch-only R1 live-proof knob)
+          # swaps in a deliberately bad token instead — real 401 from api.github.com, no live
+          # network host needed and no real credential ever touched. False/unset (every
+          # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
+          GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
         run: node scripts/content-pipeline/run.mjs
 
+      # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would
+      # otherwise skip this step — but that's independent of whether any proposal reached the PR
+      # bar this run.
       - name: Open PR if any proposal passed all three stages
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          # workflow_dispatch-only R1 live-proof knob — see content_pipeline_dry_run's own
+          # description above. A real proposal (or a stale open PR with nothing left to propose)
+          # both write publicly below (push, gh pr create/edit/close); this must short-circuit
+          # before either branch, not just the "nothing changed" one.
+          CONTENT_PIPELINE_DRY_RUN: ${{ inputs.content_pipeline_dry_run }}
         run: |
+          if [ "$CONTENT_PIPELINE_DRY_RUN" = "true" ]; then
+            echo "Dry run (content_pipeline_dry_run input) — skipping PR create/update/close entirely; nothing public written this run."
+            exit 0
+          fi
+
           BRANCH="chore/content-pipeline"
 
           if git diff --quiet content/provenance.md; then
@@ -315,6 +382,9 @@ jobs:
     # content/identity-state.json (same machine-owned-JSON convention as
     # content/metrics.json), its own PR for the same reason content-pipeline
     # gets one (see that job's header comment).
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_identity_drift`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_identity_drift
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -466,6 +536,9 @@ jobs:
     # whether any numeric drift was separately detected. Added after
     # triageiq's case study went stale despite a recent-looking commit —
     # see that field's own doc comment for the incident.
+    #
+    # `if`: same opt-out pattern as the refresh job above, via `run_metric_freshness`.
+    if: github.event_name != 'workflow_dispatch' || inputs.run_metric_freshness
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

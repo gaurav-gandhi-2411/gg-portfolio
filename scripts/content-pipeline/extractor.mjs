@@ -11,10 +11,18 @@
 //     for. A bounded regex sweep, not an LLM call (that judgment belongs to the curator stage).
 
 import { readFileSync } from "node:fs";
+import { githubApiGet } from "../lib/github-api.mjs";
 
 const METRIC_PATTERN =
   /\b\d[\d,.]*\s?(%|x|×|percent|percentage points?|pp)\b|\b\d+\/\d+\b|\bp<\s?0?\.\d+/i;
 const MAX_README_CANDIDATES_PER_REPO = 5;
+
+// R3: api.github.com (the commit-SHA lookup below) failures land here, distinct from the
+// README fetch's own silent `null`-on-failure return — raw.githubusercontent.com is an
+// unauthenticated content CDN, not the REST API R3 is about, and a missing README is already
+// handled (that repo just contributes zero readme candidates). run.mjs checks this array after
+// every repo has been processed and exits non-zero if it's non-empty.
+export const apiErrors = []; // { context, message }
 
 async function fetchText(url) {
   try {
@@ -50,8 +58,13 @@ function readmeCandidates(readmeText, existingValues) {
 export async function extract(repo, metricsStore, { ref = "HEAD" } = {}) {
   const known = knownMetricsForRepo(metricsStore, repo);
   const readme = await fetchText(`https://raw.githubusercontent.com/${repo}/${ref}/README.md`);
-  const commitInfo = await fetchText(`https://api.github.com/repos/${repo}/commits?per_page=1`);
-  const commitSha = commitInfo ? JSON.parse(commitInfo)?.[0]?.sha : undefined;
+  let commitSha;
+  try {
+    const commits = await githubApiGet(`/repos/${repo}/commits?per_page=1`);
+    commitSha = commits?.[0]?.sha;
+  } catch (err) {
+    apiErrors.push({ context: `${repo}: commit SHA lookup`, message: err.message });
+  }
 
   const existingValues = known.map((m) => m.value);
   const readmeFound = readmeCandidates(readme, existingValues).map((c) => ({
