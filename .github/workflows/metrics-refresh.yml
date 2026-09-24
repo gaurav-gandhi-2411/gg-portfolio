@@ -479,9 +479,19 @@ jobs:
       - name: Run metric freshness check
         env:
           FRESHNESS_SUMMARY_PATH: /tmp/metric-freshness-summary.md
+          # Was missing — checkShaReachability's repo-metadata/compare calls ran fully
+          # unauthenticated. Added alongside R3's exit-non-zero-on-API-error fix.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-metric-freshness.mjs
+        # R3: a real GitHub API error now exits this step non-zero. Metric STALENESS
+        # (drift, overdue verification, etc.) stays report-only via the summary file —
+        # see the script's own comment on that split.
 
+      # R3: the check above can now exit non-zero on a real API error, which would
+      # otherwise skip this step — but the summary is already written by then (see
+      # the script's own comment), and this step's whole job is reacting to it.
       - name: Open/update an issue if anything needs a look
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
