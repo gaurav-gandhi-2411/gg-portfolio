@@ -581,7 +581,7 @@
           "bold": true
         },
         {
-          "text": " — multilingual (English/Hindi/Hinglish) customer-review extraction with tiered LLM routing and cassette-replay CI; 78.6% accuracy on a 43-review CI-gated eval (threshold 76%).",
+          "text": " — multilingual (English/Hinglish) customer-review extraction with tiered LLM routing and cassette-replay CI; 78.6% extraction accuracy on a 43-review eval (95% CI 73–83%).",
           "bold": false
         }
       ],
@@ -597,7 +597,7 @@
       "role_relevance": 3,
       "technical_depth": 3,
       "metric_strength": 4,
-      "headline_metric": "78.6% vs. 76% CI gate"
+      "headline_metric": "78.6% extraction accuracy, 95% CI 73–83%"
     },
     {
       "id": "proj:tracegauge",
