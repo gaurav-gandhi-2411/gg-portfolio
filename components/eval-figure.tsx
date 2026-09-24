@@ -44,13 +44,56 @@ const FIG_TEXT_PX = 12;
 const W = 208;
 const EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
 
-function Caption({ children }: { children: React.ReactNode }) {
+// Matches an ISO date (YYYY-MM-DD) anywhere in a caption string. Generic on
+// purpose — every card's caption runs through this, not just metrics that
+// happen to carry a date today — so a future label with its own date gets
+// the same protection with no per-metric special-casing. Two separate
+// regexes on purpose: `String.split` needs the captured group with the `g`
+// flag, and `.test()` below must never run against a shared global-flagged
+// regex (its stateful `lastIndex` would silently flip true/false on
+// alternating calls) — so the whole-token check gets its own, non-global
+// instance.
+const ISO_DATE_SPLIT_RE = /(\d{4}-\d{2}-\d{2})/g;
+const ISO_DATE_FULL_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Splits caption text on ISO-date tokens and wraps each one in
+ * `whitespace-nowrap` so a line break can fall between words but never
+ * inside a date. This replaced a data-layer fix (a non-breaking hyphen
+ * substituted into the date string itself) that shipped briefly in PR #242
+ * — reverted because content/metrics.json's `label` is a data source read
+ * by other surfaces (the chatbot index, direct JSON reads, an exact-string
+ * gate on the canonical metric string), and a non-ASCII hyphen there made
+ * those surfaces byte-for-byte different from the plain-ASCII string
+ * despite rendering identically (the same failure class as PR #225, where
+ * poppler silently dropped a U+2011 from "sentence-transformers" during PDF
+ * extraction). The wrap prevention belongs here, in the rendering layer,
+ * operating on plain ASCII input.
+ */
+function wrapDateTokens(text: string): React.ReactNode {
+  const parts = text.split(ISO_DATE_SPLIT_RE);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    ISO_DATE_FULL_RE.test(part) ? (
+      <span key={i} className="whitespace-nowrap">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
+function Caption({ text }: { text: string }) {
   // aria-hidden: the sibling svg's role="img" aria-label already states the
   // full claim (label + values) — announcing the label phrase twice
   // back-to-back is redundant for SR users (design-review finding, wave 7).
+  // The aria-label itself is built from the plain, unwrapped `label` string
+  // (see each figure kind's `aria-label` below) — this wrapping is visual
+  // only and never touches accessible-name content.
   return (
     <figcaption aria-hidden="true" className="text-muted-foreground mt-[var(--space-2)] text-caption leading-snug">
-      {children}
+      {wrapDateTokens(text)}
     </figcaption>
   );
 }
@@ -165,9 +208,7 @@ export function EvalFigure({ figure, label }: { figure: ProductFigure; label: st
             {figure.to}
           </text>
         </svg>
-        <Caption>
-          {label} ({figure.scaleNote})
-        </Caption>
+        <Caption text={`${label} (${figure.scaleNote})`} />
       </figure>
     );
   }
@@ -191,7 +232,7 @@ export function EvalFigure({ figure, label }: { figure: ProductFigure; label: st
             {figure.valueText}
           </text>
         </svg>
-        <Caption>{label}</Caption>
+        <Caption text={label} />
       </figure>
     );
   }
@@ -231,7 +272,7 @@ export function EvalFigure({ figure, label }: { figure: ProductFigure; label: st
           );
         })}
       </svg>
-      <Caption>{label}</Caption>
+      <Caption text={label} />
     </figure>
   );
 }

@@ -243,6 +243,92 @@ n=43 count and the 2026-09-19 eval date are now stated directly in the rendered 
 (`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
 result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
 
+**Step 2 (2026-09-24, GG's explicit display-wording decision):** the public display for this
+metric is standardized site-wide to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)", with
+"gate 76%" permitted only when it renders alongside that CI, never alone. Re-verified against
+`review-iq/eval/results.json` directly (`overall_ci_95.lower: 0.7323872930973655`,
+`.upper: 0.8293967579473885`, rounded to 73%/83%) -- unchanged from Step 1's source, this is a
+wording/format correction, not a re-measurement. Three changes: (1)
+`content/case-studies/reviewiq.ts`'s results row now reads the exact string above, and its
+per-language accuracy breakdown ("en 78.2% / hi-en 79.3%") is removed from public copy
+entirely -- per-language accuracy numbers no longer appear on any public page; (2)
+`content/metrics.json`'s `label` for `reviewiq:extraction-eval` was rewritten from
+"en/hi-en, n=43, 2026-09-19" to "95% CI 73-83%, n=43, 2026-09-19" (the "en/hi-en" per-language
+marker dropped, the CI added) -- `value` itself is untouched, still anchored to
+`eval/report.md:5`'s exact tokens for the cited-line freshness check; (3)
+`content/products.ts`'s homepage bar-figure `valueText` was narrowed from
+"78.6% (threshold 76%)" to "78.6%" -- that figure is a fixed-width SVG label with no room for
+the CI text, and `scripts/check-card-consistency.mjs`'s Check B requires its numbers to stay a
+subset of `metrics.json`'s own `value`, so the gate reference was dropped there rather than
+risk it rendering alone; the full CI/gate context is still one tap away via the row's own
+provenance disclosure and stated in full on the case-study page.
+
+**Step 3 (PR #242, 2026-09-24, GG's explicit call):** Step 2's `content/metrics.json` `label`
+edit dropped the word "eval" before the date -- it shipped as "95% CI 73-83%, n=43,
+2026-09-19" while `content/case-studies/reviewiq.ts`'s own results row (also written in Step
+2, same day) reads "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)". That is a same-project
+wording mismatch between the projects/home card's figcaption (sourced from `label`) and the
+case-study page, invisible to `check-card-consistency.mjs` (numeric-token comparison only,
+does not compare prose) and to `check-metric-freshness.mjs` (`label` is not cited-line-checked).
+`label` corrected to "95% CI 73-83%, n=43, eval 2026-09-19" to match the case study exactly, so
+the two surfaces read identically. No number changed. Also confirmed by direct inspection of
+the built HTML that the fix in question was cosmetic, not a missing-information gap: the bar
+figure's `<svg role="img">` already carries `aria-label="{label}: {valueText}."`, so the full
+CI text was always in the accessible name even while the visible `<figcaption>` sat one word
+short of it (`aria-hidden="true"` on the figcaption is intentional and unrelated to this fix,
+see `components/eval-figure.tsx`'s own comment).
+
+Verified via the repo's Docker Playwright visual-regression procedure (never assumed from char
+count): the corrected 36-char label DID wrap to two lines on Linux CI on `/projects` (both
+widths) and `/projects/llm-agents` at 390px -- `home` stayed under the suite's 1%
+`maxDiffPixelRatio` tolerance. The wrap itself is accepted (GG's exact wording is mandatory,
+and a two-line caption is a normal working layout in this fixed-13rem figure box); what was
+fixed is that the raw wrap split inside the date ("2026-09-\n19"). The three hyphens in
+"2026-09-19" were changed to U+2011 NON-BREAKING HYPHEN (renders and is announced identically
+to "-", invisible to `check-no-em-dash.mjs` and to `check-card-consistency.mjs`'s digit-only
+token extraction) so the wrap now falls on the word boundary before "eval" instead. All three
+affected Linux baselines (`projects-390`, `projects-1440`, `projects-llm-agents-390`) were
+regenerated in this PR via the same Docker mechanism; the full 54-test visual-regression suite
+was re-run afterward and passed clean.
+
+**Step 4 (PR #242, 2026-09-24, coordinator correction):** the U+2011 non-breaking hyphen
+substitution in Step 3 was reverted. `content/metrics.json` is a data source, not a rendering
+detail -- its `label` field feeds the chatbot index, is copy-pastable by anyone reading the
+JSON directly, and is the intended target of an exact-string gate for the canonical
+"78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" string; a non-ASCII hyphen there makes those
+surfaces byte-for-byte different from the plain-ASCII case-study string even though the two
+render and sound identical. This is the same failure class that hit gg-portfolio PR #225,
+where a PDF text-extraction step (poppler) silently dropped a U+2011 from the word
+"sentence-transformers". `label` is back to plain ASCII hyphens throughout. The mid-date wrap
+is now prevented at the rendering layer instead: `components/eval-figure.tsx`'s caption
+renderer wraps any ISO-date token (`/\d{4}-\d{2}-\d{2}/`) in a `<span
+className="whitespace-nowrap">`, generically, for every card's caption text -- no
+per-metric special-casing, and the sibling `<svg role="img">`'s `aria-label` content is
+unaffected (still the plain, unwrapped string).
+
+**Step 5 (PR #242, 2026-09-24):** Step 4's own claim that "Linux baselines regenerated again
+to match" was premature -- local Docker-based regeneration was attempted but blocked by a
+severe, pre-existing host disk-space condition (the local machine's `C:` drive at 100%
+capacity, ~5-9GB free of 952GB throughout this session), which caused `npm ci` inside a
+throwaway Docker copy to either silently truncate or run for 19+ minutes without completing
+(vs. ~6 minutes measured earlier in the same session before the disk filled). Rather than
+guess the baselines were still correct, this PR was pushed as-is and its own `e2e` CI check
+(GitHub Actions, disk-unconstrained) was used as the real verification -- it failed on exactly
+three routes: `projects @ 390px`, `projects-llm-agents @ 390px`, `work-reviewiq @ 390px`. That
+failure also surfaced a SECOND, independent bug: this branch's merge of `origin/main` (bringing
+in PR #241/#243) had resolved a binary conflict on `work-reviewiq-390-desktop-linux.png` by
+taking `origin/main`'s side -- but `main` has never had this branch's `reviewiq.ts` content
+fix at all, so its baseline still showed the pre-Step-1 wording ("78.6% vs. a 76% CI gate,
+PASS" with the full en/hi-en per-language breakdown), not this PR's canonical string. Fixed by
+downloading the failed CI run's own `playwright-report` artifact (`gh run download`), decoding
+its embedded base64 zip (`<template id="playwrightReportBase64">`) to get `report.json`'s
+attachment map, and using the run's own "-actual.png" images (the real, correct, Linux-rendered
+current code) directly as the new committed baselines for all three routes -- verified visually
+before committing (the case-study page's actual image now reads the exact canonical string;
+`/projects` and `/projects/llm-agents`'s actual heights, 6074px and 3436px, match a completely
+independent verification earlier in this same session using the U+2011-era rendering, which is
+the expected cross-check since both approaches force an identical line-break point).
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
