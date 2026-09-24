@@ -62,6 +62,7 @@ const LINKS: NavLink[] = [
   { href: "/#about", label: "About", sectionId: "about" },
   { href: "/#experience", label: "Experience", sectionId: "experience" },
   { href: "/projects", label: "Projects" },
+  { href: "/open-source", label: "Open source" },
   { href: "/research", label: "Research" },
   { href: "/#contact", label: "Contact", sectionId: "contact" },
 ];
@@ -76,6 +77,7 @@ export function SiteNav() {
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
 
   const onProjects = pathname.startsWith("/projects") || pathname.startsWith("/work/");
+  const onOpenSource = pathname.startsWith("/open-source");
   const onResearch = pathname.startsWith("/research");
   const onHome = pathname === "/";
 
@@ -92,9 +94,11 @@ export function SiteNav() {
    */
   const routeIndex = onProjects
     ? LINKS.findIndex((l) => l.label === "Projects")
-    : onResearch
-      ? LINKS.findIndex((l) => l.label === "Research")
-      : -1;
+    : onOpenSource
+      ? LINKS.findIndex((l) => l.label === "Open source")
+      : onResearch
+        ? LINKS.findIndex((l) => l.label === "Research")
+        : -1;
   const [readingIndex, setReadingIndex] = useState(-1);
   const activeIndex = onHome ? readingIndex : routeIndex;
 
