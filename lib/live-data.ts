@@ -1,6 +1,11 @@
 import "server-only";
 
 import { products } from "@/content/products";
+import {
+  type PypistatsOverallResponse,
+  sumTrailingCompleteDays,
+  utcDateString,
+} from "@/lib/pypistats-window";
 
 // Wave 3 Tier 1: build-time/ISR live data. Every function here is
 // self-provenancing — it fetches from a real source rather than asserting a
@@ -42,6 +47,17 @@ async function safeFetchJson<T>(url: string, init?: RequestInit): Promise<T | nu
 export interface PypiPackageStats {
   lastWeek?: number;
   lastMonth?: number;
+  /**
+   * `true` when `lastWeek` is summed from pypistats' documented
+   * `without_mirrors` series (`/overall?mirrors=false`) -- a figure that
+   * excludes known PyPI mirror crawlers (bandersnatch/devpi). `false` when
+   * that series was empty or missing for this package and `lastWeek` fell
+   * back to `/recent`'s `last_week`, which carries no such exclusion and may
+   * include mirror or CI traffic pypistats cannot separate out. Always
+   * defined whenever `lastWeek` is -- the card must never render a raw
+   * number with no indication of which one it got (F14).
+   */
+  lastWeekExcludesMirrors?: boolean;
   /** The version the registry is currently serving, e.g. "0.4.1". */
   version?: string;
   /** How many versions have ever been published, including pre-releases. */
@@ -56,24 +72,38 @@ export type PypiStatsByPackage = Record<string, PypiPackageStats>;
  * package with neither is simply absent from the map. Absent is rendered
  * as nothing, never as zero — a real zero-download week and an unreachable
  * API must not look the same on the card (CHECKS.md's opening rule).
+ *
+ * The download figure itself prefers pypistats' documented `without_mirrors`
+ * series over `/recent`'s undocumented default (F14) -- see
+ * `sumTrailingCompleteDays` for the summing rule and `PypiPackageStats`'s
+ * `lastWeekExcludesMirrors` for how the card knows which one it got.
  */
 export async function getPypiStats(packageNames: string[]): Promise<PypiStatsByPackage> {
   const unique = [...new Set(packageNames)];
+  const today = utcDateString(new Date());
   const entries = await Promise.all(
     unique.map(async (name) => {
-      const [recent, registry] = await Promise.all([
+      const [recent, overall, registry] = await Promise.all([
         safeFetchJson<{ data: { last_week: number; last_month: number } }>(
           `https://pypistats.org/api/packages/${name}/recent`
+        ),
+        safeFetchJson<PypistatsOverallResponse>(
+          `https://pypistats.org/api/packages/${name}/overall?mirrors=false`
         ),
         safeFetchJson<{ info: { version: string }; releases: Record<string, unknown> }>(
           `https://pypi.org/pypi/${name}/json`
         ),
       ]);
       const stats: PypiPackageStats = {};
-      if (recent?.data) {
+      const withoutMirrors = sumTrailingCompleteDays(overall, "without_mirrors", today);
+      if (withoutMirrors !== undefined) {
+        stats.lastWeek = withoutMirrors;
+        stats.lastWeekExcludesMirrors = true;
+      } else if (recent?.data) {
         stats.lastWeek = recent.data.last_week;
-        stats.lastMonth = recent.data.last_month;
+        stats.lastWeekExcludesMirrors = false;
       }
+      if (recent?.data) stats.lastMonth = recent.data.last_month;
       if (registry?.info?.version) stats.version = registry.info.version;
       if (registry?.releases) stats.releaseCount = Object.keys(registry.releases).length;
       return [name, stats] as const;
