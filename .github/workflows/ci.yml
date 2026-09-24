@@ -200,6 +200,14 @@ jobs:
       - name: Identity-drift diff logic self-test
         run: node scripts/lib/identity-drift-diff.smoketest.mjs
 
+      # R3 (owner rule, 2026-09): "no silent failure — every script touching the GitHub API must
+      # exit non-zero on any API error." This is the shared fetch helper — see its own header for
+      # the api.github.com/raw.githubusercontent.com distinction and the apiErrors/exit-code
+      # convention. identity-drift.mjs and refresh-metrics.mjs get their own forced-error
+      # self-tests wired in here by follow-up PRs stacked on this one.
+      - name: GitHub API helper self-test (fetch stubbed)
+        run: node scripts/lib/github-api.smoketest.mjs
+
       - name: Build
         run: npm run build
 
