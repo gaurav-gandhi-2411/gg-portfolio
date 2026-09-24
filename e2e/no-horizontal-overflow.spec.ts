@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { caseStudySlugs } from "./fixtures/case-study-slugs";
-import { categoryIds } from "./fixtures/category-ids";
+import sitemap from "../app/sitemap";
+import { site } from "../content/site";
 
 /**
  * refresh-2026-09 direction review — the nav overflows horizontally at
@@ -15,127 +15,63 @@ import { categoryIds } from "./fixtures/category-ids";
  *
  * "Written before the fix" per CLAUDE.md's "write the assertion before you
  * read the implementation": this file exists to state what should be true
- * (no page's document is ever wider than its own viewport, and every nav
- * link is fully on-screen and tappable at the narrowest supported width)
- * before diagnosing which element causes the violation.
+ * (no page's document is ever wider than its own viewport, at all, and
+ * every nav link is fully on-screen and tappable at the narrowest supported
+ * width) before diagnosing which element causes the violation.
  *
- * Route inventory, derived from the real registries rather than hardcoded
- * lists that go stale (same convention as e2e/fixtures/*.ts):
- *   - static pages that exist in app/ and are indexed/linked from the nav
- *     or a real page (/, /projects, /open-source, /ask)
- *   - every /projects/[category] route (content/types.ts CATEGORIES)
- *   - every /work/[slug] case study (content/case-studies/index.ts)
- *   - a definitely-missing route, to cover the not-found page (it renders
- *     through the same root layout and carries the same nav)
+ * The criterion has no exceptions: document.documentElement.scrollWidth and
+ * document.body.scrollWidth are each <= window.innerWidth on every route at
+ * every width, full stop — and forcing window.scrollTo(10000, 0) never
+ * moves window.scrollX, which is the real, load-bearing signal. An earlier
+ * version of this spec pinned two routes to a clientWidth-based exception
+ * on the theory that a closed/clipped element's contribution to scrollWidth
+ * was a measurement artifact with no live effect — that was wrong, caught
+ * on direct verification: window.scrollTo(10000, 0) measurably moved
+ * window.scrollX on both routes, meaning the overflow was real and
+ * scrollable, not a phantom reading. Both were root-caused and fixed
+ * instead (see the fix commits this spec's own history sits next to).
  *
- * /warmup/[service] is deliberately excluded: those are noindex bridge
- * pages that make a real outbound call to wake a Cloud Run service and then
- * self-navigate to an external origin (`window.location.href =
- * config.destinationUrl`) — not a page a visitor lands on and reads, and
- * exercising it here would mean a live network call with a real, if small,
- * cost on every e2e run.
+ * Route inventory: every URL in the site's real sitemap.ts (never a
+ * hardcoded list that goes stale — same convention as e2e/fixtures/*.ts),
+ * plus two the sitemap doesn't carry but are still real, indexed pages a
+ * visitor lands on: /ask (has its own canonical, deliberately left out of
+ * the sitemap for reasons unrelated to this spec) and a definitely-missing
+ * route, to cover the not-found page (it renders through the same root
+ * layout and carries the same nav).
+ *
+ * /warmup/[service] is deliberately excluded, sitemap or not: those are
+ * noindex bridge pages that make a real outbound call to wake a Cloud Run
+ * service and then self-navigate to an external origin
+ * (`window.location.href = config.destinationUrl`) — not a page a visitor
+ * lands on and reads, and exercising it here would mean a live network
+ * call with a real, if small, cost on every e2e run.
  */
 
-const STATIC_ROUTES = ["/", "/projects", "/open-source", "/ask"];
-const CATEGORY_ROUTES = categoryIds.map((id) => `/projects/${id}`);
-const CASE_STUDY_ROUTES = caseStudySlugs.map((slug) => `/work/${slug}`);
+const SITEMAP_ROUTES = sitemap().map((entry) => {
+  const url = typeof entry.url === "string" ? entry.url : String(entry.url);
+  const path = url.startsWith(site.url) ? url.slice(site.url.length) : url;
+  return path === "" ? "/" : path;
+});
+
 const NOT_FOUND_ROUTE = "/no-horizontal-overflow-spec-does-not-exist";
 
-const ALL_ROUTES = [...STATIC_ROUTES, ...CATEGORY_ROUTES, ...CASE_STUDY_ROUTES, NOT_FOUND_ROUTE];
+const ALL_ROUTES = [...new Set([...SITEMAP_ROUTES, "/ask", NOT_FOUND_ROUTE])];
 
 const WIDTHS = [375, 768, 1440] as const;
 const HEIGHT = 900;
-
-/**
- * `components/metric-provenance.tsx`'s closed disclosure panel (opacity-0,
- * pointer-events-none, but still in normal flow) sits a couple of pixels
- * past the right edge on this one case-study route at 375px, purely because
- * of where its trigger happens to fall in this page's prose — the panel's
- * own box (w-72/288px) doesn't grow, only its start position does. Verified
- * out of scope for the nav fix this spec exists for, and pre-existing on
- * origin/main independent of either direction (reproduced against a clean
- * main build, both under Desktop Chrome and under a real Pixel 7 device
- * emulation — `git diff origin/main HEAD -- components/metric-provenance
- * .tsx content/case-studies/multimodal-fashion-recommender.ts` is empty, so
- * neither direction touches either file):
- *   - under Desktop Chrome, window.innerWidth correctly stays 375 and only
- *     scrollWidth carries the phantom contribution — the exact "not
- *     reliable evidence of a live overflow bug on their own" quirk
- *     e2e/mobile-viewport.spec.ts's header comment already documents for
- *     this component;
- *   - under a real mobile device profile (isMobile: true, e2e/'s "mobile"
- *     Playwright project), window.innerWidth itself inflates to 377 —
- *     confirmed on a clean main build too — which is why this check anchors
- *     on document.documentElement.clientWidth against the *requested*
- *     viewport width rather than window.innerWidth: clientWidth is the one
- *     measurement that stays exactly 375 in both environments (confirmed
- *     directly), and is what the site's own overflow-x:clip guard on `html`
- *     is built to hold steady (see app/globals.css's "Mobile
- *     viewport-expansion guard" comment) — it is what actually governs
- *     rendering, not scrollWidth/innerWidth on mobile emulation.
- * Tracked as a pre-existing, main-inherited finding rather than patched
- * inside a direction branch that never touches this file.
- *
- * Second exception, Direction B only: home's `.hero-field-fit`/
- * `.hero-field-still` (components/sections/hero.tsx's full-bleed background
- * field) bleeds well past the viewport at both 375px and 768px width —
- * deliberately, by design. Its ancestor `.hero-stage` already does exactly
- * what this spec's own header comment asks for a legitimately-bleeding
- * decorative element ("clip it at its own container and say why"):
- * `overflow: clip` with a documented `overflow-clip-margin: 16px`
- * specifically so a focus ring near the boundary can still paint (see
- * app/hero.css's `.hero-stage` comment). That fixed 16px margin is the
- * literal source of the reading at both widths — scrollWidth comes in
- * exactly 16px over innerWidth every time (391-vs-375, 784-vs-768) — it is
- * the cost of that documented a11y tradeoff, not an unclipped bleed.
- * Verified harmless the same way as the main exception above, at both
- * widths: document.documentElement.clientWidth stays exactly at the
- * requested width and window.scrollX cannot be moved by wheel input.
- * Shrinking the margin would undo a deliberate, already-justified
- * focus-visibility choice for a phantom scrollWidth reading with no real
- * effect — out of scope for the nav fix this spec exists for.
- */
-const KNOWN_EXCEPTIONS = new Set<string>([
-  "375:/work/multimodal-fashion-recommender",
-  "375:/",
-  "768:/",
-]);
 
 for (const width of WIDTHS) {
   test.describe(`document is never wider than the viewport at ${width}px`, () => {
     test.use({ viewport: { width, height: HEIGHT } });
 
     for (const path of ALL_ROUTES) {
-      const key = `${width}:${path}`;
-      const isKnownException = KNOWN_EXCEPTIONS.has(key);
-
-      test(`${path}${isKnownException ? " (known exception, see header comment)" : ""}`, async ({
-        page,
-      }) => {
+      test(`${path}`, async ({ page }) => {
         await page.goto(path);
         const measured = await page.evaluate(() => ({
           documentScrollWidth: document.documentElement.scrollWidth,
           bodyScrollWidth: document.body.scrollWidth,
-          clientWidth: document.documentElement.clientWidth,
           innerWidth: window.innerWidth,
         }));
-
-        if (isKnownException) {
-          // The real signal for these routes: the requested viewport width,
-          // not window.innerWidth (which itself inflates to 377 under real
-          // mobile emulation for the mmfr route — verified on a clean main
-          // build, see the header comment). clientWidth is what the site's
-          // own overflow-x:clip guard holds steady in every environment, so
-          // pin the assertion there instead.
-          expect(
-            measured.clientWidth,
-            `document.documentElement.clientWidth (${measured.clientWidth}) drifted from the ` +
-              `requested viewport width (${width}) on ${path} — that would mean this is no ` +
-              `longer just the known exception described in the header comment`
-          ).toBe(width);
-          return;
-        }
-
         expect(
           measured.documentScrollWidth,
           `document.documentElement.scrollWidth (${measured.documentScrollWidth}) exceeds ` +
@@ -146,6 +82,18 @@ for (const width of WIDTHS) {
           `document.body.scrollWidth (${measured.bodyScrollWidth}) exceeds ` +
             `window.innerWidth (${measured.innerWidth}) on ${path} at ${width}px`
         ).toBeLessThanOrEqual(measured.innerWidth);
+
+        // The real, load-bearing check: force the browser to actually try
+        // to scroll to the overflow, rather than trusting a measurement
+        // that a clip/margin quirk can make read clean while content is
+        // still genuinely reachable by scrolling. See header comment.
+        await page.evaluate(() => window.scrollTo(10000, 0));
+        const scrollX = await page.evaluate(() => window.scrollX);
+        expect(
+          scrollX,
+          `window.scrollTo(10000, 0) moved window.scrollX to ${scrollX} on ${path} at ${width}px — ` +
+            `there is real, scrollable horizontal overflow`
+        ).toBe(0);
       });
     }
   });
