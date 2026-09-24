@@ -721,28 +721,42 @@ body::after {
 @media (max-width: 419px) {
   /*
    * Six items (About/Experience/Projects/Open source/Research/Contact) plus
-   * the monogram no longer fit at 375px on the padding/gap this block used
-   * to carry alone: "Contact" laid out past the right edge of the viewport,
-   * present in the DOM but with its own centre off-screen — not a visual
-   * clip, a genuinely untappable control (caught by
-   * e2e/mobile-viewport.spec.ts's reachability check, which the Open
-   * source and Research nav-link additions broke). Pill and row spacing
-   * now shrink alongside the link padding so all six items stay on-screen
-   * without wrapping, which the sticky band's fixed height (see
-   * .site-nav's comment) rules out as an alternative.
+   * the monogram no longer fit at 375px on the padding/gap the five-item
+   * version of this block carried (measured overflow: "Contact" laid out
+   * 51px past the right edge of the viewport, present in the DOM but with
+   * its own centre off-screen — not a visual clip, a genuinely untappable
+   * control, caught by e2e/mobile-viewport.spec.ts's reachability check).
+   * Shrinking the link/row gaps alone (the five-item fix's approach) is not
+   * enough room for a sixth item, so this also pulls from the band's own
+   * horizontal inset (`.site-nav`), the pill's asymmetric left padding
+   * (`.site-nav-pill`, normally sized to line up with the content column
+   * below it — that alignment is the first thing this breakpoint gives up),
+   * and the brand link's own right padding. Verified by measuring every
+   * link's `getBoundingClientRect()` at 375px after each change, not by
+   * eyeballing it. Wrapping is still ruled out by the sticky band's fixed
+   * height (see .site-nav's comment).
    */
   .site-nav-pill {
-    gap: var(--space-1-5);
-    padding-right: var(--space-1);
+    gap: var(--space-1);
+    padding-right: var(--space-0-5);
+    padding-left: var(--space-2);
+  }
+
+  .site-nav-brand {
+    padding-right: var(--space-0-5);
   }
 
   .site-nav-links {
-    gap: var(--space-0-5);
+    gap: var(--space-0);
   }
 
   .site-nav-link {
-    padding-inline: var(--space-0-5);
+    padding-inline: var(--space-0);
     font-size: var(--text-caption);
+  }
+
+  .site-nav {
+    padding-inline: var(--space-3);
   }
 }
 
