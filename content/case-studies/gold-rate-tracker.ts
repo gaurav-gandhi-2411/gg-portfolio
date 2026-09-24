@@ -3,13 +3,15 @@ import type { CaseStudy } from "../types";
 // Sources: gold-rate-tracker repo (README.md, docs/adr/005-honest-baseline-reporting.md,
 // docs/adr/012, docs/adr/019, docs/DIRECTION_SIGNAL_STATUS.md, data/backtest.json) —
 // see provenance.md's Gold Rate Tracker section. Wave 19 (2026-07-31): architecture
-// corrected to IBJA-primary per ADR 025 (2026-07-18); backtest refreshed to 204 folds
-// (data/backtest.json, 2026-07-26 run). The 165-fold/10.4%/p=0.0089 figure in
-// decisions[0] is a real, distinct, earlier measurement (ADR 012, 2026-05-19) — not
-// orphaned, see provenance.md's wave-19 investigation note.
+// corrected to IBJA-primary per ADR 025 (2026-07-18). Wave refresh-2026-09 (2026-09-23,
+// F3/F4): repinned the backtest numbers to commit ad4216086d10a63bb93ed3107c9ccee429cb5fa0
+// (209 folds), the exact commit the product repo's own README cites as its frozen
+// headline citation — every site surface now agrees with it, not just each other. The
+// 165-fold/10.4%/p=0.0089 figure in decisions[0] is a real, distinct, earlier measurement
+// (ADR 012, 2026-05-19) — not orphaned, see provenance.md's wave-19 investigation note.
 export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
-  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
+  verifiedAt: "2026-09-23", // wave refresh-2026-09 (F3/F4) -- repinned to product repo's frozen SHA citation
   title: "Gold Rate Tracker",
   dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model, and shipped the honest forecast instead of the more exciting one.",
   depth: "full",
@@ -88,15 +90,15 @@ export const goldRateTracker: CaseStudy = {
   ],
   results: [
     {
-      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (204-fold backtest, horizon 5 days)",
-      value: "251.99 vs. 293.10",
+      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (209-fold backtest, horizon 5 days)",
+      value: "249.24 vs. 292.14",
       detail:
-        "MAE, naive wins by ~16% (Wilcoxon signed-rank p=0.0001, the naive baseline's advantage is real, not noise)",
+        "MAE (₹/g), naive wins by ~17% (Wilcoxon signed-rank p < 0.001, the naive baseline's advantage is real, not noise)",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
       label: "Chronos direction accuracy",
-      value: "51.96%",
+      value: "51.2%",
       detail: "barely above a coin flip, and below the true ~70% regime base rate",
       sourceRef: "gold-rate-tracker:headline",
     },

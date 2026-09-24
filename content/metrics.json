@@ -157,14 +157,14 @@
       "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. The popularity baseline the 3.06x lift is measured against, at README.md:121. "
     },
     "gold-rate-tracker:headline": {
-      "label": "Naive baseline vs. ML model (199-fold backtest)",
+      "label": "Naive baseline vs. ML model (209-fold backtest)",
       "value": "Naive wins: ships the honest baseline, not the model",
       "repo": "gaurav-gandhi-2411/gold-rate-tracker",
       "source_file": "data/backtest.json",
-      "source_line": 8,
-      "commit_sha": "a4d892cae3837048108c02d411adf1b13e964d73",
-      "measured_at": "2026-07-19",
-      "note": "data/backtest.json is bot-refreshed continuously and has moved on since this pin (now 204 folds as of 2026-07-26). The qualitative 'naive wins' claim holds at every snapshot checked. Wave-18 reconciliation fixed an internal-consistency bug in the case study: the Wilcoxon p and direction-accuracy figures shown alongside this pinned commit's MAE numbers had drifted in from a different (194-fold) snapshot — both are now pinned to this same commit_sha (0.0 as stored, rendered as 'p < 0.001' per GG's never-render-p-approx-0 instruction; direction accuracy 50.75%). Commit a4d892c itself is real and tracked (chore: update backtest results [skip ci] (#247), committed 2026-07-19T10:46:27+05:30; backtest_run_at 2026-07-19T05:12:36 UTC)."
+      "source_line": 3,
+      "commit_sha": "ad4216086d10a63bb93ed3107c9ccee429cb5fa0",
+      "measured_at": "2026-08-02",
+      "note": "Deliberately pinned to this commit, not HEAD: data/backtest.json is bot-refreshed continuously (243 folds as of 2026-09-23) so an unpinned number goes stale within days. This is the exact commit the product repo's own README now cites as its frozen headline citation (209 walk-forward folds; naive flat-hold ₹249/g avg error vs. Chronos-Bolt-Tiny ₹292/g, 17% worse, p≈0, rendered site-side as 'p < 0.001' per GG's never-render-p-approx-0 instruction). Site issue F3/F4 (wave refresh-2026-09, 2026-09-23): every surface citing this metric (this entry, the case study, provenance.md) is now pinned to this same commit_sha so the numbers can't drift apart from each other again, the same class of bug wave-18 fixed once already. The qualitative 'naive wins' claim has held at every snapshot checked since 2026-05-19. Commit ad42160 (backtest_run_at 2026-08-02T05:18:28Z): mae_5d_avg_naive 249.24, mae_5d_avg_chronos 292.14, wilcoxon_signed_rank_p 0.0, dir_acc_5d_chronos 0.512."
     },
     "aetherart:vram": {
       "label": "Full SDXL + LoRA pipeline, 8GB consumer-GPU budget",
