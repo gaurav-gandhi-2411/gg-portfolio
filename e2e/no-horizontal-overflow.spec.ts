@@ -67,6 +67,15 @@ for (const width of WIDTHS) {
     for (const path of ALL_ROUTES) {
       test(`${path}`, async ({ page }) => {
         await page.goto(path);
+        // Measure the settled state, not a transient pre-font-load frame.
+        // `goto` resolves on the load event, which can fire before web
+        // fonts finish swapping in — components that re-measure their own
+        // geometry once fonts are ready (MetricProvenance's viewport
+        // clamp, site-nav's indicator alignment) haven't necessarily run
+        // yet at that point. Caught as a real, reproducible failure here:
+        // omitting this wait made /work/multimodal-fashion-recommender at
+        // 375px fail 3/3 runs even with the component fix landed.
+        await page.evaluate(() => document.fonts.ready);
         const measured = await page.evaluate(() => ({
           documentScrollWidth: document.documentElement.scrollWidth,
           bodyScrollWidth: document.body.scrollWidth,
