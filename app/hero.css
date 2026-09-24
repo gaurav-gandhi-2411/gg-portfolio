@@ -47,9 +47,47 @@ body::after {
   isolation: isolate;
   display: flex;
   width: 100%;
-  /* clip rather than hidden, with a margin, so the field can scale past the
-   * edges on scroll while a focus ring on a button near the boundary is
-   * still allowed to paint. */
+  /*
+   * Overflow audit, 2026-09-24: this used to carry `overflow-clip-margin:
+   * 16px` directly, on the theory that `clip` (unlike `hidden`) doesn't
+   * create a scroll container so nothing outside the viewport could ever
+   * actually be reached. That held for *this* element specifically because
+   * .hero-stage's own box is full viewport width — a clip-margin extends
+   * the clip boundary outward from the box it's set on in every direction,
+   * so 16px of it landed 16px past the true right edge of the viewport,
+   * and that 16px is genuine, scrollable ink: document.documentElement
+   * .scrollWidth read 16px over innerWidth, and window.scrollTo(10000, 0)
+   * measurably moved window.scrollX by that amount. `overflow: clip` on
+   * the *root* element behaves specially in a way ordinary elements don't
+   * (see e2e/mobile-viewport.spec.ts's header comment on the same root-
+   * element quirk for `html`'s own guard) — clip on this non-root element
+   * does not carry that immunity.
+   *
+   * Plain 0-margin clip here is now the hard backstop: nothing painted by
+   * anything inside .hero-stage can ever propagate past this box, full
+   * stop. The field's own generous, scale-safe margin lives one level in,
+   * on .hero-field-clip below, inset far enough that its own 16px outward
+   * allowance lands back at this exact boundary rather than past it — so
+   * the field still scales/moves through scroll exactly as before, and a
+   * focus ring on a control near this edge still has the same 16px of
+   * room to paint into, just measured from a boundary that can no longer
+   * leak past the viewport.
+   */
+  overflow: clip;
+}
+
+/*
+ * Inset from .hero-stage's own edge by the same amount as the margin below,
+ * so `overflow-clip-margin: 16px` here pushes back out to exactly
+ * .hero-stage's true boundary — never past it. .hero-stage's own 0-margin
+ * clip (above) is the enforced backstop regardless; this is what makes the
+ * field's paint reach that backstop smoothly instead of hard-clipping
+ * short of it.
+ */
+.hero-field-clip {
+  position: absolute;
+  inset: 16px;
+  z-index: -2;
   overflow: clip;
   overflow-clip-margin: 16px;
 }
@@ -57,7 +95,6 @@ body::after {
 .hero-field {
   position: absolute;
   inset: 0;
-  z-index: -2;
   pointer-events: none;
   /* Anchored to the top so the parallax pushes it down out of frame rather
    * than pulling it up through the copy. */
