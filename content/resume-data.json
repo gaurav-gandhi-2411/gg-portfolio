@@ -581,7 +581,7 @@
           "bold": true
         },
         {
-          "text": " — multilingual (English/Hindi/Hinglish) customer-review extraction with tiered LLM routing and cassette-replay CI; 83.8% accuracy on a CI-gated eval (threshold 83%).",
+          "text": " — multilingual (English/Hindi/Hinglish) customer-review extraction with tiered LLM routing and cassette-replay CI; 78.6% accuracy on a 43-review CI-gated eval (threshold 76%).",
           "bold": false
         }
       ],
@@ -589,7 +589,7 @@
         "multilingual-nlp"
       ],
       "priority": 3,
-      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#reviewiq:extraction-eval",
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#reviewiq:extraction-eval; resynced 2026-09-24 to review-iq/eval/results.json@5c5c8e0 (generated_at 2026-09-19T21:59:11Z, overall_score 0.7859851844649027, n=43, threshold 0.76) — 83.8%/83% was stale",
       "surface": "live_demo",
       "artifact_url": "https://review-iq-ajjrytb3na-el.a.run.app/docs",
       "research_status": null,
@@ -597,7 +597,7 @@
       "role_relevance": 3,
       "technical_depth": 3,
       "metric_strength": 4,
-      "headline_metric": "83.8% vs. 83% CI gate"
+      "headline_metric": "78.6% vs. 76% CI gate"
     },
     {
       "id": "proj:tracegauge",

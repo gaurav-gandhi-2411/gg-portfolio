@@ -1,152 +1,158 @@
-Resume ATS/consistency check — 2026-09-24
+Resume ATS/consistency check — 2026-09-24 (final)
 Session: refresh-2026-09 wave, Step 4 (PR #225, branch fix/resume-oss-and-paper-status)
 
-STATUS: BLOCKED at step (b) — .docx master is not sync-able via in-place run edits.
-No PDF was regenerated, no LibreOffice was installed, resume-data.json/
-resume-metrics.json were NOT edited (see "why JSON was not touched" below).
-This file documents the diagnostics that WERE run so the blocker is
-reproducible and the next session doesn't have to re-derive it.
+STATUS: DONE. public/resume.pdf was regenerated from the (rewritten) private
+.docx master via LibreOffice 26.8.0.3 headless, and matches
+reports/resume/approved-2026-09-24.txt exactly (whitespace-normalized).
 
 =====================================================================
-1. APPROVED CONTENT (reports/resume/approved-2026-09-24.txt)
+0. Stale-master finding (why this needed a docx rewrite, not just an edit)
 =====================================================================
-Built from the actual rendered text of public/resume.pdf on this branch
-(post-PR-#225's OSS-precision + working-paper-status commit, 48233ac),
-extracted with pdfplumber (per-line x0/top coordinates, so wrapped visual
-lines were merged back into logical resume lines deterministically —
-bullet start = new line at x0≈42.1/50.1 margin, continuation = x0≈50.1,
-section body text = x0≈38.1). 49 logical lines, reading order, page 1 then
-page 2. One text edit applied on top: the Samidha Reviews / ReviewIQ
-project bullet's accuracy figure, 83.8% -> 78.6%, per this session's
-instruction, sourced to review-iq/eval/results.json (generated_at
-2026-09-19T21:59:11Z, git_sha 5c5c8e0, overall_score 0.7859851844649027,
-n=43, threshold 0.76) — matches the instructed wording almost exactly:
-"Reached 78.6% accuracy on a 43-review CI-gated eval (threshold 76%)
-across English, Hindi, and Hinglish, by building a tiered LLM extraction
-service (Llama 3.3 70B, JSON mode) with authenticity scoring,
-prompt-injection defense, PII redaction, and multi-tenant isolation."
-
-No U+FFFD (replacement character), no private-use-area glyphs, no garbled
-text anywhere in the extracted PDF text (checked programmatically). The
-only non-ASCII characters present are legitimate typography: U+2022
-bullet (26x), U+00B7 middle dot (16x), U+2014 em dash (13x), U+2013 en
-dash (10x).
+.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx (gitignored, private)
+was a materially older resume revision: 6 of its 47 paragraphs matched the
+approved content at all (all 6 bare section headers); title, role count (2
+vs the approved 3), section names, and every bullet's wording differed. It
+had not been kept in sync with public/resume.pdf since at least PR #225's
+own commit (48233ac, 2026-09-23), which found the same staleness and worked
+around it with direct PDF text surgery instead of touching the docx. Per
+GG's explicit instruction this session, the docx was rewritten in place
+(python-docx, reusing the document's own existing paragraph/run styles via
+XML clone rather than inventing new formatting) so it now equals
+approved-2026-09-24.txt line-for-line, and re-exported — the private
+master and the public artifact are back in sync. Backup taken first:
+.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx.bak-step4-2026-09-24
+(other .bak-* files left untouched).
 
 =====================================================================
-2. ATS PRE-CHECK — current (unmodified) branch PDF vs approved.txt
+1. Toolchain
 =====================================================================
-Ran pdfplumber extraction + the same line-merge logic against the
-CURRENT, unmodified public/resume.pdf already on this branch (i.e.
-before the review-iq wording change, which has not been applied to the
-PDF), and diffed line-by-line against approved.txt. Confirms approved.txt
-correctly equals "current branch PDF + exactly the review-iq change,
-nothing else":
-
-    approved lines: 49; current-PDF logical lines: 49 (line count matches)
-    1 line differs (of 49):
-
-    LINE 29 DIFFERS:
-      approved:    Samidha Reviews (bullet) ... Reached 78.6% accuracy on
-                   a 43-review CI-gated eval (threshold 76%) across
-                   English, Hindi, and Hinglish, by building a tiered LLM
-                   extraction service ...
-      current-pdf: Samidha Reviews (bullet) ... Reached 83.8% field-level
-                   extraction accuracy across English, Hindi, and
-                   Hinglish, against an 83% CI gate, by building a tiered
-                   LLM extraction service ...
-
-This is the only remaining textual delta between what currently ships and
-the fully-approved content. It has NOT been applied to public/resume.pdf
-in this session (see blocker below) — the PDF on this branch still reads
-83.8%.
+LibreOffice 26.8.0.3, extracted via lessmsi (run from PowerShell — Git Bash
+mangled the Windows args in earlier attempts, see prior session notes) into
+a portable, non-system location. Invoked headless with a fresh, isolated
+profile (-env:UserInstallation). Fidelity check first: exported the
+ORIGINAL (still-stale) docx through this same toolchain before touching
+anything — 2 pages, all Calibri fonts fully embedded, confirming the
+pipeline itself introduces no page-count or font-embedding regressions
+before it was trusted with the real rewrite.
 
 =====================================================================
-3. BLOCKER — .docx master cannot be synced via "edit runs in place"
+2. Docx rewrite — text fidelity
 =====================================================================
-Task instruction (step b) was: "Sync the .docx master with python-docx so
-its text equals approved.txt: edit runs in place preserving formatting
-(don't rebuild the document)." This is not achievable as scoped. Evidence:
+docx paragraph text (python-docx .text, tabs normalized to spaces — tabs
+are intentional right-alignment devices reused from the original document's
+own paragraphs, not content) vs reports/resume/approved-2026-09-24.txt:
+49 paragraphs, 49 approved lines, 0 mismatches.
 
-  .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx has 47 non-empty
-  paragraphs. Diffing its paragraph text against approved.txt's 49 lines
-  (whitespace/punctuation-normalized, difflib.SequenceMatcher) finds only
-  6 of 47 docx paragraphs correspond to anything in approved.txt at all —
-  and all 6 are bare section headers (GAURAV GANDHI, PROFESSIONAL SUMMARY,
-  PROFESSIONAL EXPERIENCE, RESEARCH, EDUCATION, CERTIFICATIONS).
-  SequenceMatcher ratio: 0.125.
-
-  Concretely, the docx is a materially different, older resume revision,
-  not a near-match needing wording tweaks:
-    - Title: "Senior Data Scientist" (docx) vs "Lead Data Scientist"
-      (approved) — a role that doesn't exist in the docx at all.
-    - Uber/Indium experience: 2 roles in the docx (Senior Data Scientist
-      May2025-Present, Data Scientist Jun2024-May2025) vs 3 roles in
-      approved (Lead Data Scientist Aug2026-Present [new], Senior Data
-      Scientist May2025-Aug2026, Data Scientist Jun2024-May2025) — an
-      entire role-block, with its own bullets, is structurally absent.
-    - Every experience/research/project/skills bullet has substantively
-      different wording between docx and approved, not just numbers.
-    - Section names differ: "SELECTED INDEPENDENT PROJECTS" (docx, 9
-      projects, long-form) vs "APPLIED AI PROJECTS" (approved, 5 projects,
-      Live/Code-link format); "KEY TECHNICAL SKILLS" (docx, 6 categories)
-      vs "TECHNICAL SKILLS" (approved, 6 categories, different wording and
-      split); Education is 4 docx paragraphs (degree + GPA/location on
-      separate lines) vs 2 approved lines (degree+GPA inline, dates
-      right-aligned); Certifications is 1 docx paragraph vs 3 approved
-      bullet lines.
-
-  "Edit runs in place" assumes a 1:1 paragraph correspondence that simply
-  doesn't exist for the ~90% of the document that isn't a section header.
-  Doing this for real would mean inserting/deleting paragraphs, copying
-  styles, and rebuilding the Experience/Projects/Skills/Education sections
-  from scratch — which is exactly the "rebuild the document" the task
-  instruction explicitly excluded, and a materially larger, more
-  judgment-laden change (paragraph styles, run formatting, bullet list
-  definitions) than "edit runs in place" was scoped to authorize.
-
-  This is not a new problem: PR #225's own commit (48233ac) already found
-  and recorded this same fact ("docx ... turned out to predate the current
-  public/resume.pdf by five weeks ... missing PROJECTS/SKILLS content that
-  IS in the shipped PDF") and deliberately chose direct PDF text surgery
-  over editing the docx for exactly this reason ("doing so and
-  re-exporting would have regressed the resume, not precision-edited it").
-  This session's diagnostics quantify that same finding (6/47 paragraphs,
-  ratio 0.125) rather than override it.
-
-  Full paragraph-level evidence: see the scratch file (not committed, not
-  needed as a permanent artifact) built via python-docx + difflib in this
-  session; the same figures (6/47, ratio 0.125) and the full list of
-  unmatched docx paragraphs are reproducible by re-running the diagnostic
-  against .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx and
-  reports/resume/approved-2026-09-24.txt.
-
-Per instructions ("if the docx sync is bigger than a run-edit, stop and
-report"), steps (c) PDF export, (d) full ATS verification of a freshly
-regenerated PDF, and (e) committing a regenerated public/resume.pdf are
-NOT done in this session. LibreOffice was NOT installed (no export to run
-yet). The .docx master was NOT opened for writing/edited — only read.
+Hyperlinks preserved/added, sourced to public/resume.pdf's own /Annots URIs
+(pypdf), reusing python-docx's relationship mechanism (some reused the
+docx's own pre-existing relationship IDs when the URL was already declared,
+e.g. the GitHub profile link and 3 of the 5 project Code/Live links; the
+rest newly created):
+  header: LinkedIn, GitHub, Portfolio, Hugging Face (4)
+  projects: Live + Code for TriageIQ, Style Maitri, Samidha Reviews
+            (ReviewIQ), AgentGauge, tracegauge (10)
+  projects intro: "gaurav-gandhi.vercel.app" (1)
+  total: 15 hyperlinks, all verified against the shipped PDF's own
+  annotation rects (page/x-position) before being assigned to the right
+  project/label.
 
 =====================================================================
-4. Why content/resume-data.json / content/resume-metrics.json were NOT
-   edited in this session (deviation from the literal step-a instruction)
+3. Export — page count, fonts, size
 =====================================================================
-scripts/check-resume-pdf-consistency.mjs (wired into CI) reads
-public/resume.pdf's actual text and fails if a resume-data.json project
-entry's numeric tokens aren't found anywhere in the PDF. Updating
-resume-data.json's Samidha-Reviews/ReviewIQ entry to 78.6% now, while
-public/resume.pdf still says 83.8% (since the PDF itself is blocked, see
-above), would make that check fail on this branch — "78.6" wouldn't be
-found in the PDF text. Held this edit until the PDF can actually be
-regenerated in the same change, per this repo's own rule (CLAUDE.md /
-the wider rule that a scorer/metric-surface change and its published copy
-regenerate together, never as a separate follow-up step) — the two must
-land together or not at all.
+  page count: 2 (unchanged from main's shipped PDF — verified via pypdf,
+  independently re-derived, not cited from a prior claim)
+  file size: 139,912 bytes (old shipped: 143,658 bytes; docx-source fidelity
+  check on the ORIGINAL stale docx: 158,607 bytes — all in the same range,
+  no bloat or truncation)
+
+  Fonts (pypdf, walking /Resources /Font -> /FontDescriptor ->
+  FontFile/FontFile2/FontFile3), identical set on both pages:
+    /F1  TrueType  BAAAAA+Calibri-Bold        embedded=True
+    /F2  TrueType  CAAAAA+Calibri             embedded=True
+    /F3  TrueType  DAAAAA+Calibri-Bold        embedded=True
+    /F4  TrueType  EAAAAA+Calibri-Bold        embedded=True
+    /F5  TrueType  FAAAAA+Calibri-Bold        embedded=True
+    /F6  TrueType  GAAAAA+Calibri-BoldItalic  embedded=True
+    /F7  TrueType  HAAAAA+Calibri-Italic      embedded=True
+    /F8  TrueType  IAAAAA+Calibri             embedded=True
+  All 8 font variants fully embedded (subsetted, "+" prefix = standard PDF
+  subset naming). Real Calibri, not a Carlito substitution — this machine's
+  LibreOffice found genuine Calibri (from the OS/Office font set) rather
+  than falling back to its metric-compatible sibling. No font substitution,
+  no missing glyphs.
 
 =====================================================================
-5. Font embedding / page count / rendered PNG diff
+4. ATS check — pdftotext (both modes) vs approved.txt
 =====================================================================
-N/A — no PDF was exported in this session, so there is nothing new to
-check on those axes. The existing public/resume.pdf on this branch is
-unchanged from what PR #225 already shipped (2 pages, per pypdf on the
-untouched file — see prior session's commit 48233ac for that PDF's own
-font/page-count verification).
+  pdftotext -enc UTF-8 (no -layout): 8,567 chars — U+FFFD=0, fi-ligature=0,
+    fl-ligature=0, private-use-area chars=0
+  pdftotext -enc UTF-8 -layout:      9,174 chars — U+FFFD=0, fi-ligature=0,
+    fl-ligature=0, private-use-area chars=0
+
+  Reading-order reconstruction (pdfplumber per-line x0/top coordinates,
+  same deterministic bullet/continuation-merge method used to build
+  approved.txt itself) -> 49 logical lines, whitespace-normalized diff
+  against reports/resume/approved-2026-09-24.txt:
+
+    0 lines differ (of 49). Reading order matches section-for-section
+    (header -> summary -> experience [3 roles, correct order] -> projects
+    [5, correct order] -> research -> skills -> education -> certs).
+
+  One cosmetic, expected artifact: this LibreOffice build's Calibri
+  hyphenation wraps "github.com/gaurav-gandhi-2411" as "github-" /
+  "gandhi-2411" across the header's line-wrap (vs. the old PDF's renderer,
+  which wrapped without a mid-word hyphen). Text-content-equal once
+  merged; not a garbling or drift, just a different line-break point from
+  a different font-shaping engine version. Called out explicitly rather
+  than silently absorbed into the "0 differ" count.
+
+=====================================================================
+5. content/resume-data.json / content/resume-metrics.json
+=====================================================================
+Updated only the Samidha Reviews / ReviewIQ project entry (the only place
+the stale 83.8%/83% figure lived) to 78.6% / 43-review CI-gated eval /
+76% threshold, sourced to review-iq/eval/results.json (git_sha 5c5c8e0,
+generated_at 2026-09-19T21:59:11Z, overall_score 0.7859851844649027, n=43,
+threshold 0.76). resume-metrics.json's resume_pdf_sha256 and synced_at
+bumped to match the newly exported PDF
+(164b3290f0734a1169543f17ebfe90c2504ac16b1b9c69dd6e2598f50c3a0304,
+2026-09-24), and its reviewiq:extraction-eval claim updated to the same
+78.6%/43/76% figures.
+
+`node scripts/check-resume-pdf-consistency.mjs`: PASS — "14 projects in
+resume-data.json, 5 covered by public/resume.pdf and checked (expected 5).
+checked: agentgauge, reviewiq, style-maitri, tracegauge, triageiq. OK — no
+public/resume.pdf vs. content/resume-data.json contradictions found."
+
+=====================================================================
+6. e2e
+=====================================================================
+`npx playwright test e2e/resume.spec.ts`: 4/4 passed.
+`npx playwright test` (full suite, per this repo's own CLAUDE.md rule —
+content edits can break specs in unrelated files): 496 passed, 1 failed,
+109 skipped. The 1 failure (`hero-socials.spec.ts`, mobile, tooltip-opacity
+CSS timing) is unrelated to any resume/label content — re-ran it in
+isolation and it passed cleanly (4/4), confirming a parallel-run timing
+flake, not a regression from this change.
+
+chatbot index: not rebuilt. `scripts/chatbot/build-index.mjs` reads
+content/case-studies, products.ts, provenance.md, experience.ts,
+availability.ts, site.ts — it does not ingest resume-data.json,
+resume-metrics.json, or public/resume.pdf, so this change has no effect on
+it (verified by reading the script, not assumed).
+
+=====================================================================
+7. Screenshots
+=====================================================================
+reports/screenshots/resume-step4/{old,new}-p{1,2}.png — rendered via this
+same LibreOffice toolchain (soffice --convert-to png on a single-page-split
+PDF, since multi-page PDF->PNG only renders page 1 by default). Text
+content is identical between old and new (per section 4); visual styling
+differs because the docx's own native run styles were reused as instructed
+rather than reproducing the old PDF's specific choices — the new PDF uses
+the docx's navy-blue (#1F4E79) heading/name color and italic role headers,
+where the old PDF used plain black text with underlined links and a thin
+horizontal rule under each section heading. Both are legitimate, readable,
+2-page layouts; the difference is a deliberate consequence of "reuse the
+document's existing styles" rather than a bug. Embedded inline in PR
+#225's body via raw.githubusercontent.com.

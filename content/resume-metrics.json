@@ -1,7 +1,7 @@
 {
   "_readme": "Resume↔site drift guard (wave 13 follow-up). Each claim maps a metric the resume PDF states to its content/metrics.json id, recording the STORE value at the moment the resume was last synced. The weekly metrics-refresh workflow flags any claim whose store value has moved since sync (the resume shouldn't silently rot while the site self-heals), and flags a public/resume.pdf hash change without a manifest update (a resume swap that skipped this file). Regenerate this file whenever the resume is rebuilt: update resume_says/store_value_at_sync per claim, resume_pdf_sha256, and synced_at. Claims derived from site code (e.g. the 'Nine live AI products' count = liveProductCount) are not tracked here — they have no store id.",
-  "resume_pdf_sha256": "af0cf485ffa989e437fb3dbfea052b270b050cfa7015add42dd383a85ab9e737",
-  "synced_at": "2026-09-23",
+  "resume_pdf_sha256": "164b3290f0734a1169543f17ebfe90c2504ac16b1b9c69dd6e2598f50c3a0304",
+  "synced_at": "2026-09-24",
   "claims": {
     "warmer:hinglish-fix": {
       "resume_says": "Spearman −0.003 → 0.813, held-out 0.435 → 0.704 (LoRA fine-tune published as hinglish-relatedness-sbert)",
@@ -28,8 +28,8 @@
       "store_value_at_sync": "6.2GB peak VRAM"
     },
     "reviewiq:extraction-eval": {
-      "resume_says": "83.8% accuracy on a CI-gated eval",
-      "store_value_at_sync": "83.8% overall"
+      "resume_says": "78.6% accuracy on a 43-review CI-gated eval (threshold 76%)",
+      "store_value_at_sync": "78.6% overall (n=43, threshold 76%)"
     },
     "agentgauge:blocking-causal": {
       "resume_says": "BLOCKING description defect measured at −13.3 to −28.9pp agent task success (3 model families)",
