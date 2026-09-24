@@ -719,8 +719,31 @@ body::after {
 }
 
 @media (max-width: 419px) {
+  /*
+   * Direction A added a fifth nav item ("Open source") on top of the four
+   * this breakpoint was originally tuned for. That pushed Contact's own
+   * centre past window.innerWidth at 375px — present in the DOM, off-screen,
+   * genuinely untappable — and inflated document.documentElement.scrollWidth
+   * to 435px against a 375px viewport on every route (see
+   * e2e/no-horizontal-overflow.spec.ts). Same shape and same fix as
+   * upstream's `fix(nav): fit five nav items at 375px, Contact was
+   * off-screen` (feat/open-source-section, not yet on main when this
+   * direction branched): shrink the pill's own gap/padding and the link
+   * row's gap alongside the link padding, so five items stay on one line
+   * without wrapping, which the sticky band's fixed-height constraint rules
+   * out as an alternative.
+   */
+  .site-nav-pill {
+    gap: var(--space-1-5);
+    padding-right: var(--space-1);
+  }
+
+  .site-nav-links {
+    gap: var(--space-0-5);
+  }
+
   .site-nav-link {
-    padding-inline: var(--space-1-5);
+    padding-inline: var(--space-0-5);
     font-size: var(--text-caption);
   }
 }
