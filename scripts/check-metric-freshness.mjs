@@ -79,6 +79,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Overridable for testing the failure path against a fixture that isn't
@@ -305,25 +306,15 @@ const MIN_TOKEN_LEN = 3;
 // rate limit, network) and know nothing. Collapsing them would let a real
 // UNREACHABLE hide inside the pile of private-repo entries this script can
 // never reach.
-const GITHUB_API = "https://api.github.com";
-// Optional. Unauthenticated works for public repos at 60 req/hr, which covers
-// this table; a token raises that ceiling AND is the only way private repos
-// get checked at all (see the report's own note on what that would take).
-const GH_TOKEN = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null;
-
-async function githubApi(path) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const headers = { Accept: "application/vnd.github+json" };
-    if (GH_TOKEN) headers.Authorization = `Bearer ${GH_TOKEN}`;
-    const res = await fetch(`${GITHUB_API}${path}`, { signal: controller.signal, headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
+// R3 (owner rule, 2026-09): every script touching the real GitHub REST API
+// (api.github.com) must exit non-zero on any API error. The repo-metadata/compare
+// calls below are the only api.github.com calls in this file — every other check in
+// this file reads raw.githubusercontent.com (an unauthenticated content CDN, not
+// this rule's concern) and stays note-only on a fetch failure, unchanged. Shared
+// githubApiGet/formatApiErrorLines from scripts/lib/github-api.mjs, same helper
+// identity-drift.mjs and refresh-metrics.mjs use — see its own header for the
+// authenticated-GET contract (throws on any non-2xx/network/malformed-JSON error).
+const apiErrors = []; // { context, message } — api.github.com failures only.
 
 async function checkShaReachability(store) {
   const results = [];
@@ -336,10 +327,11 @@ async function checkShaReachability(store) {
     let defaultBranch = defaultBranchCache.get(entry.repo);
     if (defaultBranch === undefined) {
       try {
-        defaultBranch = (await githubApi(`/repos/${entry.repo}`)).default_branch;
+        defaultBranch = (await githubApiGet(`/repos/${entry.repo}`)).default_branch;
       } catch (err) {
         defaultBranch = null;
         defaultBranchCache.set(entry.repo, null);
+        apiErrors.push({ context: `${entry.repo}: repo metadata`, message: err.message });
         results.push({
           ...base,
           status: "UNVERIFIABLE",
@@ -364,7 +356,7 @@ async function checkShaReachability(store) {
       // compare/base...head: "identical" or "behind" both mean head IS an
       // ancestor of base. "ahead"/"diverged" mean it is not — the squash-merge
       // signature.
-      const cmp = await githubApi(
+      const cmp = await githubApiGet(
         `/repos/${entry.repo}/compare/${defaultBranch}...${entry.commit_sha}`
       );
       if (cmp.status === "identical" || cmp.status === "behind") {
@@ -385,6 +377,7 @@ async function checkShaReachability(store) {
         });
       }
     } catch (err) {
+      apiErrors.push({ context: `${entry.repo}: compare ${defaultBranch}...${entry.commit_sha.slice(0, 7)}`, message: err.message });
       results.push({
         ...base,
         status: "UNVERIFIABLE",
@@ -1531,13 +1524,19 @@ const summary = lines.join("\n") + "\n";
 process.stdout.write(summary);
 writeFileSync(SUMMARY_PATH, summary);
 
-// Deliberately always exits 0 — same convention as identity-drift.mjs and
-// refresh-metrics.mjs: this script's job is to report, never to fail the
-// CI step itself. The workflow's next step decides whether to open/update
-// an issue by checking this summary's content, not this process's exit
-// code (a non-zero exit here would mark the whole job failed for a normal,
-// expected "found some drift" outcome, which is the opposite of what a
-// weekly report job should do).
+// Metric STALENESS (drift, unverifiable-via-content-CDN, overdue verification,
+// unreachable SHAs, etc.) stays a soft, report-only signal — same reasoning as
+// before: the workflow's next step decides whether to open/update an issue by
+// checking this summary's content, and a non-zero exit here for a normal,
+// expected "found some drift" outcome would mark the whole job failed for the
+// opposite of what a weekly report job should do.
+//
+// A GitHub REST API failure (checkShaReachability's repo-metadata/compare calls)
+// is a different kind of signal — R3 (2026-09): every script touching api.github.com
+// must exit non-zero on any API error, same as identity-drift.mjs and
+// refresh-metrics.mjs. Exit non-zero and name every failed call, after the summary
+// above is already written, so this step's own output is never lost — only the
+// exit code changes.
 console.log(
   `\n--> metrics: ${current.length} current, ${drift.length} possible drift, ${partial.length} partial drift, ${unverifiable.length} unverifiable, ` +
     `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
@@ -1548,3 +1547,8 @@ console.log(
     `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited. ` +
     `cited-line: ${lineMatch.length} match, ${lineMismatch.length} MISMATCH, ${lineUnverifiable.length} unverifiable, ${lineNone.length} no line, ${lineQualitative.length} qualitative, ${lineTooShort.length} below-floor, of ${lineResults.length}.`
 );
+
+if (apiErrors.length > 0) {
+  for (const line of formatApiErrorLines(apiErrors)) console.error(line);
+  process.exitCode = 1;
+}
