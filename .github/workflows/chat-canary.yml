@@ -108,7 +108,10 @@ jobs:
           # distinction). Never request/auth headers, and this is a
           # response-header capture only — no request headers (including any
           # secret) are ever written to a file or echoed.
-          SELECTED_HEADERS=$(grep -iE '^(x-vercel-id|x-vercel-mitigated|server|content-type):' "$HEADERS_FILE" || true)
+          # tr strips the \r HTTP header lines end in -- curl's -D file keeps
+          # it, and leaving it in would put a literal carriage return inside
+          # the issue body's code block.
+          SELECTED_HEADERS=$(grep -iE '^(x-vercel-id|x-vercel-mitigated|server|content-type):' "$HEADERS_FILE" | tr -d '\r' || true)
           {
             echo "headers<<CANARY_HEADERS_EOF"
             echo "$SELECTED_HEADERS"
