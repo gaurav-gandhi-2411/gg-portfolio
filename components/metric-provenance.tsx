@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import {
   getOpenProvenance,
   getServerOpenProvenance,
@@ -62,6 +62,7 @@ export function MetricProvenance({
 }) {
   const panelId = useId();
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  const panelRef = useRef<HTMLSpanElement>(null);
   const openId = useSyncExternalStore(
     subscribeProvenance,
     getOpenProvenance,
@@ -88,6 +89,121 @@ export function MetricProvenance({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [open, panelId]);
+
+  /*
+   * Horizontal viewport clamp (overflow audit, 2026-09-24).
+   *
+   * The panel is `absolute left-0` under its trigger, with `w-72
+   * max-w-[calc(100vw-3rem)]` capping its own width — but that width clamp
+   * has nothing to say about *position*: a trigger sitting far enough right
+   * in a line of prose still anchors an 18rem-wide panel that runs past the
+   * viewport's right edge, regardless of how narrow the clamp makes it look
+   * elsewhere. This is a real, if small (2-4px measured), *scrollable*
+   * overflow — document.documentElement.scrollWidth exceeds innerWidth, and
+   * window.scrollTo(10000, 0) genuinely moves scrollX, even though the
+   * panel is invisible (opacity-0/pointer-events-none) while closed and the
+   * site's own `overflow-x: clip` guard on `html` does not suppress it (that
+   * guard is documented as unreliable for exactly this shape on the root
+   * element — see app/globals.css's "Mobile viewport-expansion guard").
+   *
+   * Rather than guess a container to clip at (this component is shared
+   * across every case study, headline-stats, and search-methodology), clamp
+   * the panel's own geometry directly: measure it against the real
+   * viewport and shift it back on-screen by exactly the overflow amount, in
+   * either direction. Zero shift — and zero visual change — on every
+   * trigger that already fits, which is the overwhelming majority.
+   * useLayoutEffect so this resolves before paint, not after a visible
+   * jump; re-measured on resize since the overflow amount is a function of
+   * viewport width, and again once web fonts finish loading — the trigger
+   * text reflows under a fallback font first, and a font-load-driven
+   * reflow after this effect's first measurement (heavier under CPU load,
+   * e.g. the full e2e suite's 800+ concurrent tests) can shift a trigger a
+   * few px further right than it measured at mount, which is exactly the
+   * intermittent failure this second listener closes. Same pattern
+   * site-nav.tsx already uses for its own post-hydration measurement.
+   */
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    function clamp(): void {
+      if (!panel) return;
+      // CI-only failure (2026-09-25): the CSS `max-w-[calc(100vw-3rem)]`
+      // class below is not a reliable substitute for this JS-measured
+      // clamp on every platform. `100vw` includes the browser's reserved
+      // scrollbar-gutter width, which window.innerWidth (the yardstick
+      // this effect, e2e/no-horizontal-overflow.spec.ts, and
+      // scripts/measure-overflow.mjs all already use) does not — the gutter
+      // is 0 on this repo's Windows dev machine (Chromium's headless
+      // scrollbar is an overlay there) but nonzero on the Ubuntu CI runner,
+      // so a trigger near the right edge produced a panel genuinely
+      // ~9px wider than the real viewport in CI while measuring clean
+      // locally on every run. Setting an explicit inline maxWidth from
+      // window.innerWidth makes the panel's own width agree with the same
+      // measurement this effect already uses for position, on every
+      // platform — the CSS class stays as the no-JS/SSR fallback only.
+      //
+      // -64 rather than the CSS class's original -48 (3rem): on
+      // /work/multimodal-fashion-recommender specifically, this component's
+      // own shift-correction below (measured against this same maxWidth)
+      // still left documentElement.scrollWidth exactly 1px over on the
+      // Ubuntu CI runner even with the -48 value, deterministically and
+      // reproducibly (identical on retry, not a timing flake) — the same
+      // font-metric-variance class as the nav fix elsewhere in this PR, on
+      // this citation's own text. An extra 16px of margin closes it with
+      // real headroom rather than chasing an exact second number.
+      panel.style.maxWidth = `${window.innerWidth - 64}px`;
+      panel.style.transform = "";
+      const rect = panel.getBoundingClientRect();
+      // Root-caused via e2e/no-horizontal-overflow.spec.ts's own offender
+      // report (gg-portfolio#263, CI run 36123444064): this exact panel
+      // (the mmfr NDCG@10/MRR citation) measured shift=0 here — this clamp
+      // concluded it already fit — yet the same test's later, separate
+      // measurement of document.documentElement.scrollWidth found it 0.5px
+      // over window.innerWidth. Confirmed empirically (see this PR's body)
+      // that this is not a missed re-clamp: `loadingdone` fires, and this
+      // effect does re-run, even when the only font in a load batch errors
+      // out — it fires with an empty `event.fontfaces` list rather than not
+      // firing at all. The 0.5px is a genuine gap between this measurement
+      // and the browser's later, fully-settled sub-pixel layout (rounding,
+      // or one more reflow after this callback returns) — targeting exactly
+      // zero overflow leaves no room for that gap. SAFETY_MARGIN_PX makes
+      // the target "at least this many px inside the viewport", not "at
+      // most exactly at its edge", which is the only difference that
+      // matters for a sub-pixel-scale drift like this one.
+      const SAFETY_MARGIN_PX = 2;
+      const overflowRight = rect.right - window.innerWidth + SAFETY_MARGIN_PX;
+      const overflowLeft = -rect.left + SAFETY_MARGIN_PX;
+      const shift = overflowRight > 0 ? -overflowRight : overflowLeft > 0 ? overflowLeft : 0;
+      if (shift !== 0) panel.style.transform = `translateX(${shift}px)`;
+    }
+    clamp();
+    window.addEventListener("resize", clamp);
+    // `document.fonts.ready` resolving does not mean every font this page
+    // will ever need has already loaded: a family the browser hasn't
+    // matched against any rendered text yet stays `unloaded` and is only
+    // requested once something on the page actually needs it, which can
+    // happen well after the first `ready` resolution (measured directly on
+    // /work/multimodal-fashion-recommender: several of `document.fonts`'
+    // entries are `unloaded` at the point `ready` first resolves). A single
+    // `.then(clamp)` — the previous version of this — only ever catches the
+    // first wave, and even re-polling clamp() for a fixed window after that
+    // first wave still raced under the e2e suite's real 4-worker CPU
+    // contention (measured: 2/20 failures at a 60-frame stabilization poll,
+    // same shape as the 1-2/20 this line originally fixed for). `loadingdone`
+    // fires on `document.fonts` every time a font finishes loading, for as
+    // long as this component is mounted — including any later wave — so
+    // re-clamping on that event, not just once after the first `ready`,
+    // covers a font that only gets requested after this component's first
+    // render. Verified: 0/20 across two independent runs after this change,
+    // where the frame-polling version still failed 2/20 each time — see this
+    // PR's body for both reproductions.
+    if (document.fonts?.ready) void document.fonts.ready.then(clamp);
+    document.fonts?.addEventListener("loadingdone", clamp);
+    return () => {
+      window.removeEventListener("resize", clamp);
+      document.fonts?.removeEventListener("loadingdone", clamp);
+    };
+  });
 
   if (!info) return <>{children}</>;
 
@@ -118,6 +234,7 @@ export function MetricProvenance({
         <span className="sr-only">, show source for {label}</span>
       </button>
       <span
+        ref={panelRef}
         id={panelId}
         role="group"
         aria-label={`Source for ${label}`}

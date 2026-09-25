@@ -47,9 +47,47 @@ body::after {
   isolation: isolate;
   display: flex;
   width: 100%;
-  /* clip rather than hidden, with a margin, so the field can scale past the
-   * edges on scroll while a focus ring on a button near the boundary is
-   * still allowed to paint. */
+  /*
+   * Overflow audit, 2026-09-24: this used to carry `overflow-clip-margin:
+   * 16px` directly, on the theory that `clip` (unlike `hidden`) doesn't
+   * create a scroll container so nothing outside the viewport could ever
+   * actually be reached. That held for *this* element specifically because
+   * .hero-stage's own box is full viewport width — a clip-margin extends
+   * the clip boundary outward from the box it's set on in every direction,
+   * so 16px of it landed 16px past the true right edge of the viewport,
+   * and that 16px is genuine, scrollable ink: document.documentElement
+   * .scrollWidth read 16px over innerWidth at both 375px and 768px, and
+   * window.scrollTo(10000, 0) measurably moved window.scrollX by that
+   * amount. `overflow: clip` on the *root* element behaves specially in a
+   * way ordinary elements don't (see e2e/mobile-viewport.spec.ts's header
+   * comment on the same root-element quirk for `html`'s own guard) — clip
+   * on this non-root element does not carry that immunity.
+   *
+   * Plain 0-margin clip here is now the hard backstop: nothing painted by
+   * anything inside .hero-stage can ever propagate past this box, full
+   * stop. The field's own generous, scale-safe margin lives one level in,
+   * on .hero-field-clip below, inset far enough that its own 16px outward
+   * allowance lands back at this exact boundary rather than past it — so
+   * the field still scales/moves through scroll exactly as before, and a
+   * focus ring on a control near this edge still has the same 16px of
+   * room to paint into, just measured from a boundary that can no longer
+   * leak past the viewport.
+   */
+  overflow: clip;
+}
+
+/*
+ * Inset from .hero-stage's own edge by the same amount as the margin below,
+ * so `overflow-clip-margin: 16px` here pushes back out to exactly
+ * .hero-stage's true boundary — never past it. .hero-stage's own 0-margin
+ * clip (above) is the enforced backstop regardless; this is what makes the
+ * field's paint reach that backstop smoothly instead of hard-clipping
+ * short of it.
+ */
+.hero-field-clip {
+  position: absolute;
+  inset: 16px;
+  z-index: -2;
   overflow: clip;
   overflow-clip-margin: 16px;
 }
@@ -57,7 +95,6 @@ body::after {
 .hero-field {
   position: absolute;
   inset: 0;
-  z-index: -2;
   pointer-events: none;
   /* Anchored to the top so the parallax pushes it down out of frame rather
    * than pulling it up through the copy. */
@@ -720,29 +757,62 @@ body::after {
 
 @media (max-width: 419px) {
   /*
-   * Five items (About/Experience/Projects/Research/Contact) plus the
-   * monogram no longer fit at 375px on the padding/gap this block used to
-   * carry alone: "Contact" laid out past the right edge of the viewport,
-   * present in the DOM but with its own centre off-screen — not a visual
-   * clip, a genuinely untappable control (caught by
-   * e2e/mobile-viewport.spec.ts's reachability check, which the Research
-   * nav-link addition broke). Pill and row spacing now shrink alongside
-   * the link padding so the fifth item stays on-screen without wrapping,
-   * which the sticky band's fixed height (see .site-nav's comment) rules
-   * out as an alternative.
+   * Six items (About/Experience/Projects/Open source/Research/Contact) plus
+   * the monogram no longer fit at 375px on the padding/gap the five-item
+   * version of this block carried (measured overflow: "Contact" laid out
+   * 51px past the right edge of the viewport, present in the DOM but with
+   * its own centre off-screen — not a visual clip, a genuinely untappable
+   * control, caught by e2e/mobile-viewport.spec.ts's reachability check).
+   * Shrinking the link/row gaps alone (the five-item fix's approach) is not
+   * enough room for a sixth item, so this also pulls from the band's own
+   * horizontal inset (`.site-nav`), the pill's asymmetric left padding
+   * (`.site-nav-pill`, normally sized to line up with the content column
+   * below it — that alignment is the first thing this breakpoint gives up),
+   * and the brand link's own right padding. Verified by measuring every
+   * link's `getBoundingClientRect()` at 375px after each change, not by
+   * eyeballing it. Wrapping is still ruled out by the sticky band's fixed
+   * height (see .site-nav's comment).
+   *
+   * CI-only overflow (2026-09-25, fix/horizontal-overflow-375-768): the
+   * six-item measurement above (Contact's right edge at 364px, an 11px
+   * margin) was taken on this repo's Windows dev machine. GitHub Actions'
+   * Ubuntu runner renders the same nav text a few px wider per link
+   * (different font-hinting/substitution under headless Linux Chrome), and
+   * six links compound that into documentElement.scrollWidth landing 9px
+   * over at 375px in real CI — an e2e/no-horizontal-overflow.spec.ts
+   * failure on every single route (the nav is shared site-wide), not
+   * reproducible on Windows regardless of how many times it's measured
+   * there. A first pass cut `.site-nav`'s own horizontal inset from 12px to
+   * 4px per side and closed 8 of the 9px (confirmed on the next real CI
+   * run: 376 vs. 375, not 384) — the remaining 1px plus a real margin this
+   * time comes from here and from `.site-nav-pill`'s own right padding
+   * below, both zeroed rather than re-guessing a second exact-compensation
+   * number: only the RIGHT-side inset actually bears on this overflow (the
+   * left side, near the brand mark, was never the constraint), which is
+   * also why the first pass's presumed 16px of headroom only bought 8px of
+   * real improvement — the left half of that reduction was doing nothing.
    */
   .site-nav-pill {
-    gap: var(--space-1-5);
-    padding-right: var(--space-1);
+    gap: var(--space-1);
+    padding-right: var(--space-0);
+    padding-left: var(--space-2);
+  }
+
+  .site-nav-brand {
+    padding-right: var(--space-0-5);
   }
 
   .site-nav-links {
-    gap: var(--space-0-5);
+    gap: var(--space-0);
   }
 
   .site-nav-link {
-    padding-inline: var(--space-0-5);
+    padding-inline: var(--space-0);
     font-size: var(--text-caption);
+  }
+
+  .site-nav {
+    padding-inline: var(--space-0);
   }
 }
 

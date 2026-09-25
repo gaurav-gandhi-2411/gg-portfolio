@@ -663,7 +663,7 @@
           "bold": true
         },
         {
-          "text": " — zero-cost gold-price PWA; 204-fold backtest; ships the naive baseline after it beat Chronos-Bolt-Tiny on MAE, 251.99 vs 293.10, Wilcoxon p=0.0001.",
+          "text": " — zero-cost gold-price PWA; 209-fold backtest; ships the naive flat-hold baseline after it beat Chronos-Bolt-Tiny on MAE, 249.24 vs 292.14, Wilcoxon p<0.001.",
           "bold": false
         }
       ],
@@ -673,7 +673,7 @@
         "experimentation"
       ],
       "priority": 3,
-      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#gold-rate-tracker:headline | corrected 2026-08-06 (site-vs-repo reconciliation, PR #48/#49): backtest grew 199 -> 204 folds (data/backtest.json, commit d41372a, 2026-07-26T10:56:23+05:30, backtest_run_at 2026-07-26T05:22:51Z, reachable from origin/master) -- MAE 251.99 vs. 293.10, Wilcoxon p=0.0001. Supersedes the 2026-08-05 correction (199-fold, p<0.001, commit a4d892c), which was itself already superseded on the live site by the time this entry was last synced.",
+      "verified_source": ".assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx:para33 (was collapsed into the 'Also:' line; split out to its own entry); content/metrics.json#gold-rate-tracker:headline | corrected 2026-09-23 (wave refresh-2026-09 Phase C, F3/F4, PR TBD): repinned to the product repo's own frozen SHA citation, commit ad4216086d10a63bb93ed3107c9ccee429cb5fa0 (data/backtest.json, backtest_run_at 2026-08-02T05:18:28Z) -- 209 folds, MAE 249.24 vs. 292.14 (~17% gap), Wilcoxon p=0.0 (rendered p<0.001). Supersedes the 2026-08-06 correction (204-fold, commit d41372a), which had already drifted from the product repo's own citation by the time this entry was last synced.",
       "surface": "live_demo",
       "artifact_url": "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
       "research_status": null,
@@ -681,7 +681,7 @@
       "role_relevance": 3,
       "technical_depth": 3,
       "metric_strength": 4,
-      "headline_metric": "naive beats model, p=0.0001"
+      "headline_metric": "naive beats model, p<0.001"
     },
     {
       "id": "proj:shelfsense",

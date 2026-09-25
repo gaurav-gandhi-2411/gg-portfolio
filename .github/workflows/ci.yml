@@ -132,6 +132,15 @@ jobs:
       - name: Resume project pool vs. products.ts coverage
         run: node scripts/check-resume-project-coverage.mjs
 
+      # resume-select.mjs's two-stage ranker + repo_only forced-collapse gate
+      # had no CI coverage at all — it broke silently on origin/main once
+      # eval-defect-bench (F12, 2026-09-23) was added with surface repo_only,
+      # a legitimate case its hardcoded forced-collapse fixture had never
+      # seen, and nothing here would have failed to reveal it. See
+      # scripts/lib/resume-select.smoketest.mjs's header for what it proves.
+      - name: Resume select/rank self-test
+        run: node scripts/lib/resume-select.smoketest.mjs
+
       # The homepage's three headline figures come from paid work, so they are
       # the only numbers on the site a reader cannot check by clicking
       # something. This ties each to the role-ladder bullet it was taken from
@@ -175,6 +184,22 @@ jobs:
       # after the fact.
       - name: Chat canary verdict self-test
         run: node scripts/chatbot/canary-verdict.smoketest.mjs
+
+      # chat-canary.yml's two alerting steps used `if: steps.x.outcome ==
+      # 'failure'` with no failure()/always()/cancelled() call, so GitHub
+      # Actions' implicit `success() &&` prefix made both unreachable on a
+      # real probe failure (PR #196, 2026-08-23) -- /api/chat returned 503 on
+      # every scheduled run since 2026-09-23 with no issue ever opened. This
+      # scans every workflow file for the same shape so it can't recur
+      # unnoticed the way PR #196 reintroduced it once already. See
+      # scripts/lib/workflow-failure-conditions.mjs's header for the full
+      # incident and scripts/check-workflow-failure-conditions.smoketest.mjs
+      # for the detector's own regression coverage.
+      - name: Workflow failure-condition self-test
+        run: node scripts/check-workflow-failure-conditions.smoketest.mjs
+
+      - name: No unreachable failure-alerting conditions in workflows
+        run: node scripts/check-workflow-failure-conditions.mjs
 
       # scripts/relay-dispatched-ci-status.sh's history is three silent
       # failures in a row (see its header) -- this runs the current version
@@ -220,8 +245,25 @@ jobs:
       - name: content-pipeline extractor.mjs forced-error self-test
         run: node scripts/content-pipeline/extractor.smoketest.mjs
 
+      # R3 (owner rule, 2026-09): "no silent failure — every script touching an external API must
+      # exit non-zero on any API error." Covers callLlm()'s 404, 401, 400 (with response body), an
+      # unreadable error body, an un-retried 429, network error, missing GROQ_API_KEY, and the
+      # malformed-response-stays-fail-soft case — all against a stubbed fetch, no live Groq calls
+      # in CI. The 429-retry-then-success/429-exhausted cases live in the stacked b2 PR, which adds
+      # that logic.
+      - name: content-pipeline llm.mjs forced-error self-test
+        run: node scripts/content-pipeline/llm.smoketest.mjs
+
       - name: Build
         run: npm run build
+
+      # 2026-09-23 incident: @huggingface/transformers 4.3.0 loads onnxruntime-node via a
+      # createRequire(import.meta.url)(...) dynamic require Next's file tracer can't see, so
+      # route.js.nft.json silently dropped onnxruntime-node's own dist/*.js and
+      # onnxruntime-common's CJS build — every /api/chat call 503'd with embeddings_unavailable
+      # for ~7 hours before this was caught. See scripts/check-chat-onnxruntime-trace.mjs's header.
+      - name: /api/chat onnxruntime trace completeness
+        run: node scripts/check-chat-onnxruntime-trace.mjs
 
   e2e:
     name: e2e

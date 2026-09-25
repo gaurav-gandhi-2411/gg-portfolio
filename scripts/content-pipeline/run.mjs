@@ -20,13 +20,19 @@ import { extract, wiredRepos, apiErrors } from "./extractor.mjs";
 import { curate } from "./curator.mjs";
 import { frame } from "./framer.mjs";
 import { verify } from "./verifier.mjs";
-import { callLlm } from "./llm.mjs";
+import { callLlm, apiErrors as llmApiErrors } from "./llm.mjs";
 import { formatApiErrorLines } from "../lib/github-api.mjs";
 
 const METRICS_PATH = "content/metrics.json";
 const PROVENANCE_PATH = "content/provenance.md";
 const SUMMARY_PATH = process.env.PIPELINE_SUMMARY_PATH || "content-pipeline-summary.md";
-const MAX_CANDIDATES_PER_RUN = Number(process.env.PIPELINE_MAX_CANDIDATES ?? 20);
+// `|| 20` (not `?? 20`) deliberately: metrics-refresh.yml's content_pipeline_max_candidates R1
+// live-proof input (default "") always sets this env var, even when empty — an empty string or a
+// literal "0" must fall through to the real default just like an unset var, so `Number("")` (which
+// is 0, not NaN) needs the falsy-OR fallback, not nullish-coalescing which only catches
+// null/undefined. Lets a RED/GREEN proof dispatch with max_candidates=1 to finish in minutes
+// instead of fighting real Groq 429s across up to 20 candidates.
+const MAX_CANDIDATES_PER_RUN = Number(process.env.PIPELINE_MAX_CANDIDATES) || 20;
 
 function caseStudySummaryFor(repo) {
   // Best-effort: find a case-study file whose source comment mentions this repo, so the curator
@@ -143,13 +149,16 @@ async function main() {
 
   console.log(`Content pipeline: ${proposals.length} proposal(s), ${notes.length} note(s).`);
 
-  // R3: extractor.mjs's api.github.com commit-SHA lookups fail soft per-repo (a candidate still
-  // gets curated with an undefined commit_sha rather than dropping the whole repo) so the run
-  // above always finishes and writes real output — but a GitHub REST API failure must never be
-  // silent. Checked here, after every repo has been processed, rather than inside extract()
-  // itself, so one failed repo can't cut the run short for the rest.
-  if (apiErrors.length > 0) {
-    for (const line of formatApiErrorLines(apiErrors)) console.error(line);
+  // R3: extractor.mjs's api.github.com commit-SHA lookups AND llm.mjs's Groq calls both fail soft
+  // per-candidate (a candidate either keeps an undefined commit_sha or a stage records `null` and
+  // gets skipped, rather than dropping the whole repo/run) so the loop above always finishes and
+  // writes real output — but neither a GitHub REST API failure nor a Groq API failure may stay
+  // silent. Checked here, after every repo has been processed, rather than inside extract()/
+  // callLlm() themselves, so one failed repo or one failed candidate can't cut the run short for
+  // the rest.
+  const allApiErrors = [...apiErrors, ...llmApiErrors];
+  if (allApiErrors.length > 0) {
+    for (const line of formatApiErrorLines(allApiErrors)) console.error(line);
     process.exitCode = 1;
   }
 }

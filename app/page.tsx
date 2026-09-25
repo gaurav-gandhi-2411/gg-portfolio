@@ -2,6 +2,7 @@ import { About } from "@/components/sections/about";
 import { Contact, Footer } from "@/components/sections/contact";
 import { Experience } from "@/components/sections/experience";
 import { Hero } from "@/components/sections/hero";
+import { OpenSource } from "@/components/sections/open-source";
 import { Research } from "@/components/sections/research";
 import { Work } from "@/components/sections/work";
 
@@ -17,6 +18,14 @@ import { Work } from "@/components/sections/work";
  * the end of anything. Research is part of the argument, not an appendix to
  * it, and Contact is the last thing on the page because that is what a last
  * thing is for.
+ *
+ * refresh-2026-09, owner decision D2: Open source slots in between Work and
+ * Research. It carries the same kind of evidence Research does (proof
+ * someone else's project accepted the change), but it is proof about the
+ * work already shown, not a separate body of writing — so it sits right
+ * after Work, still ahead of Research and still short of Contact for the
+ * same reason Research is: it is part of the case being made, not a coda
+ * after the reader has already been asked to get in touch.
  */
 export default function Home() {
   return (
@@ -25,6 +34,7 @@ export default function Home() {
       <About />
       <Experience />
       <Work />
+      <OpenSource />
       <Research />
       <Contact />
       <Footer />

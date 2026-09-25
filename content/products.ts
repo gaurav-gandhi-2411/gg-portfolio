@@ -165,13 +165,13 @@ export const products: Product[] = [
     categories: ["llm-agents"],
     techChips: ["FastAPI", "Groq", "Tiered routing"],
     metric: refreshableMetric("reviewiq:extraction-eval"),
-    figure: { kind: "bar", pct: 78.6, valueText: "78.6% (threshold 76%)" },
+    figure: { kind: "bar", pct: 78.6, valueText: "78.6%" },
   },
   {
     slug: "gold-rate-tracker",
     name: "Gold Rate Tracker",
     tagline:
-      "A PWA that tracks 22K gold rates in India and predicts tomorrow's, shipping the plain baseline because the model I trained never beat it.",
+      "A PWA that tracks India's 22K gold rate and ships an honest naive flat-hold range, not a forecast, because the ML model I trained never beat that baseline.",
     liveUrl: "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/gold-rate-tracker",
     categories: ["forecasting", "evals-research"],
