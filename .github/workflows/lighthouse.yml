@@ -34,6 +34,12 @@ concurrency:
   group: lighthouse-${{ github.ref }}
   cancel-in-progress: true
 
+# contents: read is only for actions/checkout to clone the repo. No step needs
+# a write scope: actions/upload-artifact authenticates with the runner's own
+# ACTIONS_RUNTIME_TOKEN, not the GITHUB_TOKEN this block governs.
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: lighthouse
