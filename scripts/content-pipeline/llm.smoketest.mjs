@@ -11,22 +11,52 @@
 // is populated in exactly the cases R3 requires, and left alone in the cases that stay fail-soft by
 // design (a malformed/empty response body).
 //
-// This is fix/content-pipeline-llm-fail-loud-b1's slice of coverage: everything except 429 (no
-// retry exists on this branch — every non-2xx, 429 included, fails loud on the first attempt). The
-// 429-then-success/429-exhausted retry cases are b2's (stacked on this branch), which add the
-// bounded-backoff carve-out and its own smoketest coverage for it.
+// This is the fix/content-pipeline-llm-fail-loud-b2 slice, stacked on b1: adds bounded
+// retry-with-backoff for 429 specifically, layered onto b1's fail-loud-on-everything-else
+// baseline (404/401/400/network/missing-key coverage lives in b1's own smoketest and is unchanged
+// here — this file only replaces b1's single "429 is never retried" case with 429-then-success,
+// 429-exhausted, and the two MAX_RETRY_AFTER_MS cap cases below (within the cap → retried; above
+// it → failed loud immediately, added after a live GREEN proof honoured a real 589s Retry-After
+// on a genuine Groq tokens-per-day exhaustion — see llm.mjs's header comment).
+//
+// `sleepFn` (llm.mjs's test-only seam) is stubbed to a no-op below so the 429-retry coverage
+// doesn't actually wait out a real exponential backoff.
 
 import assert from "node:assert";
 import { callLlm, apiErrors } from "./llm.mjs";
 
 const realFetch = globalThis.fetch;
 process.env.GROQ_API_KEY = "test-key-not-real";
+const noopSleep = async () => {};
 
 function jsonResponse(body) {
   return { ok: true, status: 200, headers: new Headers(), json: async () => body };
 }
 
-// --- 429 (no retry on this branch): immediately recorded + null returned -------------------
+const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true }) } }] };
+
+// --- 429 then success: retried, no apiErrors entry, real result returned -------------------
+{
+  apiErrors.length = 0;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    if (calls === 1) {
+      return { ok: false, status: 429, headers: new Headers(), text: async () => "" };
+    }
+    return jsonResponse(OK_BODY);
+  };
+  try {
+    const result = await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    assert.strictEqual(calls, 2, "must retry exactly once after a single 429");
+    assert.deepStrictEqual(result, { passes: true });
+    assert.strictEqual(apiErrors.length, 0, "a retry that succeeds must not be recorded as a failure");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// --- 429 exhausted: retried MAX_429_RETRIES times, then recorded + null returned -----------
 {
   apiErrors.length = 0;
   let calls = 0;
@@ -35,11 +65,73 @@ function jsonResponse(body) {
     return { ok: false, status: 429, headers: new Headers(), text: async () => "" };
   };
   try {
-    const result = await callLlm("curator", "sys", "user");
-    assert.strictEqual(result, null);
-    assert.strictEqual(calls, 1, "b1 has no retry logic — a 429 must never be retried");
-    assert.strictEqual(apiErrors.length, 1);
+    const result = await callLlm("verifier", "sys", "user", { sleepFn: noopSleep });
+    assert.strictEqual(result, null, "exhausted retries must fail soft for the caller (per-candidate skip)");
+    assert.strictEqual(apiErrors.length, 1, "exhausted retries must be recorded exactly once");
     assert.ok(apiErrors[0].message.includes("429"), "recorded message must name the HTTP status");
+    assert.ok(apiErrors[0].message.toLowerCase().includes("exhaust"), "must say retries were exhausted");
+    assert.ok(apiErrors[0].context.includes("verifier"), "recorded context must name the stage");
+    assert.ok(calls > 1, "must have actually retried before giving up");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// --- Retry-After within the cap: honoured as-is, sleeps and retries ------------------------
+{
+  apiErrors.length = 0;
+  let calls = 0;
+  const sleepCalls = [];
+  const spySleep = async (ms) => sleepCalls.push(ms);
+  globalThis.fetch = async () => {
+    calls++;
+    if (calls === 1) {
+      return {
+        ok: false,
+        status: 429,
+        headers: new Headers({ "retry-after": "30" }), // 30s, under the 60s MAX_RETRY_AFTER_MS cap
+        text: async () => "",
+      };
+    }
+    return jsonResponse(OK_BODY);
+  };
+  try {
+    const result = await callLlm("curator", "sys", "user", { sleepFn: spySleep });
+    assert.strictEqual(calls, 2, "a Retry-After within the cap must still retry");
+    assert.deepStrictEqual(result, { passes: true });
+    assert.strictEqual(apiErrors.length, 0, "a retry that succeeds must not be recorded as a failure");
+    assert.deepStrictEqual(sleepCalls, [30_000], "must sleep for exactly the Retry-After value, in ms");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// --- Retry-After above the cap: not worth waiting for (e.g. a daily-quota exhaustion) — no
+// sleep, immediately recorded as an API error naming the requested wait and the stage/model ------
+{
+  apiErrors.length = 0;
+  let calls = 0;
+  const sleepCalls = [];
+  const spySleep = async (ms) => sleepCalls.push(ms);
+  globalThis.fetch = async () => {
+    calls++;
+    return {
+      ok: false,
+      status: 429,
+      headers: new Headers({ "retry-after": "589" }), // 589s, over the 60s MAX_RETRY_AFTER_MS cap
+      text: async () => "",
+    };
+  };
+  try {
+    const result = await callLlm("verifier", "sys", "user", { sleepFn: spySleep });
+    assert.strictEqual(result, null);
+    assert.strictEqual(calls, 1, "a Retry-After over the cap must not be retried at all");
+    assert.deepStrictEqual(sleepCalls, [], "must never sleep when the cap is exceeded");
+    assert.strictEqual(apiErrors.length, 1);
+    assert.ok(apiErrors[0].message.includes("589"), "recorded message must include the requested wait");
+    assert.ok(apiErrors[0].message.includes("60"), "recorded message must include the cap");
+    assert.ok(apiErrors[0].context.includes("verifier"), "recorded context must name the stage");
+    assert.ok(apiErrors[0].context.includes("qwen"), "recorded context must name the model");
   } finally {
     globalThis.fetch = realFetch;
   }
