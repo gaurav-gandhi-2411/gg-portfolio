@@ -139,6 +139,10 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
   // and this pool only covered 13). role_relevance 3 / technical_depth 4 /
   // metric_strength 4 / demo_quality 2 lands it right after aetherart and
   // ahead of gold-rate-tracker in the ranked sequence.
+  //
+  // 2026-09-23: eval-defect-bench added (F12) with surface repo_only —
+  // repoUrl only in content/products.ts, no liveUrl/pypi field — so it never
+  // enters this ranked pool at all; see the forced-collapse assertion below.
   const EXPECTED_SEQUENCE = [
     "proj:triageiq",
     "proj:style-maitri",
@@ -160,15 +164,34 @@ const noOverrideVariant = { boost_tags: [], jd_keywords: [], drop_ids: [] };
       "if this is an intentional score edit, update EXPECTED_SEQUENCE after confirming the new order by hand; " +
       "if not, a score or weight change silently reordered the resume",
   );
-  assert.deepStrictEqual(
-    base.forcedCollapse.map((e) => e.id).sort(),
-    ["proj:expense-tracker", "proj:shelfsense"],
-    "the repo_only forced-collapse set has changed — this is gated on surface, not score, so it should only " +
-      "move if a project's liveUrl/pypi status changed in content/products.ts",
-  );
 
   // Amendment 4: every non-repo_only project must carry a verified artifact_url.
   const projectEntries = resumeData.entries.filter((e) => e.section === "project");
+
+  // The repo_only forced-collapse set is gated on `surface`, not score (spec-
+  // resume-variants.md: "repo_only projects never enter the ranked pool, they
+  // go straight to forced-collapse"). Asserted here as an invariant against
+  // resume-data.json's own surface field — not a hardcoded id list — because
+  // a hardcoded list goes stale every time a new repo_only project is
+  // legitimately added (eval-defect-bench, above) without any surface
+  // reclassification of an existing project. This still catches the
+  // regression a hardcoded list caught: any project whose surface disagrees
+  // with which output list (scoredProjects vs forcedCollapse) it landed in.
+  const expectedRepoOnlyIds = projectEntries
+    .filter((e) => e.surface === "repo_only")
+    .map((e) => e.id)
+    .sort();
+  assert.deepStrictEqual(
+    base.forcedCollapse.map((e) => e.id).sort(),
+    expectedRepoOnlyIds,
+    "the repo_only forced-collapse set must be exactly the projects whose surface field is repo_only — " +
+      "check content/products.ts (liveUrl/pypi) and resume-data.json's surface field if this fails",
+  );
+  assert.ok(
+    base.scoredProjects.every((c) => c.entry.surface !== "repo_only"),
+    "no repo_only project should ever appear in the ranked/scored pool — the hard surface gate must exclude it before either stage",
+  );
+
   assert.deepStrictEqual(
     lintArtifactUrl(projectEntries),
     [],
