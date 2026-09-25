@@ -132,6 +132,15 @@ jobs:
       - name: Resume project pool vs. products.ts coverage
         run: node scripts/check-resume-project-coverage.mjs
 
+      # resume-select.mjs's two-stage ranker + repo_only forced-collapse gate
+      # had no CI coverage at all — it broke silently on origin/main once
+      # eval-defect-bench (F12, 2026-09-23) was added with surface repo_only,
+      # a legitimate case its hardcoded forced-collapse fixture had never
+      # seen, and nothing here would have failed to reveal it. See
+      # scripts/lib/resume-select.smoketest.mjs's header for what it proves.
+      - name: Resume select/rank self-test
+        run: node scripts/lib/resume-select.smoketest.mjs
+
       # The homepage's three headline figures come from paid work, so they are
       # the only numbers on the site a reader cannot check by clicking
       # something. This ties each to the role-ladder bullet it was taken from
