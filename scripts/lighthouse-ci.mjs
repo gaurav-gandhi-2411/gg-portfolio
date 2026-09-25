@@ -96,6 +96,66 @@ function seoFailingAudits(lhr) {
   return failing;
 }
 
+/** Renders up to `limit` rows of a Lighthouse table/opportunity `details` object as short strings. */
+function tableRows(details, limit) {
+  if (!details) return [];
+  const headings = (details.headings ?? []).filter((h) => h.key);
+  const items = details.items ?? [];
+  return items.slice(0, limit).map((item) => headings.map((h) => `${h.label || h.key}=${fmtCellValue(item[h.key], h.valueType)}`).join(", "));
+}
+
+function fmtCellValue(v, valueType) {
+  if (v == null) return "n/a";
+  if (typeof v === "object") {
+    if (v.snippet) return v.snippet;
+    if (v.selector) return v.selector;
+    if (v.url) return v.url;
+    return JSON.stringify(v).slice(0, 80);
+  }
+  if (valueType === "bytes") return `${Math.round(v / 1024)}KB`;
+  if (valueType === "ms" || valueType === "timespanMs") return `${Math.round(v)}ms`;
+  return String(v);
+}
+
+/** A Lighthouse "list" detail (e.g. lcp-breakdown-insight) wraps a table and/or a node — pull both out. */
+function listParts(details) {
+  if (!details || details.type !== "list") return { table: null, node: null };
+  const table = (details.items ?? []).find((i) => i?.type === "table") ?? null;
+  const node = (details.items ?? []).find((i) => i?.type === "node") ?? null;
+  return { table, node };
+}
+
+/** `rows`, or a one-element placeholder when the audit produced nothing to show. */
+function withFallback(rows) {
+  return rows.length ? rows : ["none"];
+}
+
+/**
+ * Pulls the 8 diagnostics this workflow reports for a sub-90-median-performance URL, straight off
+ * one run's raw lhr. Audit ids below were verified against the pinned lighthouse@13.5.0 install
+ * (node_modules/lighthouse/core/audits/**), not guessed. Every lookup is optional-chained and
+ * falls back to an explicit "not available" rather than throwing, since a future Lighthouse bump
+ * could rename/replace any of these (lcp-breakdown-insight already declares
+ * `replacesAudits: ['largest-contentful-paint-element']`).
+ */
+function performanceDiagnostics(lhr) {
+  const audits = lhr.audits ?? {};
+  const { table: lcpTable, node: lcpNode } = listParts(audits["lcp-breakdown-insight"]?.details);
+  const unusedJs = audits["unused-javascript"]?.details;
+
+  return {
+    lcpElement: lcpNode ? lcpNode.snippet || lcpNode.selector || lcpNode.nodeLabel || "(unnamed node)" : "not available in this Lighthouse version",
+    lcpPhaseBreakdown: lcpTable ? tableRows(lcpTable, 10) : ["not available in this Lighthouse version"],
+    renderBlocking: withFallback(tableRows(audits["render-blocking-insight"]?.details, 5)),
+    unusedJavascriptBytes: unusedJs?.overallSavingsBytes ?? null,
+    unusedJavascriptRows: withFallback(tableRows(unusedJs, 5)),
+    bootupTimeTop5: withFallback(tableRows(audits["bootup-time"]?.details, 5)),
+    mainThreadWorkBreakdown: tableRows(audits["mainthread-work-breakdown"]?.details, 10),
+    fontDisplay: withFallback(tableRows(audits["font-display-insight"]?.details, 5)),
+    imageOpportunities: withFallback(tableRows(audits["image-delivery-insight"]?.details, 5)),
+  };
+}
+
 /** Runs `runs` Lighthouse passes per URL, round-robin (run 1 for every URL, then run 2, ...). */
 async function measureRoundRobin(urls, runs, chromePath, extraSettings, runOnce, StateError) {
   const resultsByUrl = new Map(urls.map((u) => [u, []]));
@@ -127,7 +187,7 @@ async function measureRoundRobin(urls, runs, chromePath, extraSettings, runOnce,
   return resultsByUrl;
 }
 
-/** Aggregates one URL's per-run results into the table rows, gates, robots-tag note and SEO audits. */
+/** Aggregates one URL's per-run results into the table rows, gates, robots-tag note and diagnostics. */
 function buildUrlReport(url, results, robots, closestRun) {
   const rows = results.map((r) => COLUMNS.map((c) => c.get(r)));
   const medianValues = COLUMNS.map((c, i) => median(rows.map((row) => row[i])));
@@ -159,6 +219,7 @@ function buildUrlReport(url, results, robots, closestRun) {
     seoMedian,
     failingSeoAudits: seoMedian < 100 ? seoFailingAudits(representative.lhr) : [],
     perfMedian,
+    diagnostics: perfMedian < PERF_GATE ? performanceDiagnostics(representative.lhr) : null,
   };
 }
 
@@ -188,6 +249,21 @@ function renderMarkdown(reportsByUrl, formFactor, runs) {
     if (r.seoMedian < 100) {
       lines.push(`**SEO raw score (median): ${r.seoMedian}/100** — failing audits:`);
       for (const a of r.failingSeoAudits) lines.push(`- \`${a.id}\` — ${a.title}`);
+      lines.push("");
+    }
+    if (r.diagnostics) {
+      const d = r.diagnostics;
+      lines.push(`**Performance diagnostics** (median Perf ${r.perfMedian} < ${PERF_GATE} gate, from the median run):`);
+      lines.push(`- LCP element: ${d.lcpElement}`);
+      lines.push(`- LCP phase breakdown: ${d.lcpPhaseBreakdown.join("; ")}`);
+      lines.push(`- Render-blocking resources: ${d.renderBlocking.join("; ")}`);
+      lines.push(
+        `- Unused JavaScript: ${d.unusedJavascriptBytes != null ? `${Math.round(d.unusedJavascriptBytes / 1024)}KB wasted` : "n/a"} — ${d.unusedJavascriptRows.join("; ")}`
+      );
+      lines.push(`- Bootup time (top 5 scripts): ${d.bootupTimeTop5.join("; ")}`);
+      lines.push(`- Main-thread work breakdown: ${d.mainThreadWorkBreakdown.join("; ")}`);
+      lines.push(`- Font-display: ${d.fontDisplay.join("; ")}`);
+      lines.push(`- Image delivery opportunities: ${d.imageOpportunities.join("; ")}`);
       lines.push("");
     }
   }
