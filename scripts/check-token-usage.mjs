@@ -159,7 +159,13 @@ const ALLOWLIST = new Set([
   // (--ease-out-soft is a different curve from either fallback) — left for
   // the visual-unification pass to resolve deliberately, not silently
   // swapped in a token-lint fix.
-  "app/hero.css:104:ease-out",
+  //
+  // Re-checked 2026-09-24 (fix/horizontal-overflow-375-768): the overflow
+  // fix's new .hero-field-clip block shifted this same, untouched line
+  // from 104 to 141 — confirmed via `git blame` (still dated 2026-08-18,
+  // unchanged content) that this is the identical pre-existing debt, not
+  // new code following the moved line silently.
+  "app/hero.css:141:ease-out",
 ]);
 
 function walk(dir, exts, out = []) {
