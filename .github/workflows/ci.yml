@@ -176,6 +176,22 @@ jobs:
       - name: Chat canary verdict self-test
         run: node scripts/chatbot/canary-verdict.smoketest.mjs
 
+      # chat-canary.yml's two alerting steps used `if: steps.x.outcome ==
+      # 'failure'` with no failure()/always()/cancelled() call, so GitHub
+      # Actions' implicit `success() &&` prefix made both unreachable on a
+      # real probe failure (PR #196, 2026-08-23) -- /api/chat returned 503 on
+      # every scheduled run since 2026-09-23 with no issue ever opened. This
+      # scans every workflow file for the same shape so it can't recur
+      # unnoticed the way PR #196 reintroduced it once already. See
+      # scripts/lib/workflow-failure-conditions.mjs's header for the full
+      # incident and scripts/check-workflow-failure-conditions.smoketest.mjs
+      # for the detector's own regression coverage.
+      - name: Workflow failure-condition self-test
+        run: node scripts/check-workflow-failure-conditions.smoketest.mjs
+
+      - name: No unreachable failure-alerting conditions in workflows
+        run: node scripts/check-workflow-failure-conditions.mjs
+
       # scripts/relay-dispatched-ci-status.sh's history is three silent
       # failures in a row (see its header) -- this runs the current version
       # against a stubbed `gh` covering the config-missing, malformed,
