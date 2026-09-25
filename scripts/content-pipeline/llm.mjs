@@ -6,9 +6,20 @@
 // already apply to their own judge/verifier stages, see content/case-studies). An OpenRouter
 // path was tried first for the verifier specifically to get a different PROVIDER, not just a
 // different family, but the available key (reused from another project) turned out to be dead
-// ("User not found") — rather than provision a new account for this, Groq's own Qwen model
-// (`qwen/qwen3.6-27b`, confirmed available via `GET /openai/v1/models`) gives the same
-// cross-family independence property this pipeline actually needs, with zero new credentials.
+// ("User not found") — rather than provision a new account for this, Groq's own Qwen model gives
+// the same cross-family independence property this pipeline actually needs, with zero new
+// credentials.
+//
+// fix/content-pipeline-model-discovery (2026-09): the original pin here, `qwen/qwen3.6-27b`, was
+// retired/renamed by Groq with no announcement this repo tracked and started 404ing on every
+// verifier call. Swapped to `qwen/qwen3.8-27b`, the only Qwen model Groq's live
+// `GET /openai/v1/models` actually lists as of this fix — confirmed via the list_models dispatch
+// input added in the prior commit (run
+// https://github.com/gaurav-gandhi-2411/gg-portfolio/actions/runs/36058065170 — full list:
+// allam-2-7b, canopylabs/orpheus-arabic-saudi, canopylabs/orpheus-v1-english,
+// meta-llama/llama-prompt-guard-2-22m, meta-llama/llama-prompt-guard-2-86m,
+// openai/gpt-oss-120b, openai/gpt-oss-20b, openai/gpt-oss-safeguard-20b, qwen/qwen3.8-27b,
+// whisper-large-v3, whisper-large-v3-turbo — all reported active=true, none flagged preview).
 //
 // Zero dependencies, same convention as scripts/refresh-metrics.mjs — global fetch only.
 
@@ -21,9 +32,10 @@ export const MODELS = {
   // unaffected by the swap.
   curator: { model: "openai/gpt-oss-120b" },
   framer: { model: "openai/gpt-oss-120b" },
-  // Different model family than curator/framer (Meta Llama) — Qwen (Alibaba), for genuine
-  // independence on the verifier's re-check, not a second vote from the same family.
-  verifier: { model: "qwen/qwen3.6-27b" },
+  // Different model family than curator/framer (OpenAI OSS) — Qwen (Alibaba), for genuine
+  // independence on the verifier's re-check, not a second vote from the same family. See this
+  // file's header comment for why this is qwen/qwen3.8-27b and not qwen/qwen3.6-27b.
+  verifier: { model: "qwen/qwen3.8-27b" },
 };
 
 /**

@@ -104,6 +104,18 @@ on:
           the "Weekly metric freshness check" issue.
         type: boolean
         default: true
+      list_models:
+        description: >-
+          workflow_dispatch-only model-discovery utility (fix/content-pipeline-groq-model,
+          2026-09): when true, runs the list-models job instead of any of the jobs above — calls
+          Groq's GET /openai/v1/models and prints model ids (+ owned_by/active when present),
+          sorted. Prints no headers and never the key. Exists so a retired/renamed pinned model
+          (see scripts/content-pipeline/llm.mjs's MODELS map) can be diagnosed against what Groq
+          actually serves right now, without guessing at replacement ids. Never runs on schedule
+          or push; defaults to false so a dispatch that doesn't set this explicitly runs the
+          normal jobs instead.
+        type: boolean
+        default: false
 
 concurrency:
   group: metrics-refresh
@@ -119,11 +131,30 @@ permissions:
     # scripts/relay-dispatched-ci-status.sh's header for why this is needed
 
 jobs:
+  list-models:
+    # Model-discovery utility — see list_models's own description above. Mutually exclusive with
+    # every job below: a dispatch with list_models=true does nothing else this run.
+    if: github.event_name == 'workflow_dispatch' && inputs.list_models
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: List Groq models
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: node scripts/content-pipeline/list-models.mjs
+
   refresh:
-    # `if`: schedule runs (no `inputs` context) always run this job; a manual
-    # workflow_dispatch runs it too unless the operator explicitly opts out
-    # via `run_refresh=false` (see the input's own description).
-    if: github.event_name != 'workflow_dispatch' || inputs.run_refresh
+    # `if`: schedule runs (no `inputs` context) always run this job; a manual workflow_dispatch
+    # runs it too unless the operator explicitly opts out via `run_refresh=false`, OR this
+    # dispatch is a list_models run (which runs only the list-models job above — see its own `if`).
+    if: github.event_name != 'workflow_dispatch' || (!inputs.list_models && inputs.run_refresh)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -284,8 +315,9 @@ jobs:
     #
     # `if`: schedule runs (no `inputs` context) always run this job; a manual
     # workflow_dispatch runs it too unless the operator explicitly opts out
-    # via `run_content_pipeline=false` (see the input's own description).
-    if: github.event_name != 'workflow_dispatch' || inputs.run_content_pipeline
+    # via `run_content_pipeline=false` (see the input's own description), or
+    # this dispatch is a list_models run (see that job's own `if`).
+    if: github.event_name != 'workflow_dispatch' || (!inputs.list_models && inputs.run_content_pipeline)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -309,6 +341,16 @@ jobs:
           # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
           GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
         run: node scripts/content-pipeline/run.mjs
+
+      # Diagnostic only — the run step above only console.logs a proposal count, never the actual
+      # drafts (those go to PIPELINE_SUMMARY_PATH, which otherwise never appears in this job's log
+      # unless a real, non-dry-run PR gets opened below). `if: always()` so a run that exited
+      # non-zero still shows whatever partial summary was written before the failure.
+      - name: Show pipeline summary
+        if: always()
+        run: cat "$PIPELINE_SUMMARY_PATH" 2>/dev/null || echo "(no summary file written this run)"
+        env:
+          PIPELINE_SUMMARY_PATH: /tmp/content-pipeline-summary.md
 
       # R3: the step above can now exit non-zero on a commit-SHA lookup failure, which would
       # otherwise skip this step — but that's independent of whether any proposal reached the PR
@@ -383,8 +425,9 @@ jobs:
     # content/metrics.json), its own PR for the same reason content-pipeline
     # gets one (see that job's header comment).
     #
-    # `if`: same opt-out pattern as the refresh job above, via `run_identity_drift`.
-    if: github.event_name != 'workflow_dispatch' || inputs.run_identity_drift
+    # `if`: same opt-out pattern as the refresh job above, via `run_identity_drift` (and the same
+    # list_models exclusion).
+    if: github.event_name != 'workflow_dispatch' || (!inputs.list_models && inputs.run_identity_drift)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -537,8 +580,9 @@ jobs:
     # triageiq's case study went stale despite a recent-looking commit —
     # see that field's own doc comment for the incident.
     #
-    # `if`: same opt-out pattern as the refresh job above, via `run_metric_freshness`.
-    if: github.event_name != 'workflow_dispatch' || inputs.run_metric_freshness
+    # `if`: same opt-out pattern as the refresh job above, via `run_metric_freshness` (and the
+    # same list_models exclusion).
+    if: github.event_name != 'workflow_dispatch' || (!inputs.list_models && inputs.run_metric_freshness)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
