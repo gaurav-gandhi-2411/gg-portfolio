@@ -17,6 +17,18 @@ on:
   schedule:
     - cron: "0 */6 * * *" # every 6 hours
   workflow_dispatch:
+    inputs:
+      target_url_override:
+        description: >-
+          Dispatch-only override for the probed URL. Exists to prove the
+          failure/issue-opening path on demand without depending on
+          production actually being down at the moment someone wants to
+          verify it — point it at any URL known to return non-200. Leave
+          empty for a normal probe of the real production endpoint. Has no
+          effect on the schedule trigger (there is no way to set an input on
+          a cron run).
+        required: false
+        default: ""
 
 concurrency:
   group: chat-canary
@@ -61,26 +73,73 @@ jobs:
       - name: Ask the production chatbot a real, answerable question
         id: probe
         if: steps.tooling.outcome == 'success'
+        env:
+          TARGET_URL_OVERRIDE: ${{ github.event.inputs.target_url_override }}
         run: |
+          TARGET_URL="${TARGET_URL_OVERRIDE:-https://gaurav-gandhi.vercel.app/api/chat}"
           RESPONSE_FILE=$(mktemp)
-          HTTP_STATUS=$(curl -sS -o "$RESPONSE_FILE" -w "%{http_code}" \
+          HEADERS_FILE=$(mktemp)
+          HTTP_STATUS=$(curl -sS -D "$HEADERS_FILE" -o "$RESPONSE_FILE" -w "%{http_code}" \
             --max-time 45 \
-            -X POST "https://gaurav-gandhi.vercel.app/api/chat" \
+            -X POST "$TARGET_URL" \
             -H "Content-Type: application/json" \
             -d '{"question":"What is Gaurav'"'"'s current role and background?"}' \
             || echo "000")
 
           echo "http_status=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
+
+          # Bounded to 2 KB: enough to see a real error body or a platform/
+          # firewall page without the issue growing unboundedly on a giant
+          # response. GITHUB_OUTPUT can't hold raw newlines/quotes safely —
+          # heredoc form.
           BODY=$(cat "$RESPONSE_FILE")
-          # GITHUB_OUTPUT can't hold raw newlines/quotes safely — heredoc form.
+          BODY_BOUNDED=$(printf '%s' "$BODY" | head -c 2048)
           {
             echo "body<<CANARY_BODY_EOF"
-            echo "$BODY"
+            echo "$BODY_BOUNDED"
             echo "CANARY_BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          # A hand-picked subset, never every header verbatim: these are the
+          # ones that actually help tell "the function ran and returned an
+          # error" apart from "a Vercel-level or firewall response never
+          # reached the function at all" (round three's own motivating gap —
+          # a bare "non-200 status: 503" line could not make that
+          # distinction). Never request/auth headers, and this is a
+          # response-header capture only — no request headers (including any
+          # secret) are ever written to a file or echoed.
+          SELECTED_HEADERS=$(grep -iE '^(x-vercel-id|x-vercel-mitigated|server|content-type):' "$HEADERS_FILE" || true)
+          {
+            echo "headers<<CANARY_HEADERS_EOF"
+            echo "$SELECTED_HEADERS"
+            echo "CANARY_HEADERS_EOF"
           } >> "$GITHUB_OUTPUT"
 
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "non-200 status: $HTTP_STATUS"
+            echo "response headers (selected):"
+            echo "$SELECTED_HEADERS"
+            echo "response body (first 2 KB):"
+            echo "$BODY_BOUNDED"
+
+            # Even a non-200 can carry a well-formed refusalReason —
+            # serverErrorAnswer() (500) and unavailableAnswer() (503) both
+            # return one (app/api/chat/route.ts) — so this runs the same
+            # verdict logic here too rather than only for a 200. A body that
+            # isn't JSON at all (a Vercel firewall/edge page, a raw platform
+            # error) fails this the same way check-canary-verdict.mjs already
+            # handles malformed JSON, which is itself useful signal: it means
+            # the request never reached the function.
+            set +e
+            VERDICT_OUTPUT=$(echo "$BODY" | node scripts/chatbot/check-canary-verdict.mjs 2>&1)
+            set -e
+            echo "$VERDICT_OUTPUT"
+            {
+              echo "verdict<<CANARY_VERDICT_EOF"
+              echo "$VERDICT_OUTPUT"
+              echo "CANARY_VERDICT_EOF"
+            } >> "$GITHUB_OUTPUT"
+
             exit 1
           fi
 
@@ -137,7 +196,16 @@ jobs:
       # never be conflated with (or silently satisfy/close) a real chat
       # outage tracked under the other title below.
       - name: Open/update the failure issue (canary tooling broken)
-        if: steps.tooling.outcome == 'failure'
+        # `failure()` is required, not decorative: GitHub Actions implicitly
+        # prepends `success() &&` to any `if:` that doesn't itself reference a
+        # status function, so without this the condition actually meant "the
+        # job hasn't failed yet AND tooling failed" -- never true once tooling
+        # actually fails. That silently skipped this step (and the one below)
+        # on every real probe failure since 2026-09-23 (PR #196 replaced a
+        # working `if: failure()` with this on 2026-08-23, three weeks
+        # earlier). See scripts/lib/workflow-failure-conditions.mjs and the
+        # CI check built from it for the guard against this recurring.
+        if: failure() && steps.tooling.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -175,12 +243,17 @@ jobs:
       # broken canary (the step above owns that case, under a different
       # title, so the two can never merge into one ambiguous thread).
       - name: Open/update the failure issue (chatbot not answering)
-        if: steps.tooling.outcome == 'success' && steps.probe.outcome == 'failure'
+        # `failure()` is required, not decorative — see the sibling step
+        # above's comment for the mechanism. This exact condition (missing
+        # failure()) is the reason /api/chat has returned 503 on every
+        # scheduled run since 2026-09-23 with no issue ever opened.
+        if: failure() && steps.tooling.outcome == 'success' && steps.probe.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           HTTP_STATUS: ${{ steps.probe.outputs.http_status }}
           RESPONSE_BODY: ${{ steps.probe.outputs.body }}
+          RESPONSE_HEADERS: ${{ steps.probe.outputs.headers }}
           VERDICT: ${{ steps.probe.outputs.verdict }}
         run: |
           TITLE="Chat canary failing: /api/chat is not answering"
@@ -191,13 +264,21 @@ jobs:
 
           - **When:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
           - **HTTP status:** \`${HTTP_STATUS:-000}\`
-          - **Verdict (refusalReason + runbook, empty for a non-200 status
-            since the check never ran):**
+          - **Verdict (refusalReason + runbook — computed for a non-200 too,
+            when the body parses as JSON; blank only if the request itself
+            never got a response body to check):**
 
           \`\`\`
           ${VERDICT:-(no verdict — the request itself failed before a response body existed to check; see HTTP status above)}
           \`\`\`
-          - **Response body:**
+          - **Response headers (selected — tells a real function error apart
+            from a platform/firewall response that never reached the
+            function):**
+
+          \`\`\`
+          ${RESPONSE_HEADERS:-(no headers captured)}
+          \`\`\`
+          - **Response body (first 2 KB):**
 
           \`\`\`
           ${RESPONSE_BODY:-(no response — request may have timed out or failed to connect)}
