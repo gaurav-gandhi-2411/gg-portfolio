@@ -772,10 +772,29 @@ body::after {
    * link's `getBoundingClientRect()` at 375px after each change, not by
    * eyeballing it. Wrapping is still ruled out by the sticky band's fixed
    * height (see .site-nav's comment).
+   *
+   * CI-only overflow (2026-09-25, fix/horizontal-overflow-375-768): the
+   * six-item measurement above (Contact's right edge at 364px, an 11px
+   * margin) was taken on this repo's Windows dev machine. GitHub Actions'
+   * Ubuntu runner renders the same nav text a few px wider per link
+   * (different font-hinting/substitution under headless Linux Chrome), and
+   * six links compound that into documentElement.scrollWidth landing 9px
+   * over at 375px in real CI — an e2e/no-horizontal-overflow.spec.ts
+   * failure on every single route (the nav is shared site-wide), not
+   * reproducible on Windows regardless of how many times it's measured
+   * there. A first pass cut `.site-nav`'s own horizontal inset from 12px to
+   * 4px per side and closed 8 of the 9px (confirmed on the next real CI
+   * run: 376 vs. 375, not 384) — the remaining 1px plus a real margin this
+   * time comes from here and from `.site-nav-pill`'s own right padding
+   * below, both zeroed rather than re-guessing a second exact-compensation
+   * number: only the RIGHT-side inset actually bears on this overflow (the
+   * left side, near the brand mark, was never the constraint), which is
+   * also why the first pass's presumed 16px of headroom only bought 8px of
+   * real improvement — the left half of that reduction was doing nothing.
    */
   .site-nav-pill {
     gap: var(--space-1);
-    padding-right: var(--space-0-5);
+    padding-right: var(--space-0);
     padding-left: var(--space-2);
   }
 
@@ -793,7 +812,7 @@ body::after {
   }
 
   .site-nav {
-    padding-inline: var(--space-3);
+    padding-inline: var(--space-0);
   }
 }
 
