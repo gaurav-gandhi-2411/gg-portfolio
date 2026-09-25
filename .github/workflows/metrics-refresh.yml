@@ -116,6 +116,26 @@ on:
           normal jobs instead.
         type: boolean
         default: false
+      verifier_model_override:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob (fix/content-pipeline-llm-fail-loud-b1,
+          2026-09): when non-empty, overrides scripts/content-pipeline/llm.mjs's verifier stage
+          model id for this run only — e.g. a deliberately bad id to force a live 404 and prove the
+          R3 exit-non-zero path, without hand-editing MODELS. Empty string (the default) keeps the
+          pinned model; never set on the scheduled run.
+        type: string
+        default: ""
+      content_pipeline_max_candidates:
+        description: >-
+          workflow_dispatch-only R1 live-proof knob (fix/content-pipeline-llm-fail-loud-b1,
+          2026-09): overrides PIPELINE_MAX_CANDIDATES (run.mjs's per-run candidate budget, normally
+          20) for this run only. A live RED/GREEN proof against a real Groq model can otherwise
+          take 5-45+ minutes fighting real 429 rate limits across up to 20 candidates before
+          reaching the assertion that actually matters — set to "1" for a proof dispatch so it
+          finishes in minutes. Empty string (the default) keeps run.mjs's own default; never set on
+          the scheduled run.
+        type: string
+        default: ""
 
 concurrency:
   group: metrics-refresh
@@ -340,6 +360,13 @@ jobs:
           # network host needed and no real credential ever touched. False/unset (every
           # scheduled run, and any dispatch that doesn't set it) keeps the real github.token.
           GITHUB_TOKEN: ${{ inputs.content_pipeline_force_invalid_token && 'invalid-token-for-r1-forced-error-proof' || github.token }}
+          # R1 live-proof knob — see verifier_model_override's own description above. Empty/unset
+          # (every scheduled run, and any dispatch that doesn't set it) keeps llm.mjs's pinned
+          # verifier model, since llm.mjs only honours this when the env var is non-empty.
+          VERIFIER_MODEL_OVERRIDE: ${{ inputs.verifier_model_override }}
+          # R1 live-proof knob — see content_pipeline_max_candidates's own description above.
+          # run.mjs's `|| 20` fallback (not `??`) treats this empty string the same as unset.
+          PIPELINE_MAX_CANDIDATES: ${{ inputs.content_pipeline_max_candidates }}
         run: node scripts/content-pipeline/run.mjs
 
       # Diagnostic only — the run step above only console.logs a proposal count, never the actual
