@@ -87,7 +87,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, writ
 import { hostname, platform, release, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORTS_DIR = process.env.REPORTS_DIR_OVERRIDE ?? join(ROOT, "reports");
@@ -432,7 +432,7 @@ function dirSize(dir) {
   return total;
 }
 
-async function runOnce(url, chromePath, runIndex) {
+async function runOnce(url, chromePath, runIndex, extraSettings = {}) {
   // chrome-launcher's own kill() deletes ITS OWN auto-created temp profile
   // dir TWICE — once synchronously inside kill() itself, and again later
   // from a `chromeProcess.on('close', ...)` listener it registers
@@ -477,7 +477,10 @@ async function runOnce(url, chromePath, runIndex) {
     result = await lighthouse(
       url,
       { port: chrome.port, onlyCategories: CATEGORIES, output: "json", blockedUrlPatterns: BLOCKED_URL_PATTERNS },
-      { extends: "lighthouse:default", settings: { throttlingMethod: THROTTLING_METHOD } }
+      // extraSettings lets a caller override e.g. formFactor/screenEmulation
+      // (the CI dispatch workflow's desktop form-factor option) without this
+      // function needing to know about every possible override itself.
+      { extends: "lighthouse:default", settings: { throttlingMethod: THROTTLING_METHOD, ...extraSettings } }
     );
   } finally {
     await chrome.kill();
@@ -497,6 +500,14 @@ async function runOnce(url, chromePath, runIndex) {
   }
   if (!result?.lhr) throw new Error("lighthouse() returned no lhr");
   const { lhr } = result;
+  // A runtimeError doesn't make lighthouse() reject — it resolves with a
+  // degenerate lhr (e.g. DNS_FAILURE, NO_FCP) that would otherwise be
+  // scored and reported as if the page had loaded. Failing closed here is
+  // what lets a genuinely unreachable URL abort the run instead of
+  // silently producing a misleading low score (rule 98a).
+  if (lhr.runtimeError) {
+    throw new Error(`lighthouse runtimeError: ${lhr.runtimeError.code} — ${lhr.runtimeError.message}`);
+  }
   const categories = Object.fromEntries(CATEGORIES.map((c) => [c, Math.round((lhr.categories[c]?.score ?? 0) * 100)]));
   const audits = Object.fromEntries(
     Object.entries(AUDITS).map(([auditId, key]) => [key, lhr.audits[auditId]?.numericValue ?? null])
@@ -504,6 +515,18 @@ async function runOnce(url, chromePath, runIndex) {
   const rawPath = join(RAW_OUTPUT_DIR, `run-${runIndex}.json`);
   writeFileSync(rawPath, JSON.stringify(lhr, null, 2));
   return { run: runIndex, categories, audits, lighthouseVersion: lhr.lighthouseVersion, chromeVersion: extractChromeVersion(lhr), rawPath, lhr };
+}
+
+/**
+ * The real run in `results` whose `valueFn(run)` sits closest to `target`
+ * (ties broken by earliest run) — used to pick a single representative run
+ * (e.g. by performance score) whose full raw report is worth keeping,
+ * rather than an aggregate that isn't any one actual run.
+ */
+function closestRun(results, valueFn, target) {
+  return results.reduce((best, r) =>
+    Math.abs(valueFn(r) - target) < Math.abs(valueFn(best) - target) ? r : best
+  );
 }
 
 async function measureRoute(route, chromePath) {
@@ -551,9 +574,7 @@ async function measureRoute(route, chromePath) {
   // performance score sits closest to the aggregate's own mean — ties
   // broken by earliest run index.
   const perfMean = aggregate.performance.mean;
-  const median = results.reduce((best, r) =>
-    Math.abs(r.categories.performance - perfMean) < Math.abs(best.categories.performance - perfMean) ? r : best
-  );
+  const median = closestRun(results, (r) => r.categories.performance, perfMean);
 
   const today = new Date().toISOString().slice(0, 10);
   const branch = gitBranch();
@@ -664,4 +685,15 @@ async function main() {
   console.log(`\nOK — ${outcomes.length} route(s) measured and written to ${REPORTS_DIR}.`);
 }
 
-await main();
+// Only auto-run when this file is executed directly (`node scripts/lighthouse.mjs`),
+// not when scripts/lighthouse-ci.mjs imports it for its Chrome-lifecycle helpers
+// (resolveChromePath/runOnce/sweepStaleProfiles/StateError) — those carry the
+// hard-won cleanup and fail-closed behavior this file documents at length, and
+// re-implementing them there would be exactly the duplication rule 58b warns
+// against. An import must never also trigger this file's own default-route CLI run.
+const isMainModule = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMainModule) {
+  await main();
+}
+
+export { StateError, CATEGORIES, AUDITS, resolveChromePath, runOnce, sweepStaleProfiles, closestRun, mean, stddev, round2 };
