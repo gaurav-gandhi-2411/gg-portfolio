@@ -138,8 +138,20 @@ on:
         default: ""
 
 concurrency:
-  group: metrics-refresh
-  cancel-in-progress: true
+  # Was a single unscoped group (`metrics-refresh`) shared across every ref — any
+  # workflow_dispatch on any branch cancelled an in-flight run on any OTHER branch too, observed
+  # live this wave (runs 36071653228, 36077118014 cancelled/interrupted by unrelated dispatches).
+  # Scoping the group by ref restores per-branch isolation while keeping the original "one run at
+  # a time per ref" guarantee scheduled main runs need (this job commits and opens PRs; two
+  # concurrent main runs racing on the same branch/PR would be a real problem).
+  group: metrics-refresh-${{ github.ref }}
+  # cancel-in-progress stays true for everything except main: a feature-branch dispatch that's
+  # iterating on this workflow should still have a newer run replace a stale one on the SAME
+  # branch, same as before. But main only ever runs this on a schedule (or an explicit dispatch
+  # against main), and a newer main run cancelling an older one mid-`git commit`/`gh pr create`
+  # could leave chore/metrics-refresh (or the sibling content-pipeline/identity-drift branches)
+  # half-updated with no error. Main runs queue instead of cancelling.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: write
