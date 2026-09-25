@@ -87,16 +87,32 @@ for (const width of WIDTHS) {
         // it names the symptom, never the element causing it. When either
         // measurement is already over budget, name the actual offenders
         // before asserting, so a CI failure log is diagnosable on its own,
-        // without a trace download: every element whose right edge sits
-        // past innerWidth, sorted worst-first, plus the font-load status
-        // this spec already waits on, since a still-loading/failed font can
-        // change measured text width between runs on the same markup.
+        // without a trace download.
+        //
+        // Two passes, because a single element scan turned out to be a
+        // control with a narrower surface than its own report implied
+        // (CLAUDE.md's "write the assertion before you read the
+        // implementation" / rule 85a's shape): on the first real CI
+        // reproduction of this exact failure this spec's own
+        // getBoundingClientRect() element scan came back empty — every
+        // element's box fit within innerWidth, yet scrollWidth was still
+        // 1px over. Browsers count a run of rendered glyphs ("ink") that
+        // overflows its own inline box into scrollWidth even when no
+        // element's *box* extends past innerWidth — a fallback-font glyph
+        // rendering slightly wider than the primary font it stands in for
+        // is exactly this shape, and is consistent with the erroring
+        // "Fallback" font-face entries seen in that same failure's
+        // document.fonts dump below. Range.getClientRects() on each text
+        // node's own contents measures the actual rendered glyphs, not the
+        // containing element's laid-out box, and is the only thing here
+        // that can see that class of overflow at all.
         const offenderReport =
           measured.documentScrollWidth > measured.innerWidth ||
           measured.bodyScrollWidth > measured.innerWidth
             ? await page.evaluate(() => {
                 const innerWidth = window.innerWidth;
-                const overflowing = [...document.querySelectorAll<HTMLElement>("*")]
+
+                const overflowingElements = [...document.querySelectorAll<HTMLElement>("*")]
                   .map((el) => ({ el, rect: el.getBoundingClientRect() }))
                   .filter(({ rect }) => rect.right > innerWidth)
                   .sort((a, b) => b.rect.right - a.rect.right)
@@ -118,15 +134,46 @@ for (const width of WIDTHS) {
                       transform: style.transform,
                     };
                   });
+
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                  acceptNode: (node) =>
+                    node.textContent && node.textContent.trim().length > 0
+                      ? NodeFilter.FILTER_ACCEPT
+                      : NodeFilter.FILTER_REJECT,
+                });
+                const overflowingText: {
+                  right: number;
+                  text: string;
+                  parentTag: string;
+                  parentClass: string;
+                }[] = [];
+                for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+                  const range = document.createRange();
+                  range.selectNodeContents(node);
+                  for (const rect of range.getClientRects()) {
+                    if (rect.right > innerWidth && rect.width > 0) {
+                      const parent = node.parentElement;
+                      overflowingText.push({
+                        right: Math.round(rect.right * 100) / 100,
+                        text: (node.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40),
+                        parentTag: parent ? parent.tagName.toLowerCase() : "(no parent)",
+                        parentClass:
+                          parent && typeof parent.className === "string" ? parent.className : "",
+                      });
+                    }
+                  }
+                }
+                overflowingText.sort((a, b) => b.right - a.right);
+
                 const fonts = [...document.fonts].map((f) => `${f.family}:${f.status}`);
-                return { overflowing, fonts };
+                return { overflowingElements, overflowingText: overflowingText.slice(0, 5), fonts };
               })
             : null;
 
         const offenderMessage = offenderReport
           ? "\nTop offending elements (right edge > innerWidth, worst first):\n" +
-            (offenderReport.overflowing.length > 0
-              ? offenderReport.overflowing
+            (offenderReport.overflowingElements.length > 0
+              ? offenderReport.overflowingElements
                   .map(
                     (o, i) =>
                       `  ${i + 1}. <${o.tag}${o.id ? `#${o.id}` : ""}${
@@ -134,8 +181,19 @@ for (const width of WIDTHS) {
                       }> right=${o.right} position=${o.position} transform=${o.transform} text="${o.text}"`
                   )
                   .join("\n")
-              : "  (none — overflow may come from a pseudo-element, scrollbar, or a zero-size " +
-                "container's own box, none of which getBoundingClientRect() on real elements sees)") +
+              : "  (none — no element's own box overflows; see rendered text below)") +
+            "\nTop overflowing rendered text runs (ink, via Range.getClientRects — catches " +
+            "glyph overflow no element box reflects):\n" +
+            (offenderReport.overflowingText.length > 0
+              ? offenderReport.overflowingText
+                  .map(
+                    (o, i) =>
+                      `  ${i + 1}. right=${o.right} in <${o.parentTag}${
+                        o.parentClass ? ` class="${o.parentClass}"` : ""
+                      }> text="${o.text}"`
+                  )
+                  .join("\n")
+              : "  (none)") +
             `\ndocument.fonts: ${offenderReport.fonts.join(", ") || "(none reported)"}`
           : "";
 
