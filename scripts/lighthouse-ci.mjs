@@ -1,18 +1,13 @@
 // Dispatch-only Lighthouse runner for .github/workflows/lighthouse.yml.
 //
-// A separate file rather than new flags on scripts/lighthouse.mjs: that
-// script's contract is one BASE_URL with same-origin routes measured one
-// route at a time, and a committed reports/*.summary.json artifact — right
-// for its own local baseline job, wrong shape for several unrelated origins
-// measured round-robin into a $GITHUB_STEP_SUMMARY table. What IS reused
-// (not duplicated, rule 58b) is lighthouse.mjs's exports: the Chrome
-// launch/kill lifecycle and profile-dir cleanup (runOnce), Chrome-binary
-// resolution (resolveChromePath), the stale-tmpdir sweep, and the
-// fail-closed run error (StateError) — the hard-won part of that file.
+// Separate from scripts/lighthouse.mjs (one BASE_URL, same-origin routes,
+// a committed reports/*.summary.json) because this job's shape is several
+// unrelated origins, round-robin, into $GITHUB_STEP_SUMMARY. Reuses (not
+// duplicates, rule 58b) that file's Chrome launch/kill lifecycle, Chrome
+// resolution, stale-tmpdir sweep and fail-closed run error via its exports.
 //
-// Fails closed (rule 98a): a runtimeError (checked inside runOnce) or a run
-// that fails twice aborts the ENTIRE dispatch, never a partial table for
-// whichever URLs happened to work. Malformed inputs are a hard exit 1.
+// Fails closed (rule 98a): a runtimeError or a twice-failed run aborts the
+// ENTIRE dispatch, never a partial table. Malformed inputs are exit 1.
 
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -104,66 +99,6 @@ function seoFailingAudits(lhr) {
   return failing;
 }
 
-/** Renders up to `limit` rows of a Lighthouse table/opportunity `details` object as short strings. */
-function tableRows(details, limit) {
-  if (!details) return [];
-  const headings = (details.headings ?? []).filter((h) => h.key);
-  const items = details.items ?? [];
-  return items.slice(0, limit).map((item) => headings.map((h) => `${h.label || h.key}=${fmtCellValue(item[h.key], h.valueType)}`).join(", "));
-}
-
-function fmtCellValue(v, valueType) {
-  if (v == null) return "n/a";
-  if (typeof v === "object") {
-    if (v.snippet) return v.snippet;
-    if (v.selector) return v.selector;
-    if (v.url) return v.url;
-    return JSON.stringify(v).slice(0, 80);
-  }
-  if (valueType === "bytes") return `${Math.round(v / 1024)}KB`;
-  if (valueType === "ms" || valueType === "timespanMs") return `${Math.round(v)}ms`;
-  return String(v);
-}
-
-/** A Lighthouse "list" detail (e.g. lcp-breakdown-insight) wraps a table and/or a node — pull both out. */
-function listParts(details) {
-  if (!details || details.type !== "list") return { table: null, node: null };
-  const table = (details.items ?? []).find((i) => i?.type === "table") ?? null;
-  const node = (details.items ?? []).find((i) => i?.type === "node") ?? null;
-  return { table, node };
-}
-
-/** `rows`, or a one-element placeholder when the audit produced nothing to show. */
-function withFallback(rows) {
-  return rows.length ? rows : ["none"];
-}
-
-/**
- * Pulls the 8 diagnostics this workflow reports for a sub-90-median-performance URL, straight off
- * one run's raw lhr. Audit ids below were verified against the pinned lighthouse@13.5.0 install
- * (node_modules/lighthouse/core/audits/**), not guessed. Every lookup is optional-chained and
- * falls back to an explicit "not available" rather than throwing, since a future Lighthouse bump
- * could rename/replace any of these (lcp-breakdown-insight already declares
- * `replacesAudits: ['largest-contentful-paint-element']`).
- */
-function performanceDiagnostics(lhr) {
-  const audits = lhr.audits ?? {};
-  const { table: lcpTable, node: lcpNode } = listParts(audits["lcp-breakdown-insight"]?.details);
-  const unusedJs = audits["unused-javascript"]?.details;
-
-  return {
-    lcpElement: lcpNode ? lcpNode.snippet || lcpNode.selector || lcpNode.nodeLabel || "(unnamed node)" : "not available in this Lighthouse version",
-    lcpPhaseBreakdown: lcpTable ? tableRows(lcpTable, 10) : ["not available in this Lighthouse version"],
-    renderBlocking: withFallback(tableRows(audits["render-blocking-insight"]?.details, 5)),
-    unusedJavascriptBytes: unusedJs?.overallSavingsBytes ?? null,
-    unusedJavascriptRows: withFallback(tableRows(unusedJs, 5)),
-    bootupTimeTop5: withFallback(tableRows(audits["bootup-time"]?.details, 5)),
-    mainThreadWorkBreakdown: tableRows(audits["mainthread-work-breakdown"]?.details, 10),
-    fontDisplay: withFallback(tableRows(audits["font-display-insight"]?.details, 5)),
-    imageOpportunities: withFallback(tableRows(audits["image-delivery-insight"]?.details, 5)),
-  };
-}
-
 /** Runs `runs` Lighthouse passes per URL, round-robin (run 1 for every URL, then run 2, ...). */
 async function measureRoundRobin(urls, runs, chromePath, extraSettings, runOnce, StateError) {
   const resultsByUrl = new Map(urls.map((u) => [u, []]));
@@ -195,7 +130,7 @@ async function measureRoundRobin(urls, runs, chromePath, extraSettings, runOnce,
   return resultsByUrl;
 }
 
-/** Aggregates one URL's per-run results into the table rows, gates, robots-tag note and diagnostics. */
+/** Aggregates one URL's per-run results into the table rows, gates, robots-tag note and SEO audits. */
 function buildUrlReport(url, results, robots, closestRun) {
   const rows = results.map((r) => COLUMNS.map((c) => c.get(r)));
   const medianValues = COLUMNS.map((c, i) => median(rows.map((row) => row[i])));
@@ -203,9 +138,7 @@ function buildUrlReport(url, results, robots, closestRun) {
   const maxValues = COLUMNS.map((_, i) => Math.max(...rows.map((row) => row[i])));
 
   const [perfMedian, a11yMedian, bpMedian, seoMedian, clsMedian] = medianValues;
-  // The single run whose raw lhr backs every "from the median run" diagnostic below — the run
-  // whose own performance score sits closest to the computed median (real run, not an interpolated
-  // value with no lhr of its own to point at).
+  // Real run closest to the computed performance median — backs seoFailingAudits below.
   const representative = closestRun(results, (r) => r.categories.performance, perfMedian);
 
   const gates = [
@@ -229,7 +162,6 @@ function buildUrlReport(url, results, robots, closestRun) {
     seoMedian,
     failingSeoAudits: seoMedian < 100 ? seoFailingAudits(representative.lhr) : [],
     perfMedian,
-    diagnostics: perfMedian < PERF_GATE ? performanceDiagnostics(representative.lhr) : null,
   };
 }
 
@@ -259,21 +191,6 @@ function renderMarkdown(reportsByUrl, formFactor, runs) {
     if (r.seoMedian < 100) {
       lines.push(`**SEO raw score (median): ${r.seoMedian}/100** — failing audits:`);
       for (const a of r.failingSeoAudits) lines.push(`- \`${a.id}\` — ${a.title}`);
-      lines.push("");
-    }
-    if (r.diagnostics) {
-      const d = r.diagnostics;
-      lines.push(`**Performance diagnostics** (median Perf ${r.perfMedian} < ${PERF_GATE} gate, from the median run):`);
-      lines.push(`- LCP element: ${d.lcpElement}`);
-      lines.push(`- LCP phase breakdown: ${d.lcpPhaseBreakdown.join("; ")}`);
-      lines.push(`- Render-blocking resources: ${d.renderBlocking.join("; ")}`);
-      lines.push(
-        `- Unused JavaScript: ${d.unusedJavascriptBytes != null ? `${Math.round(d.unusedJavascriptBytes / 1024)}KB wasted` : "n/a"} — ${d.unusedJavascriptRows.join("; ")}`
-      );
-      lines.push(`- Bootup time (top 5 scripts): ${d.bootupTimeTop5.join("; ")}`);
-      lines.push(`- Main-thread work breakdown: ${d.mainThreadWorkBreakdown.join("; ")}`);
-      lines.push(`- Font-display: ${d.fontDisplay.join("; ")}`);
-      lines.push(`- Image delivery opportunities: ${d.imageOpportunities.join("; ")}`);
       lines.push("");
     }
   }
@@ -308,10 +225,8 @@ async function main() {
     return;
   }
 
-  // lighthouse.mjs reads OUTPUT_DIR_OVERRIDE at module-load time to set its raw-output directory
-  // (the one runOnce() actually writes each run's JSON into) — must be set before the dynamic
-  // import below, and the directory must already exist since that module never creates it itself
-  // for a caller-supplied override (see its own RAW_OUTPUT_DIR_IS_OURS comment).
+  // lighthouse.mjs reads OUTPUT_DIR_OVERRIDE at module-load time for its raw-output dir, and
+  // never creates it for a caller-supplied override — must exist before the import below.
   mkdirSync(outputDir, { recursive: true });
   process.env.OUTPUT_DIR_OVERRIDE = outputDir;
 
@@ -332,9 +247,7 @@ async function main() {
   }
   console.log(`Chrome: ${chromePath}`);
 
-  // Desktop settings come straight from Lighthouse's own shipped preset (the same one
-  // `lighthouse --preset=desktop` uses) rather than hand-typed formFactor/screenEmulation
-  // values, so this never invents numbers Lighthouse doesn't already vouch for.
+  // Desktop settings come from Lighthouse's own shipped preset, never hand-typed values.
   const extraSettings = formFactor === "desktop" ? (await import("lighthouse/core/config/desktop-config.js")).default.settings : {};
 
   let resultsByUrl;

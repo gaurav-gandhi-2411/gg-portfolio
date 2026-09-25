@@ -1,14 +1,11 @@
 name: Lighthouse (dispatch)
 
-# Dispatch-only Lighthouse measurement against arbitrary URLs (production, a
-# preview deploy, or a third-party comparison) on a clean GitHub-hosted
-# runner — local Lighthouse on a dev machine is contaminated by whatever else
-# is using the CPU at measurement time (see scripts/lighthouse-ci.mjs).
+# Dispatch-only Lighthouse measurement against arbitrary URLs on a clean
+# GitHub-hosted runner — local Lighthouse is contaminated by whatever else is
+# using the CPU at measurement time (see scripts/lighthouse-ci.mjs).
 #
-# A measurement tool, not a merge gate: workflow_dispatch only, never
-# push/pull_request/schedule, and the job fails only on a genuine Lighthouse
-# error (a URL that didn't load) — never on a score below the gate
-# thresholds the summary itself reports.
+# A measurement tool, not a merge gate: workflow_dispatch only, and the job
+# fails only on a genuine Lighthouse error, never a score below its gates.
 
 on:
   workflow_dispatch:
@@ -32,10 +29,8 @@ on:
           - desktop
 
 concurrency:
-  # Scoped by ref, same reasoning as live-link-latency.yml's own group: an
-  # unscoped name would let a dispatch on one branch cancel an in-flight
-  # dispatch on another. This job has no git-commit sequence to leave
-  # half-done, so cancel-in-progress stays safe per-ref.
+  # Scoped by ref (same reasoning as live-link-latency.yml) so a dispatch on
+  # one branch can't cancel an in-flight one on another.
   group: lighthouse-${{ github.ref }}
   cancel-in-progress: true
 
@@ -57,8 +52,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Inputs flow through `env:`, not string-interpolated into the shell
-      # command below, so a dispatch input can never be read as shell syntax.
+      # Inputs flow through env:, never string-interpolated into the shell command.
       - name: Run Lighthouse
         env:
           LH_URLS: ${{ inputs.urls }}
