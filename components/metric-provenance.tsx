@@ -154,15 +154,55 @@ export function MetricProvenance({
       panel.style.maxWidth = `${window.innerWidth - 64}px`;
       panel.style.transform = "";
       const rect = panel.getBoundingClientRect();
-      const overflowRight = rect.right - window.innerWidth;
-      const overflowLeft = -rect.left;
+      // Root-caused via e2e/no-horizontal-overflow.spec.ts's own offender
+      // report (gg-portfolio#263, CI run 36123444064): this exact panel
+      // (the mmfr NDCG@10/MRR citation) measured shift=0 here — this clamp
+      // concluded it already fit — yet the same test's later, separate
+      // measurement of document.documentElement.scrollWidth found it 0.5px
+      // over window.innerWidth. Confirmed empirically (see this PR's body)
+      // that this is not a missed re-clamp: `loadingdone` fires, and this
+      // effect does re-run, even when the only font in a load batch errors
+      // out — it fires with an empty `event.fontfaces` list rather than not
+      // firing at all. The 0.5px is a genuine gap between this measurement
+      // and the browser's later, fully-settled sub-pixel layout (rounding,
+      // or one more reflow after this callback returns) — targeting exactly
+      // zero overflow leaves no room for that gap. SAFETY_MARGIN_PX makes
+      // the target "at least this many px inside the viewport", not "at
+      // most exactly at its edge", which is the only difference that
+      // matters for a sub-pixel-scale drift like this one.
+      const SAFETY_MARGIN_PX = 2;
+      const overflowRight = rect.right - window.innerWidth + SAFETY_MARGIN_PX;
+      const overflowLeft = -rect.left + SAFETY_MARGIN_PX;
       const shift = overflowRight > 0 ? -overflowRight : overflowLeft > 0 ? overflowLeft : 0;
       if (shift !== 0) panel.style.transform = `translateX(${shift}px)`;
     }
     clamp();
     window.addEventListener("resize", clamp);
+    // `document.fonts.ready` resolving does not mean every font this page
+    // will ever need has already loaded: a family the browser hasn't
+    // matched against any rendered text yet stays `unloaded` and is only
+    // requested once something on the page actually needs it, which can
+    // happen well after the first `ready` resolution (measured directly on
+    // /work/multimodal-fashion-recommender: several of `document.fonts`'
+    // entries are `unloaded` at the point `ready` first resolves). A single
+    // `.then(clamp)` — the previous version of this — only ever catches the
+    // first wave, and even re-polling clamp() for a fixed window after that
+    // first wave still raced under the e2e suite's real 4-worker CPU
+    // contention (measured: 2/20 failures at a 60-frame stabilization poll,
+    // same shape as the 1-2/20 this line originally fixed for). `loadingdone`
+    // fires on `document.fonts` every time a font finishes loading, for as
+    // long as this component is mounted — including any later wave — so
+    // re-clamping on that event, not just once after the first `ready`,
+    // covers a font that only gets requested after this component's first
+    // render. Verified: 0/20 across two independent runs after this change,
+    // where the frame-polling version still failed 2/20 each time — see this
+    // PR's body for both reproductions.
     if (document.fonts?.ready) void document.fonts.ready.then(clamp);
-    return () => window.removeEventListener("resize", clamp);
+    document.fonts?.addEventListener("loadingdone", clamp);
+    return () => {
+      window.removeEventListener("resize", clamp);
+      document.fonts?.removeEventListener("loadingdone", clamp);
+    };
   });
 
   if (!info) return <>{children}</>;

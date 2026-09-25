@@ -1,13 +1,10 @@
 // Dispatch-only Lighthouse runner for .github/workflows/lighthouse.yml.
 //
-// Separate from scripts/lighthouse.mjs (one BASE_URL, same-origin routes,
-// a committed reports/*.summary.json) because this job's shape is several
-// unrelated origins, round-robin, into $GITHUB_STEP_SUMMARY. Reuses (not
-// duplicates, rule 58b) that file's Chrome launch/kill lifecycle, Chrome
-// resolution, stale-tmpdir sweep and fail-closed run error via its exports.
-//
-// Fails closed (rule 98a): a runtimeError or a twice-failed run aborts the
-// ENTIRE dispatch, never a partial table. Malformed inputs are exit 1.
+// Separate from scripts/lighthouse.mjs (one BASE_URL) because this measures
+// several unrelated origins round-robin into $GITHUB_STEP_SUMMARY — reuses
+// (not duplicates, rule 58b) that file's Chrome lifecycle and fail-closed
+// run handling via its exports. Fails closed (rule 98a): a runtimeError or
+// a twice-failed run aborts the whole dispatch; malformed inputs are exit 1.
 
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -301,8 +298,7 @@ async function main() {
     return;
   }
 
-  // lighthouse.mjs reads OUTPUT_DIR_OVERRIDE at module-load time for its raw-output dir, and
-  // never creates it for a caller-supplied override — must exist before the import below.
+  // lighthouse.mjs never creates a caller-supplied OUTPUT_DIR_OVERRIDE — must exist first.
   mkdirSync(outputDir, { recursive: true });
   process.env.OUTPUT_DIR_OVERRIDE = outputDir;
 

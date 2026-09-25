@@ -34,6 +34,10 @@ concurrency:
   group: lighthouse-${{ github.ref }}
   cancel-in-progress: true
 
+# contents: read is only for checkout; upload-artifact uses its own runtime token, not this one.
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: lighthouse
