@@ -339,6 +339,12 @@ jobs:
     # this dispatch is a list_models run (see that job's own `if`).
     if: github.event_name != 'workflow_dispatch' || (!inputs.list_models && inputs.run_content_pipeline)
     runs-on: ubuntu-latest
+    # Was unbounded (GitHub's own default is 360 minutes) — llm.mjs honoured Groq's Retry-After
+    # header with no cap, so a real tokens-per-day exhaustion (589s on a single retry, observed
+    # live in run 36083037346) could still let this job run far longer than any real proposal is
+    # worth waiting for. MAX_RETRY_AFTER_MS in llm.mjs now fails loud instead of sleeping past 60s,
+    # so this bound is a safety net against anything else going wrong, not the primary defense.
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v7

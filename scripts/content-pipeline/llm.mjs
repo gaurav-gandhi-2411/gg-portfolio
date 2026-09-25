@@ -46,6 +46,12 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_429_RETRIES = 5;
 const BASE_DELAY_MS = 1_000;
 const MAX_DELAY_MS = 30_000;
+// A live GREEN proof run (fix/content-pipeline-llm-fail-loud-b2, run 36083037346) hit a real Groq
+// tokens-per-day exhaustion and honoured a server-provided Retry-After of 589s on a single retry —
+// technically correct, but waiting minutes for a DAILY quota to clear can never succeed within a
+// bounded number of attempts and just stalls the job. Any Retry-After above this cap is not worth
+// sleeping for; it's failed loud immediately instead (see the 429 branch in callLlm below).
+const MAX_RETRY_AFTER_MS = 60_000;
 
 /** Errors recorded here, one per failed callLlm() invocation, checked by run.mjs after every repo
  * has been processed (formatApiErrorLines from lib/github-api.mjs renders them). A per-candidate
@@ -69,13 +75,21 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Parses a `Retry-After` header value (seconds) into milliseconds. Returns null when the header is
+// absent or unparseable — callers treat that the same as "no explicit hint, use our own backoff."
+function parseRetryAfterMs(retryAfterHeader) {
+  if (!retryAfterHeader) return null;
+  const seconds = Number(retryAfterHeader);
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  return seconds * 1000;
+}
+
 // Full jitter (AWS backoff literature): a uniformly random delay between 0 and the exponential
-// cap, not the cap itself — spreads retries out instead of every failed caller retrying in lockstep.
-function backoffDelayMs(attempt, retryAfterHeader) {
-  if (retryAfterHeader) {
-    const seconds = Number(retryAfterHeader);
-    if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
-  }
+// cap, not the cap itself — spreads retries out instead of every failed caller retrying in
+// lockstep. `explicitDelayMs` (a Retry-After value already checked against MAX_RETRY_AFTER_MS by
+// the caller) is honoured as-is when present; callers never pass one that exceeds the cap.
+function backoffDelayMs(attempt, explicitDelayMs) {
+  if (explicitDelayMs !== null) return explicitDelayMs;
   const cap = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt);
   return Math.random() * cap;
 }
@@ -153,8 +167,25 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
     }
 
     if (res.status === 429) {
+      const explicitDelayMs = parseRetryAfterMs(res.headers.get("retry-after"));
+      if (explicitDelayMs !== null && explicitDelayMs > MAX_RETRY_AFTER_MS) {
+        // A Retry-After this long (e.g. a tokens-per-day exhaustion) can't be waited out within a
+        // bounded number of attempts — sleeping for it only stalls the job. Fail loud immediately
+        // instead of retrying, same as any other case this file records into apiErrors.
+        apiErrors.push({
+          context: `llm ${stage} (${model})`,
+          message:
+            `HTTP 429 — Retry-After ${Math.round(explicitDelayMs / 1000)}s exceeds the ` +
+            `${MAX_RETRY_AFTER_MS / 1000}s cap, not waiting${await errorBodySuffix(res)}`,
+        });
+        console.error(
+          `[llm] ${stage}: groq (${model}) 429 with Retry-After ${Math.round(explicitDelayMs / 1000)}s ` +
+            `exceeds the ${MAX_RETRY_AFTER_MS / 1000}s cap — failing loud instead of waiting`
+        );
+        return null;
+      }
       if (attempt < MAX_429_RETRIES) {
-        const delay = backoffDelayMs(attempt, res.headers.get("retry-after"));
+        const delay = backoffDelayMs(attempt, explicitDelayMs);
         console.warn(
           `[llm] ${stage}: 429 from groq (${model}), retrying in ${Math.round(delay)}ms ` +
             `(attempt ${attempt + 1}/${MAX_429_RETRIES})`
