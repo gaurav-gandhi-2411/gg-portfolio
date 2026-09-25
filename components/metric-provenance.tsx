@@ -154,8 +154,25 @@ export function MetricProvenance({
       panel.style.maxWidth = `${window.innerWidth - 64}px`;
       panel.style.transform = "";
       const rect = panel.getBoundingClientRect();
-      const overflowRight = rect.right - window.innerWidth;
-      const overflowLeft = -rect.left;
+      // Root-caused via e2e/no-horizontal-overflow.spec.ts's own offender
+      // report (gg-portfolio#263, CI run 36123444064): this exact panel
+      // (the mmfr NDCG@10/MRR citation) measured shift=0 here — this clamp
+      // concluded it already fit — yet the same test's later, separate
+      // measurement of document.documentElement.scrollWidth found it 0.5px
+      // over window.innerWidth. Confirmed empirically (see this PR's body)
+      // that this is not a missed re-clamp: `loadingdone` fires, and this
+      // effect does re-run, even when the only font in a load batch errors
+      // out — it fires with an empty `event.fontfaces` list rather than not
+      // firing at all. The 0.5px is a genuine gap between this measurement
+      // and the browser's later, fully-settled sub-pixel layout (rounding,
+      // or one more reflow after this callback returns) — targeting exactly
+      // zero overflow leaves no room for that gap. SAFETY_MARGIN_PX makes
+      // the target "at least this many px inside the viewport", not "at
+      // most exactly at its edge", which is the only difference that
+      // matters for a sub-pixel-scale drift like this one.
+      const SAFETY_MARGIN_PX = 2;
+      const overflowRight = rect.right - window.innerWidth + SAFETY_MARGIN_PX;
+      const overflowLeft = -rect.left + SAFETY_MARGIN_PX;
       const shift = overflowRight > 0 ? -overflowRight : overflowLeft > 0 ? overflowLeft : 0;
       if (shift !== 0) panel.style.transform = `translateX(${shift}px)`;
     }
