@@ -1,0 +1,49 @@
+GAURAV GANDHI
+Lead Data Scientist · Applied AI | GenAI & LLM Systems · Multi-Agent RAG · Fine-Tuning · ML Evaluation
+Bengaluru, India | gauravgandhi429@gmail.com | +91-8789321250 linkedin.com/in/gauravgandhi03 | github.com/gaurav-gandhi-2411 | gaurav-gandhi.vercel.app | huggingface.co/gauravgandhi2411
+PROFESSIONAL SUMMARY
+Lead Data Scientist heading a 5-person team within Uber's AI organization, responsible for the modeling roadmap, evaluation strategy, and technical review of document-intelligence and conversational-AI systems, including the verification platform that gates earner onboarding across all Uber regions. Shipped a document-understanding Transformer that runs in production at 95%+ field accuracy and saves over $10M annually, and a vision quality gate that automates roughly 70% of document verification. Hired and onboarded two of the team's data scientists; works daily with engineering, legal, annotation, and regional leadership teams. Technical depth spans LLM fine-tuning (LoRA/QLoRA), multi-agent RAG, distributed training (Ray Train, DeepSpeed ZeRO-3), model calibration, and conformal prediction. Success metrics and evaluation gates are defined before development begins, and systems are monitored in production after release.
+PROFESSIONAL EXPERIENCE
+Uber Technologies — Uber AI | via Indium Software · Bengaluru, India Jun 2024 – Present
+Lead Data Scientist Aug 2026 – Present
+• Lead a 5-person data-science team across GenAI document-intelligence and conversational-AI workstreams, setting the modeling roadmap, evaluation strategy, and technical review standards; hired two of the team's data scientists through end-to-end interviews and onboarded both onto live production systems.
+• Coordinate the document-verification platform that gates earner onboarding in every Uber region, working with engineering, legal, annotation, regression, and regional leadership teams on model updates and threshold rollouts.
+Senior Data Scientist May 2025 – Aug 2026
+• Automated roughly 70% of earner document verification (thousands of documents daily) by designing a dual-threshold policy on a Vision Transformer: recall-calibrated auto-approval and precision-calibrated auto-rejection thresholds, tuned per document type and rejection reason (55 types, 9 reasons), so only the uncertain band reaches human review.
+• Raised field-level extraction accuracy above 97% by building a parameter-efficient fine-tuning framework for Qwen (LoRA/QLoRA) with a layer-freezing strategy, instruction-tuning data design, and an automated field-accuracy evaluation harness; mentored partner teams on prompt and evaluator design.
+• Delivered $10M+ in annual cost savings by displacing manual document review: owned the multi-task training objective and extraction head of an encoder–decoder Transformer pretrained on 50M+ documents across 144 A100 GPUs (PyTorch, Ray Train, DeepSpeed ZeRO-3), shipped to production at 95%+ field accuracy.
+Data Scientist Jun 2024 – May 2025
+• Cut analytics turnaround from hours to seconds by shipping a multi-agent copilot that combines hybrid RAG (dense + sparse retrieval), NL2SQL, and a schema knowledge graph — adopted by program managers across all business units.
+• Drove a sustained 27% lift in user engagement, validated through A/B tests across releases, by replacing static collaborative filtering with a BERT-based session-aware sequence model that captures evolving user intent.
+FedEx Express | Consumer Logistics & Supply Chain · Bengaluru (Remote) Aug 2022 – Jun 2024
+Decision Scientist
+• Recovered lost enterprise shipping volume, surfaced through Average-Daily-Volume decline, by deploying an ensemble of Bayesian change-point detection, probabilistic clustering, and profitability scoring, and worked cross-functionally with sales and operations to shape regional supply strategy.
+• Reduced operational inefficiencies by roughly 20% by upgrading ARIMA pipelines to SARIMA with Box-Jenkins tuning, Fourier seasonality terms, and automated anomaly filtering, feeding directly into sales and staffing plans.
+Tata Consultancy Services (TCS) | Bengaluru (Remote) Jul 2021 – Jul 2022
+Data Engineer
+• Enabled reliable, scalable analytics for a high-volume booking and transaction client by designing end-to-end GCP ETL pipelines and dashboards for campaign targeting, segmentation, and trend monitoring.
+APPLIED AI PROJECTS
+Independently built and deployed. Full portfolio: gaurav-gandhi.vercel.app
+• TriageIQ — ML issue-triage service (GCP Cloud Run) Live · Code — Reached 87–90% top-3 accuracy in routing GitHub issues to the right component by combining a temperature-calibrated classifier, semantic retrieval of similar solved issues (BGE + FAISS), and conformal prediction intervals for resolution time; LLM fabrication rate is enforced as a hard CI gate.
+• Style Maitri — AI stylist for Indian occasion wear Live · Code — Achieved 93.8% intent-parsing accuracy (n=211) and NDCG@10 of 0.918 over a 52,000-item catalogue from 8 stores by building a LangGraph agent on hybrid retrieval (FAISS + BM25 with cross-encoder reranking) and a grounding layer that removes invented price, size, and fabric claims.
+• Samidha Reviews — multilingual review intelligence Live · Code — Reached 78.6% extraction accuracy on a 43-review eval (95% CI 73–83%) across English and Hinglish, by building a tiered LLM extraction service (Llama 3.3 70B, JSON mode) with authenticity scoring, prompt-injection defense, PII redaction, and multi-tenant isolation.
+• AgentGauge — causal A/B harness for AI-agent tool use (PyPI) Live · Code — Measured a 13–29 percentage-point drop in agent task success caused by a single defective tool description, across three model families, using a pre-registered A/B design with fully deterministic replay and per-run cost accounting.
+• tracegauge — cost and efficiency gauge for AI coding-agent sessions (PyPI) Live · Code — Scores agent sessions on token economy, trajectory quality, and deterministic waste detection, and gates cost regressions in CI using bootstrap confidence intervals rather than point estimates; 2 contributions landed in google/adk-python (#6681, #6939); 1 in keras-team/keras (#23420).
+RESEARCH
+Two first-author working papers (drafts, not yet submitted):
+• On tool descriptions for AI agents: controlled experiments across three model families showing that more precise tool descriptions help agents choose between similar tools, but hurt performance on broader selection and retrieval tasks — description quality is not a single dial to turn up.
+• On the statistics of agent benchmarks: shows that many agent evaluations are too noisy to detect the effects they report, and contributes a method for computing the smallest effect a benchmark can reliably detect, plus a screening protocol for measurement artifacts.
+TECHNICAL SKILLS
+• Leadership & Delivery: Technical Leadership, Modeling Roadmap Ownership, Hiring & Interviewing, Mentorship, Stakeholder Management, Cross-Functional Delivery, Evaluation Strategy, Technical Review
+• ML & Deep Learning: Transformers (BERT, Llama, GPT), ViT, CLIP, Diffusion Models (SDXL, ControlNet), Two-Tower & Contrastive Learning, Recommender and Ranking Systems, Model Calibration, Conformal Prediction, A/B Testing & Experimentation, Causal Inference, Bayesian Inference, Time-Series Forecasting
+• LLMs & GenAI: LoRA/QLoRA, PEFT, Instruction Tuning, Hard-Negative Mining, LLM-as-Judge Evaluation, RLHF/DPO, Guardrails & Grounding, Structured Output (JSON Mode), Prompt-Injection Defense, LLM APIs (OpenAI, Anthropic, Gemini, Groq)
+• RAG, Retrieval & Agents: Hybrid Retrieval (Dense + BM25), Cross-Encoder Reranking, Vector Search (FAISS, pgvector), NL2SQL, Knowledge Graphs, Multi-Agent Systems, LangChain, LangGraph, MCP
+• Languages & Frameworks: Python (Advanced), SQL, PySpark, PyTorch, Hugging Face Transformers, diffusers, sentence-transformers, scikit-learn, LightGBM, FastAPI, Pytest
+• Deployment & MLOps: Docker, GCP (Cloud Run, Vertex AI, Workload Identity Federation), MLflow, GitHub Actions CI/CD, Dagster, Ray Train, DeepSpeed ZeRO-3, Production Monitoring
+EDUCATION
+Post Graduate Diploma in Data Science, Great Lakes Institute of Management · GPA 8.45/10 2022
+B.Tech, Electronics & Communication Engineering, Manipal University Jaipur · GPA 8.05/10 2017 – 2021
+CERTIFICATIONS
+• Deep Learning, NLP, and Generative AI with LLMs / LLMOps Specializations · DeepLearning.AI
+• Machine Learning with Python · IBM
+• Google Cloud Professional Data Engineer · Google Cloud

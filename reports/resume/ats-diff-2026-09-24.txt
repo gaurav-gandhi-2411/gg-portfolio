@@ -1,0 +1,640 @@
+Resume ATS/consistency check — 2026-09-24 (Samidha Reviews / review-iq bullet fix, final)
+Session: refresh-2026-09 wave, PR #225, branch fix/resume-oss-and-paper-status
+
+STATUS: DONE. GG's decision (relayed by orchestrator) for the Samidha Reviews /
+review-iq bullet: "78.6% extraction accuracy on a 43-review eval (95% CI
+73-83%)", language list "English and Hinglish" (Hindi dropped), and the
+literal string "threshold 76" must not appear anywhere in the resume. All
+three applied across every resume surface (private .docx master, the
+canonical approved.txt, public/resume.pdf, and content/resume-data.json /
+content/resume-metrics.json), and public/resume.pdf regenerated from the
+edited master via LibreOffice 26.8.0.3 headless.
+
+CORRECTION (same-day follow-up, see section 9): this report originally
+called every pdftotext/pdfplumber line-wrap difference "pre-existing," and
+for the header's GitHub URL that claim was WRONG -- the "github.com/gaurav-
+gandhi-2411" mid-URL wrap was a real regression introduced by this branch's
+own earlier Step-4 docx rewrite, not something present on origin/main. The
+"pre-existing" claim was only ever checked against this branch's own
+already-modified public/resume.pdf, never against origin/main's actual
+file -- section 9 has the corrected, origin/main-verified comparison, the
+root-cause, and the fix. The Education-section reading-order artifact and
+the raw-mode hyphen-drop remain genuinely pre-existing (re-confirmed
+against origin/main directly in section 9, this time correctly).
+
+=====================================================================
+0. Backup
+=====================================================================
+.assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx.bak-ats-2026-09-24b
+taken before any edit this session (gitignored dir; existing .bak-* files
+left untouched: .bak-refresh-2026-09, .bak-reviewiq-ci-2026-09-24 [an
+earlier, apparently-abandoned attempt at this same fix — the live master
+still had the stale wording when this session started], .bak-step4-2026-09-24,
+.bak-wave13).
+
+=====================================================================
+1. Docx edit — before/after (paragraph 28, python-docx .text)
+=====================================================================
+BEFORE:
+  Samidha Reviews - multilingual review intelligence Live . Code - Reached
+  78.6% accuracy on a 43-review CI-gated eval (threshold 76%) across
+  English, Hindi, and Hinglish, by building a tiered LLM extraction service
+  (Llama 3.3 70B, JSON mode) with authenticity scoring, prompt-injection
+  defense, PII redaction, and multi-tenant isolation.
+  [bullet char U+2022, em dashes U+2014, middle dot U+00B7 in the actual
+  document -- shown here as plain punctuation for terminal-safe display]
+
+AFTER:
+  Samidha Reviews - multilingual review intelligence Live . Code - Reached
+  78.6% extraction accuracy on a 43-review eval (95% CI 73-83%) across
+  English and Hinglish, by building a tiered LLM extraction service (Llama
+  3.3 70B, JSON mode) with authenticity scoring, prompt-injection defense,
+  PII redaction, and multi-tenant isolation.
+  [same run/formatting structure preserved -- only run index 2's text was
+  changed via python-docx string replacement, so bold/italic/hyperlink runs
+  for "Samidha Reviews" / "Live" / "Code" are byte-identical to before]
+
+Edit method: two targeted string replacements inside the paragraph's third
+direct run (the only run holding this text; "Live"/"Code" are separate
+hyperlink runs python-docx doesn't expose via .runs, left untouched):
+  "78.6% accuracy on a 43-review CI-gated eval (threshold 76%)"
+    -> "78.6% extraction accuracy on a 43-review eval (95% CI 73-83%)"
+      [en dash U+2013 in "73-83%", verified below to survive PDF extraction]
+  "English, Hindi, and Hinglish" -> "English and Hinglish"
+No other paragraph/run in the document was touched.
+
+=====================================================================
+2. Other resume surfaces updated to match
+=====================================================================
+reports/resume/approved-2026-09-24.txt (line 29): same two replacements
+applied; now line-for-line identical to the docx's paragraph 28 text.
+
+content/resume-data.json (proj:reviewiq entry, the JD-tailored-variant
+source, worded independently of the canonical prose per its own style):
+  text_run: "multilingual (English/Hindi/Hinglish) customer-review
+    extraction with tiered LLM routing and cassette-replay CI; 78.6%
+    accuracy on a 43-review CI-gated eval (threshold 76%)."
+    -> "multilingual (English/Hinglish) customer-review extraction with
+    tiered LLM routing and cassette-replay CI; 78.6% extraction accuracy
+    on a 43-review eval (95% CI 73-83%)."
+  headline_metric: "78.6% vs. 76% CI gate" -> "78.6% extraction accuracy,
+    95% CI 73-83%" (paren-free per lintHeadlineMetricNoParens; this field
+    only renders if the project is ever collapsed into a "More on GitHub"
+    line in some JD variant, but the old threshold-framed wording would
+    have reintroduced exactly what this fix removes, so it was aligned too)
+  verified_source / other metadata fields: left untouched (provenance/audit
+    trail, not resume-rendered text; the "threshold 0.76" mention there
+    describes the eval's own historical characteristic at generation time,
+    same as content/metrics.json's unrelated, untouched canonical value for
+    the product/case-study surface -- out of scope for a resume-bullet fix)
+
+content/resume-metrics.json (reviewiq:extraction-eval claim):
+  resume_says: "78.6% accuracy on a 43-review CI-gated eval (threshold
+    76%)" -> "78.6% extraction accuracy on a 43-review eval (95% CI
+    73-83%)"
+  store_value_at_sync: left as "78.6% overall (n=43, threshold 76%)" --
+    this field mirrors content/metrics.json's own (untouched) canonical
+    store value for drift detection, not the resume's prose; it was already
+    a pre-existing, report-only near-mismatch against metrics.json's exact
+    string ("78.6% overall (threshold 76%)", missing "n=43,") before this
+    session and is unrelated to this fix's scope.
+  resume_pdf_sha256: 164b3290f0734a1169543f17ebfe90c2504ac16b1b9c69dd6e2598f50c3a0304
+    -> 1d14373f047c4616d4804eb5d65453a4b048b721b8df94daee082e7ddda0038b
+    (old hash independently re-derived from `git show HEAD:public/resume.pdf`,
+    confirmed to match the manifest's prior recorded value before bumping it)
+  synced_at: unchanged, "2026-09-24" (same day)
+
+content/metrics.json, content/products.ts, content/case-studies/reviewiq.ts:
+  NOT touched -- these describe the live product's actual language support
+  (English/Hindi/Hinglish is accurate there; the product genuinely handles
+  all three) and the product's own eval-gate framing (76% threshold is the
+  product's real CI gate). GG's decision was scoped to the resume bullet
+  specifically; the product landing/case-study copy is a separate, correct
+  claim about a different thing (the product's feature set vs. the resume's
+  space-constrained headline stat) and rewording it here would be scope
+  creep beyond what was authorized.
+
+=====================================================================
+3. Toolchain
+=====================================================================
+Python venv (throwaway, scratchpad-only, never touched base/global/user-site
+Python): python-docx 1.2.0, pdfplumber 0.11.10, pypdf 6.19.0, installed via
+`uv pip install --python <scratchpad>\resume-venv\Scripts\python.exe ...`.
+
+LibreOffice 26.8.0.3 (soffice.com --version, verified). The prior session's
+portable copy at %TEMP%\claude\lo\x6\SourceDir\LibreOffice\program\soffice.com
+was gone (only a partial extraction remained -- python-core and share/
+extensions subtrees present, no program/*.exe at all). Re-extracted fresh,
+administratively (`msiexec /a <msi> /qn TARGETDIR=<scratchpad>\lo`, via a
+.ps1 invoked through Windows PowerShell -- pwsh/PowerShell 7 is not
+installed on this machine, so `powershell.exe` was substituted for the
+`pwsh` invocation the task specified; functionally equivalent for this use)
+from the cached installer at %TEMP%\claude\lo\LibreOffice.msi into the
+session scratchpad. Invoked headless with an isolated `-env:UserInstallation`
+profile, also under the scratchpad. `soffice.exe --version` produces no
+stdout when invoked directly (GUI-subsystem detachment); `soffice.com` is
+the console-mode entry point that returns synchronously with output --
+used for both the version check and all conversions below.
+
+=====================================================================
+4. Export — page count, fonts, size
+=====================================================================
+`--headless --convert-to pdf` from the edited docx.
+  page count: 2 (pypdf, independently re-derived) -- unchanged
+  file size: 139,927 bytes (previously shipped: 143,658 bytes -- both in
+    the same range; this session's edit only shortened the bullet's text,
+    consistent with a smaller file)
+
+  Fonts (pypdf, walking /Resources /Font -> /FontDescriptor ->
+  FontFile/FontFile2/FontFile3 -- pdffonts CLI is not installed in this
+  environment, this is the documented pypdf-equivalent method):
+    /F1  TrueType  BAAAAA+Calibri-Bold        embedded=True
+    /F2  TrueType  CAAAAA+Calibri             embedded=True
+    /F3  TrueType  DAAAAA+Calibri-Bold        embedded=True
+    /F4  TrueType  EAAAAA+Calibri-Bold        embedded=True
+    /F5  TrueType  FAAAAA+Calibri-Bold        embedded=True
+    /F6  TrueType  GAAAAA+Calibri-BoldItalic  embedded=True
+    /F7  TrueType  HAAAAA+Calibri-Italic      embedded=True
+    /F8  TrueType  IAAAAA+Calibri             embedded=True
+  Identical set on both pages, all embedded, real Calibri (not a Carlito
+  substitution).
+
+=====================================================================
+5. ATS check — pdftotext (both modes) + pdfplumber vs approved.txt
+=====================================================================
+Extracted with `pdftotext -enc UTF-8` (raw) and `pdftotext -enc UTF-8
+-layout`, plus a pdfplumber word-coordinate reading-order reconstruction.
+
+Garbled-character scan (all three extractions): U+FFFD=0, private-use-area
+chars=0, fi-ligature (U+FB01)=0, fl-ligature (U+FB02)=0, stray "?"=0.
+
+En dash survival: "73-83%" extracts as literal U+2013 in every extraction
+mode (verified by codepoint, not by eye) -- the en-dash-preservation gate
+this task required before falling back to a plain hyphen. No fallback
+needed.
+
+Wording checks (all three extractions, whole-document scope, not just the
+edited bullet): "threshold 76" -- 0 hits. "Hindi" (word-boundary regex,
+case-insensitive) -- 0 hits. "Hinglish" -- 1 hit (correctly retained).
+
+Line-by-line vs reports/resume/approved-2026-09-24.txt (49 non-blank
+lines), whitespace-normalized containment check, with the extractor's own
+line-wrap points reconciled where a hyphen was immediately followed by a
+wrap-inserted space (a font-shaping engine never puts a space right after
+a genuine mid-word hyphen in the source; this pattern only fires at a wrap
+point):
+
+  pdfplumber reconstruction: 49/49 matched, 0 missing. 2 wrap points needed
+    de-hyphenation reconciliation before matching (both pre-existing,
+    unrelated to this fix -- see below).
+  pdftotext -layout: 47/49 matched after de-hyphenation; 2 still differ
+    (education section, explained below -- pre-existing, not a regression).
+  pdftotext (raw): 46/49 matched after de-hyphenation; 3 still differ (the
+    same 2 education lines, plus one wrap point where raw mode drops the
+    hyphen entirely rather than inserting a space -- also pre-existing).
+
+  This matches the prior session's own documented methodology (Step 4's
+  ats-diff, section 4): pdfplumber's coordinate-based reconstruction is the
+  authoritative line-by-line comparison; pdftotext's char-count/garbling
+  numbers are reported separately because pdftotext's column/tab-stop
+  reading-order heuristics are known to reorder or lose characters around
+  right-aligned tab stops independent of document content.
+
+  [SUPERSEDED BY SECTION 9 -- READ SECTION 9 BEFORE TRUSTING THIS BLOCK.
+  At the time this was written, "confirmed present in the old shipped
+  PDF" meant this branch's own already-Step-4-rewritten public/resume.pdf
+  (HEAD 844c8c1), never origin/main's actual file. Once checked against
+  real origin/main (section 9), item 1 (Education reading-order) held up
+  as genuinely pre-existing -- item 2 did NOT: the github.com URL wrap and
+  the sentence-transformers wrap were BOTH regressions introduced by this
+  branch's Step-4 docx rewrite, not present on origin/main at all. Both
+  are fixed in section 9.]
+
+  Every pdftotext difference explained, at the time, against the wrong
+  baseline (see correction above and section 9):
+    1. Education section reading order: pdftotext (both modes) misattributes
+       the two closely-spaced, tab-stop-right-aligned graduation years --
+       "2022" and "2017 - 2021" -- reordering them relative to the two
+       degree lines. pdfplumber's x/y-coordinate reconstruction places both
+       correctly. Confirmed byte-identical behavior on the old, currently-
+       shipped PDF via the same pdftotext invocation.
+    2. Two mid-word hyphenation wraps from this LibreOffice build's font
+       shaping: "github.com/gaurav-" / "gandhi-2411" (header) and
+       "sentence-" / "transformers" (skills line) -- cosmetic line-break
+       placement, not garbling; text-content-equal once rejoined. Confirmed
+       present, identically, in the old shipped PDF.
+    3. pdftotext's raw (non-layout) mode additionally drops the hyphen
+       entirely at the "sentence-transformers" wrap point ("sentencetransformers",
+       no hyphen) -- a pdftotext-raw-mode-specific quirk, also confirmed
+       present identically in the old shipped PDF.
+
+  Net (at the time): 0 unexplained differences on the review-iq bullet or
+  anywhere else; pdfplumber (the higher-fidelity method) showed 0/49 lines
+  differing. Still true after section 9's fix, on the correct baseline.
+
+=====================================================================
+6. Repo consistency checks
+=====================================================================
+`node scripts/check-resume-pdf-consistency.mjs`: PASS -- "15 projects in
+resume-data.json, 5 covered by public/resume.pdf and checked (expected 5).
+checked: agentgauge, reviewiq, style-maitri, tracegauge, triageiq. OK — no
+public/resume.pdf vs. content/resume-data.json contradictions found."
+
+`node scripts/check-resume-project-coverage.mjs`: PASS -- "15 product(s) in
+products.ts, 15 project entry/entries in resume-data.json's pool."
+
+`node scripts/lib/resume-lint.smoketest.mjs`: PASS -- all assertions
+passed.
+
+`node scripts/lib/resume-select.smoketest.mjs`: FAILS, but pre-existing and
+unrelated -- an assertion about proj:eval-defect-bench's repo_only
+forced-collapse set, a different project this session never touched.
+Confirmed pre-existing by `git stash`-ing this session's changes and
+re-running against the unmodified branch tip: identical failure,
+byte-for-byte. Not fixed here (out of scope: it concerns
+content/products.ts's surface/liveUrl classification for an unrelated
+project, not the review-iq bullet).
+
+`npm run typecheck`: PASS, clean.
+`npm run build` (Next.js production build): PASS, clean, all 53 static
+pages generated.
+
+=====================================================================
+7. e2e
+=====================================================================
+`npx playwright test e2e/resume.spec.ts`: 4/4 passed.
+`npx playwright test` (full suite, per this repo's CLAUDE.md rule -- content
+edits can break specs in unrelated files via accessible-name locators):
+519 passed, 113 skipped, 0 failed. (Fully clean this run; the PR's own
+earlier report noted one flaky mobile tooltip-timing failure elsewhere in
+the suite that reran clean in isolation -- not reproduced this run at all.)
+
+chatbot index: not rebuilt. Re-verified by reading scripts/chatbot/build-index.mjs
+directly (grep for resume-data/resume-metrics/resume.pdf/approved-2026-09):
+zero references -- it ingests content/case-studies, products.ts,
+provenance.md, experience.ts, availability.ts, and site.ts only, none of
+which this session touched. Independently re-confirms the prior session's
+identical finding.
+
+=====================================================================
+8. Screenshots
+=====================================================================
+reports/screenshots/resume-step4/new-p{1,2}.png regenerated (same
+LibreOffice toolchain: split the 2-page PDF into single-page PDFs via
+pypdf, then `soffice --convert-to png` per page, since multi-page PDF->PNG
+only renders page 1 by default). old-p{1,2}.png left untouched from the
+prior session (visual-styling baseline is unaffected by this text-only
+edit). Page 2's Samidha Reviews bullet visually confirmed to read exactly:
+"Samidha Reviews - multilingual review intelligence Live . Code - Reached
+78.6% extraction accuracy on a 43-review eval (95% CI 73-83%) across
+English and Hinglish, by building a tiered LLM extraction service (Llama
+3.3 70B, JSON mode) with authenticity scoring, prompt-injection defense,
+PII redaction, and multi-tenant isolation."
+
+=====================================================================
+9. FOLLOW-UP (same session, same day) -- header URL wrap regression, fixed
+=====================================================================
+Orchestrator caught a real defect in this report's own section 5: the
+"github.com/gaurav-" / "gandhi-2411" header wrap was called "pre-existing"
+there, and that was wrong. Root cause of the wrong claim: section 5's
+"old PDF" baseline was `public/resume.pdf` as it stood on THIS branch
+before this session's edit (commit 844c8c1) -- i.e., the Step-4 session's
+own already-rewritten docx/PDF -- never origin/main's actual file. Both
+PDFs came from the same rewritten docx lineage, so of course the wrap
+looked "identical" between them; that comparison could never have detected
+a regression Step-4 itself introduced.
+
+Corrected comparison, this time against real origin/main
+(`git show origin/main:public/resume.pdf`, independently re-extracted):
+
+  pdfplumber, origin/main:
+    "linkedin.com/in/gauravgandhi03 | github.com/gaurav-gandhi-2411 |
+    gaurav-gandhi.vercel.app | huggingface.co/gauravgandhi2411" -- ALL ONE
+    LINE, URL fully intact.
+  pdfplumber, this branch @598faef (the commit this report originally
+  covered):
+    "...github.com/gaurav-\ngandhi-2411..." -- URL split across two
+    lines. CONFIRMED REGRESSION, not pre-existing.
+
+  Same re-check for "sentence-transformers" (Technical Skills): origin/main
+  extracts it whole, on one line, in BOTH pdftotext raw and -layout modes
+  (`sentence-transformers,` fits without wrapping). This branch's Step-4
+  PDF wraps it "sentence-" / "transformers". Also a Step-4-introduced
+  regression, not pre-existing -- the earlier "pre-existing but benign"
+  framing (this report's own section 5 item 2, and the orchestrator's
+  relay of it) was equally wrong, just lower-stakes (a compound word, not
+  a clickable URL/email, so it never affects reachability -- but it wasn't
+  accurate to call it pre-existing, and it's fixed below anyway since the
+  fix was cheap).
+
+  The Education-section reading-order artifact (item 1) DID hold up under
+  the corrected, origin/main-verified check: origin/main's own pdftotext
+  extraction also reorders "2022" / "2017 - 2021" away from their degree
+  lines (attaches "2022" to the "EDUCATION" heading line in -layout mode;
+  concatenates both dates together, detached from both degree lines, in
+  raw mode) -- same artifact class, genuinely present on main, confirmed
+  this time against the right file. Left as-is; not in scope (doesn't
+  split any URL/email, and pdfplumber's coordinate reconstruction already
+  places both dates correctly).
+
+---------------------------------------------------------------------
+9.1 Fix
+---------------------------------------------------------------------
+Backup taken first (existing .bak-* files untouched):
+  .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx.bak-ats-2026-09-24c
+
+Header fix (paragraph 2, the contact-info line): the paragraph relies
+entirely on automatic word-wrap (no explicit break existed anywhere in
+it), and this LibreOffice build's line-breaking wraps mid-URL at the
+hyphens inside "gaurav-gandhi-2411" once the available width runs out --
+even though "github.com/gaurav-gandhi-2411" is a single hyperlink run
+with no internal spaces, hyphens are still treated as break opportunities
+by the layout engine. Fix: inserted one explicit line break
+(`Run.add_break(WD_BREAK.LINE)`, i.e. a `<w:br/>`) at the end of the first
+run, right after "+91-8789321250" and before the LinkedIn hyperlink --
+the same point origin/main's own renderer happens to wrap at naturally.
+This forces that break to happen regardless of renderer/font-metric
+differences, rather than leaving the wrap point to chance. No text was
+added, removed, or reworded; the break is a layout-only element.
+
+Result: the contact line now renders as three lines instead of two
+("Bengaluru, India | ... | +91-8789321250" / "linkedin.com/... |
+github.com/... | gaurav-gandhi.vercel.app |" / "huggingface.co/...").
+The second of those three lines is itself long enough to wrap again on
+this renderer, but it wraps at a "|" boundary (after "vercel.app |"),
+never mid-URL. Page count unaffected (still 2, verified below).
+
+sentence-transformers fix (Technical Skills, "Languages & Frameworks"
+bullet): replaced the plain hyphen (U+002D) in "sentence-transformers"
+with a non-breaking hyphen (U+2011) -- renders visually identical to a
+normal hyphen, but is never treated as a line-break opportunity. No
+wording change. (Not applied to any URL: for a URL, changing the visible
+hyphen character would mean the extracted PDF text no longer matches the
+URL's real spelling, which is a worse ATS outcome than a rare wrap -- the
+explicit-line-break approach was used for the header specifically to
+avoid that trade-off. For a plain compound word with no clickability
+requirement, the non-breaking-hyphen substitution has no such downside.)
+
+---------------------------------------------------------------------
+9.2 New gate: every header URL/email must be unbroken
+---------------------------------------------------------------------
+Orchestrator-requested, added this session, permanent going forward for
+this file's methodology: every URL and email address in approved.txt's
+header contact line (line 3) must appear as a single, unbroken, contiguous
+substring in the RAW (non-whitespace-collapsed) extracted text -- checked
+against pdftotext raw, pdftotext -layout, AND pdfplumber's word-coordinate
+reconstruction independently. A miss on any single mode is a FAIL, not a
+warning; this is deliberately stricter than the general 49-line comparison
+(which whitespace-normalizes first, precisely because THAT collapsing is
+what let the original regression through undetected).
+
+Tokens checked: gauravgandhi429@gmail.com, linkedin.com/in/gauravgandhi03,
+github.com/gaurav-gandhi-2411, gaurav-gandhi.vercel.app,
+huggingface.co/gauravgandhi2411.
+
+Self-test (rule 85a: a new control gets checked against its own failure
+class before being trusted): ran this exact check against the regressed
+PDF from commit 598faef before re-running it against the fix. Result:
+FAIL, correctly, on "github.com/gaurav-gandhi-2411" in all three
+extraction modes (pdftotext raw, pdftotext -layout, pdfplumber) -- proving
+the gate actually catches the failure it exists for, not just that it
+runs. Then re-ran against the fixed PDF below: PASS, all tokens, all three
+modes.
+
+---------------------------------------------------------------------
+9.3 Full re-verification after the fix (fresh PDF, this section's fix only)
+---------------------------------------------------------------------
+New PDF hash: 57be0c9c49f9a4dafc8c3885f9fdf09462a3f9fe580b1f04326c25467f6f6c88
+(previous, regressed hash: 1d14373f047c4616d4804eb5d65453a4b048b721b8df94daee082e7ddda0038b)
+content/resume-metrics.json's resume_pdf_sha256 updated to match, and
+programmatically re-verified equal to the actual file's sha256 (not just
+eyeballed) before committing.
+
+  Page count: 2 (pypdf) -- unchanged -- PASS
+  Fonts: all 8 Calibri variants embedded=True on both pages (pypdf
+    /FontDescriptor walk, same method as before) -- PASS
+  URL/email unbroken (section 9.2's new gate): all 5 tokens, all 3
+    extraction modes (pdftotext raw, pdftotext -layout, pdfplumber) --
+    PASS
+  Garbled-character scan (U+FFFD, private-use-area, fi/fl ligature, stray
+    "?"), all 3 modes: all zero -- PASS
+  En dash survival: "73-83%" extracts as literal U+2013 in every mode,
+    verified by codepoint -- PASS
+  Wording: "threshold 76" -- 0 hits, all 3 modes. "Hindi" (word-boundary)
+    -- 0 hits, all 3 modes. "Hinglish" -- 1 hit, all 3 modes -- PASS
+  49/49 approved.txt lines vs pdfplumber reconstruction: 0 missing, 0
+    hyphen-wrap-heuristic interventions needed at all this time (both the
+    github and sentence-transformers wraps are simply gone, not merely
+    reconciled) -- PASS
+  49/49 approved.txt lines vs pdftotext raw/-layout: 47/49 and 47/49
+    respectively (2 pre-existing Education-section misses each, per
+    section 9's corrected root-cause analysis above) -- explained, not a
+    FAIL by this file's established methodology (pdfplumber is the
+    line-by-line authority; pdftotext's separate garbling/wording/
+    URL-unbroken checks above are unaffected and all pass)
+
+  `node scripts/check-resume-pdf-consistency.mjs`: PASS
+  `node scripts/check-resume-project-coverage.mjs`: PASS
+  `node scripts/lib/resume-lint.smoketest.mjs`: PASS
+  `npm run typecheck`: PASS, clean
+  `npm run build`: PASS, clean
+  `npx playwright test e2e/resume.spec.ts`: 4/4 passed
+  `npx playwright test` (full suite): 518 passed, 113 skipped, 1 failed
+    (`hero-socials.spec.ts` mobile tooltip-opacity-timing test -- the same
+    flake this PR's own body already documented; re-ran in isolation
+    (`--project=mobile` on just that file): 4/4 passed, confirming a
+    parallel-run timing flake, not a regression from this fix)
+
+reports/screenshots/resume-step4/new-p1.png and new-p2.png regenerated
+from the fixed PDF (same split-then-soffice-convert-to-png method) and
+visually confirmed: header reads across three clean lines with no URL
+split; Technical Skills' "sentence-transformers" reads whole on one line.
+
+[CORRECTION, see section 10: the non-breaking-hyphen (U+2011) fix used
+above for "sentence-transformers" was itself a defect -- it broke
+pdftotext extraction under its default (non -enc UTF-8) codepage, which
+is a real-world risk for ATS pipelines that don't pass -enc UTF-8
+explicitly. Reverted to a plain ASCII hyphen with a structural fix
+instead; see section 10 for the corrected approach and re-verification.]
+
+=====================================================================
+10. SECOND FOLLOW-UP (same day) -- U+2011 broke default-codepage
+    pdftotext extraction; reverted to ASCII hyphen + structural fix
+=====================================================================
+Orchestrator check: `pdftotext public/resume.pdf - | grep -a sentence`
+(no -enc flag, i.e. pdftotext's default codepage) returned
+"sentencetransformers" -- the U+2011 non-breaking hyphen character was
+silently dropped entirely, not just mis-rendered. Independently
+reproduced before touching anything:
+  pdftotext public/resume.pdf -            -> "sentencetransformers" (hyphen gone)
+  pdftotext -enc UTF-8 public/resume.pdf -  -> "sentence‑transformers" (hyphen present)
+So the U+2011 fix only ever looked correct because every check in this
+report's section 9 explicitly passed `-enc UTF-8` to pdftotext -- it never
+tested the tool's own default behavior, which is exactly the invocation
+shape a poppler-based ATS integration is likely to use unmodified. A real
+regression in ATS-visible text, introduced by section 9's own fix.
+
+---------------------------------------------------------------------
+10.1 Fix
+---------------------------------------------------------------------
+Backup taken first (existing .bak-* files, including .bak-ats-2026-09-24c
+from section 9, left untouched):
+  .assets/resume-sources/Gaurav_Gandhi_Resume_2026.docx.bak-ats-2026-09-24d
+
+Two changes to the same run (Technical Skills, "Languages & Frameworks"
+bullet), both via python-docx:
+  1. Reverted "sentence‑transformers" back to "sentence-transformers"
+     (plain ASCII hyphen-minus, U+002D). No wording change -- same
+     characters as originally written, just the codepoint restored.
+  2. Rather than leave the word exposed to the renderer's own wrap-point
+     choice again (which is what caused the original mid-word split),
+     split the run and inserted one explicit line break
+     (`Run.add_break(WD_BREAK.LINE)`) immediately before "sentence-
+     transformers" -- the whole word (with comma-separated neighbors)
+     now always starts a fresh line rather than ever being a candidate
+     for a mid-word wrap. This is the same class of fix as section 9's
+     header fix (an explicit break, not a character substitution), which
+     is why it doesn't carry the encoding risk the U+2011 approach did:
+     a `<w:br/>` is a layout instruction, not a text character, so no
+     extractor can "drop" it in a way that changes the word's spelling.
+
+Considered and rejected: letting it wrap exactly as origin/main's PDF
+happens to ("sentence-transformers,\nscikit-") -- origin/main wraps after
+the word+comma because ITS renderer's line width fits less per line at
+that point than ours does; replicating that exact break position on our
+renderer would require guessing at a specific character budget that
+could drift with any future content edit above it in the same bullet.
+An explicit break anchored to the word itself (not to a fragile line-
+width coincidence) is the same fix in spirit, more robust to future
+edits, and produces the same visual outcome (word never splits, comma-
+separated list of other neighbours still wraps normally elsewhere).
+
+---------------------------------------------------------------------
+10.2 Strengthened gate: verbatim (ASCII hyphens included) in ALL THREE
+     modes, not just pdfplumber
+---------------------------------------------------------------------
+Orchestrator-requested tightening: section 9's 49-line check only required
+pdfplumber to match verbatim; pdftotext's raw/-layout modes were allowed
+through via a "hyphen-wrap reconciliation" heuristic that (correctly, in
+intent, but too permissively in practice) treated "-<wrap>" as equivalent
+to "-". That heuristic is exactly the kind of leniency that let a real
+encoding defect (U+2011 silently vanishing) hide behind a "PASS" -- it was
+built to tolerate cosmetic line-wrap noise, not silently launder a dropped
+character. It is retired for this gate. The check is now: every approved
+line, whitespace-normalized ONLY, must appear as an exact verbatim
+substring (ASCII hyphens required, no substitution tolerance) in each of
+pdftotext-raw, pdftotext-layout, and pdfplumber independently. A miss in
+any one mode is listed by line number, not silently passed because
+another mode was clean.
+
+Also fixed, in the same pass: `scripts/pdfplumber_reconstruct.py`-equivalent
+tooling used in section 9 wrote its reconstruction to a single hardcoded
+output filename regardless of which PDF was fed in -- re-running it
+against origin/main's PDF for classification purposes (section 9 and
+again in this section) silently overwrote the correct branch reconstruction
+out from under later checks, twice, without any error. This produced two
+distinct false readings before being caught by cross-checking against
+pdftotext/pdfplumber's own `extract_text()` output directly: a URL-
+unbroken "PASS" that was actually re-testing origin/main's already-known-
+good PDF instead of this branch's, and a spurious "Hindi (word-boundary)
+hits=1" that was origin/main's own real, legitimate, not-yet-merged
+"English, Hindi, and Hinglish ... 83% CI gate" text, misattributed to this
+branch's PDF. Root-caused by dumping raw pdfplumber word objects
+(top/x0/text) and confirming no "Hindi" text object exists anywhere in
+this branch's actual PDF before concluding the finding was a tooling
+artifact, not a real leak (rule 85a: don't trust a control's output
+without checking what it actually inspected). Fixed by making the
+reconstruction script's output path a required, explicit argument with no
+default -- every invocation in this section wrote to its own distinctly-
+named file (ours-plumber.txt / main-plumber.txt), and re-verified fresh
+before use, every time.
+
+---------------------------------------------------------------------
+10.3 Non-ASCII hyphen/space character scan
+---------------------------------------------------------------------
+Scanned for U+2010 (HYPHEN), U+2011 (NON-BREAKING HYPHEN), U+00A0
+(NO-BREAK SPACE), U+00AD (SOFT HYPHEN):
+  Docx source (python-docx paragraph text, all 49 paragraphs, which
+    includes hyperlink-run text): none found
+  Docx source (raw word/document.xml bytes, independent second reading
+    that doesn't go through python-docx's own text-assembly): none found
+  pdftotext raw (-enc UTF-8): none found
+  pdftotext -layout (-enc UTF-8): none found
+  pdfplumber reconstruction: none found
+Clean on every surface checked. (The one U+2011 this session introduced
+in section 9 was reverted in 10.1, and this scan confirms nothing else of
+this class exists anywhere in the current docx or its exported text.)
+
+---------------------------------------------------------------------
+10.4 Full re-verification (fresh PDF)
+---------------------------------------------------------------------
+New PDF hash: 821008fa538f45d1369a8545ae1d3860ae0d688cac0e5d336094f4cb76623c32
+(section 9's hash, now superseded: 57be0c9c49f9a4dafc8c3885f9fdf09462a3f9fe580b1f04326c25467f6f6c88)
+content/resume-metrics.json's resume_pdf_sha256 updated via a small Node
+script that reads the actual file and writes its real digest back
+in-place (never hand-typed), then re-verified equal to the file's actual
+sha256 by a second, independent script run before committing -- the same
+transcription-error class that bit section 9's hash update once (caught
+there before commit) is structurally avoided here.
+
+  Page count: 2 (pypdf) -- unchanged -- PASS
+  Fonts: all 8 Calibri variants embedded=True on both pages -- PASS
+  URL/email unbroken (section 9.2's gate, unchanged): all 5 tokens, all 3
+    modes -- PASS
+  Garbled-character scan, all 3 modes: U+FFFD=0, PUA=0, fi/fl-ligature=0,
+    stray "?"=0 -- PASS
+  Non-ASCII hyphen/space scan (section 10.3): clean everywhere -- PASS
+  `pdftotext public/resume.pdf -` (DEFAULT codepage, no -enc flag) ->
+    "sentence-transformers" intact, hyphen present -- PASS (this is the
+    exact command that caught the regression; re-run against the fix to
+    close the loop)
+  Wording: "threshold 76" 0 hits, "Hindi" (word-boundary) 0 hits,
+    "Hinglish" 1 hit, all 3 modes -- PASS
+  49/49 approved.txt lines, STRICT verbatim (ASCII hyphens, no wrap
+    reconciliation), per mode:
+    pdftotext raw:      47/49 (2 missing: lines 44-45, Education section)
+    pdftotext -layout:  47/49 (2 missing: lines 44-45, Education section)
+    pdfplumber:         49/49 (0 missing)
+
+  Classification of the 2 pdftotext misses against origin/main (fetched
+  explicitly via `git show origin/main:public/resume.pdf`, same strict
+  script run against it):
+    origin/main, pdftotext raw:     same 2 lines (44-45) also missing,
+      plus 4 more (lines 5, 29, 31, 33) that are ordinary NOT-YET-MERGED
+      content differences unrelated to this defect (main still has this
+      PR's pre-fix wording for the professional summary, the Samidha
+      Reviews bullet, the tracegauge bullet, and the D1 research-status
+      line -- expected, since main hasn't merged this PR).
+    origin/main, pdftotext -layout: identical pattern to raw.
+    origin/main, pdfplumber:        same 4 content-difference lines only;
+      lines 44-45 NOT missing (pdfplumber handles them correctly on main
+      too, exactly as on this branch).
+  Verdict: the Education-section artifact has the IDENTICAL failure
+  signature on origin/main -- fails only in pdftotext raw/-layout, passes
+  in pdfplumber, in both cases. The raw extracted text differs in minor,
+  cosmetic positional detail between the two PDFs (main isolates
+  "2017 - 2021" on its own line in -layout mode; this branch's render
+  attaches it to the end of the preceding line instead) due to unrelated
+  content elsewhere on the page shifting sub-point-level spacing -- same
+  root cause (pdftotext's tab-stop reading-order heuristic misattributing
+  the two right-aligned graduation years), not a different defect. Stays,
+  per the orchestrator's own stated condition ("may stay only if it is
+  identical on origin/main").
+
+  `node scripts/check-resume-pdf-consistency.mjs`: PASS
+  `node scripts/check-resume-project-coverage.mjs`: PASS
+  `node scripts/lib/resume-lint.smoketest.mjs`: PASS
+  `npm run typecheck`: PASS, clean
+  `npm run build`: PASS, clean
+  `npx playwright test e2e/resume.spec.ts`: 4/4 passed
+  `npx playwright test` (full suite): 519 passed, 113 skipped, 0 failed
+    (fully clean this run -- no flake reproduced at all)
+
+reports/screenshots/resume-step4/new-p1.png and new-p2.png regenerated
+from this section's fixed PDF and visually confirmed: "sentence-
+transformers" now reads as one intact word (with its real ASCII hyphen)
+starting a fresh line, never split. Byte-identical to section 9's PNGs --
+the explicit line break lands at the same visual position the
+non-breaking-hyphen version's natural wrap already fell at, so the
+rendered pixels are unchanged even though the underlying fix mechanism
+(and, critically, the extracted text) is now correct.
