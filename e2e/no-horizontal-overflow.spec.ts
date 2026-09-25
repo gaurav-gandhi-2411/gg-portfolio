@@ -135,6 +135,33 @@ for (const width of WIDTHS) {
                     };
                   });
 
+                // A text run whose own layout geometry sits past innerWidth
+                // is only a real contributor to document scrollWidth if
+                // nothing between it and the document clips it first — the
+                // sr-only technique (position:absolute, a 1px box, and
+                // overflow:hidden) deliberately lays out far-off-screen text
+                // exactly like this, on purpose, on every route, and its
+                // overflow:hidden ancestor is specifically what keeps it
+                // from ever counting toward scrollWidth (verified directly:
+                // a throwaway page with a 1px/overflow:hidden/nowrap sr-only
+                // span containing a 400px-wide sentence measured
+                // scrollWidth === innerWidth). Skip any text rect that an
+                // ancestor's own clipped box already excludes, so the
+                // report doesn't spend its top-5 slots on spans that were
+                // never candidates.
+                function isClippedByAncestor(node: Node, rect: DOMRect): boolean {
+                  let el = node.parentElement;
+                  while (el) {
+                    const s = getComputedStyle(el);
+                    if (s.overflowX === "hidden" || s.overflowX === "clip") {
+                      const hostRect = el.getBoundingClientRect();
+                      if (rect.right > hostRect.right || rect.left < hostRect.left) return true;
+                    }
+                    el = el.parentElement;
+                  }
+                  return false;
+                }
+
                 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
                   acceptNode: (node) =>
                     node.textContent && node.textContent.trim().length > 0
@@ -151,7 +178,7 @@ for (const width of WIDTHS) {
                   const range = document.createRange();
                   range.selectNodeContents(node);
                   for (const rect of range.getClientRects()) {
-                    if (rect.right > innerWidth && rect.width > 0) {
+                    if (rect.right > innerWidth && rect.width > 0 && !isClippedByAncestor(node, rect)) {
                       const parent = node.parentElement;
                       overflowingText.push({
                         right: Math.round(rect.right * 100) / 100,
@@ -165,8 +192,45 @@ for (const width of WIDTHS) {
                 }
                 overflowingText.sort((a, b) => b.right - a.right);
 
+                // Third tier: CSS generated content. A ::before/::after with
+                // real content and its own `position: absolute` establishes
+                // a box neither of the two scans above can see at all —
+                // element scan #1 only sees real elements' own boxes, and a
+                // generated box isn't a text node scan #2's TreeWalker can
+                // reach either. getComputedStyle CAN read a pseudo-element's
+                // own resolved used-value geometry directly (no live rect
+                // API exists for pseudo-elements), which is enough to name
+                // a suspect even without an exact right edge.
+                const pseudoCandidates = [...document.querySelectorAll<HTMLElement>("*")]
+                  .flatMap((el) =>
+                    (["::before", "::after"] as const)
+                      .map((pseudo) => ({ el, pseudo, style: getComputedStyle(el, pseudo) }))
+                      .filter(({ style }) => style.content !== "none" && style.content !== '""')
+                  )
+                  .slice(0, 5)
+                  .map(({ el, pseudo, style }) => {
+                    const classAttr =
+                      typeof el.className === "string"
+                        ? el.className
+                        : el.getAttribute("class") || "";
+                    return {
+                      tag: el.tagName.toLowerCase(),
+                      pseudo,
+                      class: classAttr,
+                      content: style.content.slice(0, 40),
+                      position: style.position,
+                      left: style.left,
+                      width: style.width,
+                    };
+                  });
+
                 const fonts = [...document.fonts].map((f) => `${f.family}:${f.status}`);
-                return { overflowingElements, overflowingText: overflowingText.slice(0, 5), fonts };
+                return {
+                  overflowingElements,
+                  overflowingText: overflowingText.slice(0, 5),
+                  pseudoCandidates,
+                  fonts,
+                };
               })
             : null;
 
@@ -194,6 +258,20 @@ for (const width of WIDTHS) {
                   )
                   .join("\n")
               : "  (none)") +
+            (offenderReport.overflowingElements.length === 0 && offenderReport.overflowingText.length === 0
+              ? "\nCSS generated content present (::before/::after with real content — neither " +
+                "scan above can see a pseudo-element's own box; no live rect API exists for one, " +
+                "so only its computed geometry is listed):\n" +
+                (offenderReport.pseudoCandidates.length > 0
+                  ? offenderReport.pseudoCandidates
+                      .map(
+                        (o, i) =>
+                          `  ${i + 1}. <${o.tag}${o.class ? ` class="${o.class}"` : ""}>${o.pseudo} ` +
+                            `content="${o.content}" position=${o.position} left=${o.left} width=${o.width}`
+                      )
+                      .join("\n")
+                  : "  (none)")
+              : "") +
             `\ndocument.fonts: ${offenderReport.fonts.join(", ") || "(none reported)"}`
           : "";
 
