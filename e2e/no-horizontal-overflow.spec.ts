@@ -81,15 +81,73 @@ for (const width of WIDTHS) {
           bodyScrollWidth: document.body.scrollWidth,
           innerWidth: window.innerWidth,
         }));
+
+        // This gate previously reported only the two widths, which is
+        // useless for tracking down an intermittent 1px CI-only failure —
+        // it names the symptom, never the element causing it. When either
+        // measurement is already over budget, name the actual offenders
+        // before asserting, so a CI failure log is diagnosable on its own,
+        // without a trace download: every element whose right edge sits
+        // past innerWidth, sorted worst-first, plus the font-load status
+        // this spec already waits on, since a still-loading/failed font can
+        // change measured text width between runs on the same markup.
+        const offenderReport =
+          measured.documentScrollWidth > measured.innerWidth ||
+          measured.bodyScrollWidth > measured.innerWidth
+            ? await page.evaluate(() => {
+                const innerWidth = window.innerWidth;
+                const overflowing = [...document.querySelectorAll<HTMLElement>("*")]
+                  .map((el) => ({ el, rect: el.getBoundingClientRect() }))
+                  .filter(({ rect }) => rect.right > innerWidth)
+                  .sort((a, b) => b.rect.right - a.rect.right)
+                  .slice(0, 5)
+                  .map(({ el, rect }) => {
+                    const style = getComputedStyle(el);
+                    const classAttr =
+                      typeof el.className === "string"
+                        ? el.className
+                        : el.getAttribute("class") || "";
+                    const text = (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40);
+                    return {
+                      tag: el.tagName.toLowerCase(),
+                      id: el.id || null,
+                      class: classAttr,
+                      text,
+                      right: Math.round(rect.right * 100) / 100,
+                      position: style.position,
+                      transform: style.transform,
+                    };
+                  });
+                const fonts = [...document.fonts].map((f) => `${f.family}:${f.status}`);
+                return { overflowing, fonts };
+              })
+            : null;
+
+        const offenderMessage = offenderReport
+          ? "\nTop offending elements (right edge > innerWidth, worst first):\n" +
+            (offenderReport.overflowing.length > 0
+              ? offenderReport.overflowing
+                  .map(
+                    (o, i) =>
+                      `  ${i + 1}. <${o.tag}${o.id ? `#${o.id}` : ""}${
+                        o.class ? ` class="${o.class}"` : ""
+                      }> right=${o.right} position=${o.position} transform=${o.transform} text="${o.text}"`
+                  )
+                  .join("\n")
+              : "  (none — overflow may come from a pseudo-element, scrollbar, or a zero-size " +
+                "container's own box, none of which getBoundingClientRect() on real elements sees)") +
+            `\ndocument.fonts: ${offenderReport.fonts.join(", ") || "(none reported)"}`
+          : "";
+
         expect(
           measured.documentScrollWidth,
           `document.documentElement.scrollWidth (${measured.documentScrollWidth}) exceeds ` +
-            `window.innerWidth (${measured.innerWidth}) on ${path} at ${width}px`
+            `window.innerWidth (${measured.innerWidth}) on ${path} at ${width}px${offenderMessage}`
         ).toBeLessThanOrEqual(measured.innerWidth);
         expect(
           measured.bodyScrollWidth,
           `document.body.scrollWidth (${measured.bodyScrollWidth}) exceeds ` +
-            `window.innerWidth (${measured.innerWidth}) on ${path} at ${width}px`
+            `window.innerWidth (${measured.innerWidth}) on ${path} at ${width}px${offenderMessage}`
         ).toBeLessThanOrEqual(measured.innerWidth);
 
         // The real, load-bearing check: force the browser to actually try
