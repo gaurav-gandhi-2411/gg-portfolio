@@ -161,8 +161,31 @@ export function MetricProvenance({
     }
     clamp();
     window.addEventListener("resize", clamp);
+    // `document.fonts.ready` resolving does not mean every font this page
+    // will ever need has already loaded: a family the browser hasn't
+    // matched against any rendered text yet stays `unloaded` and is only
+    // requested once something on the page actually needs it, which can
+    // happen well after the first `ready` resolution (measured directly on
+    // /work/multimodal-fashion-recommender: several of `document.fonts`'
+    // entries are `unloaded` at the point `ready` first resolves). A single
+    // `.then(clamp)` — the previous version of this — only ever catches the
+    // first wave, and even re-polling clamp() for a fixed window after that
+    // first wave still raced under the e2e suite's real 4-worker CPU
+    // contention (measured: 2/20 failures at a 60-frame stabilization poll,
+    // same shape as the 1-2/20 this line originally fixed for). `loadingdone`
+    // fires on `document.fonts` every time a font finishes loading, for as
+    // long as this component is mounted — including any later wave — so
+    // re-clamping on that event, not just once after the first `ready`,
+    // covers a font that only gets requested after this component's first
+    // render. Verified: 0/20 across two independent runs after this change,
+    // where the frame-polling version still failed 2/20 each time — see this
+    // PR's body for both reproductions.
     if (document.fonts?.ready) void document.fonts.ready.then(clamp);
-    return () => window.removeEventListener("resize", clamp);
+    document.fonts?.addEventListener("loadingdone", clamp);
+    return () => {
+      window.removeEventListener("resize", clamp);
+      document.fonts?.removeEventListener("loadingdone", clamp);
+    };
   });
 
   if (!info) return <>{children}</>;
