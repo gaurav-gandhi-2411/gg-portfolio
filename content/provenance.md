@@ -1324,3 +1324,44 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
+
+## Wave 15 pipeline proposals — 2026-09-28 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a measurable +6.35pp accuracy gain (skill) and is directly quoted from the README, but lacks a recent date, so it’s not clearly current.; verifier: The draft accurately reflects the specific metrics, confidence intervals, and context (ADR-0041 fix) provided in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:117`
+  Draft: "Improved the Kubernetes resolution predictor’s bucket classifier, boosting accuracy by 6.35 pp over a naive baseline (confidence interval +5.08 to +7.55) after applying the ADR‑0041 stale‑split fix."
+  Suggested provenance ID: `resolution-predictor-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 3/5 — The fact shows a measurable LLM performance result verifiable in the README, but lacks a recent timestamp and is not reflected in the existing copy.; verifier: The draft accurately reflects the specific metrics (10.26/15, 68.4%, -0.245 drop) and the qualitative assessment (accepted trade-off) found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:124`
+  Draft: "Measured the LLM synthesis judge’s regression detection on Kubernetes, achieving a mean score of 10.26 / 15 (68.4%), a 0.245‑point drop from the previous baseline that was accepted as a trade‑off."
+  Suggested provenance ID: `triage-iq-readme`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a measurable improvement in the LLM regression detector, is directly quoted in the README, lacks a recent timestamp, and isn’t already covered in the case study.; verifier: The draft accurately reflects the specific metrics (8.64/15, 57.6%, 8.36/15), the tool context (VSCode), and the qualitative assessment (flat within noise band) found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:125`
+  Draft: "Measured the LLM synthesis regression detector in VSCode, achieving a mean score of 8.64 / 15 (57.6%), which is flat compared to the prior baseline of 8.36 / 15 within the noise band."
+  Suggested provenance ID: `triage-iq-readme`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a verifiable 0.0% fabrication rate, proving reliable LLM synthesis skill, but lacks a timestamp for recency while not duplicating existing copy.; verifier: The draft accurately reflects the source data, including the 0.0% rate, 53 attempts, Kubernetes context, and the specific ADR-0044 gate reference without adding unsupported claims or tone drift.)
+  Source: `README.md:128`
+  Draft: "Measured a zero-percent fabrication rate across 53 LLM-generated Kubernetes synthesis attempts, meeting the hard zero-tolerance gate (ADR-0044)."
+  Suggested provenance ID: `triage-iq-fabrication-rate`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates substantial engineering skill and is directly quoted, but lacks a recent timestamp to confirm currency.; verifier: The draft accurately reflects all specific numbers (7 variants, 22 assets, 20 checks, 111 tests, 34 commits, 60% coverage) and technical details from the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:17`
+  Draft: "Developed and evaluated seven LightGBM model variants across per‑series, cross‑series, per‑category and per‑store granularities, comparing classical baselines, Tweedie vs RMSE loss and recursive vs multi‑horizon evaluation, which revealed counter‑intuitive findings about ensemble diversity. Refactored the entire experiment history into the production‑grade `shelfsense` Python package, adding Dagster orchestration (22 data assets, 20 asset checks), MLflow tracking, Hydra configs, DVC versioning, Pandera schema enforcement, Docker environment and GitHub Actions CI with 111 unit tests and >60% coverage across 34 commits."
+  Suggested provenance ID: `shelfsense-modelling-refactor`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Shows concrete forecasting modeling insight and is verbatim in the README, but lacks a recent timestamp so it isn’t clearly current.; verifier: The draft accurately reflects all specific numbers, feature names, and causal claims present in the source text without introducing unsupported information or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed that a compound‑Poisson (Tweedie) loss was the correct objective, flagged SNAP flags and lag‑7/14/28 as high‑value features, and required hierarchy encodings for store_id, cat_id, and dept_id; this analysis predicted a 68 % zero‑demand rate and a 55 % lumpy/erratic classification, indicating that per‑series classical methods would collapse on the HOBBIES segment and that a cross‑series global model with the right loss would recover the signal."
+  Suggested provenance ID: `readme-eda-implication`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates solid debugging and performance decision skill, is directly quoted, but lacks a recent timestamp, and adds new info not in current copy.; verifier: The draft accurately reflects the specific numbers (442/1,000, 3 hours, 558, ~12 hours), the cause (joblib worker pool), and the conclusion (structural failure of classical methods on sparse series) found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:111`
+  Draft: "Diagnosed that SARIMA fitting crashed after 3 hours at series 442/1,000 due to joblib’s worker pool. Measured that sequentially fitting the remaining 558 series would have taken ~12 hours, confirming that ETS and ARIMA aren’t competitive on sparse HOBBIES series; documented the failure transparently."
+  Suggested provenance ID: `sarima-crash-diagnosis`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — Shows analytical skill and is directly sourced, but lacks a recent timestamp, so it passes with a note on age.; verifier: The draft accurately reflects the source text's specific metrics (0.33–0.38, 5/5), causal explanations (modality dominance, weak confidence), and proposed solution (colour-aware re-ranking) without introducing unsupported claims or tone drift.)
+  Source: `README.md:202`
+  Draft: "Diagnosed that users browsing a single colour across many product types generate the lowest fused similarity scores (0.33–0.38), showing that neither visual nor textual modality dominates and that confidence is weak even though the model retrieves the correct colour (5/5 Black recommendations). Identified a colour‑aware re‑ranking step as a needed improvement for this user archetype."
+  Suggested provenance ID: `readme-fused-similarity-analysis`
+- **gaurav-gandhi-2411/AetherArt** (curator 4/5 — Shows a concrete model‑evaluation skill with a verifiable source, but lacks a recent timestamp, so it’s useful yet not clearly current.; verifier: The draft accurately reflects the source's mention of the 500/1000/1500 sweep, the specific scoring metrics (HPSv2.1 + ImageReward), and the selection of a winning checkpoint, without introducing unsupported claims or tone drift.)
+  Source: `README.md:59`
+  Draft: "Scored checkpoints from 500, 1000, and 1500‑step sweeps with HPSv2.1 and ImageReward, selecting the top‑ranking checkpoint (see the winning‑checkpoint grid)."
+  Suggested provenance ID: `aetherart:checkpoint-eval`
