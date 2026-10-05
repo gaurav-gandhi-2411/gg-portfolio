@@ -163,6 +163,16 @@ async function main() {
       `  ${result.label}: ${result.rows.length} measured, ${failing.length} failing, ${errored.length} errored`
     );
   }
+
+  // Exit non-zero on any overflow OR any navigation/measurement error. Before this the script
+  // exited 0 whatever it found, so a wrapper (or a person trusting `$?`) read an overflowing or
+  // half-unmeasured site as clean; an errored row is "could not verify", which must fail too.
+  const bad = results.flatMap((r) => r.rows).filter((r) => r.pass === false || r.error);
+  if (bad.length > 0) {
+    console.error(`
+FAIL: ${bad.length} route×width combination(s) overflowing or errored`);
+    process.exitCode = 1;
+  }
 }
 
 await main();
