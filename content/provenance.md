@@ -207,9 +207,11 @@ claim made.
 
 ### ReviewIQ
 
+**Copy consistency pass (2026-10-05, fix/reviewiq-site-copy-hindi-models):** site copy aligned to review-iq's current source of truth. Re-verified against `review-iq/eval/results.json` (blob `c3f3e43dbcd65d1a28a28441ac462ead9ea552bf`, `generated_at 2026-09-19T21:59:11Z`, main at `3be568b8a572430cd2a4b2d6d3bc8f90986f501a`): `groq_model_small openai/gpt-oss-20b`, `groq_model_large openai/gpt-oss-120b`, `per_language` has only `en` (n=27) and `hi-en` (n=16), `overall_ci_95` n=43 [0.7324, 0.8294]. `README.md` (blob `e41f1ed17bdb946d4d4313015250cba24a022889`) line 13 and lines 402-417: English and Hinglish supported, Devanagari Hindi NOT supported (retired scope, ADR 0022 `docs/architecture/adr/0022-hindi-retirement.md`, blob `c5d7dffa1ec94b89bc4ca569590ba58eb0529686`); line 269: primary LLM `openai/gpt-oss-20b` / `openai/gpt-oss-120b`; lines 135-137, 207: llama models retired. Removed "Hindi" as a supported language and the llama model names from `content/products.ts` and `content/case-studies/reviewiq.ts`; the caveat row is now framed as retired scope, and `content/metrics.json`'s `value` dropped "(threshold 76%)" (it renders on the OG image and non-figure cards; the gate now appears only beside the CI). Guarded by `lib/reviewiq-copy.test.ts`. Résumé files untouched (still carry the old 83.8%/Hindi wording; GG owns them).
+
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; gate 76% only ever beside the CI | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -496,7 +498,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `reviewiq:cassette-ci` | Cassette-replay CI keyed on sha256(model+prompts); zero live LLM calls | `eval/README.md:5-16,52-57` |
 | `reviewiq:urgency-rubric` | Urgency rewritten tone→signal-based; "poor fit" pattern-match bug diagnosed via cassette replay | `PROMPTS.md:162-192,79-128,7-56,248-251` |
 | `reviewiq:authenticity` | Authenticity on 40 fixtures: P/R/F1 = 1.000, labeled "a starting calibration" | `README.md:151-157`, `docs/compliance.md:74-87` |
-| `reviewiq:gold-label-caveat` | hi/hi-en gold labels LLM-generated, "not published-credible"; gap mostly benchmark-label noise | `spec.md:11-13`, `PROMPTS.md:38-43` |
+| `reviewiq:gold-label-caveat` | Devanagari Hindi is retired scope (not supported, ADR 0022); Hinglish gold labels LLM-generated, "not published-credible"; gap mostly benchmark-label noise | `spec.md:11-13`, `PROMPTS.md:38-43` |
 
 ### Multimodal Fashion Recommender
 
