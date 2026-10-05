@@ -268,6 +268,17 @@ export function MetricProvenance({
           // both text children below forces a break inside an otherwise
           // unbroken token instead of letting it run past the box —
           // fixes the true cause; see the two className additions below.
+          // Closed = a zero-width, overflow-hidden, borderless box (hardening
+          // for the intermittent ~1-2px overflow on /work/multimodal-fashion-
+          // recommender at 375px). A closed panel used to keep its full w-72
+          // box and rely on the JS clamp above to stay inside the viewport,
+          // but that clamp only runs after hydration: before it, with the
+          // real web fonts swapped in, the invisible box hung 1.75px past the
+          // right edge and any measurement landing in that window saw real,
+          // scrollable overflow. Size and border now apply only while open
+          // (opacity is the only transitioned property, so the snap is
+          // invisible), which makes the closed state fit by construction;
+          // the clamp re-runs on open because this effect runs every render.
           // max-h + overflow-y-auto, gated to data-open=true only
           // (production audit, 2026-08-22): the longest sourceText entries
           // could grow tall enough to overlap the next metric down on a
@@ -278,8 +289,8 @@ export function MetricProvenance({
           // check reads computed overflow regardless of the opacity-0/
           // pointer-events-none visual hiding below, so an unconditional
           // overflow-y-auto flagged every closed panel on every route.
-          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-72 max-w-[calc(100vw-3rem)] rounded-lg border p-4 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
-          "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:max-h-64 data-[open=true]:overflow-y-auto"
+          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-0 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border-0 p-0 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
+          "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:max-h-64 data-[open=true]:w-72 data-[open=true]:overflow-y-auto data-[open=true]:border data-[open=true]:p-4"
         )}
       >
         <p className="text-muted-foreground font-mono text-[11px] tracking-eyebrow uppercase">
