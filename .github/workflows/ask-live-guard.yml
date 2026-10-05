@@ -1,0 +1,94 @@
+# Required check `ask-live-guard`: a PR that changes any package /api/chat depends on must pass a
+# LIVE /api/chat request against that PR's own Vercel preview before it can merge.
+#
+# WHY: refresh-2026-09 S1 / PR #255. @huggingface/transformers 4.3.0 (a green Dependabot PR) started
+# loading onnxruntime-node via a dynamic createRequire(), which Next's file tracer cannot see, so
+# the deployed function lacked onnxruntime-node and /api/chat returned 503 embeddings_unavailable
+# for every visitor for ~7 hours. build + e2e + the nft trace gate all passed: none of them ever
+# runs the DEPLOYED function. Only a request to a real deployment can.
+#
+# DESIGN (also in the PR body that introduced this):
+# - Runs on EVERY pull_request, never path-filtered: a required check that is skipped by a path
+#   filter reports nothing and blocks unrelated PRs forever. Instead the detector decides whether
+#   the check is applicable and a non-applicable run passes immediately.
+# - Applicability = base vs head diff of the guarded packages (scripts/ask-guard/guarded-packages.json)
+#   in package.json AND package-lock.json, so a lockfile-only transitive bump counts.
+# - Applicable: wait (<= 15 min) for the GitHub Deployments API to report a successful Preview
+#   deployment for the head SHA, then POST the chat-canary's question to <preview>/api/chat and
+#   require HTTP 200 + grounded, non-empty answer. Timeout, ambiguity, failed deployment, any
+#   non-200 or refusal = red (rule 98a: could not verify means deny).
+# - Previews are publicly reachable (curl-verified): no protection-bypass secret. Job name is the
+#   stable required-check context.
+
+name: Ask live guard
+
+on:
+  pull_request:
+
+concurrency:
+  group: ask-live-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  ask-live-guard:
+    name: ask-live-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout (PR head, full history for merge-base)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Detect whether this PR changes a guarded /ask package
+        id: detect
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          # merge-base, not base tip: only what THIS PR changes, even if the base has moved on.
+          MB=$(git merge-base "$BASE_SHA" HEAD)
+          echo "merge-base: $MB"
+          git show "$MB:package.json" > "$RUNNER_TEMP/base-package.json"
+          git show "$MB:package-lock.json" > "$RUNNER_TEMP/base-package-lock.json"
+          node scripts/ask-guard/detect.mjs \
+            --base-pkg "$RUNNER_TEMP/base-package.json" \
+            --base-lock "$RUNNER_TEMP/base-package-lock.json" \
+            --head-pkg package.json \
+            --head-lock package-lock.json
+
+      - name: Not applicable
+        if: steps.detect.outputs.applicable == 'false'
+        run: echo "ask-live-guard: not applicable - no /ask-relevant package changed in package.json or package-lock.json. Passing."
+
+      - name: Wait for this PR's Vercel preview
+        id: preview
+        if: steps.detect.outputs.applicable == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ask-guard/preview.mjs wait-preview
+
+      - name: Live /ask request against the preview
+        if: steps.detect.outputs.applicable == 'true'
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
+        run: node scripts/ask-guard/preview.mjs probe "$PREVIEW_URL"
+
+      # Catches a future edit that lets the `applicable` output go missing while detect exits 0.
+      - name: Require a decided applicability
+        if: always() && steps.detect.outputs.applicable != 'true' && steps.detect.outputs.applicable != 'false'
+        run: |
+          echo "::error::detector produced no applicability decision; failing closed"
+          exit 1
