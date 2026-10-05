@@ -293,6 +293,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # measure-overflow.mjs used to exit 0 on any overflow or navigation error. This drives it
+      # against a local planted-overflow server and asserts exit codes 0 / 1 / 1.
+      - name: Overflow script exit-code smoketest
+        run: node scripts/measure-overflow.smoketest.mjs
+
       - name: Build
         run: npm run build
 
