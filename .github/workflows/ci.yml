@@ -260,6 +260,9 @@ jobs:
       - name: content-pipeline llm.mjs forced-error self-test
         run: node scripts/content-pipeline/llm.smoketest.mjs
 
+      - name: Chatbot-index hook covers every builder input
+        run: node scripts/chatbot/hook-coverage.smoketest.mjs
+
       - name: Build
         run: npm run build
 
