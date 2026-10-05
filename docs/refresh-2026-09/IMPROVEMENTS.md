@@ -53,7 +53,7 @@ Decision by GG (repo owner), relayed by orchestrator: the résumé is produced b
 | A8 resume-lint smoketest wired into CI | shipped (red proof run 37287493015, green 37287536601) | #277 |
 | A9 measure-overflow exits non-zero | shipped | #278 |
 | A10 error prefix names the right provider | shipped | #279 |
-| Lighthouse sub-90 diagnostics | shipped after live proof (run 37284493137: slow page 52 → diagnostics; control 93 → none; error URL → exit 1) | #260 |
+| Lighthouse sub-90 diagnostics | shipped after live proof (run 37284493137: slow page median 52 → diagnostics, control 93 → none; separate run 37284836762: error URL → exit 1) | #260 |
 | mmfr 375px overflow (2nd source: closed provenance panel kept its box until hydration) | shipped; 152/200 → 0/200 failures | #276 |
 | A3 pin embedding model revision | blocked on the index decision (#273 vs #274) | |
 | A5 merge-gate vs cancelled runs | open; additionally `merge_gate.py` reported ELIGIBLE for #278/#279 while their pull_request-event `e2e` was red (it appears to read the green push-event duplicate). Lives in GG's claude-config; needs GG | |
