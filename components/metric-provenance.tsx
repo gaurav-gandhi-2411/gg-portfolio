@@ -290,7 +290,7 @@ export function MetricProvenance({
           // pointer-events-none visual hiding below, so an unconditional
           // overflow-y-auto flagged every closed panel on every route.
           "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-0 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border-0 p-0 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
-          "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:max-h-64 data-[open=true]:w-72 data-[open=true]:overflow-y-auto data-[open=true]:border data-[open=true]:p-4"
+          "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:max-h-64 data-[open=true]:w-72 data-[open=true]:overflow-x-auto data-[open=true]:overflow-y-auto data-[open=true]:border data-[open=true]:p-4"
         )}
       >
         <p className="text-muted-foreground font-mono text-[11px] tracking-eyebrow uppercase">
