@@ -40,10 +40,6 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/chat": [
       "./node_modules/onnxruntime-node/bin/**/*",
-      "./node_modules/onnxruntime-node/package.json",
-      "./node_modules/onnxruntime-node/dist/**/*",
-      "./node_modules/onnxruntime-common/package.json",
-      "./node_modules/onnxruntime-common/dist/**/*",
     ],
   },
 };
