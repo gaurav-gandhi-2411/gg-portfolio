@@ -2,14 +2,22 @@ import { refreshableMetric } from "@/lib/metrics";
 import type { Product } from "./types";
 
 /**
- * "Live" = has a public liveUrl or a published PyPI package — matches
- * content/provenance.md's `derived:products-live-count` definition exactly.
+ * "Live" = has a public liveUrl — the exact field components/project-card.tsx
+ * checks to render a card's "Live ↗" link, so this count can never again
+ * exceed the number of cards that actually show that link (F13: it
+ * previously also counted pypi-only entries, which get an install-command
+ * box, not a "Live ↗" link, and the count silently drifted to "12 live"
+ * against 9 real links once a second and third PyPI package shipped).
+ * PyPI packages are real ships but a different claim ("installable", not
+ * "has a live demo") — see content/provenance.md's
+ * `derived:products-live-count` entry for the full definition.
  * Repo-only entries (e.g. ShelfSense) still get a card but don't count here.
- * Single source of truth so the hero stat can never silently drift from the
- * actual product list (see components/sections/hero.tsx).
+ * Single source of truth so this stat can never silently drift from the
+ * actual product list (see app/projects/page.tsx and
+ * components/sections/work.tsx).
  */
 export function liveProductCount(list: Product[]): number {
-  return list.filter((p) => Boolean(p.liveUrl) || Boolean(p.pypi)).length;
+  return list.filter((p) => Boolean(p.liveUrl)).length;
 }
 
 /**
@@ -157,13 +165,13 @@ export const products: Product[] = [
     categories: ["llm-agents"],
     techChips: ["FastAPI", "Groq", "Tiered routing"],
     metric: refreshableMetric("reviewiq:extraction-eval"),
-    figure: { kind: "bar", pct: 78.6, valueText: "78.6% (threshold 76%)" },
+    figure: { kind: "bar", pct: 78.6, valueText: "78.6%" },
   },
   {
     slug: "gold-rate-tracker",
     name: "Gold Rate Tracker",
     tagline:
-      "A PWA that tracks 22K gold rates in India and predicts tomorrow's, shipping the plain baseline because the model I trained never beat it.",
+      "A PWA that tracks India's 22K gold rate and ships an honest naive flat-hold range, not a forecast, because the ML model I trained never beat that baseline.",
     liveUrl: "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/gold-rate-tracker",
     categories: ["forecasting", "evals-research"],
@@ -228,5 +236,22 @@ export const products: Product[] = [
     categories: ["retrieval", "forecasting", "llm-agents"],
     techChips: ["Groq", "Prophet", "IsolationForest"],
     metric: refreshableMetric("expense-tracker:tests"),
+  },
+  {
+    // F12 (2026-09-23): appended at the end, not re-scored against the
+    // wave-13 four-axis depth rubric (reports/wave13-autonomy-density-
+    // 2026-07-25.md) — out of scope for this addition, see provenance.md.
+    slug: "eval-defect-bench",
+    name: "eval-defect-bench",
+    tagline:
+      "A held-out benchmark for a class of silent-verdict-degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all failed a pre-registered viability gate.",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/eval-defect-bench",
+    categories: ["evals-research", "llm-agents", "tooling"],
+    techChips: ["AST", "Ollama", "Frontier judge"],
+    // No metric badge: the honest numbers (0/3 detectors passed the
+    // pre-registered gate) have no `.portfolio/metrics.json` manifest in
+    // that repo for the weekly refresh to read — same reasoning as
+    // DealHunter's own "no metric badge" note above. Sourced instead in
+    // the case study's results rows.
   },
 ];

@@ -3,6 +3,7 @@ import { adkTracegauge } from "./adk-tracegauge";
 import { aetherart } from "./aetherart";
 import { agentgauge } from "./agentgauge";
 import { dealhunter } from "./dealhunter";
+import { evalDefectBench } from "./eval-defect-bench";
 import { expenseTracker } from "./expense-tracker";
 import { goldRateTracker } from "./gold-rate-tracker";
 import { mmfr } from "./multimodal-fashion-recommender";
@@ -34,4 +35,5 @@ export const caseStudies: Record<string, CaseStudy> = {
   [tracegauge.slug]: tracegauge,
   [adkTracegauge.slug]: adkTracegauge,
   [expenseTracker.slug]: expenseTracker,
+  [evalDefectBench.slug]: evalDefectBench,
 };

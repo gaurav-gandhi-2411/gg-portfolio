@@ -63,9 +63,9 @@ sources: `reports/resume-rework-2026-07-17.md`.
 |---|---|---|
 | `resume:indium-ds-docunderstanding` | "50M+ documents", "144 A100 GPUs", "$10M+ in annual cost savings", "95%+ field accuracy" | Resume PDF p.1, Indium Software → Data Scientist (Jun 2024–May 2025), bullet "Document-Understanding Transformer at Production Scale" |
 | `resume:indium-senior-vit` | "~70%" | Resume PDF p.1, Indium Software → Senior Data Scientist (Uber AI via Indium), ViT dual-threshold verification bullet: "Automated roughly 70% of earner document verification". |
-| `derived:products-live-count` | "N live AI products" (currently 9) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Now computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` OR `pypi` field (8 live web demos + 1 published PyPI package = 9; ShelfSense is repo-only and excluded, though still shown as a card). One function is the single source of truth — the number can never drift from the array again. **Retired from the hero at GG's launch review** — the hero's own stat row duplicated `/projects`' "N projects · N live today" line and, worse, sat alongside `HeadlineStats`' $10M+/~70%/50M+ row with no explanation of why two stat rows disagreed. `liveProductCount()` stays; it is still what `/projects` and `app/projects/page.tsx` read. |
+| `derived:products-live-count` | "N projects · N live" (currently 14 projects · 9 live) | Mechanically derived as of 2026-07-16 — was previously a hand-typed `"9"` string in `content/site.ts` that could silently drift from the actual product list (a wave-4 review found a design exploration computing "10" from a naive `products.length`, which is what surfaced this). Computed at build time via `liveProductCount()` in `content/products.ts`: entries with a set `liveUrl` field only — the exact field `components/project-card.tsx` checks to render a card's "Live ↗" link, so the count and the visible links can never disagree. ShelfSense and pypi-only entries (AgentGauge, tracegauge, adk-tracegauge) are repo/install-only and excluded, though still shown as a card. **F13 (2026-09-23):** the definition previously also counted a set `pypi` field ("liveUrl OR pypi"), which was correct when only one product (AgentGauge) had a pypi field (8 web demos + 1 package = 9, matching 9 real "Live ↗" links at the time) but silently drifted to "12 live" against 9 cards once tracegauge and adk-tracegauge shipped as pypi-only packages with no liveUrl — pypi packages get an install-command box on the card, never a "Live ↗" link. Fixed to count `liveUrl` alone, the single field both the stat and the card's link read. One function is the single source of truth — the number can never drift from the array again. **Retired from the hero at GG's launch review** — the hero's own stat row duplicated `/projects`' "N projects · N live today" line and, worse, sat alongside `HeadlineStats`' $10M+/~70%/50M+ row with no explanation of why two stat rows disagreed. `liveProductCount()` stays; it is still what `/projects`, `app/projects/page.tsx`, and `components/sections/work.tsx` read. |
 | `derived:warmer-puzzle-count` | "N+ daily Warmer puzzles shipped" (wave 5, replaces the retired 50M+/$10M+ employer-derived hero stats) | Live server fetch, not a hand-typed number: `getWarmerPuzzleNumber()` (`lib/live-data.ts`) reads the public `mindmeld-payloads` manifest (`raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json`), same source and function already used and verified in wave 3 (`reports/wave3-live-stats-budget-2026-07-12.md` — confirmed Puzzle #31 on 2026-07-12). ISR-revalidated every 6h, fails soft to `"—"` in `components/sections/hero.tsx` if the manifest is unreachable — never a stale or fabricated number. |
-| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `preprint-pending`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
+| `derived:research-paper-count` | "1 research paper in progress" | `researchPaperCount(researchPapers)` in `content/research.ts` — `researchPapers.length` against the single array already sourced in this file (the AgentGauge paper, `agentgauge:paper-md`, status `working-paper`). Mirrors `liveProductCount`'s pattern: one function, one array, can't drift. **Retired from the hero in wave 10** (GG's feedback on the stat set) — the count function remains for potential reuse. |
 | `derived:career-years` | "N years in data science & ML" (currently 5) | Computed at build/ISR time in `components/sections/hero.tsx` `careerYears()`: whole years elapsed since Jul 2021, the start of the first data-science role on the resume (TCS Data Engineer, "Jul 2021 – Jul 2022" — `content/experience.ts` dateRange, itself resume-sourced via `resume:tcs-pipelines`). Same drift-proofing rationale as `derived:products-live-count`: a computed floor, never a hand-typed number that ages. **Retired from the hero at GG's launch review**, same PR as `derived:products-live-count` above — explicitly named in his feedback as a number that was agreed to be dropped and came back. `careerYears()` is deleted with its only caller rather than kept for reuse; nothing else on the site states career length as a number. |
 
 ## About / skills
@@ -97,7 +97,7 @@ Experience" section.
 
 | ID | Claim | Source |
 |---|---|---|
-| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16` — ships as `preprint-pending`; no Tier-2 paper found anywhere in the repo) |
+| `agentgauge:paper-md` | Paper title + abstract, "Tool-Description Quality Is Not One Axis" | `agentgauge/docs/paper/paper.md` lines 1, 7–13 (full draft + compiled LaTeX/PDF exist; arXiv ID is an explicit `TO FILL after upload` placeholder in `README.md:16`, and neither paper has been submitted anywhere — ships as `working-paper`; no Tier-2 paper found anywhere in the repo) |
 
 ## Products
 
@@ -209,7 +209,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -232,6 +232,103 @@ repo's part — the 2026-07-06 figures were correct as of that date. `content/me
 homepage card figure were all updated to the current numbers; the per-language label narrowed
 from "en/hi/hi-en" to "en/hi-en" to match the report's own current shape.
 
+**Step 1 (2026-09-24, single source of truth):** cross-checked `eval/report.md` against
+`review-iq/eval/results.json` (`generated_at: 2026-09-19T21:59:11Z`, `git_sha 5c5c8e0`) --
+both agree: `overall_score: 0.7859851844649027` (78.6%), `threshold: 0.76`, `passed: true`,
+`overall_ci_95.n: 43` (`per_language.en.n: 27`, `per_language.hi-en.n: 16`). The retired
+83.8% figure referenced above is review-iq's own v2.3/llama-era measurement from
+2026-07-06 (n=49, superseded by the 2026-09-19 gpt-oss re-record) -- not a citation error,
+a genuine re-measurement, and not to be conflated with the current 78.6%/n=43 headline. The
+n=43 count and the 2026-09-19 eval date are now stated directly in the rendered card
+(`content/products.ts` figure caption via `content/metrics.json`'s label) and case-study
+result row (`content/case-studies/reviewiq.ts`'s `detail` field), not just in this citation.
+
+**Step 2 (2026-09-24, GG's explicit display-wording decision):** the public display for this
+metric is standardized site-wide to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)", with
+"gate 76%" permitted only when it renders alongside that CI, never alone. Re-verified against
+`review-iq/eval/results.json` directly (`overall_ci_95.lower: 0.7323872930973655`,
+`.upper: 0.8293967579473885`, rounded to 73%/83%) -- unchanged from Step 1's source, this is a
+wording/format correction, not a re-measurement. Three changes: (1)
+`content/case-studies/reviewiq.ts`'s results row now reads the exact string above, and its
+per-language accuracy breakdown ("en 78.2% / hi-en 79.3%") is removed from public copy
+entirely -- per-language accuracy numbers no longer appear on any public page; (2)
+`content/metrics.json`'s `label` for `reviewiq:extraction-eval` was rewritten from
+"en/hi-en, n=43, 2026-09-19" to "95% CI 73-83%, n=43, 2026-09-19" (the "en/hi-en" per-language
+marker dropped, the CI added) -- `value` itself is untouched, still anchored to
+`eval/report.md:5`'s exact tokens for the cited-line freshness check; (3)
+`content/products.ts`'s homepage bar-figure `valueText` was narrowed from
+"78.6% (threshold 76%)" to "78.6%" -- that figure is a fixed-width SVG label with no room for
+the CI text, and `scripts/check-card-consistency.mjs`'s Check B requires its numbers to stay a
+subset of `metrics.json`'s own `value`, so the gate reference was dropped there rather than
+risk it rendering alone; the full CI/gate context is still one tap away via the row's own
+provenance disclosure and stated in full on the case-study page.
+
+**Step 3 (PR #242, 2026-09-24, GG's explicit call):** Step 2's `content/metrics.json` `label`
+edit dropped the word "eval" before the date -- it shipped as "95% CI 73-83%, n=43,
+2026-09-19" while `content/case-studies/reviewiq.ts`'s own results row (also written in Step
+2, same day) reads "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)". That is a same-project
+wording mismatch between the projects/home card's figcaption (sourced from `label`) and the
+case-study page, invisible to `check-card-consistency.mjs` (numeric-token comparison only,
+does not compare prose) and to `check-metric-freshness.mjs` (`label` is not cited-line-checked).
+`label` corrected to "95% CI 73-83%, n=43, eval 2026-09-19" to match the case study exactly, so
+the two surfaces read identically. No number changed. Also confirmed by direct inspection of
+the built HTML that the fix in question was cosmetic, not a missing-information gap: the bar
+figure's `<svg role="img">` already carries `aria-label="{label}: {valueText}."`, so the full
+CI text was always in the accessible name even while the visible `<figcaption>` sat one word
+short of it (`aria-hidden="true"` on the figcaption is intentional and unrelated to this fix,
+see `components/eval-figure.tsx`'s own comment).
+
+Verified via the repo's Docker Playwright visual-regression procedure (never assumed from char
+count): the corrected 36-char label DID wrap to two lines on Linux CI on `/projects` (both
+widths) and `/projects/llm-agents` at 390px -- `home` stayed under the suite's 1%
+`maxDiffPixelRatio` tolerance. The wrap itself is accepted (GG's exact wording is mandatory,
+and a two-line caption is a normal working layout in this fixed-13rem figure box); what was
+fixed is that the raw wrap split inside the date ("2026-09-\n19"). The three hyphens in
+"2026-09-19" were changed to U+2011 NON-BREAKING HYPHEN (renders and is announced identically
+to "-", invisible to `check-no-em-dash.mjs` and to `check-card-consistency.mjs`'s digit-only
+token extraction) so the wrap now falls on the word boundary before "eval" instead. All three
+affected Linux baselines (`projects-390`, `projects-1440`, `projects-llm-agents-390`) were
+regenerated in this PR via the same Docker mechanism; the full 54-test visual-regression suite
+was re-run afterward and passed clean.
+
+**Step 4 (PR #242, 2026-09-24, coordinator correction):** the U+2011 non-breaking hyphen
+substitution in Step 3 was reverted. `content/metrics.json` is a data source, not a rendering
+detail -- its `label` field feeds the chatbot index, is copy-pastable by anyone reading the
+JSON directly, and is the intended target of an exact-string gate for the canonical
+"78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" string; a non-ASCII hyphen there makes those
+surfaces byte-for-byte different from the plain-ASCII case-study string even though the two
+render and sound identical. This is the same failure class that hit gg-portfolio PR #225,
+where a PDF text-extraction step (poppler) silently dropped a U+2011 from the word
+"sentence-transformers". `label` is back to plain ASCII hyphens throughout. The mid-date wrap
+is now prevented at the rendering layer instead: `components/eval-figure.tsx`'s caption
+renderer wraps any ISO-date token (`/\d{4}-\d{2}-\d{2}/`) in a `<span
+className="whitespace-nowrap">`, generically, for every card's caption text -- no
+per-metric special-casing, and the sibling `<svg role="img">`'s `aria-label` content is
+unaffected (still the plain, unwrapped string).
+
+**Step 5 (PR #242, 2026-09-24):** Step 4's own claim that "Linux baselines regenerated again
+to match" was premature -- local Docker-based regeneration was attempted but blocked by a
+severe, pre-existing host disk-space condition (the local machine's `C:` drive at 100%
+capacity, ~5-9GB free of 952GB throughout this session), which caused `npm ci` inside a
+throwaway Docker copy to either silently truncate or run for 19+ minutes without completing
+(vs. ~6 minutes measured earlier in the same session before the disk filled). Rather than
+guess the baselines were still correct, this PR was pushed as-is and its own `e2e` CI check
+(GitHub Actions, disk-unconstrained) was used as the real verification -- it failed on exactly
+three routes: `projects @ 390px`, `projects-llm-agents @ 390px`, `work-reviewiq @ 390px`. That
+failure also surfaced a SECOND, independent bug: this branch's merge of `origin/main` (bringing
+in PR #241/#243) had resolved a binary conflict on `work-reviewiq-390-desktop-linux.png` by
+taking `origin/main`'s side -- but `main` has never had this branch's `reviewiq.ts` content
+fix at all, so its baseline still showed the pre-Step-1 wording ("78.6% vs. a 76% CI gate,
+PASS" with the full en/hi-en per-language breakdown), not this PR's canonical string. Fixed by
+downloading the failed CI run's own `playwright-report` artifact (`gh run download`), decoding
+its embedded base64 zip (`<template id="playwrightReportBase64">`) to get `report.json`'s
+attachment map, and using the run's own "-actual.png" images (the real, correct, Linux-rendered
+current code) directly as the new committed baselines for all three routes -- verified visually
+before committing (the case-study page's actual image now reads the exact canonical string;
+`/projects` and `/projects/llm-agents`'s actual heights, 6074px and 3436px, match a completely
+independent verification earlier in this same session using the U+2011-era rendering, which is
+the expected cross-check since both approaches force an identical line-break point).
+
 **Wave 2 link-check finding:** the card's live URL previously pointed at the bare API root
 (`https://review-iq-ajjrytb3na-el.a.run.app`), which 404s — the FastAPI service has no root
 route handler. `/docs` (interactive Swagger UI) returns 200 and is genuinely browsable/
@@ -251,8 +348,8 @@ used the HF Space URL as the card's live link, not an aspirational Cloud Run URL
 
 | ID | Claim | Source |
 |---|---|---|
-| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE 251.99 vs. 293.10 (naive wins by ~16%), Wilcoxon p=0.0001, direction accuracy 51.96%, 204-fold backtest | `gold-rate-tracker/data/backtest.json@d41372a` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`) and had already moved to 209 folds/different numbers by the time issue #45 was filed, causing a false POSSIBLE_DRIFT against the pinned claim's actual numbers. Commit `d41372a` (2026-07-26T05:26:23Z, `chore: update backtest results [skip ci] (#436)`): `mae_5d_avg_naive: 251.99` vs `mae_5d_avg_chronos: 293.1`, `wilcoxon_signed_rank_p: 0.0001`, `dir_acc_5d_chronos: 0.5196` |
-| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 204-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
+| `gold-rate-tracker:headline` | Naive flat-hold beats the ML model (Chronos-Bolt-Tiny) — MAE (₹/g) 249.24 vs. 292.14 (naive wins by ~17%), Wilcoxon p≈0 (rendered `p < 0.001`), direction accuracy 51.2%, 209-fold backtest | `gold-rate-tracker/data/backtest.json@ad42160` — pinned per this file's "Pinned refs" note above: `data/backtest.json` is bot-refreshed continuously (`weekly-backtest.yml`, 243 folds as of 2026-09-23) so an unpinned number goes stale within days. Repinned wave refresh-2026-09 (F3/F4, 2026-09-23) to `ad4216086d10a63bb93ed3107c9ccee429cb5fa0` — the exact commit the product repo's own README now cites as its frozen headline citation, so every surface (this row, `content/metrics.json`, the case study) agrees with the same artifact instead of three different snapshots. Commit `ad42160` (`backtest_run_at` 2026-08-02T05:18:28Z): `mae_5d_avg_naive: 249.24` vs `mae_5d_avg_chronos: 292.14`, `wilcoxon_signed_rank_p: 0.0`, `dir_acc_5d_chronos: 0.512` |
+| `gold-rate-tracker:original-decision` | The original 165-fold walk-forward backtest (2026-05-19) that triggered shipping naive as the headline: Chronos-Bolt-Tiny 10.4% worse than naive on MAE, Wilcoxon p=0.0089 — a distinct, deliberately historical measurement from `gold-rate-tracker:headline`'s current 209-fold snapshot, not a citation gap. Already traced in this file's wave-19 investigation note below; this row just gives it its own citable ID instead of sharing `gold-rate-tracker:headline`'s pin, which the freshness checker was (correctly) never going to find a 2026-05-19 p-value inside | `gold-rate-tracker/docs/adr/012-naive-headline-chronos-companion.md@3ec3660d` (committed, main tree, 2026-05-19): `Wilcoxon signed-rank p` = 0.0089 |
 
 This project's own design principle is to ship the honest baseline over a model that loses to
 it (direction signal is still flagged "DARK" at both horizons in
@@ -317,7 +414,7 @@ for that one stat, never a broken build or a stale number presented as current.
 | Live stat | Source | Verified behavior |
 |---|---|---|
 | Warmer "Puzzle #N live today" | `raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json` — 1-indexed position of today's UTC date in the `en.days` array | Confirmed 2026-07-12: manifest shows 60 precomputed days from 2026-06-12; today's index computes to **Puzzle #31**, matching the launch-date math (30 days elapsed + 1) |
-| Per-package "vX.Y.Z · N releases · N downloads last week" on any card with a `pypi` entry | `pypi.org/pypi/{package}/json` (`info.version`, `Object.keys(releases).length`) and `pypistats.org/api/packages/{package}/recent` (`data.last_week`), keyed by that product's own `pypi.packageName` | Confirmed 2026-07-12 for tracegauge: `last_week: 32`, matching the rendered build. **Re-confirmed 2026-08-18 with two packages present, which is the case the first version got wrong:** `getTracegaugeDownloads()` fetched one hard-coded package and the call site rendered it for any product with a `pypi` field, so adk-tracegauge's card would have shown tracegauge's download count. Rendered output after the per-package fix: tracegauge `v0.12.0 · 14 releases · 457 downloads`, adk-tracegauge `v0.5.0 · 9 releases · 824 downloads`, each matching its own endpoint |
+| Per-package "vX.Y.Z · N releases · ≈N downloads/week (pypistats, excl. mirrors)" on any card with a `pypi` entry | `pypi.org/pypi/{package}/json` (`info.version`, `Object.keys(releases).length`) and `pypistats.org/api/packages/{package}/overall?mirrors=false` (trailing 7 complete UTC days of the `without_mirrors` series, summed by `lib/live-data.ts`'s `sumTrailingCompleteDays`), keyed by that product's own `pypi.packageName` | Confirmed 2026-07-12 for tracegauge: `last_week: 32`, matching the rendered build. **Re-confirmed 2026-08-18 with two packages present, which is the case the first version got wrong:** `getTracegaugeDownloads()` fetched one hard-coded package and the call site rendered it for any product with a `pypi` field, so adk-tracegauge's card would have shown tracegauge's download count. Rendered output after the per-package fix: tracegauge `v0.12.0 · 14 releases · 457 downloads`, adk-tracegauge `v0.5.0 · 9 releases · 824 downloads`, each matching its own endpoint. **F14 (2026-09-23): the figure was unlabelled raw traffic from `/recent`.** `/recent` has no `mirrors` query argument (confirmed against pypistats' own API docs) and its default is undocumented, so the card now sums pypistats' own documented `without_mirrors` series from `/overall?mirrors=false` instead, and labels the card with which figure it got. If that series is ever empty for a package, the card falls back to `/recent`'s `last_week` and labels it "may include CI" rather than rendering an unlabelled number. Verified live 2026-09-23 (window 2026-09-16 to 2026-09-22 UTC): tracegauge 16, adk-tracegauge 589, agentgauge-harness 36, each summed from `/overall?mirrors=false`'s `without_mirrors` rows |
 | Per-product "shipped Nd/mo/y ago" freshness badge | `api.github.com/repos/{owner}/{repo}/commits?per_page=1` — latest commit's `commit.committer.date`, per public repo referenced in `content/products.ts` | Only computed for products with a public `repoUrl` (Warmer excluded — private repo, uses its puzzle number as the live signal instead) |
 | Shipping log (merged PRs across public repos) | `api.github.com/users/gaurav-gandhi-2411/events/public` — `PullRequestEvent` entries with `payload.action === "merged"` | **Correction during build-testing:** the events API's `PushEvent` payload has no commit-message array in this response shape (just refs/SHAs), and a merged PR's signal is `payload.action === "merged"`, not a `pull_request.merged` boolean as the docs might suggest — verified against the actual live payload, not assumed. Restricted to merged-PR entries only, matching "notable merges" rather than raw pushes |
 
@@ -474,7 +571,7 @@ serves.
 
 | ID | Claim | Source |
 |---|---|---|
-| `adk-tracegauge:pypi` | Installable from PyPI; the displayed version and release count are fetched live, not asserted here | `lib/live-data.ts`'s `getPypiStats` reads `pypi.org/pypi/adk-tracegauge/json` at ISR time (6h) for `info.version` and `Object.keys(releases).length`, and `pypistats.org/api/packages/adk-tracegauge/recent` for `data.last_week`. **Why no version is written down here:** the same endpoint returned `0.4.1` / 8 releases at 2026-08-18T09:10Z and `0.5.0` / 9 releases at 09:16Z, six minutes apart, during the session that added this project. A hand-written version on a package that releases this often is stale on arrival, which is exactly what happened to `tracegauge:pypi` below. Snapshot at the time of writing, for the record only: v0.5.0, 9 releases, first release `0.1.0rc1` uploaded 2026-08-13T16:47Z, 824 downloads in the last week |
+| `adk-tracegauge:pypi` | Installable from PyPI; the displayed version, release count and weekly downloads are fetched live, not asserted here | `lib/live-data.ts`'s `getPypiStats` reads `pypi.org/pypi/adk-tracegauge/json` at ISR time (6h) for `info.version` and `Object.keys(releases).length`, and `pypistats.org/api/packages/adk-tracegauge/overall?mirrors=false` for the trailing 7 complete UTC days of the `without_mirrors` series (falls back to `pypistats.org/api/packages/adk-tracegauge/recent`'s `data.last_week` if that series is ever empty, labelled accordingly on the card, see F14 in the row above). **Why no version is written down here:** the same endpoint returned `0.4.1` / 8 releases at 2026-08-18T09:10Z and `0.5.0` / 9 releases at 09:16Z, six minutes apart, during the session that added this project. A hand-written version on a package that releases this often is stale on arrival, which is exactly what happened to `tracegauge:pypi` below. Snapshot at the time of writing, for the record only: v0.5.0, 9 releases, first release `0.1.0rc1` uploaded 2026-08-13T16:47Z, 589 without-mirrors downloads in the trailing week (2026-09-16 to 2026-09-22 UTC, verified live 2026-09-23) |
 | `adk-tracegauge:quickstart` | 78.2s wall clock from a fresh `pip install --user` to a printed regression verdict, on a bundled demo agent, no API key and no network call | `README.md:19` |
 | `adk-tracegauge:achieved-power` | Every `check` run prints the smallest effect it could reliably (80% power) detect given that run's own observed variance and n, plus an explicit WARNING when the configured floor sits below it | `README.md:41,52,129,338`; `src/adk_tracegauge/_regression.py`'s `minimum_detectable_effect_usd` and its "Achieved statistical power" section |
 | `adk-tracegauge:power-retraction` | A published "99.22% at n=30" power figure was withdrawn after an audit found it rested on one unmeasured cost-variance assumption, and an equally plausible alternative put the same cell near 5%; replaced by two regime-labelled grids rather than a different single number | `README.md:81-83,88-90`; `docs/audit/AC1_SKEW_SENSITIVITY.md`; `docs/audit/Q1A_RECONCILIATION.md` |
@@ -947,8 +1044,9 @@ fails closed on any per-project internal disagreement — see that script's own 
 ## Known gaps / not shipped
 
 - **Headshot:** none provided. Site ships without one (optional per spec).
-- **arXiv IDs for both AgentGauge papers:** not yet assigned for either — Research section ships
-  both entries with `status: "preprint-pending"`, no live arXiv/Scholar link. Flip each
+- **arXiv IDs for both AgentGauge papers:** not yet assigned for either, and neither paper has
+  been submitted anywhere — Research section ships both entries with `status: "working-paper"`,
+  rendered as "Working paper (draft, not yet submitted)", no live arXiv/Scholar link. Flip each
   independently when assigned (separate from Wave 3 "Living portfolio," which is the current
   wave — the original spec's post-arXiv wave 3 is still pending on GG getting real IDs).
 - **Uber-metric confidentiality:** no override received from GG — default applied (publish only
@@ -1079,6 +1177,39 @@ Each proposal below passed all three stages (curator score against `docs/content
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
 
+## Wave refresh-2026-09 Phase C, step 2.4 (2026-09-23) — Gold Rate Tracker cross-surface repin (F3/F4)
+
+**F3 — the fold count disagreed across every surface citing it.** `content/metrics.json`
+(`gold-rate-tracker:headline`) was pinned at 199 folds (its own note already flagged it as
+stale relative to the live file); the case study said 204 folds and "naive wins by ~16%"; the
+profile README said 204 folds with MAE 251.99 vs. 293.10; the product repo's own README had
+moved on to a FROZEN, SHA-pinned citation of 209 walk-forward folds @ commit
+`ad4216086d10a63bb93ed3107c9ccee429cb5fa0` (naive flat-hold ₹249/g avg error vs.
+Chronos-Bolt-Tiny ₹292/g, 17% worse, p≈0). Fetched that exact artifact
+(`data/backtest.json` @ `ad42160`, `backtest_run_at` 2026-08-02T05:18:28Z) directly via the
+GitHub contents API and confirmed it matches the repo README's frozen citation exactly:
+`n_folds: 209`, `mae_5d_avg_naive: 249.24`, `mae_5d_avg_chronos: 292.14` (a 17.21% gap, rounds
+to the README's "17%"), `wilcoxon_signed_rank_p: 0.0`. No discrepancy found, so every site
+surface (`content/metrics.json`, this file's Gold Rate Tracker section above, the case study's
+Results row and inline comment) is now repinned to this same commit with identical numbers —
+the same fix wave-18 (2026-07-31 entry above) applied once already for an internal p-value/
+direction-accuracy mismatch, now applied across surfaces instead of within one file. Left the
+profile README's own 204-fold citation unedited — out of scope for this PR, tracked separately
+for the next profile-README pass, which should reuse the canonical citation block from this
+PR's description verbatim.
+
+**F4 — the site tagline claimed the product predicts prices; it deliberately doesn't.** The
+product repo's README says "No price prediction… Refuses to predict tomorrow's direction" and
+its GitHub description reads "honest flat-hold range (no fake predictions)" — the shipped
+headline forecast is a naive flat-hold (tomorrow = today), not a prediction. `content/products.ts`'s
+tagline said "…tracks 22K gold rates in India and predicts tomorrow's, shipping the plain
+baseline because the model I trained never beat it," which contradicts the product's own
+documented behavior. Reworded to lead with what it does for the user (today's price, tracked)
+and keep the honest-negative-result framing, with no "predicts". Site-wide grep for
+`predicts tomorrow`, `199-fold`, `204-fold`, and the `~16%` gold figure found no other
+occurrences outside the three files fixed here — see this PR's description for the exact grep
+commands and their (clean) output.
+
 ## refresh-2026-09 Phase C — Open source contributions
 
 New `content/open-source.ts`, rendered on the homepage's Open source section and on the
@@ -1103,3 +1234,93 @@ purpose: they are live numbers fetched from the PyPI JSON API at build/ISR time
 (`getPypiStats()` in `lib/live-data.ts`, the same function and fetch already used by every
 product card's PyPI badge), never hand-typed, so there is no static claim here to source — the
 fetch itself is the provenance, and it fails soft to no number rather than a stale one.
+
+## F12 (2026-09-23) — Hinglish SBERT linked to Warmer; eval-defect-bench added
+
+Two entries missing from the site (finding F12), added following the wave-14 reclaim precedent
+(add, source strictly to what was actually read, disclose what wasn't).
+
+### Warmer — Hinglish SBERT model + public benchmark linked, not duplicated
+
+`gauravgandhi2411/hinglish-relatedness-sbert` (the LoRA fine-tune the warmer case study's story
+already narrates — see `warmer:lora-reframe` above) and its companion dataset
+`gauravgandhi2411/hinglish-relatedness-benchmark` are the same model/benchmark already covered by
+Warmer's case study, so no new product card was created — the two Hugging Face pages were added to
+`content/case-studies/warmer.ts`'s `links`, and one new result row cites a claim from the model
+card that wasn't yet on the site: the model's comparison against 7 off-the-shelf alternatives on
+the public benchmark (superseding the older, smaller-sample "leading 7 comparators" mention already
+in `warmer:lora-reframe` with the actual field-leading numbers).
+
+Sources read in full this session: `gauravgandhi2411/hinglish-relatedness-sbert`'s model card
+(`https://huggingface.co/gauravgandhi2411/hinglish-relatedness-sbert/raw/main/README.md`, fetched
+2026-09-23) and `gauravgandhi2411/hinglish-relatedness-benchmark`'s dataset card
+(`https://huggingface.co/datasets/gauravgandhi2411/hinglish-relatedness-benchmark/raw/main/README.md`,
+fetched 2026-09-23). No other file in either repo was read.
+
+| ID | Claim | Source |
+|---|---|---|
+| `warmer:hinglish-public-benchmark` | The model card's own field-leading claim: `hinglish-relatedness-sbert` leads all 7 tested off-the-shelf alternatives (including 2 released after the project's original bake-off) on both metrics, CI-significant in all 14 comparisons, on what the model card itself describes as a "public, scrubbed, 50-secret held-out set" (42 dim1-eligible secrets): dim1 semantic-ranking Spearman **0.675** [95% CI 0.601, 0.741], dim2 cross-language pass-rate **0.740** [0.62, 0.86] | Model card `README.md:50-56,82` ("Evaluation" section, field-leading claim) — fetched 2026-09-23 (verified: 2026-09-23) |
+
+**Model card vs. dataset card — a genuine source discrepancy, disclosed, not reconciled:** the model
+card's "Evaluation" section attributes its field-leading 0.675/0.740 numbers to a "public, scrubbed,
+50-secret held-out set" (`README.md:52`, 42 dim1-eligible secrets per `README.md:82`). The published
+dataset it names as that benchmark, `hinglish-relatedness-benchmark`, describes its own contents as
+**34 secret words across 7 domains** (`README.md:21,36`) and states its own headline dim1 Spearman for
+the same reference model as **0.657** [95% CI 0.569, 0.736] (`README.md:88-90`), not 0.675 — a
+different set size AND a different number, not just a rounding difference. Both cards were fetched in
+full this session (2026-09-23) and neither was edited or reconciled; this row reports the model card's
+own field-leading claim as it states it, and flags rather than resolves the mismatch against the
+dataset card's self-description, since resolving it would require reading the benchmark's own scoring
+script and possibly an unpublished 50-secret superset — out of scope for this addition. The site's
+result row (`content/case-studies/warmer.ts`) discloses the same discrepancy rather than picking a
+side.
+
+**Not added:** the model card's "Production wrapper" section (a build-time, non-fine-tuning generator
+mitigation layered on top of the raw model, already summarized in `mindmeld`'s own docs) was read but
+not added as a new claim — Warmer's case study already covers the fine-tune's story at case-study
+depth, and the wrapper is an implementation detail of the generator pipeline, not a new claim this
+site doesn't already make in substance.
+
+### eval-defect-bench (new project card + case study)
+
+`gaurav-gandhi-2411/eval-defect-bench` — "A held-out benchmark for a class of silent-verdict-
+degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all
+failed a pre-registered viability gate." Given a project card (repo-only, no liveUrl/pypi, so it
+never counts toward `liveProductCount()`) and a full case study, the same treatment every other
+product gets, rather than folding it into the Research section — the Research section's card is
+hardcoded to a paper's arXiv/abstract shape and a single `/work/agentgauge` case-study link
+(`components/sections/research.tsx`), neither of which fits a GitHub benchmark repo with no paper.
+
+Source read in full this session: the repo's `README.md`
+(`gh api repos/gaurav-gandhi-2411/eval-defect-bench/readme --jq .content | base64 -d`, fetched
+2026-09-23). `METHODOLOGY.md`, `TAXONOMY.md`, and the `benchmark/`/`results/` files it references
+were **not** independently read this session — every number below is exactly as the README states
+it, including numbers the README itself attributes to those other files.
+
+| ID | Claim | Source |
+|---|---|---|
+| `eval-defect-bench:gate` | Two pass/fail gates pre-registered before the frontier-judge baseline ran: mechanism-naming (EXACT localization ≥40% AND adjudicated FPR ≤20%) and triage (balanced accuracy ≥70% AND adjudicated FPR ≤15%); 0 of 3 detectors passed either | `README.md:35-38` |
+| `eval-defect-bench:ast` | AST scanner (5 hand-built detectors): 0% recall (0/30 held-out positives), never run against the control set; its 75% training-set recall (the 4 examples it was hand-built from) is explicitly flagged by the README as not a valid generalization comparison | `README.md:25,29-33` |
+| `eval-defect-bench:llm-consensus` | Local LLM consensus (llama3.1:8b + gemma2:9b + qwen2.5:7b, majority vote): 53.3% recall, 36.7% adjudicated FPR, 58.3% balanced accuracy, d-prime 0.42 | `README.md:26` (leaderboard table) |
+| `eval-defect-bench:frontier-judge` | Frontier single judge (blind, isolated function body): 13.3% recall, 6.7% adjudicated FPR, 53.3% balanced accuracy, d-prime 0.39; raw numbers (13.3%/10.0% raw FPR/51.7%/0.17) independently reproduced by transforming `frontier_judge_answers.jsonl` into `scripts/score.py`'s input format and re-running it | `README.md:27` (leaderboard), `README.md:85-107` ("Verification" section, reproduced output block) |
+| `eval-defect-bench:taxonomy` | In-class coverage of the benchmark's own target class (silent verdict degradation): 15/30 (50%), across 3 primary shapes (silent accumulation loss n=6, value not consulted n=5, boundary strips attached data n=4), each cross-referenced against real external `google/adk-python` PRs/issues; one cross-reference, `keras#23420`, merged 2026-09-15 after a contested review resolved with a cross-backend regression test | `README.md:109-135` (defect taxonomy table), `README.md:145-157` (keras#23420 merge detail) |
+
+**Categories:** `evals-research` (primary — the whole repo is a benchmark/methodology artifact),
+`llm-agents` (the evaluated codebase is `google/adk-python`'s agent-evaluation module and two of the
+three baselines are LLM-based detectors), `tooling` (ships a standalone, reusable `scripts/score.py`)
+— the same three-tag pattern AgentGauge already uses for a comparable meta-evaluation/research repo.
+
+**Not scored against the wave-13 four-axis depth rubric** (`reports/wave13-autonomy-density-2026-07-25.md`)
+— appended at the end of `content/products.ts` rather than re-running that comparative exercise
+against the other 14 products, which is out of scope for this addition; a future wave can place it
+properly if the ordering should reflect it.
+
+**Resume pool:** `content/resume-data.json` gained a `proj:eval-defect-bench` entry (not in the
+current docx, same pattern as `shelfsense`/`reclaim`/`agentgauge`/`expense-tracker`/`adk-tracegauge`)
+so `scripts/check-resume-project-coverage.mjs` stays green against the 15-product pool.
+
+**`scripts/refresh-metrics.mjs`:** `eval-defect-bench` is no longer flagged as a new/untracked repo
+now that `content/products.ts` references its `github.com` URL (the script's own
+`referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
+added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
+would otherwise have started flagging.

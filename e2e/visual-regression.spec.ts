@@ -32,13 +32,18 @@ import { warmupConfigs } from "../content/warmup";
  * site's own motion design already commits to providing.
  *
  * Baselines were generated inside the same Playwright Docker image this
- * repo's CI resolves to (mcr.microsoft.com/playwright:v1.62.1-jammy) rather
- * than on a local machine — Playwright's own screenshot comparison is
- * sensitive to OS-level font rasterization, and a Windows-generated
- * baseline does not match an Ubuntu CI runner's actual pixels, gate or no
- * gate. Regenerate the same way after any intentional visual change:
- *   docker run --rm -v "$PWD:/work" -w /work \
- *     mcr.microsoft.com/playwright:v1.62.1-jammy \
+ * repo's CI resolves to (mcr.microsoft.com/playwright:v1.63.0-jammy — pin
+ * this to match whatever @playwright/test resolves to in package.json;
+ * a stale tag fails fast with an explicit version-mismatch error from
+ * browserType.launch, not a silent wrong-browser run) rather than on a
+ * local machine — Playwright's own screenshot comparison is sensitive to
+ * OS-level font rasterization, and a Windows-generated baseline does not
+ * match an Ubuntu CI runner's actual pixels, gate or no gate. Regenerate
+ * the same way after any intentional visual change (CI=1 is required —
+ * the `test.skip(!process.env.CI, ...)` above means this spec silently
+ * no-ops, "0 failed" and 0 baselines written, without it):
+ *   docker run --rm -e CI=1 -v "$PWD:/work" -w /work \
+ *     mcr.microsoft.com/playwright:v1.63.0-jammy \
  *     sh -c "npm ci && npm run build && npx playwright test \
  *       e2e/visual-regression.spec.ts --project=desktop --update-snapshots"
  */
@@ -66,8 +71,8 @@ const ALL_ROUTES = [...STATIC_ROUTES, ...CATEGORY_ROUTES, ...WORK_ROUTES, ...WAR
 
 // Fail closed, not silently: a route list derived wrong (an empty import, a
 // broken path) must not read as "every route passed" because there were no
-// routes to fail. 20 is comfortably under the current real count (3 static +
-// 6 categories + 14 case studies + 3 warmup = 26) with room for either list
+// routes to fail. 20 is comfortably under the current real count (4 static +
+// 6 categories + 15 case studies + 3 warmup = 28) with room for either list
 // to grow or shrink a little without this tripping on noise.
 if (ALL_ROUTES.length < 20) {
   throw new Error(

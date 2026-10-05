@@ -1,0 +1,5 @@
+{
+  "_comment": "Single source of truth for the commit-status contexts scripts/relay-dispatched-ci-status.sh posts onto bot-PR SHAs, standing in for main's branch protection required_status_checks.contexts (which GITHUB_TOKEN cannot read inside Actions -- that read needs admin and used to fail silently, see the relay script's header). This file MUST match main's live branch protection at all times -- .github/workflows/required-checks-drift.yml checks that daily and fails red on any mismatch. If you add/remove a required check in GitHub's branch protection settings, update `contexts` here in the same change, or the next scheduled drift check will fail.",
+  "branch": "main",
+  "contexts": ["build", "e2e"]
+}
