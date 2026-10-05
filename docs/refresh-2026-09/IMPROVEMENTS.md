@@ -39,3 +39,27 @@ This backlog is ranked by expected effect ÷ effort.
 | G5 | Direction A and B branches are behind main: no /research or /work/eval-defect-bench, and no OSS changes. | The overflow sweep covered only 23 routes on each. | Merge main into both before the direction decision, so GG compares them on current content. |
 | G6 | Vercel runtime-log retention is about 1 h on the current plan, so diagnosing production incidents needed a canary body dump. | The runtime-log query returned nothing older than about 1 h. | Keep the canary body and headers printing (shipped in #254). Consider a free log drain only if incidents recur. |
 | G7 | The two expense-tracker repo homepage edits. | The homepage was cleared because the URL is dead (404). | Confirm; the revert value is `https://expense-tracker-tawny-eight-98.vercel.app`. |
+
+## Session 6 status (2026-10-05)
+
+Decision by GG (repo owner), relayed by orchestrator: the résumé is produced by GG directly. No résumé file is edited, regenerated or merged by automation, and résumé-regeneration work is **removed from this backlog** (PR #225 closed; the required changes live in a private, gitignored checklist). The résumé *tooling* items (A2, A8 smoketest wiring) were test-only and are unaffected.
+
+| Item | Status | PR |
+|---|---|---|
+| A1 concurrency per ref | shipped earlier (conc branch) | n/a |
+| A2 resume-select smoketest in CI | shipped earlier | |
+| A4 pre-commit hook covers every index input (+ drift test) | shipped | #275 |
+| A6 hover-tooltip flake | shipped earlier (#262) | #262 |
+| A8 resume-lint smoketest wired into CI | shipped (red proof run 37287493015, green 37287536601) | #277 |
+| A9 measure-overflow exits non-zero | shipped | #278 |
+| A10 error prefix names the right provider | shipped | #279 |
+| Lighthouse sub-90 diagnostics | shipped after live proof (run 37284493137: slow page 52 → diagnostics; control 93 → none; error URL → exit 1) | #260 |
+| mmfr 375px overflow (2nd source: closed provenance panel kept its box until hydration) | shipped; 152/200 → 0/200 failures | #276 |
+| A3 pin embedding model revision | blocked on the index decision (#273 vs #274) | |
+| A5 merge-gate vs cancelled runs | open; additionally `merge_gate.py` reported ELIGIBLE for #278/#279 while their pull_request-event `e2e` was red (it appears to read the green push-event duplicate). Lives in GG's claude-config; needs GG | |
+| A7 mergeable chatbot index (C2) | two variants open, GG to choose | #273 (batch 1, vectors move) / #274 (keeps vectors, freshness floor unsafe on clean merges) |
+
+New findings for GG (not implemented):
+- G8: site content still says "English, Hindi and Hinglish" (content/products.ts, content/case-studies/reviewiq.ts) and names llama models for review-iq; review-iq's eval/README say gpt-oss and Hindi retired (ADR 0022).
+- G9: the TriageIQ case study and provenance.md call the fabrication gate "informational"; the triage-iq README and ADR-0044 say it is a hard gate.
+- G10: `content/resume-metrics.json` `resume_pdf_sha256` does not match the live PDF.
