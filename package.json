@@ -14,7 +14,7 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/functions": "^3.9.9",
+    "@vercel/functions": "^3.9.11",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "docx": "^9.7.2",
