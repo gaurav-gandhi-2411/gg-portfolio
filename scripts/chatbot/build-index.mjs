@@ -42,7 +42,13 @@ const AVAILABILITY_PATH = join(ROOT, "content", "availability.ts");
 const SITE_PATH = join(ROOT, "content", "site.ts");
 const OUTPUT_PATH = join(ROOT, "content", "chatbot", "index.json");
 
-const BATCH_SIZE = 24;
+// One text per forward pass, on purpose. With a padded batch, a chunk's vector
+// depends on the LONGEST other chunk in its batch (measured 2026-10-05: editing
+// one chunk shifted 23 unrelated neighbours, min cosine 0.9916 vs a full
+// rebuild). That would make "reuse unchanged embeddings" differ from a full
+// rebuild and make the index depend on chunk order. Batch size 1 makes a vector
+// a pure function of (model, text), so incremental == full rebuild exactly.
+const BATCH_SIZE = 1;
 
 /** The committed index, or null if absent/unreadable (then everything is embedded). */
 function readPriorIndex() {
@@ -402,14 +408,16 @@ async function main() {
   const { reused, missing } = partitionForReuse(chunks, prior, EMBEDDING_MODEL_ID);
   console.log(
     `Chunked ${chunks.length} records: reusing ${reused.length}, embedding ${missing.length} ` +
-      `in batches of ${BATCH_SIZE}...`
+      `one at a time...`
   );
   const withEmbeddings = [...reused];
   for (let i = 0; i < missing.length; i += BATCH_SIZE) {
     const batch = missing.slice(i, i + BATCH_SIZE);
     const vectors = await embed(batch.map((c) => c.text));
     batch.forEach((c, j) => withEmbeddings.push({ ...c, embedding: vectors[j] }));
-    console.log(`  embedded ${Math.min(i + BATCH_SIZE, missing.length)}/${missing.length}`);
+    if ((i + 1) % 100 === 0 || i + 1 === missing.length) {
+      console.log(`  embedded ${i + 1}/${missing.length}`);
+    }
   }
 
   writeFileSync(
