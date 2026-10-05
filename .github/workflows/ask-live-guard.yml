@@ -69,7 +69,8 @@ jobs:
 
       - name: Not applicable
         if: steps.detect.outputs.applicable == 'false'
-        run: echo "ask-live-guard: not applicable - no /ask-relevant package changed in package.json or package-lock.json. Passing."
+        run: |
+          echo "ask-live-guard NOT APPLICABLE: no /ask-relevant package changed in package.json or package-lock.json. Passing."
 
       - name: Wait for this PR's Vercel preview
         id: preview
