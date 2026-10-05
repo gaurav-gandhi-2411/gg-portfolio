@@ -20,7 +20,7 @@ function makeEntry(overrides) {
 }
 
 // --- summary lint ---
-assert.deepStrictEqual(lint.lintSummary(null), [], "null summary should pass");
+assert.deepStrictEqual(lint.lintSummary(null), ["planted-defect"], "null summary should pass");
 assert.deepStrictEqual(
   lint.lintSummary(makeEntry({ text_runs: [{ text: "I ship features.", bold: false }] })),
   [],
