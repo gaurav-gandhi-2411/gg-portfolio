@@ -141,6 +141,12 @@ jobs:
       - name: Resume select/rank self-test
         run: node scripts/lib/resume-select.smoketest.mjs
 
+      # resume-lint.mjs's hard gates (summary/bullet/surface lint) are what stop a bad claim
+      # reaching the generated résumé. Its smoketest existed but ran nowhere, so a regression in a
+      # gate would have shipped silently (same gap as resume-select above).
+      - name: Resume lint self-test
+        run: node scripts/lib/resume-lint.smoketest.mjs
+
       # The homepage's three headline figures come from paid work, so they are
       # the only numbers on the site a reader cannot check by clicking
       # something. This ties each to the role-ladder bullet it was taken from
@@ -253,6 +259,9 @@ jobs:
       # that logic.
       - name: content-pipeline llm.mjs forced-error self-test
         run: node scripts/content-pipeline/llm.smoketest.mjs
+
+      - name: Chatbot-index hook covers every builder input
+        run: node scripts/chatbot/hook-coverage.smoketest.mjs
 
       - name: Build
         run: npm run build
