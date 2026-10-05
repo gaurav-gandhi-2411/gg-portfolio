@@ -27,22 +27,40 @@ test.describe("hero social icons", () => {
   });
 
   test("hovering an icon reveals a visible tooltip with its label", async ({ page }) => {
-    // Round three: this flaked exactly once in five full-suite runs this
-    // session (never once in >10 isolated re-runs), always alongside
-    // GPU-heavy WebGL hero/case-study tests running concurrently in other
-    // workers -- consistent with genuine resource contention delaying the
-    // hover transition's paint past Playwright's default 5s retry window,
-    // not a logic defect (the mechanism itself is sabotage-verified in
-    // app/hero.css). A longer explicit timeout is the correct hardening
-    // for contention; it would not mask a real regression, since a broken
-    // rule never reaches opacity:1 at any timeout.
+    // Round three called this GPU-contention flake and raised the assertion
+    // timeout to 15s; it kept failing on both desktop and mobile (#225, #244,
+    // #246, #247, #248, run 36111662959) because that was never the actual
+    // mechanism. Instrumented repro (getBoundingClientRect + elementFromPoint
+    // polled every 20ms through the hover): .hero-actions's own entrance
+    // animation (`hero-rise`, app/hero.css, 620ms + a 240ms delay --
+    // ~860ms total) is still sliding the icon row up into place well after
+    // page.goto() resolves. Playwright's hover() "stable" actionability
+    // check can pass early on this ease-out curve's shallow tail -- two
+    // consecutive rAF samples close enough to look settled while the
+    // element is still moving -- so hover() fires at a not-yet-final
+    // position and the animation keeps carrying the icon the rest of the
+    // way, out from under a now-stationary cursor. The browser's :hover
+    // then correctly clears (confirmed via `.matches(":hover")`, which goes
+    // false mid-slide) and the tooltip's opacity transitions back to 0 --
+    // exactly the CSS rule working as written, not a logic defect and not
+    // contention. A real mouse user never notices this because their
+    // cursor keeps moving, which re-triggers :hover at the icon's current
+    // (or final) position; a single static synthetic hover does not get
+    // that second chance. Waiting for the entrance animation's own
+    // `finished` promise before hovering removes the race at its source,
+    // which no timeout on the assertion after the fact could do -- the
+    // tooltip was never going to re-open on its own once the one hover
+    // event had already landed and been undone.
     await page.goto("/");
+    const heroActions = page.locator(".hero-actions");
     const github = page.locator("[data-hero]").getByRole("link", { name: "GitHub", exact: true });
     const tip = github.locator(".hero-social-tip");
 
+    await heroActions.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+
     await expect(tip).toHaveCSS("opacity", "0");
     await github.hover();
-    await expect(tip).toHaveCSS("opacity", "1", { timeout: 15000 });
+    await expect(tip).toHaveCSS("opacity", "1");
     await expect(tip).toHaveText("GitHub");
   });
 

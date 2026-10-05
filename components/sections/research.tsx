@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { InlineLink } from "@/components/inline-link";
+import { ResearchPaperList } from "@/components/research-paper-list";
 import { Section } from "@/components/section";
 import { researchPapers } from "@/content/research";
 
@@ -22,6 +21,11 @@ import { researchPapers } from "@/content/research";
  * case-study link carries `.card-stretch-link`; arXiv/Repo carry
  * `.card-clickable` to keep landing on themselves (app/globals.css has
  * both rules' full reasoning).
+ *
+ * refresh-2026-09: the card markup itself moved to
+ * components/research-paper-list.tsx, shared with the standalone /research
+ * page (app/research/page.tsx) — this component now only owns the section
+ * shell and card gap.
  */
 export function Research() {
   return (
@@ -39,63 +43,7 @@ export function Research() {
        * Experience: once each item has a border, the border is doing the
        * separating and the old whitespace is just distance.
        */}
-      <div className="flex flex-col gap-[var(--space-6)]">
-        {researchPapers.map((paper) => (
-          <article
-            key={paper.title}
-            className="section-card relative border-border/40 bg-card/40 flex flex-col gap-[var(--space-3)] rounded-xl border p-6 md:p-8 lg:grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:gap-x-14 lg:gap-y-0"
-          >
-            <div className="contents lg:flex lg:flex-col lg:gap-[var(--space-3)]">
-              <h3 className="font-heading text-title max-w-[30ch] font-semibold text-foreground">
-                {paper.title}
-              </h3>
-
-              <p className="text-muted-foreground text-sm">
-                {paper.status === "preprint-pending"
-                  ? "Preprint, pending arXiv. The link lands here the moment an ID is assigned."
-                  : "Published and citable."}
-              </p>
-
-              {/*
-               * gap-y has to clear the -my-3 these links carry for their 44px
-               * tap target, exactly as Contact's link row does. Each link's
-               * box extends 12px above and below its text, so a 20px row gap
-               * leaves 4px of overlap the moment the row wraps, and the tap
-               * lands on whichever link is painted last.
-               *
-               * This did not wrap before the card arrived: p-6 took ~48px out
-               * of the row at 375px and pushed the second link onto its own
-               * line. The overlap was always latent, the padding just found
-               * it. See CHECKS.md instance 17 for the same defect in Contact.
-               */}
-              <p className="order-last flex flex-wrap gap-x-[var(--space-5)] gap-y-[var(--space-8)] text-sm lg:order-none lg:mt-auto">
-                {paper.arxivUrl && (
-                  <InlineLink
-                    href={paper.arxivUrl}
-                    className="card-clickable -my-3 inline-flex min-h-11 items-center"
-                  >
-                    arXiv ↗
-                  </InlineLink>
-                )}
-                <InlineLink href={paper.repoUrl} className="card-clickable -my-3 inline-flex min-h-11 items-center">
-                  Repo ↗
-                </InlineLink>
-                {/* Wave 12: the benchmark behind the paper has its own case study. */}
-                <Link
-                  href="/work/agentgauge"
-                  className="card-stretch-link text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
-                >
-                  Read the benchmark&apos;s case study →
-                </Link>
-              </p>
-            </div>
-
-            <p className="text-muted-foreground max-w-measure text-base leading-relaxed">
-              {paper.abstractExcerpt ?? paper.abstract}
-            </p>
-          </article>
-        ))}
-      </div>
+      <ResearchPaperList papers={researchPapers} />
     </Section>
   );
 }

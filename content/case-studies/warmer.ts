@@ -4,6 +4,12 @@ import type { CaseStudy } from "../types";
 // docs/known-limitations.md, PLAN.md) — see provenance.md wave-12 section.
 // Perf-budget claim refreshed wave 19 (2026-07-31): the app fires zero LCP
 // entries by design; README.md replaced the LCP budget with FCP on 2026-07-30.
+// F12 (2026-09-23): added the public-benchmark result row + the model/
+// dataset links, sourced to the hinglish-relatedness-sbert model card and
+// hinglish-relatedness-benchmark dataset card on Hugging Face (fetched
+// 2026-09-23) — see provenance.md's F12 section. Doesn't advance the
+// verifiedAt date above: the pre-existing mindmeld-sourced numbers on this
+// page were not re-checked this pass, only the new HF-sourced row was added.
 export const warmer: CaseStudy = {
   slug: "warmer",
   verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
@@ -104,6 +110,14 @@ export const warmer: CaseStudy = {
       sourceRef: "warmer:hinglish-fix",
     },
     {
+      label: "Public Hinglish relatedness benchmark vs. 7 off-the-shelf alternatives",
+      value: "0.675 Spearman [95% CI 0.601, 0.741], 0.740 cross-language pass-rate [0.62, 0.86]",
+      detail:
+        "leads all 7 tested alternatives (including 2 released after the original bake-off) on both metrics, CI-significant in all 14 comparisons, per the model card's own reported eval set; the companion dataset published alongside the model describes its own contents as 34 secrets and reports a close but distinct 0.657 for the same metric, a source discrepancy noted rather than resolved (see provenance.md)",
+      sourceRef: "warmer:hinglish-public-benchmark",
+      format: "prose",
+    },
+    {
       label: "Test suite",
       value: "160/160 generator · 94/94 app · 2/2 emulator integration",
       sourceRef: "warmer:tests",
@@ -128,5 +142,15 @@ export const warmer: CaseStudy = {
   closing: [
     "If you need a model that has to work across code-mixed or low-resource languages, not just English demos, this is the debugging discipline that gets it there: falsify the easy hypothesis, measure the alternative, and don't ship a fix until it's beaten the baseline on held-out data.",
   ],
-  links: [{ label: "Play Warmer", href: "https://playwarmer.vercel.app/" }],
+  links: [
+    { label: "Play Warmer", href: "https://playwarmer.vercel.app/" },
+    {
+      label: "hinglish-relatedness-sbert on Hugging Face",
+      href: "https://huggingface.co/gauravgandhi2411/hinglish-relatedness-sbert",
+    },
+    {
+      label: "Benchmark dataset on Hugging Face",
+      href: "https://huggingface.co/datasets/gauravgandhi2411/hinglish-relatedness-benchmark",
+    },
+  ],
 };

@@ -45,6 +45,25 @@ export function ProjectCard({
   const Heading = headingLevel;
   const size = rhythm?.size ?? "standard";
   const hue = (rhythm?.hueShift ?? 0) + 277;
+
+  // F14: no unlabelled raw download number, anywhere. The two label shapes
+  // correspond exactly to the two ways lib/live-data.ts's getPypiStats can
+  // populate lastWeek -- see PypiPackageStats.lastWeekExcludesMirrors for
+  // which is which. Both variants carry the same window explanation in
+  // `title` (hover) and in a visually-hidden span (screen readers), since
+  // neither reads the visible text alone.
+  const weeklyDownloads =
+    pypiStats?.lastWeek !== undefined
+      ? {
+          visible: pypiStats.lastWeekExcludesMirrors
+            ? `≈${pypiStats.lastWeek.toLocaleString()} downloads/week (pypistats, excl. mirrors)`
+            : `≈${pypiStats.lastWeek.toLocaleString()}/week (pypistats; may include CI)`,
+          windowNote: pypiStats.lastWeekExcludesMirrors
+            ? "Sum of the 7 most recently completed calendar days pypistats.org reports with known PyPI mirrors excluded, UTC, today's partial day not counted."
+            : "pypistats.org's trailing 7 day total for this package, without a mirror exclusion, since pypistats has not yet published a without-mirrors series for it. May include known-mirror or CI installs.",
+        }
+      : undefined;
+
   return (
     <article
       data-cats={product.categories.join(" ")}
@@ -119,9 +138,14 @@ export function ProjectCard({
                     : ""}
                 </span>
               )}
-              {pypiStats?.lastWeek !== undefined && (
-                <span data-live-value className="text-muted-foreground font-mono text-caption">
-                  {pypiStats.lastWeek.toLocaleString()} downloads last week
+              {weeklyDownloads && (
+                <span
+                  data-live-value
+                  title={weeklyDownloads.windowNote}
+                  className="text-muted-foreground font-mono text-caption"
+                >
+                  {weeklyDownloads.visible}
+                  <span className="sr-only"> {weeklyDownloads.windowNote}</span>
                 </span>
               )}
             </div>

@@ -78,12 +78,16 @@ export function Hero() {
 
   return (
     <header data-hero className="hero-stage">
-      {/* Far plane. Full bleed, aria-hidden, never takes the pointer. */}
-      <div data-hero-plane="field" className="hero-field" aria-hidden="true">
-        <div className="hero-field-fit">
-          <EmbeddingCloud>
-            <EmbeddingCloudStatic points={points} />
-          </EmbeddingCloud>
+      {/* Far plane. Full bleed, aria-hidden, never takes the pointer.
+          .hero-field-clip is the field's own clip boundary, inset from the
+          stage's true edge — see its definition in app/hero.css for why. */}
+      <div className="hero-field-clip">
+        <div data-hero-plane="field" className="hero-field" aria-hidden="true">
+          <div className="hero-field-fit">
+            <EmbeddingCloud>
+              <EmbeddingCloudStatic points={points} />
+            </EmbeddingCloud>
+          </div>
         </div>
       </div>
 
