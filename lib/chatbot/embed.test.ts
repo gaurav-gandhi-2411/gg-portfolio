@@ -10,6 +10,7 @@ import {
   EMBEDDING_MODEL_VERSION,
   EMBEDDING_PIPELINE_OPTIONS,
   EmbeddingUnavailableError,
+  loadExtractor,
 } from "./embed.mjs";
 import { partitionForReuse, reuseKey } from "./index-format.mjs";
 
@@ -96,4 +97,21 @@ test("the committed index header records the pinned revision", () => {
   const head = readFileSync(new URL("../../content/chatbot/index.json", import.meta.url), "utf8")
     .split("\n", 1)[0];
   assert.equal(JSON.parse(head + "]}").model, EMBEDDING_MODEL_VERSION);
+});
+
+test("loadExtractor calls pipeline() with the pinned revision (the real call, no network)", async () => {
+  const calls: unknown[][] = [];
+  const fake = {
+    env: { cacheDir: "", backends: { onnx: { wasm: { numThreads: 4 } } } },
+    pipeline: async (...args: unknown[]) => {
+      calls.push(args);
+      return {};
+    },
+  };
+  await loadExtractor((async () => fake) as unknown as Parameters<typeof loadExtractor>[0]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], "feature-extraction");
+  assert.equal(calls[0][1], EMBEDDING_MODEL_ID);
+  assert.deepEqual(calls[0][2], EMBEDDING_PIPELINE_OPTIONS);
+  assert.equal((calls[0][2] as { revision: string }).revision, EMBEDDING_MODEL_REVISION);
 });
