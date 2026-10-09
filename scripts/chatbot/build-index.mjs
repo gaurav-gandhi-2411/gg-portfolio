@@ -20,7 +20,7 @@
 // Zero dependencies beyond @huggingface/transformers (via lib/chatbot/embed.mjs);
 // Node 20+.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -30,6 +30,7 @@ import {
   EMBEDDING_MODEL_ID,
   EmbeddingUnavailableError,
 } from "../../lib/chatbot/embed.mjs";
+import { partitionForReuse, serializeIndex } from "../../lib/chatbot/index-format.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
@@ -41,7 +42,23 @@ const AVAILABILITY_PATH = join(ROOT, "content", "availability.ts");
 const SITE_PATH = join(ROOT, "content", "site.ts");
 const OUTPUT_PATH = join(ROOT, "content", "chatbot", "index.json");
 
-const BATCH_SIZE = 24;
+// One text per forward pass, on purpose. With a padded batch, a chunk's vector
+// depends on the LONGEST other chunk in its batch (measured 2026-10-05: editing
+// one chunk shifted 23 unrelated neighbours, min cosine 0.9916 vs a full
+// rebuild). That would make "reuse unchanged embeddings" differ from a full
+// rebuild and make the index depend on chunk order. Batch size 1 makes a vector
+// a pure function of (model, text), so incremental == full rebuild exactly.
+const BATCH_SIZE = 1;
+
+/** The committed index, or null if absent/unreadable (then everything is embedded). */
+function readPriorIndex() {
+  if (!existsSync(OUTPUT_PATH)) return null;
+  try {
+    return JSON.parse(readFileSync(OUTPUT_PATH, "utf8"));
+  } catch {
+    return null;
+  }
+}
 
 // ── 1. Case studies ──────────────────────────────────────────────────────
 
@@ -383,22 +400,30 @@ async function main() {
     return { id, ...c };
   });
 
-  console.log(`Chunked ${chunks.length} records. Embedding in batches of ${BATCH_SIZE}...`);
-  const withEmbeddings = [];
-  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
+  // Reuse a prior embedding only when id + exact text + model match (see
+  // lib/chatbot/index-format.mjs). CHATBOT_INDEX_REEMBED=1 turns reuse off:
+  // check-index-fresh.mjs sets it so the freshness check still embeds from
+  // scratch and cannot be fooled by a stale vector carried forward.
+  const prior = process.env.CHATBOT_INDEX_REEMBED === "1" ? null : readPriorIndex();
+  const { reused, missing } = partitionForReuse(chunks, prior, EMBEDDING_MODEL_ID);
+  console.log(
+    `Chunked ${chunks.length} records: reusing ${reused.length}, embedding ${missing.length} ` +
+      `one at a time...`
+  );
+  const withEmbeddings = [...reused];
+  for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+    const batch = missing.slice(i, i + BATCH_SIZE);
     const vectors = await embed(batch.map((c) => c.text));
     batch.forEach((c, j) => withEmbeddings.push({ ...c, embedding: vectors[j] }));
-    console.log(`  embedded ${Math.min(i + BATCH_SIZE, chunks.length)}/${chunks.length}`);
+    if ((i + 1) % 100 === 0 || i + 1 === missing.length) {
+      console.log(`  embedded ${i + 1}/${missing.length}`);
+    }
   }
 
-  const output = {
-    generatedAt: new Date().toISOString(),
-    model: EMBEDDING_MODEL_ID,
-    chunkCount: withEmbeddings.length,
-    chunks: withEmbeddings,
-  };
-  writeFileSync(OUTPUT_PATH, JSON.stringify(output) + "\n");
+  writeFileSync(
+    OUTPUT_PATH,
+    serializeIndex({ model: EMBEDDING_MODEL_ID, chunks: withEmbeddings })
+  );
   console.log(`Wrote ${withEmbeddings.length} chunks to ${OUTPUT_PATH}`);
 }
 
