@@ -155,8 +155,8 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 | `triageiq:cqr-coverage-k8s` / `-vscode` (split 2026-08-13) | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
-on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9.1% (vscode)**
-(not a blended 3.1%), per `triage-iq/README.md:103-104`; per
+on every count. Grounding-verified fabrication rates as of that 2026-07-12 audit were **1.9% (k8s) / 9.1% (vscode)**
+(stale; current values are in the gate-status paragraph below; not a blended 3.1%), per `triage-iq/README.md:103-104`; per
 `triage-iq/docs/architecture/adr/0028-per-model-eval-audit.md:156-160` it is explicitly
 "informational-only... pending an observation window before any promotion to a hard gate" —
 true on 2026-07-12, **superseded since** (see the gate-status paragraph below). (This matches the earlier concurrent-session pass's independent
@@ -168,19 +168,23 @@ metric instead as a clean, current, positive, fully-corrected number.
 
 **Fabrication gate status (re-verified 2026-10-10 against triage-iq code, `main` @ `877af11`,
 not just README/ADR text):** the "informational" wording above is superseded. Scope is
-**Kubernetes only**; the gate is a ratchet at the approved baseline, **not literally zero**.
-(1) `eval/test_quality_regression.py:151-169` `test_k8s_no_fabrication` asserts
-`rate <= baseline["per_repo"]["kubernetes/kubernetes"]["fabrication_rate"]`;
-`eval/test_invariants.py:854-866` `test_grounding_ratchet_k8s` asserts
-`ungrounded_count <= baseline_count`, baseline 1 of 53 (`_GROUNDING_BASELINE`, ADR-0061). (2) Both
+**Kubernetes only**, with two separate bounds. (1a) Quality gate:
+`eval/test_quality_regression.py:151-169` `test_k8s_no_fabrication` asserts
+`rate <= baseline["per_repo"]["kubernetes/kubernetes"]["fabrication_rate"]`; the bound is the
+committed `reports/eval_baseline.json` rate and moves with that file. It is **0.0 (0/53) at
+`877af11`** (set by `cd2934f`, 2026-10-08; it was 0.0189 = 1/53 at `bcb1fca`, 2026-09-23), so it
+currently fails on any fabrication. (1b) Grounding ratchet: `eval/test_invariants.py:854-866`
+`test_grounding_ratchet_k8s` asserts `ungrounded_count <= baseline_count`, with
+`_GROUNDING_BASELINE` k8s `ungrounded_count` **1** of 53 (ADR-0061), a looser bound. (2) Both
 run in `.github/workflows/eval-gate.yml` jobs with no `continue-on-error` (only a comment mentions
 it, line 20; blocking since PR #57, ADR-0044), and branch protection on `main` requires both
 contexts ("Structural invariants (no LLM)", "Quality regression (cassette-replayed judge)"); the
 latest `main` run (`877af11`) concluded success. (3) **microsoft/vscode is report-only**:
 `test_vscode_no_fabrication` (`test_quality_regression.py:121-148`) and
 `test_grounding_ratchet_vscode` (`test_invariants.py:869`) assert nothing at n=11 (ADR-0058). So
-triage-iq's README "hard zero-tolerance gate" wording overstates the code for vscode and for k8s
-(ratchet at 1/53, not 0); the site states the code-accurate scope. No test plants a fabricated
+triage-iq's README figures (`README.md:128-129`, 0.0% (0/53) k8s, 0.0% (0/11) vscode) match the
+current baseline, but its "hard zero-tolerance gate" label is loose: vscode is not gated and the
+k8s grounding ratchet tolerates 1/53; the site states the code-accurate scope. No test plants a fabricated
 claim to prove the gate fails (the failure path is the `assert`s above, and ADR-0061 records the
 ratchet firing 1 > 0 on the 2026-09-23 recording); the gate tests were not run locally (they need
 GCS-hosted models behind CI's workload identity).

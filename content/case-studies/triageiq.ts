@@ -93,7 +93,7 @@ export const triageiq: CaseStudy = {
     },
     {
       title: "Gate fabrication on Kubernetes, report it on vscode",
-      body: "Fabrication, a synthesized plan citing a component or similar issue the retriever and classifier never supplied, is a hard, blocking CI gate on the Kubernetes eval set: the count of ungrounded plans may not rise above the approved baseline of 1 in 53, and the check replays a recorded cassette, so an unrelated change cannot trip it. The vscode set (11 issues) is deliberately report-only, because one plan moves its rate by about nine points, too noisy to block merges without false alarms. Gating only where the sample can support it keeps the gate trustworthy.",
+      body: "Fabrication, a synthesized plan citing a component or similar issue the retriever and classifier never supplied, is a hard, blocking CI gate on the Kubernetes eval set: the fabrication rate may not exceed the committed baseline, currently 0 of 53 plans, and a separate grounding ratchet tolerates at most 1 of 53 ungrounded plans. The check replays a recorded cassette, so an unrelated change cannot trip it. The vscode set (11 issues) is deliberately report-only, because one plan moves its rate by about nine points, too noisy to block merges without false alarms. Gating only where the sample can support it keeps the gate trustworthy.",
       sourceRef: "triageiq:contamination-adr0018",
     },
   ],
@@ -154,7 +154,8 @@ export const triageiq: CaseStudy = {
     },
     {
       label: "LLM fabrication rate (grounding-verified)",
-      value: "1.9% (k8s) / 9.1% (vscode)",
+      value: "0.0% (0/53) k8s / 0.0% (0/11) vscode",
+      detail: "Committed baseline at triage-iq 877af11 (set 2026-10-08, cd2934f). k8s was 1.9% (1/53) on the 2026-09-23 recording; 9.1% vscode was an older audit.",
       sourceRef: "triageiq:contamination-adr0018",
     },
   ],
