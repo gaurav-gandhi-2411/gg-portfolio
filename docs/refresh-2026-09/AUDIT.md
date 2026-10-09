@@ -310,3 +310,5 @@ Deferred per spec.md §7 — **Phase C/D decisions, not blocking Phase B:**
 - ~~**pypistats' "OS-attributed" download figures as a mirror-exclusion proxy.** This is explicitly an approximation (74–82% of traffic is unattributed `null`-OS, a reasonable-but-unofficial proxy for CI/mirror traffic) — pypistats has no dedicated mirror-exclusion endpoint, so this number must never be presented as a verified "real" install count.~~ **Retracted — see Erratum.**
 - **The specific trigger for #122's HTTP 403** (believed to be concurrent anonymous `api.github.com` calls across the workflow's 4 parallel jobs tripping GitHub's 60/hour anonymous rate limit) — the 403 itself and the missing `Authorization` header are directly verified; the exact request-volume mechanism was not reproduced.
 - **8 Warmer/mindmeld metric claims in issue #123** — genuinely unverifiable by this audit (private source repo, no credential in scope); flagged as "not covered," not "passing," per the issue's own labelling.
+
+<!-- vercel-ignore R1 proof (docs-only commit, expect Canceled by Ignored Build Step) -->
