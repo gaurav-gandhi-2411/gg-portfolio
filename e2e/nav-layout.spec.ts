@@ -135,3 +135,21 @@ test.describe("header layout never overlaps or runs items together", () => {
     });
   }
 });
+
+test.describe("without JavaScript the six links are visible, not behind an inert button", () => {
+  test.use({ javaScriptEnabled: false });
+
+  for (const width of [375, 390] as const) {
+    test(`${width}px`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop", "explicit widths are set below");
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+
+      const links = page.getByRole("navigation", { name: "Site" }).getByRole("link");
+      await expect(links.filter({ hasText: /^(About|Experience|Projects|Open source|Research|Contact)$/ })).toHaveCount(6);
+      await expect(page.locator(".site-nav-toggle")).toBeHidden();
+      for (const link of await links.all()) await expect(link).toBeVisible();
+      assertClean(await measureItems(page), `${width}px no-JS`);
+    });
+  }
+});
