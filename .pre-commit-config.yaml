@@ -35,10 +35,12 @@ repos:
       # regen — both times via a path CI's own equivalent check never
       # reaches until after the commit exists. Catches it before the commit
       # is even made. See scripts/chatbot/check-index-fresh.mjs's header for
-      # the full incident history and tolerance rationale.
+      # the full incident history and tolerance rationale. The files: regex must cover every
+      # input build-index.mjs reads; scripts/chatbot/hook-coverage.smoketest.mjs (run in CI)
+      # derives that set from the builder and fails on drift.
       - id: chatbot-index-fresh
         name: chatbot index is up to date
         entry: node scripts/chatbot/check-index-fresh.mjs
         language: system
-        files: ^content/(case-studies/.*\.ts|provenance\.md)$
+        files: ^(content/(case-studies/.*\.ts|provenance\.md|products\.ts|experience\.ts|availability\.ts|site\.ts)|lib/(case-study-anchors\.ts|chatbot/(embed|index-format)\.mjs))$
         pass_filenames: false

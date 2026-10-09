@@ -18,9 +18,7 @@ interface IndexChunk {
 }
 
 interface ChatbotIndex {
-  generatedAt: string;
   model: string;
-  chunkCount: number;
   chunks: IndexChunk[];
 }
 

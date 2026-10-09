@@ -28,6 +28,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { serializeIndex } from "../../lib/chatbot/index-format.mjs";
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const INDEX_PATH = join(ROOT, "content", "chatbot", "index.json");
 const SIMILARITY_FLOOR = 0.99;
@@ -48,8 +50,13 @@ function cosineSim(a, b) {
 const committedRaw = readFileSync(INDEX_PATH, "utf8");
 const committed = JSON.parse(committedRaw);
 
+// CHATBOT_INDEX_REEMBED=1: build-index.mjs normally reuses the committed
+// embeddings for unchanged chunks. Reuse would make this check compare the
+// file against itself, so it is switched off here and every chunk is embedded
+// from scratch (the same tolerance-based comparison as before).
 execFileSync("node", [join(ROOT, "scripts", "chatbot", "build-index.mjs")], {
   cwd: ROOT,
+  env: { ...process.env, CHATBOT_INDEX_REEMBED: "1" },
   stdio: "pipe", // build-index.mjs's own progress output isn't useful here; only its written file is
 });
 const fresh = JSON.parse(readFileSync(INDEX_PATH, "utf8"));
@@ -59,18 +66,18 @@ const fresh = JSON.parse(readFileSync(INDEX_PATH, "utf8"));
 // whether it passes or fails.
 writeFileSync(INDEX_PATH, committedRaw);
 
-delete committed.generatedAt;
-delete fresh.generatedAt;
-
 const problems = [];
 
-if (committed.chunkCount !== fresh.chunkCount || committed.model !== fresh.model) {
+// The merge-friendly layout (one chunk per line, sorted by id) is part of the
+// contract: a hand-edited or differently-formatted file would silently bring
+// back whole-file merge conflicts. Re-serialising must reproduce it byte for byte.
+if (serializeIndex(committed) !== committedRaw) {
+  problems.push("file is not in canonical layout (one chunk per line, sorted by id, no volatile fields)");
+}
+
+if (committed.model !== fresh.model) {
   problems.push(
-    "chunkCount/model mismatch: " +
-      JSON.stringify({
-        committed: { chunkCount: committed.chunkCount, model: committed.model },
-        fresh: { chunkCount: fresh.chunkCount, model: fresh.model },
-      })
+    "model mismatch: " + JSON.stringify({ committed: committed.model, fresh: fresh.model })
   );
 }
 
