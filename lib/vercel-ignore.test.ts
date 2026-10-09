@@ -45,7 +45,15 @@ function commit(repo: string, rel: string, text: string): string {
   return git(repo, "rev-parse", "HEAD");
 }
 
+/** Vercel always sets these; a preview of a normal branch is the default shape under test. */
+const PREVIEW_ENV = { VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "feature" };
+
 function run(repo: string, env: Record<string, string> = {}): number {
+  return runRaw(repo, { ...PREVIEW_ENV, ...env });
+}
+
+/** Like run() but with no VERCEL_* defaults at all (only what the caller passes). */
+function runRaw(repo: string, env: Record<string, string> = {}): number {
   const clean = Object.fromEntries(
     Object.entries(process.env).filter(([k]) => !k.startsWith("VERCEL_")),
   );
@@ -198,4 +206,97 @@ test("depth-1 clone has no window and fails open", () => {
 test("production never skips on the shallow-window guess", () => {
   const { clone } = vercelClone(3, false, ["docs/a.md", "docs/b.md"]);
   assert.equal(run(clone, { VERCEL_ENV: "production" }), 1);
+});
+
+/**
+ * Production on main must never be skipped (GG, Step 0b). The verifier's repro: a depth-2 clone
+ * of main where origin/main == HEAD, so merge-base(HEAD, origin/main) == HEAD and nothing
+ * watched differs from "base" -> the old script said "skipping build" for a production deploy.
+ */
+function mainClone(files: string[]): string {
+  const root = tmp();
+  const remote = join(root, "remote.git");
+  git(root, "init", "-q", "--bare", "-b", "main", remote);
+  const seed = join(root, "seed");
+  git(root, "clone", "-q", remote, seed);
+  git(seed, "checkout", "-q", "-b", "main");
+  commit(seed, "app/page.tsx", "v1");
+  commit(seed, "README.md", "r1");
+  files.forEach((f, i) => commit(seed, f, `m ${i}`));
+  git(seed, "push", "-q", "origin", "main");
+  const clone = join(root, "vercel");
+  git(root, "clone", "-q", "--depth=2", "--branch", "main", pathToFileURL(remote).href, clone);
+  assert.equal(git(clone, "rev-parse", "origin/main"), git(clone, "rev-parse", "HEAD"));
+  mkdirSync(join(clone, "scripts"), { recursive: true });
+  copyFileSync(SCRIPT, join(clone, "scripts", "vercel-ignore.sh"));
+  return clone;
+}
+
+const PROD = { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "main" };
+
+for (const [label, files] of [
+  ["docs-only", ["docs/a.md"]],
+  ["app", ["app/New.tsx"]],
+] as const) {
+  test(`production on main, origin/main == HEAD, ${label} commit, no previous sha: builds`, () => {
+    assert.equal(runRaw(mainClone([...files]), PROD), 1);
+  });
+  test(`production on main, origin/main == HEAD, ${label} commit, previous sha: builds`, () => {
+    const clone = mainClone([...files]);
+    const prev = git(clone, "rev-parse", "HEAD~1");
+    assert.equal(runRaw(clone, { ...PROD, VERCEL_GIT_PREVIOUS_SHA: prev }), 1);
+  });
+}
+
+test("production env on a non-main ref still builds (VERCEL_ENV alone is enough)", () => {
+  const clone = mainClone(["docs/a.md"]);
+  assert.equal(runRaw(clone, { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_REF: "feature" }), 1);
+});
+
+test("ref main in a preview env still builds (ref alone is enough)", () => {
+  const clone = mainClone(["docs/a.md"]);
+  assert.equal(runRaw(clone, { VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_REF: "main" }), 1);
+});
+
+test("unset VERCEL_ENV and unset ref is undeterminable: builds even for docs-only", () => {
+  const repo = fullRepo();
+  commit(repo, "docs/a.md", "1");
+  assert.equal(runRaw(repo), 1);
+});
+
+test("zz-* throwaway branch with an app change is skipped", () => {
+  const repo = fullRepo();
+  commit(repo, "app/New.tsx", "x");
+  assert.equal(run(repo, { VERCEL_GIT_COMMIT_REF: "zz-probe" }), 0);
+});
+
+test("zz-* branch is still built when VERCEL_ENV is production", () => {
+  const repo = fullRepo();
+  commit(repo, "app/New.tsx", "x");
+  assert.equal(run(repo, { VERCEL_GIT_COMMIT_REF: "zz-probe", VERCEL_ENV: "production" }), 1);
+});
+
+test("a non-zz branch with an app change builds", () => {
+  const repo = fullRepo();
+  commit(repo, "app/New.tsx", "x");
+  assert.equal(run(repo, { VERCEL_GIT_COMMIT_REF: "fix/thing" }), 1);
+});
+
+test("a branch merely containing zz (not prefixed) is not treated as throwaway", () => {
+  const repo = fullRepo();
+  commit(repo, "app/New.tsx", "x");
+  assert.equal(run(repo, { VERCEL_GIT_COMMIT_REF: "fix/zz-thing" }), 1);
+});
+
+test("a reports/screenshots PNG-only change is skipped", () => {
+  const repo = fullRepo();
+  commit(repo, "reports/screenshots/pr-1/before.png", "png");
+  commit(repo, "e2e/visual.spec.ts-snapshots/home-chromium-linux.png", "png");
+  assert.equal(run(repo), 0);
+});
+
+test("a dependabot-style package-lock.json-only change builds a preview", () => {
+  const repo = fullRepo();
+  commit(repo, "package-lock.json", "bumped");
+  assert.equal(run(repo, { VERCEL_GIT_COMMIT_REF: "dependabot/npm_and_yarn/x-1.2.3" }), 1);
 });

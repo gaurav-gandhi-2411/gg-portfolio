@@ -26,6 +26,26 @@ cd "$ROOT" || exit 1
 
 export GIT_TERMINAL_PROMPT=0 GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=20
 
+# Guards, before any git-diff logic (GG decision, Step 0b). Production on main is NEVER skipped:
+# a docs-only merge to main must still deploy, and on main merge-base(HEAD, origin/main) == HEAD
+# so the diff below would say "nothing changed" and skip it. Vercel always sets both variables;
+# if neither is set we cannot tell production from preview, so build.
+if [ "${VERCEL_ENV:-}" = "production" ] || [ "${VERCEL_GIT_COMMIT_REF:-}" = "main" ]; then
+  echo "ignore-step: production / main deploy; building (never skipped)"
+  exit 1
+fi
+if [ -z "${VERCEL_ENV:-}" ] && [ -z "${VERCEL_GIT_COMMIT_REF:-}" ]; then
+  echo "ignore-step: VERCEL_ENV and VERCEL_GIT_COMMIT_REF both unset; cannot rule out production; building"
+  exit 1
+fi
+# Throwaway probe branches (zz-*) exist only to test the pipeline; skip their previews.
+case "${VERCEL_GIT_COMMIT_REF:-}" in
+  zz-*)
+    echo "ignore-step: throwaway branch ${VERCEL_GIT_COMMIT_REF}; skipping preview build"
+    exit 0
+    ;;
+esac
+
 # Pathspecs (relative to the repo root). The exclude keeps unit-test-only edits from building.
 WATCHED="app components lib content public package.json package-lock.json next.config.ts next.config.js next.config.mjs tsconfig.json postcss.config.mjs components.json .npmrc vercel.json .vercelignore :(exclude,glob)**/*.test.ts"
 
