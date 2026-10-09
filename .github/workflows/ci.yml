@@ -207,6 +207,12 @@ jobs:
       - name: No unreachable failure-alerting conditions in workflows
         run: node scripts/check-workflow-failure-conditions.mjs
 
+      # scripts/vercel-ignore.sh decides which Vercel deployments are skipped.
+      # A wrong "skip" on a production deploy ships a stale site, so its
+      # tests run here (npm run test:unit is not otherwise part of CI).
+      - name: Vercel ignored-build-step tests
+        run: node --experimental-strip-types --test lib/vercel-ignore.test.ts
+
       # scripts/relay-dispatched-ci-status.sh's history is three silent
       # failures in a row (see its header) -- this runs the current version
       # against a stubbed `gh` covering the config-missing, malformed,
