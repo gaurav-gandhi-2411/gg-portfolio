@@ -121,10 +121,13 @@ test.describe("mobile menu behaviour", () => {
     await expect(menuLinks(page).last()).toBeFocused();
   });
 
-  test("axe: zero violations with the menu open", async ({ page }) => {
-    await toggleOf(page).click();
-    await expect(menuLinks(page).first()).toBeVisible();
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
-  });
+  for (const scheme of ["light", "dark"] as const) {
+    test(`axe: zero violations with the menu open (${scheme} scheme)`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await toggleOf(page).click();
+      await expect(menuLinks(page).first()).toBeVisible();
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+    });
+  }
 });
