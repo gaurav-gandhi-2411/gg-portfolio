@@ -159,12 +159,31 @@ on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9
 (not a blended 3.1%), per `triage-iq/README.md:103-104`; per
 `triage-iq/docs/architecture/adr/0028-per-model-eval-audit.md:156-160` it is explicitly
 "informational-only... pending an observation window before any promotion to a hard gate" —
-**not currently a hard gate**. (This matches the earlier concurrent-session pass's independent
+true on 2026-07-12, **superseded since** (see the gate-status paragraph below). (This matches the earlier concurrent-session pass's independent
 finding — cross-confirmed by two separate reads.) Also corrected in the same 2026-07-11/12 audit:
 the previously-quoted retriever Recall@5 (36.7% vscode) was inflated by a proxy-task measurement
 bug; the honest product-task number is 22.4% (vscode) / 23.5% (k8s) — see
 `triage-iq/docs/architecture/adr/0030-phaseC-product-task-feasibility.md`. Used the classifier
 metric instead as a clean, current, positive, fully-corrected number.
+
+**Fabrication gate status (re-verified 2026-10-10 against triage-iq code, `main` @ `877af11`,
+not just README/ADR text):** the "informational" wording above is superseded. Scope is
+**Kubernetes only**; the gate is a ratchet at the approved baseline, **not literally zero**.
+(1) `eval/test_quality_regression.py:151-169` `test_k8s_no_fabrication` asserts
+`rate <= baseline["per_repo"]["kubernetes/kubernetes"]["fabrication_rate"]`;
+`eval/test_invariants.py:854-866` `test_grounding_ratchet_k8s` asserts
+`ungrounded_count <= baseline_count`, baseline 1 of 53 (`_GROUNDING_BASELINE`, ADR-0061). (2) Both
+run in `.github/workflows/eval-gate.yml` jobs with no `continue-on-error` (only a comment mentions
+it, line 20; blocking since PR #57, ADR-0044), and branch protection on `main` requires both
+contexts ("Structural invariants (no LLM)", "Quality regression (cassette-replayed judge)"); the
+latest `main` run (`877af11`) concluded success. (3) **microsoft/vscode is report-only**:
+`test_vscode_no_fabrication` (`test_quality_regression.py:121-148`) and
+`test_grounding_ratchet_vscode` (`test_invariants.py:869`) assert nothing at n=11 (ADR-0058). So
+triage-iq's README "hard zero-tolerance gate" wording overstates the code for vscode and for k8s
+(ratchet at 1/53, not 0); the site states the code-accurate scope. No test plants a fabricated
+claim to prove the gate fails (the failure path is the `assert`s above, and ADR-0061 records the
+ratchet firing 1 > 0 on the 2026-09-23 recording); the gate tests were not run locally (they need
+GCS-hosted models behind CI's workload identity).
 
 | ID | Claim | Source |
 |---|---|---|
