@@ -13,7 +13,7 @@ const isLocal = /localhost|127\.0\.0\.1/.test(process.env.PLAYWRIGHT_BASE_URL ??
 test.describe("resume link", () => {
   test("opens the PDF inline in a new tab — never a forced download", async ({ page, context }) => {
     await page.goto("/");
-    const resumeLink = page.getByRole("link", { name: "View Resume" });
+    const resumeLink = page.getByRole("link", { name: "Résumé", exact: true });
     await expect(resumeLink).toHaveAttribute("href", "/resume.pdf");
     await expect(resumeLink).toHaveAttribute("target", "_blank");
     await expect(resumeLink).not.toHaveAttribute("download");

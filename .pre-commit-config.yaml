@@ -42,5 +42,5 @@ repos:
         name: chatbot index is up to date
         entry: node scripts/chatbot/check-index-fresh.mjs
         language: system
-        files: ^(content/(case-studies/.*\.ts|provenance\.md|products\.ts|experience\.ts|availability\.ts|site\.ts)|lib/(case-study-anchors\.ts|chatbot/embed\.mjs))$
+        files: ^(content/(case-studies/.*\.ts|provenance\.md|products\.ts|experience\.ts|availability\.ts|site\.ts)|lib/(case-study-anchors\.ts|chatbot/(embed|index-format)\.mjs))$
         pass_filenames: false
