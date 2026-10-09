@@ -865,6 +865,38 @@ body::after {
   }
 }
 
+/*
+ * No JavaScript: the Menu button can never open, so show the links as a
+ * wrapped row inside a pill that grows with them (the band's fixed height
+ * exists for the scroll contraction, which also needs JS).
+ */
+@media (max-width: 767px) and (scripting: none) {
+  .site-nav {
+    height: auto;
+    padding-block: var(--space-3);
+  }
+  .site-nav-pill {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: var(--radius-2xl);
+  }
+  .site-nav-toggle {
+    display: none;
+  }
+  .site-nav-links {
+    position: static;
+    display: flex;
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-nav-link {
     transition: none;
