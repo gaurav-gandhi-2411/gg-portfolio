@@ -76,6 +76,22 @@ test.describe("mobile menu behaviour", () => {
     await expect(toggleOf(page)).toHaveAttribute("aria-expanded", "false");
   });
 
+  test("focus is never dropped to <body> after choosing a link (route or hash)", async ({ page }) => {
+    const activeIsMenuButton = () =>
+      page.evaluate(() => document.activeElement?.textContent?.trim() === "Menu");
+    for (const [name, url] of [
+      ["Contact", /#contact$/],
+      ["Projects", /\/projects$/],
+    ] as const) {
+      await toggleOf(page).click();
+      await page.getByRole("link", { name, exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await expect(page).toHaveURL(url);
+      await expect(toggleOf(page)).toHaveAttribute("aria-expanded", "false");
+      expect(await activeIsMenuButton(), `focus after choosing ${name}`).toBe(true);
+    }
+  });
+
   test("focus is trapped while open and Tab order is brand, button, six links", async ({ page }) => {
     const toggle = toggleOf(page);
     const brand = page.getByRole("link", { name: "Gaurav Gandhi, home" });
