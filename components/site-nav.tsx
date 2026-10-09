@@ -348,7 +348,14 @@ export function SiteNav() {
                 data-nav-item={index}
                 aria-current={isActive ? "page" : undefined}
                 className={cn("site-nav-link", isActive && "site-nav-link-active")}
-                onClick={() => setOpenFor(null)}
+                onClick={() => {
+                  setOpenFor(null);
+                  // The pressed link is about to be display:none, which would
+                  // drop focus to <body>. The button is always visible where
+                  // the menu exists and display:none at desktop widths, so
+                  // this is a no-op there.
+                  toggleRef.current?.focus();
+                }}
               >
                 {link.label}
               </Link>
