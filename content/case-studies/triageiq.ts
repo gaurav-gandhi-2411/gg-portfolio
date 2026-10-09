@@ -17,7 +17,7 @@ import type { CaseStudy } from "../types";
 // corrected 3-shot -> 4-shot (ADR-0037, 2026-07-30).
 export const triageiq: CaseStudy = {
   slug: "triageiq",
-  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
+  verifiedAt: "2026-10-10", // fabrication-gate wording re-verified against triage-iq code (provenance.md); other rows last checked wave 19
   title: "TriageIQ",
   dek: "An ML issue-triage assistant for busy open-source maintainers, caught a target-leakage bug that had inflated its own error estimate 8×, then found two more leaks nobody was looking for.",
   depth: "full",
@@ -92,8 +92,8 @@ export const triageiq: CaseStudy = {
       sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
-      title: "Leave the fabrication-rate gate informational, not blocking, for now",
-      body: "The grounding verifier's fabrication-rate numbers (1.9% on kubernetes, 9.1% on vscode) are tracked and reported, but deliberately not wired up as a hard CI gate yet, the team wants an observation window to understand the metric's stability before it can block a deploy. Shipping a gate before trusting the number it's built on would be premature.",
+      title: "Gate fabrication on Kubernetes, report it on vscode",
+      body: "Fabrication, a synthesized plan citing a component or similar issue the retriever and classifier never supplied, is a hard, blocking CI gate on the Kubernetes eval set: the fabrication rate may not exceed the committed baseline, currently 0 of 53 plans, and a separate grounding ratchet tolerates at most 1 of 53 ungrounded plans. The check replays a recorded cassette, so an unrelated change cannot trip it. The vscode set (11 issues) is deliberately report-only, because one plan moves its rate by about nine points, too noisy to block merges without false alarms. Gating only where the sample can support it keeps the gate trustworthy.",
       sourceRef: "triageiq:contamination-adr0018",
     },
   ],
@@ -154,7 +154,8 @@ export const triageiq: CaseStudy = {
     },
     {
       label: "LLM fabrication rate (grounding-verified)",
-      value: "1.9% (k8s) / 9.1% (vscode)",
+      value: "0.0% (0/53) k8s / 0.0% (0/11) vscode",
+      detail: "Committed baseline at triage-iq 877af11 (set 2026-10-08, cd2934f). k8s was 1.9% (1/53) on the 2026-09-23 recording; 9.1% vscode was an older audit.",
       sourceRef: "triageiq:contamination-adr0018",
     },
   ],
