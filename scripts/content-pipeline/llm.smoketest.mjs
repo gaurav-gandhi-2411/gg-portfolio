@@ -24,6 +24,7 @@
 
 import assert from "node:assert";
 import { callLlm, apiErrors } from "./llm.mjs";
+import { formatApiErrorLines } from "../lib/github-api.mjs";
 
 const realFetch = globalThis.fetch;
 process.env.GROQ_API_KEY = "test-key-not-real";
@@ -278,6 +279,58 @@ const OK_BODY = { choices: [{ message: { content: JSON.stringify({ passes: true 
   } finally {
     globalThis.fetch = realFetch;
   }
+}
+
+// --- every callLlm() failure renders as a Groq error, never "GitHub API" -------------------
+// formatApiErrorLines used to hardcode "GitHub API call failed", so a dead Groq model or a missing
+// GROQ_API_KEY annotated the workflow run as a GitHub API failure and sent triage to the wrong
+// provider. Each branch that records into apiErrors is forced below and its rendered line checked.
+{
+  const scenarios = {
+    "missing key": async () => {
+      delete process.env.GROQ_API_KEY;
+      await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+      process.env.GROQ_API_KEY = "test-key-not-real";
+    },
+    "network error": async () => {
+      globalThis.fetch = async () => {
+        throw new Error("ECONNRESET");
+      };
+      await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    },
+    "HTTP 404": async () => {
+      globalThis.fetch = async () => ({ ok: false, status: 404, headers: new Headers(), text: async () => "" });
+      await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    },
+    "429 exhausted": async () => {
+      globalThis.fetch = async () => ({ ok: false, status: 429, headers: new Headers(), text: async () => "" });
+      await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    },
+    "429 over Retry-After cap": async () => {
+      globalThis.fetch = async () => ({
+        ok: false,
+        status: 429,
+        headers: new Headers({ "retry-after": "99999" }),
+        text: async () => "",
+      });
+      await callLlm("curator", "sys", "user", { sleepFn: noopSleep });
+    },
+  };
+  for (const [name, force] of Object.entries(scenarios)) {
+    apiErrors.length = 0;
+    try {
+      await force();
+    } finally {
+      globalThis.fetch = realFetch;
+      process.env.GROQ_API_KEY = "test-key-not-real";
+    }
+    assert.strictEqual(apiErrors.length, 1, `${name}: must record exactly one error`);
+    const [line] = formatApiErrorLines(apiErrors);
+    assert.ok(line.includes("Groq API call failed"), `${name}: line must name Groq, got: ${line}`);
+    assert.ok(!line.includes("GitHub"), `${name}: line must not blame GitHub, got: ${line}`);
+  }
+  // Entries with no provider (every GitHub caller) keep the GitHub label.
+  assert.ok(formatApiErrorLines([{ context: "repo metadata", message: "HTTP 403" }])[0].includes("GitHub API call failed"));
 }
 
 apiErrors.length = 0; // leave the shared module state clean for anything run after this in-process

@@ -135,7 +135,7 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
   const model = modelFor(stage);
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    apiErrors.push({ context: `llm ${stage} (${model})`, message: "missing GROQ_API_KEY" });
+    apiErrors.push({ context: `llm ${stage} (${model})`, provider: "Groq", message: "missing GROQ_API_KEY" });
     console.error(`[llm] ${stage}: no GROQ_API_KEY — recorded as an API error (R3), not skipped`);
     return null;
   }
@@ -161,7 +161,7 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
       });
     } catch (err) {
       // Network error — not retried (see this file's header comment on retry scope).
-      apiErrors.push({ context: `llm ${stage} (${model})`, message: `network error — ${err.message}` });
+      apiErrors.push({ context: `llm ${stage} (${model})`, provider: "Groq", message: `network error — ${err.message}` });
       console.error(`[llm] ${stage}: network error calling groq (${model}) — ${err.message}`);
       return null;
     }
@@ -174,6 +174,7 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
         // instead of retrying, same as any other case this file records into apiErrors.
         apiErrors.push({
           context: `llm ${stage} (${model})`,
+          provider: "Groq",
           message:
             `HTTP 429 — Retry-After ${Math.round(explicitDelayMs / 1000)}s exceeds the ` +
             `${MAX_RETRY_AFTER_MS / 1000}s cap, not waiting${await errorBodySuffix(res)}`,
@@ -195,6 +196,7 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
       }
       apiErrors.push({
         context: `llm ${stage} (${model})`,
+        provider: "Groq",
         message: `HTTP 429 — exhausted ${MAX_429_RETRIES} retries${await errorBodySuffix(res)}`,
       });
       console.error(`[llm] ${stage}: groq (${model}) still 429 after ${MAX_429_RETRIES} retries`);
@@ -203,7 +205,7 @@ export async function callLlm(stage, systemPrompt, userPrompt, { sleepFn = sleep
 
     if (!res.ok) {
       const detail = await errorBodySuffix(res);
-      apiErrors.push({ context: `llm ${stage} (${model})`, message: `HTTP ${res.status}${detail}` });
+      apiErrors.push({ context: `llm ${stage} (${model})`, provider: "Groq", message: `HTTP ${res.status}${detail}` });
       console.error(`[llm] ${stage}: groq returned HTTP ${res.status} for ${model}${detail}`);
       return null;
     }

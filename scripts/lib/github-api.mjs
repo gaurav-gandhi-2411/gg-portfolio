@@ -54,5 +54,9 @@ export async function githubApiGet(path, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}
  * failed").
  */
 export function formatApiErrorLines(apiErrors) {
-  return apiErrors.map((e) => `::error::GitHub API call failed — ${e.context}: ${e.message}`);
+  // `provider` defaults to GitHub (every pre-existing caller); llm.mjs tags its Groq errors so
+  // they stop being labelled "GitHub API".
+  return apiErrors.map(
+    (e) => `::error::${e.provider ?? "GitHub"} API call failed — ${e.context}: ${e.message}`,
+  );
 }
