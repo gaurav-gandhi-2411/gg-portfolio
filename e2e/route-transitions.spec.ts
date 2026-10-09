@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 
 test.describe("route transitions", () => {
   test("clicking a project card reaches its real case study, and back returns cleanly", async ({
@@ -32,6 +33,7 @@ test.describe("route transitions", () => {
 
   test("a client-side nav completes without a stuck/blank page", async ({ page }) => {
     await page.goto("/");
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Projects", exact: true }).click();
     await expect(page).toHaveURL(/\/projects$/);
     // The destination page must stay interactive immediately after the nav
@@ -43,6 +45,7 @@ test.describe("route transitions", () => {
 
   test("browser back/forward after a client-side nav lands on the right page", async ({ page }) => {
     await page.goto("/");
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Projects", exact: true }).click();
     await expect(page).toHaveURL(/\/projects$/);
     await page.locator(".project-grid article").first().getByRole("link", { name: "Case study →" }).click();

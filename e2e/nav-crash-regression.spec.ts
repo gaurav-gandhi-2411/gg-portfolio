@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 import { productSlugs } from "./fixtures/product-slugs";
 
 /**
@@ -113,6 +114,7 @@ test.describe("nav crash regression", () => {
         const watcher = watchForCrashes(page);
 
         await page.goto("/", { waitUntil: "networkidle" });
+        await openSiteMenu(page);
         await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
           name: "Projects",
           exact: true,
@@ -124,6 +126,8 @@ test.describe("nav crash regression", () => {
         await caseStudyLink.click();
         await expect(page).toHaveURL(new RegExp(`/work/${slug}$`));
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+        await openSiteMenu(page);
 
         await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
           name: `, home`,
@@ -141,6 +145,7 @@ test.describe("nav crash regression", () => {
     const watcher = watchForCrashes(page);
     await page.goto("/", { waitUntil: "networkidle" });
     for (const name of ["About", "Experience", "Contact"] as const) {
+      await openSiteMenu(page);
       await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
         name,
         exact: true,
@@ -153,6 +158,7 @@ test.describe("nav crash regression", () => {
   test("/projects -> home (header logo) never crashes", async ({ page }) => {
     const watcher = watchForCrashes(page);
     await page.goto("/projects", { waitUntil: "networkidle" });
+    await openSiteMenu(page);
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: `, home`,
     }).click();
@@ -173,6 +179,7 @@ test.describe("nav crash regression", () => {
     }
     // End on a case study reached via a real click, then back to home, to
     // exercise the exact insertBefore-anchor path the real bug corrupted.
+    await openSiteMenu(page);
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: "Projects",
       exact: true,
@@ -180,6 +187,7 @@ test.describe("nav crash regression", () => {
     const firstCard = page.locator(".project-grid article a[href^='/work/']").first();
     await firstCard.click();
     await expect(page).toHaveURL(/\/work\//);
+    await openSiteMenu(page);
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: `, home`,
     }).click();

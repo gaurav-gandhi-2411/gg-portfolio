@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 
 /**
  * 2026-08-10 mobile audit regression: MetricProvenance panels are
@@ -114,6 +115,10 @@ test.describe("Tap target sizing (375px)", () => {
 
   test("primary nav links meet the 44px tap-target minimum", async ({ page }) => {
     await page.goto("/");
+    // The links live in the menu at this width, so the button is a primary
+    // control too and gets the same minimum.
+    await assertAtLeast44(page.getByRole("button", { name: "Menu" }));
+    await openSiteMenu(page);
     for (const name of ["About", "Experience", "Projects", "Contact"]) {
       await assertAtLeast44(page.getByRole("navigation", { name: "Site" }).getByRole("link", { name }));
     }
