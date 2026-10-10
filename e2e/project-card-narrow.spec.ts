@@ -36,6 +36,16 @@ test.describe("project card header at narrow widths", () => {
           .map((c) => c.dataset.slug)
       );
       expect(overlaps).toEqual([]);
+
+      // The fix hides the decorative mark only where the card is too narrow;
+      // an earlier rem threshold hid it on every phone up to ~364px.
+      const marks = await page.evaluate(
+        () =>
+          [...document.querySelectorAll<SVGElement>(".project-card h2 svg, .project-card h3 svg")].filter(
+            (s) => getComputedStyle(s).display !== "none"
+          ).length
+      );
+      if (width >= 340) expect(marks).toBeGreaterThan(0);
     });
   }
 });

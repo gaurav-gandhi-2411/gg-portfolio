@@ -41,7 +41,7 @@ Scale per criterion: 0 broken, 1 visible defects, 2 minor defects, 3 clean.
 | d | Menu scrim + active marker | FIXED (#302) | Test asserts written first and failed on the reverted build. `aria-current` already existed; the marker is now more than a tint. |
 | e1 | Half-empty fold at 1440 | FIXED (PR 3) | `.hero-inner` centres at >= 1024px. Linux baselines regenerated for the home route only. |
 | e2 | Unlabeled contact icons | VERIFIED, NO CHANGE | All icon links have `aria-label`; hover/focus tooltip already exists. |
-| f | 320px pill overlap in cards | FIXED (PR 3) | Overlaps at 320 on multimodal-fashion-recommender, shelfsense, dealhunter (title glyphs under the pill). Decorative project mark is hidden when the card container is under 20rem. 0 overlaps at 320/340/375 after. |
+| f | 320px pill overlap in cards | FIXED (PR 3) | Overlaps at 320 on multimodal-fashion-recommender, shelfsense, dealhunter (title glyphs under the pill). Decorative project mark is hidden when the card container is under 230px of content width. 0 overlaps at 320/340/375 after. |
 
 ### Computed-colour sweep (what it covered)
 
