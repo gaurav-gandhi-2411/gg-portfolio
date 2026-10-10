@@ -139,9 +139,23 @@ test.describe("/projects search", () => {
 
     expect(matchingProductNames("quantum spreadsheet nonsense")).toHaveLength(0);
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await expect(page.getByRole("status")).toContainText(
-      /no projects match .quantum spreadsheet nonsense./i
-    );
+    // One message, not two: the dropdown used to say "No projects match
+    // "<query>"" directly above the grid saying "No projects match your
+    // search." with a "Showing 0 of 0 projects" counter between them.
+    await expect(page.getByText(/no projects match/i)).toHaveCount(1);
+    await expect(page.getByRole("status")).toContainText("No projects match your search.");
+    await expect(page.getByText(/^Showing \d+ of \d+ projects$/)).toHaveCount(0);
+  });
+
+  test("result taglines render at the caption size, not the 16px tailwind-merge fallback", async ({
+    page,
+  }) => {
+    await page.goto("/projects");
+    await page.getByRole("combobox", { name: /search projects/i }).fill("tria");
+    const tagline = page.getByRole("option").first().locator("span").nth(1);
+    await expect(tagline).toBeVisible();
+    const px = await tagline.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(px).toBeLessThan(13); // --text-caption is 0.72rem = 11.52px
   });
 
   test("a query matching nothing also empties the grid, with a search-specific reset", async ({
