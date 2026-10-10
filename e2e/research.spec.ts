@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 import { researchPapers } from "../content/research";
 import { site } from "../content/site";
 
@@ -64,9 +65,11 @@ test.describe("/research page", () => {
 
   test("is reachable from the site nav, and the nav marks it active", async ({ page }) => {
     await page.goto("/");
+    await openSiteMenu(page);
     await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Research", exact: true }).click();
     await expect(page).toHaveURL(/\/research$/);
 
+    await openSiteMenu(page);
     const researchLink = page
       .getByRole("navigation", { name: "Site" })
       .getByRole("link", { name: "Research", exact: true });

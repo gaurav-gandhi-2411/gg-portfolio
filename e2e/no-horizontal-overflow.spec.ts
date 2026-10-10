@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import sitemap from "../app/sitemap";
 import { site } from "../content/site";
+import { openSiteMenu } from "./fixtures/site-menu";
 
 /**
  * refresh-2026-09 direction review — the nav overflows horizontally at
@@ -308,6 +309,9 @@ test.describe("primary nav links stay fully on-screen and tappable at 375px", ()
   for (const path of ALL_ROUTES) {
     test(`${path}`, async ({ page }) => {
       await page.goto(path);
+      // At 375px the links sit in the disclosure menu; open it so they are
+      // measured (a closed menu would make the loop below vacuously pass).
+      await openSiteMenu(page);
 
       const result = await page.evaluate(() => {
         const nav = document.querySelector('nav[aria-label="Site"]');
@@ -320,6 +324,8 @@ test.describe("primary nav links stay fully on-screen and tappable at 375px", ()
         // is about).
         const links = [...nav.querySelectorAll("a.site-nav-link")];
         const failures: string[] = [];
+        const visible = links.filter((l) => l.getBoundingClientRect().width > 0);
+        if (visible.length !== 6) failures.push(`${visible.length} of 6 nav links are visible`);
 
         for (const link of links) {
           const box = link.getBoundingClientRect();
