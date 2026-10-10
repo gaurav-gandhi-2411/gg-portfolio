@@ -18,7 +18,7 @@ import type { CaseStudy } from "../types";
 // the same gitignored-report problem recurring on main.
 export const styleMaitri: CaseStudy = {
   slug: "style-maitri",
-  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
+  verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
   title: "Style Maitri",
   dek: "A white-label AI shopping assistant for Indian fashion brands, stress-tested by sending 6 agents to role-play skeptical shoppers on the live site, shipped only after that audit's two trust-breaking bugs were found and fixed.",
   depth: "full",
