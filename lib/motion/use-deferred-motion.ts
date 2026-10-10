@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-import { onPresenceOrIdle } from "@/lib/motion/after-first-paint";
-import { loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
+import { MOTION_ARRIVAL_MS, onPresenceOrIdle } from "@/lib/motion/after-first-paint";
+import { inOwnTask, loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
 
 type Motion = Awaited<ReturnType<typeof loadMotion>>;
 
@@ -41,7 +41,7 @@ type Motion = Awaited<ReturnType<typeof loadMotion>>;
 export function useDeferredMotion(
   build: (motion: Motion) => (() => void) | void,
   deps: unknown[],
-  minimumMs = 1200
+  minimumMs = MOTION_ARRIVAL_MS
 ): void {
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -50,12 +50,15 @@ export function useDeferredMotion(
     let cancelled = false;
 
     const cancelTrigger = onPresenceOrIdle(() => {
-      void loadMotion().then((motion) => {
-        // Unmounted while the chunk was in flight: do not build into a tree
-        // React has already taken apart.
-        if (cancelled) return;
-        cleanup = build(motion);
-      });
+      void loadMotion().then((motion) =>
+        // Own task per consumer, so the builds are not one long task.
+        inOwnTask(() => {
+          // Unmounted while the chunk was in flight: do not build into a tree
+          // React has already taken apart.
+          if (cancelled) return;
+          cleanup = build(motion);
+        })
+      );
     }, minimumMs);
 
     return () => {

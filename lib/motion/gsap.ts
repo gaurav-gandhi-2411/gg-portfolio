@@ -67,6 +67,37 @@ export function loadMotion(): Promise<Motion> {
   return pending;
 }
 
+/** Tail of the serial queue behind {@link inOwnTask}. */
+let lastTurn: Promise<unknown> = Promise.resolve();
+
+/**
+ * Runs `work` in its own macrotask, after every earlier caller's has finished.
+ *
+ * Every deferred consumer waits on the same presence/idle trigger and then on
+ * the same memoised {@link loadMotion} promise, so their `.then` callbacks all
+ * resume back to back in ONE task: the ScrollTrigger setups, the Lenis
+ * instance and the nav indicator built as a single long block. The work is
+ * the same either way; what changes is that the browser can run input handlers
+ * and paint between the pieces, and none of them is a long task on its own.
+ * Order is first-come, so it matches the order the consumers mounted in.
+ */
+export function inOwnTask<T>(work: () => T): Promise<T> {
+  const run = lastTurn.then(
+    () =>
+      new Promise<T>((resolve, reject) => {
+        setTimeout(() => {
+          try {
+            resolve(work());
+          } catch (error) {
+            reject(error);
+          }
+        }, 0);
+      })
+  );
+  lastTurn = run.catch(() => undefined);
+  return run;
+}
+
 /** True when this visitor has asked for less motion, checked before any import. */
 export function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
