@@ -5,33 +5,33 @@ import type { CaseStudy } from "../types";
 // review-iq-closeout-roadmap.md) — see provenance.md's ReviewIQ section.
 export const reviewiq: CaseStudy = {
   slug: "reviewiq",
-  verifiedAt: "2026-09-24", // issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1). Step 2 (same day): standardized the public display to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" per GG's decision, dropped the en/hi-en per-language accuracy breakdown from public copy, and moved "gate 76%" so it only ever renders next to the CI, never alone -- no underlying number changed, this is a wording/format correction only.
+  verifiedAt: "2026-10-05", // 2026-10-05: copy aligned to review-iq README/ADR 0022/eval results.json (no Hindi support claim, gpt-oss models). Earlier: issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1). Step 2 (same day): standardized the public display to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" per GG's decision, dropped the en/hi-en per-language accuracy breakdown from public copy, and moved "gate 76%" so it only ever renders next to the CI, never alone -- no underlying number changed, this is a wording/format correction only.
   title: "Samidha Reviews",
-  dek: "Turns customer-review text in English, Hindi, and Hinglish into structured sentiment, urgency, and authenticity signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
+  dek: "Turns customer-review text in English and Hinglish into structured sentiment, urgency, and authenticity signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
   problem: [
-    "Indian D2C (direct-to-consumer) sellers get customer reviews in English, Hindi, and Hinglish (romanized, code-mixed Hindi-English, \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones, or the likely-fake ones, doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
+    "Indian D2C (direct-to-consumer) sellers get customer reviews in English and Hinglish (romanized, code-mixed Hindi-English, \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones, or the likely-fake ones, doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
     "Samidha Reviews (built and shipped under the name ReviewIQ, live-rebranded since) turns unstructured review text into structured data: sentiment, pros/cons, an urgency flag, and an authenticity score, so a seller can triage what actually needs attention instead of reading everything.",
   ],
   approach: [
-    "A review first passes through a sanitizer that strips personally identifiable information, then a language detector classifies it as English, Hindi, or Hinglish, which routes it to a language-branched prompt (a prompt template tuned for that language's phrasing).",
-    "From there, a tiered router sends the easy cases to a small, fast model (llama-3.1-8b-instant) by default, and escalates to a larger model (Llama 3.3 70B) only when the small model's output fails schema validation or comes back with low confidence, most reviews never need the expensive model.",
+    "A review first passes through a sanitizer that strips personally identifiable information, then a language detector classifies it as English or Hinglish, which routes it to a language-branched prompt (a prompt template tuned for that language's phrasing).",
+    "From there, a tiered router sends the easy cases to a small, fast model (openai/gpt-oss-20b) by default, and escalates to a larger model (openai/gpt-oss-120b) only when the small model's output fails schema validation or comes back with low confidence, most reviews never need the expensive model.",
     "The model's response is validated against a strict JSON schema before it's accepted, and results are stored behind API-key authentication (using argon2id, a memory-hard password-hashing algorithm) with Postgres row-level security enforcing that one seller's data is never visible to another in the shared multi-tenant database.",
   ],
   architecture: {
     intro:
       "Sanitize, detect language, route by difficulty to the cheapest model that can do the job, and never let an unvalidated response reach storage.",
     stages: [
-      { label: "Review text", kind: "input", detail: "English, Hindi, or Hinglish" },
+      { label: "Review text", kind: "input", detail: "English or Hinglish" },
       { label: "POST /v2/extract", detail: "argon2id API-key auth + per-tenant quota" },
       { label: "Sanitizer", detail: "strips PII before anything else touches the text" },
-      { label: "Language detection", detail: "en / hi / hi-en" },
+      { label: "Language detection", detail: "en / hi-en" },
       { label: "Language-branched prompt builder" },
       {
         label: "Tiered router",
         parallel: [
-          { label: "Small model", detail: "llama-3.1-8b-instant, default" },
-          { label: "Large model", detail: "Llama 3.3 70B, escalation on validation failure/low confidence" },
+          { label: "Small model", detail: "openai/gpt-oss-20b, default" },
+          { label: "Large model", detail: "openai/gpt-oss-120b, escalation on validation failure/low confidence" },
         ],
       },
       { label: "Schema-validated JSON", detail: "response must pass strict schema before storage" },
@@ -79,8 +79,8 @@ export const reviewiq: CaseStudy = {
       sourceRef: "reviewiq:authenticity",
     },
     {
-      label: "Honest caveat on the Hindi/Hinglish gap",
-      value: "hi/hi-en gold labels are LLM-generated, called \"not published-credible\" in the spec",
+      label: "Honest caveat: Devanagari Hindi is retired scope",
+      value: "Devanagari Hindi is not supported (retired scope, ADR 0022); the Hinglish gold labels are LLM-generated, called \"not published-credible\" in the spec",
       detail: "a follow-up investigation attributed most of the apparent hi-en gap to benchmark-label noise, not model failure",
       sourceRef: "reviewiq:gold-label-caveat",
       format: "prose",
