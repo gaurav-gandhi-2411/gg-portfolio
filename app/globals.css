@@ -95,6 +95,11 @@
   --text-heading--line-height: 1.15;
   --text-display: clamp(2.5rem, 5vw, 4rem);
   --text-display--line-height: 1.08;
+  /* The homepage name (.hero-name). Floor is the phone size, ceiling the 1440
+   * size, the vw term only governs the stretch between; moved here from a
+   * literal clamp() in hero.css with the same values (rule 15b). */
+  --text-hero: clamp(2.35rem, 6.6vw, 5.2rem);
+  --text-hero--line-height: 1.02;
 
   /* One tracked-out caps eyebrow treatment sitewide — the wave-5 review
    * found four different ad-hoc tracking values doing the same job. */

@@ -269,6 +269,12 @@ body::after {
 }
 
 @media (min-width: 1024px) {
+  /* The content block is far shorter than the viewport-tall hero, and with a
+   * single child space-between pinned it to the top, leaving the lower ~40% of
+   * the 1440x900 fold empty. Centre it in the available height instead. */
+  .hero-inner {
+    justify-content: center;
+  }
   .hero-split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
@@ -309,10 +315,8 @@ body::after {
 .hero-name {
   margin-top: var(--space-6);
   font-family: var(--font-heading);
-  /* The floor is the phone size and the ceiling is the 1440 size; the vw
-   * term only governs the stretch between them. Both ends were chosen
-   * against a real viewport rather than derived from each other. */
-  font-size: clamp(2.35rem, 6.6vw, 5.2rem);
+  /* Floor/ceiling/vw rationale lives with the token in globals.css. */
+  font-size: var(--text-hero);
   font-variation-settings: "wght" 600, "opsz" 144, "SOFT" 0, "WONK" 1;
   line-height: 1.02;
   letter-spacing: -0.022em;
@@ -377,8 +381,10 @@ body::after {
 }
 
 .hero-role-detail {
+  /* No opacity dim: at 0.75 over the page background this 11.5px text
+   * measured 3.78:1 (light) and 4.12:1 (dark), under the 4.5:1 floor. The
+   * smaller size and the parentheses already set it apart from the company. */
   color: var(--muted-foreground);
-  opacity: 0.75;
 }
 
 .hero-tagline {
