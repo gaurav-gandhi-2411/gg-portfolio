@@ -121,6 +121,49 @@ test.describe("mobile menu behaviour", () => {
     await expect(menuLinks(page).last()).toBeFocused();
   });
 
+  test("a scrim covers the page behind the open menu, under the pill, and swallows the dismissing click", async ({
+    page,
+  }) => {
+    const scrim = page.locator(".site-nav-scrim");
+    await expect(scrim).toHaveCount(0);
+    await toggleOf(page).click();
+    await expect(scrim).toBeVisible();
+    const box = (await scrim.boundingBox())!;
+    expect(box.width).toBe(375);
+    expect(box.height).toBe(800);
+    const topmost = (x: number, y: number) =>
+      page.evaluate(
+        ([px, py]) => document.elementFromPoint(px, py)?.className?.toString() ?? "",
+        [x, y]
+      );
+    expect(await topmost(190, 600)).toContain("site-nav-scrim");
+    // the pill and menu stay above it, so they remain operable
+    const t = (await toggleOf(page).boundingBox())!;
+    expect(await topmost(t.x + t.width / 2, t.y + t.height / 2)).not.toContain("site-nav-scrim");
+    // clicking the scrim closes the menu and does not activate anything under it
+    const url = page.url();
+    await page.mouse.click(190, 600);
+    await expect(toggleOf(page)).toHaveAttribute("aria-expanded", "false");
+    await expect(scrim).toHaveCount(0);
+    expect(page.url()).toBe(url);
+  });
+
+  test("the current page is marked in the open menu by more than colour", async ({ page }) => {
+    await page.goto("/projects");
+    await page.waitForTimeout(400);
+    await toggleOf(page).click();
+    const current = page.locator('#site-nav-menu a[aria-current="page"]');
+    await expect(current).toHaveText("Projects");
+    const shadow = (el: Element) => getComputedStyle(el).boxShadow;
+    expect(await current.evaluate(shadow)).not.toBe("none");
+    const other = page.locator("#site-nav-menu a:not([aria-current])").first();
+    expect(await other.evaluate(shadow)).toBe("none");
+    // marking it must not move the rows: still six 44px+ links
+    for (const link of await menuLinks(page).all()) {
+      expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+  });
+
   for (const scheme of ["light", "dark"] as const) {
     test(`axe: zero violations with the menu open (${scheme} scheme)`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });
