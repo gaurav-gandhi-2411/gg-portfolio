@@ -3,6 +3,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import hfDownloads from "@/content/generated/hf-downloads.json";
 import metricsJson from "@/content/metrics.json";
 import {
   extractCitations,
@@ -52,6 +53,15 @@ export interface ProvenanceInfo {
 }
 
 const metrics = (metricsJson as { metrics: Record<string, MetricEntry> }).metrics;
+
+/**
+ * Refs whose value is a GENERATED snapshot (not hand-typed): the popover's "measured <date>" is the
+ * snapshot's own fetch date, never a date typed into the provenance.md row (which would go stale
+ * the first week the weekly refresh runs).
+ */
+const generatedFetchDates: Record<string, string> = {
+  "aetherart:hf-downloads": hfDownloads.fetchedAt,
+};
 
 let parsedCache: ParsedProvenance | null = null;
 
@@ -119,7 +129,8 @@ export function getProvenance(
 
   const repoSlug = stripRepoSlug(repoUrl);
   const citations = extractCitations(row.source, repoSlug);
-  const measuredAt = extractMeasuredDate(row.claim, row.source);
+  const measuredAt =
+    generatedFetchDates[sourceRef] ?? extractMeasuredDate(row.claim, row.source);
 
   return {
     tier: "prose",
