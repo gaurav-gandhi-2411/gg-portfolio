@@ -43,15 +43,19 @@ CHARSET = (FONTS_DIR / "core-chars.txt").read_text(encoding="utf-8").replace("\n
 # Highest SOFT value used anywhere: font-variation-settings in app/case-study.css (12).
 SOFT_MAX = 12
 
+# Weights used anywhere: 400 (default), 500 (font-medium), 600 (font-semibold), 700 (UA bold).
+# Nothing sets 100-300 or 800-900, so those ends of the wght axis are dead weight.
+WGHT = (400, 700)
+
 # (css2 family query, output file, axis limits applied after subsetting)
 FAMILIES: list[tuple[str, str, dict[str, tuple[float, float]]]] = [
-    ("Space+Grotesk:wght@300..700", "space-grotesk-latin-core.woff2", {}),
+    ("Space+Grotesk:wght@300..700", "space-grotesk-latin-core.woff2", {"wght": WGHT}),
     (
         "Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1",
         "fraunces-latin-core.woff2",
-        {"SOFT": (0, SOFT_MAX)},
+        {"wght": WGHT, "SOFT": (0, SOFT_MAX)},
     ),
-    ("JetBrains+Mono:wght@100..800", "jetbrains-mono-latin-core.woff2", {}),
+    ("JetBrains+Mono:wght@100..800", "jetbrains-mono-latin-core.woff2", {"wght": WGHT}),
 ]
 
 # A modern UA so the API answers with woff2 and per-unicode-range blocks.
