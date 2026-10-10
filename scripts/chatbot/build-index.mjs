@@ -27,7 +27,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { anchorFor, caseStudyUrl, storyAnchor } from "../../lib/case-study-anchors.ts";
 import {
   embed,
-  EMBEDDING_MODEL_ID,
+  EMBEDDING_MODEL_VERSION,
   EmbeddingUnavailableError,
 } from "../../lib/chatbot/embed.mjs";
 import { partitionForReuse, serializeIndex } from "../../lib/chatbot/index-format.mjs";
@@ -405,7 +405,7 @@ async function main() {
   // check-index-fresh.mjs sets it so the freshness check still embeds from
   // scratch and cannot be fooled by a stale vector carried forward.
   const prior = process.env.CHATBOT_INDEX_REEMBED === "1" ? null : readPriorIndex();
-  const { reused, missing } = partitionForReuse(chunks, prior, EMBEDDING_MODEL_ID);
+  const { reused, missing } = partitionForReuse(chunks, prior, EMBEDDING_MODEL_VERSION);
   console.log(
     `Chunked ${chunks.length} records: reusing ${reused.length}, embedding ${missing.length} ` +
       `one at a time...`
@@ -422,7 +422,7 @@ async function main() {
 
   writeFileSync(
     OUTPUT_PATH,
-    serializeIndex({ model: EMBEDDING_MODEL_ID, chunks: withEmbeddings })
+    serializeIndex({ model: EMBEDDING_MODEL_VERSION, chunks: withEmbeddings })
   );
   console.log(`Wrote ${withEmbeddings.length} chunks to ${OUTPUT_PATH}`);
 }
