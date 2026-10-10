@@ -243,6 +243,9 @@ jobs:
       - name: GitHub API helper self-test (fetch stubbed)
         run: node scripts/lib/github-api.smoketest.mjs
 
+      - name: refresh-hf-downloads.mjs tests (stub HTTP server, R3 exit codes, as-of label)
+        run: node --test scripts/refresh-hf-downloads.test.mjs
+
       - name: refresh-metrics.mjs forced-error self-test
         run: node scripts/refresh-metrics.forced-error.smoketest.mjs
 
