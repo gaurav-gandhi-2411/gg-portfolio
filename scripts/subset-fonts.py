@@ -25,6 +25,12 @@ Run (needs fonttools + brotli; use a throwaway venv, never a global env):
     python -m venv .venv-fonts && .venv-fonts/Scripts/pip install fonttools==4.66.1 brotli
     .venv-fonts/Scripts/python scripts/subset-fonts.py
 
+Licences: all three families are SIL OFL 1.1. The licence texts ship next to the
+subsets (app/fonts/*-OFL.txt, copied from each project's upstream OFL.txt or the
+existing assets/fonts/ copies); keep them with the files if the fonts move.
+
+Output is byte-deterministic for a given upstream file (check with sha256sum).
+
 Sources are fetched from the Google Fonts CSS2 API (OFL-licensed families)
 with the same axis ranges next/font/google requested.
 """
@@ -84,7 +90,9 @@ def latin_woff2_url(family_query: str) -> str:
 
 def build(family_query: str, limits: dict[str, tuple[float, float]]) -> bytes:
     """Download a family's latin woff2, subset it to CHARSET and limit axes; return woff2 bytes."""
-    font = TTFont(io.BytesIO(fetch(latin_woff2_url(family_query))))
+    # recalcTimestamp=False: fontTools otherwise stamps head.modified with the current time on
+    # save, making every run's bytes differ. checkSumAdjustment is recomputed on save regardless.
+    font = TTFont(io.BytesIO(fetch(latin_woff2_url(family_query))), recalcTimestamp=False)
     options = subset.Options()
     options.layout_features = ["*"]
     options.flavor = "woff2"
