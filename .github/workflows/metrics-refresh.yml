@@ -223,6 +223,28 @@ jobs:
           PORTFOLIO_EXCLUDED_REPOS: ${{ secrets.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
+      # AetherArt's Hugging Face download counts are a rolling 30-day figure, so they are generated,
+      # not typed: this writes content/generated/hf-downloads.json, which the site renders under
+      # "as of <fetch date>". R3: exits non-zero on any API/auth/shape error and leaves the committed
+      # snapshot untouched (the site then keeps showing it under its own, older, date). `if: always()`
+      # so a failure in the step above doesn't skip it, and vice versa.
+      - name: Refresh Hugging Face download counts
+        if: always()
+        run: node scripts/refresh-hf-downloads.mjs
+
+      # The chatbot index embeds the case-study rows, including these counts; CI's "chatbot index is
+      # up to date" gate would otherwise fail on every weekly snapshot change. Only when the snapshot
+      # actually changed, so quiet weeks stay cheap.
+      - name: Rebuild chatbot index if the HF snapshot changed
+        if: always()
+        run: |
+          if git diff --quiet content/generated/hf-downloads.json; then
+            echo "HF snapshot unchanged - index rebuild not needed."
+          else
+            npm ci
+            node scripts/chatbot/build-index.mjs
+          fi
+
       # R3: the step above now exits non-zero on a repo-inventory failure, which would otherwise
       # skip this step by default — but that failure is independent of whether metrics.json has a
       # real diff to propose, so this step must still run.
@@ -233,7 +255,7 @@ jobs:
         run: |
           BRANCH="chore/metrics-refresh"
 
-          if git diff --quiet content/metrics.json; then
+          if git diff --quiet content/metrics.json content/generated/hf-downloads.json; then
             echo "No metric changes — no PR this week."
             # A prior week's PR may still be open with nothing left to
             # propose (its underlying drift already landed some other way,
@@ -251,7 +273,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git checkout -B "$BRANCH"
-          git add content/metrics.json
+          git add content/metrics.json content/generated/hf-downloads.json
+          # Modified only when the HF snapshot changed (rebuild step above); a no-op otherwise.
+          git add content/chatbot/index.json
           git commit -m "chore(metrics): weekly metric refresh from source repos"
           # The refresh branch is owned by this workflow alone; force-push
           # replaces any stale unmerged run with the freshest numbers
