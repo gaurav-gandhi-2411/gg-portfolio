@@ -204,8 +204,8 @@ export function ProjectSearch({ products }: { products: Product[] }) {
         id={inputId}
         type="text"
         role="combobox"
-        aria-expanded={open}
-        aria-controls={listboxId}
+        aria-expanded={open && ranked.length > 0}
+        aria-controls={open && ranked.length > 0 ? listboxId : undefined}
         aria-activedescendant={activeOptionId}
         aria-autocomplete="list"
         autoComplete="off"
@@ -218,20 +218,11 @@ export function ProjectSearch({ products }: { products: Product[] }) {
         className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
       />
 
-      {open && trimmedQuery.length > 0 && ranked.length === 0 ? (
-        // Same id as the listbox below so aria-controls always resolves to
-        // whichever of the two is actually on screen. Not role="listbox"
-        // itself — an empty listbox with no role="option" children fails
-        // axe's aria-required-children check, and there is nothing here to
-        // select anyway.
-        <p
-          id={listboxId}
-          role="status"
-          className="border-border/60 bg-popover text-popover-foreground shadow-card-hover absolute top-full left-0 z-20 mt-2 w-full rounded-lg border p-3 text-sm text-muted-foreground"
-        >
-          No projects match &ldquo;{trimmedQuery}&rdquo;.
-        </p>
-      ) : null}
+      {/* No "no match" popover here: the grid below already says so, with the
+          reset action, and showing both stacked the same sentence twice with a
+          "Showing 0 of 0" counter between them (components/project-filter.tsx
+          owns the single, role="status" empty state). aria-controls is only
+          meaningful while the listbox below is rendered. */}
 
       {open && ranked.length > 0 ? (
         <ul
@@ -276,7 +267,10 @@ export function ProjectSearch({ products }: { products: Product[] }) {
               </span>
               <span
                 className={cn(
-                  "block text-caption leading-snug",
+                  // Bracket form on purpose: tailwind-merge reads `text-caption` and
+                  // the colour class below as one group and drops the size, which
+                  // left the tagline at 16px.
+                  "block [font-size:var(--text-caption)] leading-snug",
                   i === activeIndex ? "text-accent-foreground/85" : "text-muted-foreground"
                 )}
               >

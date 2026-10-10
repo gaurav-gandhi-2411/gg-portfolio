@@ -147,7 +147,11 @@ export function SiteNav() {
     // A press outside the pill closes it. No focus move: the press already
     // chose a new target.
     const onPointerDown = (e: PointerEvent) => {
-      if (pill && !pill.contains(e.target as Node)) setOpenFor(null);
+      // The scrim is outside the pill but closes on click instead, so the
+      // press that dismisses the menu is absorbed by it rather than falling
+      // through to whatever link sits underneath.
+      const target = e.target as Element;
+      if (pill && !pill.contains(target) && !target.closest(".site-nav-scrim")) setOpenFor(null);
     };
     // Growing past the breakpoint turns the menu back into the inline row.
     const mq = window.matchMedia(DESKTOP_QUERY);
@@ -305,6 +309,10 @@ export function SiteNav() {
       <a href="#main" className="site-nav-skip">
         Skip to content
       </a>
+
+      {open && (
+        <div className="site-nav-scrim" aria-hidden="true" onClick={() => setOpenFor(null)} />
+      )}
 
       <div className="site-nav-pill" ref={pillRef}>
         <Link href="/" className="site-nav-brand" aria-label={`${site.name}, home`}>
