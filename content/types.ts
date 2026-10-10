@@ -150,13 +150,21 @@ export interface CaseStudy {
   approach: string[];
   architecture?: { intro?: string; stages: FlowStage[]; note?: string };
   /** Model/method choices and why — the teaching core. */
-  decisions?: { title: string; body: string; sourceRef: string }[];
+  decisions?: { title: string; body: string; sourceRef: string; selfReported?: boolean }[];
   /** Sourced metrics, including the honest/unflattering ones. */
   results?: {
     label: string;
     value: string;
     detail?: string;
     sourceRef: string;
+    /**
+     * `true` when the claim's only source is a PRIVATE repo, so no reader (and no CI job here)
+     * can check it. The page then shows "self-reported (private repo)" next to it, and
+     * scripts/check-metric-freshness.mjs reports it as SELF_REPORTED instead of drift/unchecked.
+     * Set it only for claims that truly cannot be verified: a claim backed by a public artifact
+     * (e.g. content/metrics.json entries pointing at a public repo) must not carry it.
+     */
+    selfReported?: boolean;
     /**
      * "prose" typesets `value` as readable body text instead of the huge
      * display numeral every other result gets — for a value that is
@@ -186,6 +194,8 @@ export interface CaseStudy {
      */
     body: (string | { text: string; sourceRef: string })[];
     sourceRef: string;
+    /** See `results[].selfReported`. */
+    selfReported?: boolean;
     /**
      * An optional opening sentence sourced separately from the rest of the
      * story — for when the story's lead-in restates a fact that's really

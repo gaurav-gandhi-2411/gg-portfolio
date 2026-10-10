@@ -15,6 +15,26 @@ import { getProvenance } from "@/lib/provenance";
 import { caseStudyReadingMinutes } from "@/lib/reading-time";
 import type { RelatedProduct } from "@/lib/related-products";
 import { SECTION_TITLES, headingId } from "@/lib/case-study-anchors";
+import { SELF_REPORTED_LABEL } from "@/lib/self-reported";
+
+/**
+ * Same type treatment as the provenance popover's footer line (components/metric-provenance.tsx):
+ * a claim whose only source is a private repo says so next to the claim, instead of only in the
+ * weekly freshness report.
+ */
+function SelfReportedTag({ inline = false }: { inline?: boolean }) {
+  return (
+    <span
+      className={
+        inline
+          ? "text-muted-foreground/80 text-[11px]"
+          : "text-muted-foreground/80 mt-[var(--space-2-5)] block text-[11px]"
+      }
+    >
+      {inline ? ` · ${SELF_REPORTED_LABEL}` : SELF_REPORTED_LABEL}
+    </span>
+  );
+}
 
 /**
  * CONCEPT C — "one modular system": neither the homepage's language
@@ -166,6 +186,7 @@ export function CaseStudyPage({
                 <li key={decision.sourceRef} className="case-block">
                   <p className="font-medium text-foreground">{decision.title}</p>
                   <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">{decision.body}</p>
+                  {decision.selfReported && <SelfReportedTag />}
                 </li>
               ))}
             </ol>
@@ -201,6 +222,7 @@ export function CaseStudyPage({
                     <dt className="case-chip-label">
                       {result.label}
                       {result.detail && <span className="text-muted-foreground/70"> · {result.detail}</span>}
+                      {result.selfReported && <SelfReportedTag inline />}
                     </dt>
                   </div>
                 );
@@ -212,6 +234,7 @@ export function CaseStudyPage({
         {study.story && (
           <>
             <SectionHeading title={study.story.title} />
+            {study.story.selfReported && <SelfReportedTag />}
             {study.story.leadIn && (
               <p className="text-muted-foreground mt-[var(--space-4)] text-base leading-relaxed">
                 {study.story.leadIn.text}

@@ -80,6 +80,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
+import { classifySelfReported, collectCaseStudyClaims } from "./lib/case-study-claims.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Overridable for testing the failure path against a fixture that isn't
@@ -855,50 +856,6 @@ function isBinaryPath(path) {
   return BINARY_EXTENSIONS.has(path.slice(dot).toLowerCase());
 }
 
-// Walks one case study's results/decisions/story fields for every
-// sourceRef-carrying claim, pairing each with the exact text the site
-// displays for it (value+detail for a result row, body for a decision,
-// the joined paragraphs for the story) — this is the text that actually
-// ships, not a separately-maintained copy of it, so there's no risk of
-// this check validating against stale metadata about itself.
-function collectCaseStudyClaims(study) {
-  const claims = [];
-  for (const r of study.results ?? []) {
-    claims.push({ sourceRef: r.sourceRef, text: `${r.value} ${r.detail ?? ""}`.trim(), kind: "result" });
-  }
-  for (const d of study.decisions ?? []) {
-    claims.push({ sourceRef: d.sourceRef, text: d.body, kind: "decision" });
-  }
-  if (study.story) {
-    // A body paragraph can override the story's default sourceRef with its
-    // own (see content/types.ts's doc comment) — a mid-story topic shift
-    // that's really evidenced by a different, existing claim's citation.
-    // Overridden paragraphs are excluded from the main "story" claim's
-    // joined text (checking them against the story's default source would
-    // be exactly the wrong-citation bug this mechanism exists to fix) and
-    // instead become their own claim, each against its own sourceRef.
-    const plainParagraphs = study.story.body.filter((p) => typeof p === "string");
-    const overrideParagraphs = study.story.body.filter((p) => typeof p !== "string");
-    claims.push({ sourceRef: study.story.sourceRef, text: plainParagraphs.join(" "), kind: "story" });
-    for (const seg of overrideParagraphs) {
-      claims.push({ sourceRef: seg.sourceRef, text: seg.text, kind: "story-segment" });
-    }
-    // A story's optional leadIn restates a fact really evidenced by a
-    // different claim's own source (see content/types.ts's doc comment) —
-    // checked as its own claim against its own sourceRef, not folded into
-    // the main story text above, which would check it against the wrong
-    // citation.
-    if (study.story.leadIn) {
-      claims.push({ sourceRef: study.story.leadIn.sourceRef, text: study.story.leadIn.text, kind: "story-leadIn" });
-    }
-  }
-  if (study.diagram) {
-    const pointsText = study.diagram.points.map((p) => `${p.label} ${p.value}`).join(" ");
-    claims.push({ sourceRef: study.diagram.sourceRef, text: `${pointsText} ${study.diagram.caption}`, kind: "diagram" });
-  }
-  return claims;
-}
-
 async function checkCaseStudyClaims(provenance) {
   const modules = discoverCaseStudyModules();
   const claimResults = []; // { slug, sourceRef, kind, status, detail }
@@ -914,8 +871,17 @@ async function checkCaseStudyClaims(provenance) {
     const repo = Object.hasOwn(CASE_STUDY_REPO, fileName) ? CASE_STUDY_REPO[fileName] : undefined;
     const repoSlug = repo ? repo.split("/")[1] : null;
 
-    for (const { sourceRef, text, kind } of collectCaseStudyClaims(study)) {
+    for (const claim of collectCaseStudyClaims(study)) {
+      const { sourceRef, text, kind } = claim;
       const base = { slug: fileName, sourceRef, kind };
+
+      // Claims labelled "self-reported (private repo)" on the page: nothing to compare them
+      // against, so they leave the drift/unchecked accounting and get their own section.
+      const selfReported = classifySelfReported(claim);
+      if (selfReported) {
+        claimResults.push({ ...base, ...selfReported });
+        continue;
+      }
 
       const tokens = extractTokens(text);
       if (tokens.length === 0) {
@@ -1141,7 +1107,10 @@ const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
 // numeric-checked in principle but this run's data/config didn't resolve
 // far enough to try — reported separately, not folded into either bucket.
 const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsPartial.length + claimsUnverifiable.length;
-const claimsNumericTotal = claimResults.length - claimsNotNumeric.length;
+const claimsSelfReported = claimsByStatus("SELF_REPORTED");
+// Self-reported claims are labelled on the page and have no source to check, so they are not
+// part of the "numeric claims we could check" denominator either.
+const claimsNumericTotal = claimResults.length - claimsNotNumeric.length - claimsSelfReported.length;
 
 const svgResults = await checkSvgMetrics(store);
 const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
@@ -1274,6 +1243,19 @@ if (claimsStructurallyUnverifiable.length > 0) {
   );
   lines.push("");
   for (const r of claimsStructurallyUnverifiable) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+
+if (claimsSelfReported.length > 0) {
+  lines.push(`### ${claimsSelfReported.length} claim(s) SELF-REPORTED (private source repo)`);
+  lines.push("");
+  lines.push(
+    "Labelled \"self-reported (private repo)\" next to each claim on the page. Excluded from " +
+      "drift and from the UNCHECKED count below: there is no public source to compare them with. " +
+      "This is a stated property of the claim, not a pass."
+  );
+  lines.push("");
+  for (const r of claimsSelfReported) lines.push(`- \`${r.slug}\` (${r.kind}, \`${r.sourceRef}\`)`);
   lines.push("");
 }
 
@@ -1542,6 +1524,7 @@ console.log(
     `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
     `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
+    `${claimsSelfReported.length} claims SELF-REPORTED (private repo, labelled). ` +
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +
     `sha-reachability: ${shaReachable.length} reachable, ${shaUnreachable.length} UNREACHABLE, ${shaUnverifiable.length} unverifiable, of ${shaResults.length} cited. ` +
