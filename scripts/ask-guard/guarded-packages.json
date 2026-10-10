@@ -1,0 +1,20 @@
+{
+  "_comment": "Single source of truth for the packages whose change forces a LIVE /api/chat probe against the PR's Vercel preview (.github/workflows/ask-live-guard.yml). An entry is an exact package name, or a prefix ending in '*'. Derived from what /api/chat actually loads: lib/chatbot/embed.mjs dynamically imports @huggingface/transformers, which at runtime createRequire()s onnxruntime-node (invisible to Next's file tracer, see next.config.ts outputFileTracingIncludes and PR #255) and pulls onnxruntime-web, sharp and the @huggingface/* helpers; onnxruntime-node needs onnxruntime-common's CJS build; onnxruntime-web/-common bring flatbuffers, guid-typescript, long, protobufjs and @protobufjs/*; sharp's native binaries live in @img/*; `next` owns the file tracer itself; app/api/chat/route.ts uses @vercel/functions. Add a package here the moment /api/chat starts depending on it. Matching is by the last node_modules/<name> segment of every lockfile entry, so a lockfile-only (transitive) bump counts.",
+  "packages": [
+    "@huggingface/transformers",
+    "@huggingface/jinja",
+    "@huggingface/tokenizers",
+    "onnxruntime-node",
+    "onnxruntime-web",
+    "onnxruntime-common",
+    "sharp",
+    "@img/*",
+    "flatbuffers",
+    "guid-typescript",
+    "long",
+    "protobufjs",
+    "@protobufjs/*",
+    "next",
+    "@vercel/functions"
+  ]
+}
