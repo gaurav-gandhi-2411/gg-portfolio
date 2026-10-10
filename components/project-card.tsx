@@ -103,10 +103,10 @@ export function ProjectCard({
           holds focus. */}
       <span className="project-card-light" aria-hidden="true" />
 
-      <div className="project-card-body grid gap-x-8 gap-y-6 @[28rem]:grid-cols-[minmax(0,1fr)_13rem]">
-        <div className="flex min-w-0 flex-col">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <Heading className="flex items-center gap-[var(--space-2-5)] font-heading text-lead font-semibold text-foreground">
+      <div className="project-card-body">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-start justify-between gap-x-3">
+            <Heading className="flex min-w-0 items-center gap-[var(--space-2-5)] font-heading text-lead font-semibold text-foreground">
               <ProjectMark id={product.slug as ProjectMarkId} hue={hue} size={28} className="mark-idle shrink-0" />
               <Link
                 href={`/work/${product.slug}`}
@@ -115,49 +115,55 @@ export function ProjectCard({
                 {product.name}
               </Link>
             </Heading>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              {/* Direction B ("Product showcase") — status at a glance,
-                  derived from the project's own liveUrl/pypi fields, never
-                  hand-typed (see projectStatus above). */}
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-caption tracking-eyebrow uppercase",
-                  STATUS_PILL_CLASS[status]
-                )}
-              >
-                {status === "Live" && (
-                  <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
-                )}
-                {status}
-              </span>
-              {dateline && (
-                // data-live-value: masked out of visual-regression screenshots
-                // (e2e/visual-regression.spec.ts) — this is ISR-refreshed
-                // live data, not layout, so it must never be what a baseline
-                // diff fails on.
-                <span
-                  data-live-value
-                  className="text-muted-foreground inline-flex items-center gap-[var(--space-1-5)] font-mono text-caption"
-                >
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                    "bg-accent inline-block size-1.5 shrink-0 rounded-full",
-                    // Design review (2026-07-30): a continuously-pulsing dot
-                    // reads as "happening right now" — right for Warmer's
-                    // daily puzzle, wrong for a past-tense "shipped 4mo ago"
-                    // fact (even though the value itself is ISR-refreshed).
-                    // Reserved for the genuinely present-tense case; every
-                    // other dateline gets the hero badge's existing static
-                    // dot instead of a new, unpulsed variant.
-                    dateline.includes("live today") && "live-dot"
-                  )}
-                />
-                {dateline}
-              </span>
+            {/* Direction B ("Product showcase") — status at a glance,
+                derived from the project's own liveUrl/pypi fields, never
+                hand-typed (see projectStatus above). Its own right-aligned,
+                non-wrapping cell, so the header reads the same on every card
+                (it used to wrap below the title on some and not others). The size is
+                a bracket property on purpose: cn() runs tailwind-merge, which
+                reads text-caption and the STATUS_PILL_CLASS text colour as one
+                conflicting group and silently dropped the size, leaving the
+                pill at 16px. */}
+            <span
+              data-card-status
+              className={cn(
+                "mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono [font-size:var(--text-caption)] leading-[var(--text-caption--line-height)] tracking-wider whitespace-nowrap uppercase",
+                STATUS_PILL_CLASS[status]
               )}
-            </div>
+            >
+              {status === "Live" && (
+                <span aria-hidden="true" className="bg-status-open live-dot size-1.5 rounded-full" />
+              )}
+              {status}
+            </span>
           </div>
+
+          {dateline && (
+            // data-live-value: masked out of visual-regression screenshots
+            // (e2e/visual-regression.spec.ts) — this is ISR-refreshed
+            // live data, not layout, so it must never be what a baseline
+            // diff fails on.
+            <span
+              data-live-value
+              className="text-muted-foreground mt-[var(--space-1-5)] inline-flex w-fit items-center gap-[var(--space-1-5)] font-mono text-caption"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "bg-accent inline-block size-1.5 shrink-0 rounded-full",
+                  // Design review (2026-07-30): a continuously-pulsing dot
+                  // reads as "happening right now" — right for Warmer's
+                  // daily puzzle, wrong for a past-tense "shipped 4mo ago"
+                  // fact (even though the value itself is ISR-refreshed).
+                  // Reserved for the genuinely present-tense case; every
+                  // other dateline gets the hero badge's existing static
+                  // dot instead of a new, unpulsed variant.
+                  dateline.includes("live today") && "live-dot"
+                )}
+              />
+              {dateline}
+            </span>
+          )}
 
           <p className="text-muted-foreground mt-[var(--space-2)] text-sm leading-relaxed">{product.tagline}</p>
 
@@ -218,7 +224,36 @@ export function ProjectCard({
             </div>
           )}
 
-          <div className="mt-auto flex flex-wrap gap-x-5 gap-y-[var(--space-2)] pt-5 text-sm">
+          {/* The metric slot: one position on every card (directly above the
+              links, which are pinned to the card's bottom), one reserved
+              height, whatever the project has to show -- a drawn figure, a
+              text metric, or nothing. A project with no published metric
+              (DealHunter, tracegauge, ...) gets the same slot, empty and
+              aria-hidden: the content has no "not published" label and none
+              is invented here. The reserved height is dropped below lg
+              (app/work.css), where there is one card per row and nothing to
+              align with. */}
+          <div
+            data-card-metric
+            className="project-card-metric"
+            aria-hidden={product.metric ? undefined : true}
+          >
+            {product.figure && product.metric && (
+              <EvalFigure figure={product.figure} label={product.metric.label} />
+            )}
+            {!product.figure && product.metric && (
+              <p>
+                <span className="value-settle block font-mono text-lead font-semibold text-foreground">
+                  {product.metric.value}
+                </span>
+                <span className="text-muted-foreground mt-[var(--space-1)] block text-caption leading-snug">
+                  {product.metric.label}
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-x-5 gap-y-[var(--space-2)] pt-5 text-sm">
             <Link
               href={`/work/${product.slug}`}
               className="card-clickable text-accent focus-visible:outline-ring -my-3 inline-flex min-h-11 items-center font-medium transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
@@ -243,21 +278,6 @@ export function ProjectCard({
             )}
           </div>
         </div>
-
-        {product.figure && product.metric && (
-          <div className="@[28rem]:self-center @[28rem]:justify-self-end">
-            <EvalFigure figure={product.figure} label={product.metric.label} />
-          </div>
-        )}
-
-        {!product.figure && product.metric && (
-          <p className="text-sm @[28rem]:max-w-[13rem] @[28rem]:self-center @[28rem]:justify-self-end @[28rem]:text-right">
-            <span className="value-settle font-mono font-medium text-foreground">
-              {product.metric.value}
-            </span>{" "}
-            <span className="text-muted-foreground">· {product.metric.label}</span>
-          </p>
-        )}
       </div>
     </article>
   );
