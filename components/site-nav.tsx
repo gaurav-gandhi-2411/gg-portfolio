@@ -70,6 +70,9 @@ const LINKS: NavLink[] = [
 /** How far you scroll before the pill is fully contracted. */
 const SHRINK_DISTANCE_PX = 180;
 
+/** Below this width the six links collapse into a disclosure menu (hero.css uses the same 767px). */
+const DESKTOP_QUERY = "(min-width: 768px)";
+
 export function SiteNav() {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement | null>(null);
@@ -101,6 +104,66 @@ export function SiteNav() {
         : -1;
   const [readingIndex, setReadingIndex] = useState(-1);
   const activeIndex = onHome ? readingIndex : routeIndex;
+
+  /*
+   * Mobile menu. `openFor` stores the pathname the menu was opened on, and
+   * "open" is derived as openFor === pathname, so a route change closes it
+   * without an effect that sets state. Same-page hash links do not change the
+   * pathname, so those close it from the link's own click handler.
+   */
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const pillRef = useRef<HTMLDivElement | null>(null);
+  const [openFor, setOpenFor] = useState<string | null>(null);
+  const open = openFor === pathname;
+
+  useEffect(() => {
+    if (!open) return;
+    const pill = pillRef.current;
+
+    // Esc closes and hands focus back to the button that opened it.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpenFor(null);
+        toggleRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab" || !pill) return;
+      // Focus trap: Tab and Shift+Tab wrap inside the pill (home link,
+      // button, the six links) instead of walking out into the page behind.
+      const items = [...pill.querySelectorAll<HTMLElement>("a[href], button")];
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const current = document.activeElement;
+      if (e.shiftKey && (current === first || !pill.contains(current))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (current === last || !pill.contains(current))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    // A press outside the pill closes it. No focus move: the press already
+    // chose a new target.
+    const onPointerDown = (e: PointerEvent) => {
+      if (pill && !pill.contains(e.target as Node)) setOpenFor(null);
+    };
+    // Growing past the breakpoint turns the menu back into the inline row.
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const onMq = (e: MediaQueryListEvent) => {
+      if (e.matches) setOpenFor(null);
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    mq.addEventListener("change", onMq);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+      mq.removeEventListener("change", onMq);
+    };
+  }, [open]);
 
   // Scroll spy, homepage only. One trigger per section, reporting which one
   // currently owns the middle of the viewport.
@@ -243,13 +306,36 @@ export function SiteNav() {
         Skip to content
       </a>
 
-      <div className="site-nav-pill">
+      <div className="site-nav-pill" ref={pillRef}>
         <Link href="/" className="site-nav-brand" aria-label={`${site.name}, home`}>
           <Monogram className="site-nav-mark" />
           <span className="site-nav-name">{site.name}</span>
         </Link>
 
-        <div className="site-nav-links" ref={listRef}>
+        <button
+          type="button"
+          ref={toggleRef}
+          className="site-nav-toggle"
+          aria-expanded={open}
+          aria-controls="site-nav-menu"
+          onClick={() => setOpenFor(open ? null : pathname)}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          >
+            {open ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3 6h14M3 10h14M3 14h14" />}
+          </svg>
+          Menu
+        </button>
+
+        <div className="site-nav-links" id="site-nav-menu" data-open={open} ref={listRef}>
           {/* Purely decorative: the active item already says so with
               aria-current, so this must never be announced twice. */}
           <span className="site-nav-indicator" ref={indicatorRef} aria-hidden="true" />
@@ -262,6 +348,14 @@ export function SiteNav() {
                 data-nav-item={index}
                 aria-current={isActive ? "page" : undefined}
                 className={cn("site-nav-link", isActive && "site-nav-link-active")}
+                onClick={() => {
+                  setOpenFor(null);
+                  // The pressed link is about to be display:none, which would
+                  // drop focus to <body>. The button is always visible where
+                  // the menu exists and display:none at desktop widths, so
+                  // this is a no-op there.
+                  toggleRef.current?.focus();
+                }}
               >
                 {link.label}
               </Link>

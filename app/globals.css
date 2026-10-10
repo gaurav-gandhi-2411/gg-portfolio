@@ -413,7 +413,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* Full-strength ring, not /50: the half-alpha default measured 2.26:1 (light)
+     * and 2.43:1 (dark) against the page on elements that rely on this
+     * fallback (underlined inline links, heading links), under the 3:1 WCAG
+     * 1.4.11 minimum. Elements with their own focus-visible:outline-ring were
+     * already 5.3 to 6.6:1. */
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
