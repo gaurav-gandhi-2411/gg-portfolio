@@ -1,17 +1,14 @@
 name: Lighthouse (dispatch)
 
-# Dispatch-only Lighthouse measurement against arbitrary URLs on a clean
-# GitHub-hosted runner — local Lighthouse is contaminated by whatever else is
-# using the CPU at measurement time (see scripts/lighthouse-ci.mjs).
-#
-# A measurement tool, not a merge gate: workflow_dispatch only, and the job
-# fails only on a genuine Lighthouse error, never a score below its gates.
+# LAB VARIANT (never merged): builds each ref in `refs`, serves it behind a
+# brotli proxy (approximating Vercel's compressed transfer sizes) and runs the
+# repo's scripts/lighthouse-ci.mjs against localhost on a clean runner.
 
 on:
   workflow_dispatch:
     inputs:
       urls:
-        description: "Space- or comma-separated absolute URL(s) to measure"
+        description: "Space-separated PATHS (e.g. '/ /projects')"
         required: true
         type: string
       runs:
@@ -27,49 +24,96 @@ on:
         options:
           - mobile
           - desktop
+      refs:
+        description: "Space-separated lab refs under refs/lab/ (e.g. 'base fonts')"
+        required: true
+        type: string
 
-concurrency:
-  # Scoped by ref (same reasoning as live-link-latency.yml) so a dispatch on
-  # one branch can't cancel an in-flight one on another.
-  group: lighthouse-${{ github.ref }}
-  cancel-in-progress: true
-
-# contents: read is only for checkout; upload-artifact uses its own runtime token, not this one.
 permissions:
   contents: read
 
 jobs:
-  lighthouse:
-    name: lighthouse
+  lab:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
 
-      - name: Setup Node
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install harness deps
         run: npm ci
 
-      # Inputs flow through env:, never string-interpolated into the shell command.
-      - name: Run Lighthouse
+      - name: Build, serve and measure each variant
         env:
-          LH_URLS: ${{ inputs.urls }}
+          LAB_PATHS: ${{ inputs.urls }}
           LH_RUNS: ${{ inputs.runs }}
           LH_FORM_FACTOR: ${{ inputs.form_factor }}
-          LH_OUTPUT_DIR: ${{ github.workspace }}/lighthouse-ci-output
-        run: node scripts/lighthouse-ci.mjs
+          LAB_REFS: ${{ inputs.refs }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/proxy.mjs" <<'EOF'
+          import http from "node:http";
+          import zlib from "node:zlib";
+          const [listen, upstream] = process.argv.slice(2).map(Number);
+          const cache = new Map();
+          const compressible = /^(text\/|application\/(javascript|json|xml)|image\/svg)/;
+          http.createServer((req, res) => {
+            const key = req.url;
+            const send = (e) => { res.writeHead(e.status, e.headers); res.end(e.body); };
+            if (cache.has(key)) return send(cache.get(key));
+            const up = http.request({ host: "127.0.0.1", port: upstream, path: req.url, method: req.method, headers: { ...req.headers, "accept-encoding": "identity" } }, (r) => {
+              const chunks = [];
+              r.on("data", (c) => chunks.push(c));
+              r.on("end", () => {
+                let body = Buffer.concat(chunks);
+                const headers = { ...r.headers };
+                delete headers["content-length"]; delete headers["transfer-encoding"];
+                if (compressible.test(String(headers["content-type"] ?? "")) && body.length > 200) {
+                  body = zlib.brotliCompressSync(body, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } });
+                  headers["content-encoding"] = "br";
+                }
+                headers["content-length"] = String(body.length);
+                const e = { status: r.statusCode, headers, body };
+                if (req.method === "GET" && r.statusCode === 200) cache.set(key, e);
+                send(e);
+              });
+            });
+            up.on("error", () => { res.writeHead(502); res.end(); });
+            req.pipe(up);
+          }).listen(listen, "127.0.0.1");
+          EOF
+          mkdir -p "$GITHUB_WORKSPACE/lab-out"
+          i=0
+          for ref in $LAB_REFS; do
+            i=$((i+1))
+            git fetch --depth=1 origin "refs/lab/$ref:refs/remotes/lab/$ref"
+            dir="$RUNNER_TEMP/v_$ref"
+            git worktree add --detach "$dir" "refs/remotes/lab/$ref"
+            (cd "$dir" && npm ci --no-audit --no-fund >/dev/null && npx next build >"$GITHUB_WORKSPACE/lab-out/build-$ref.log" 2>&1)
+            up=$((4200+i)); px=$((4100+i))
+            (cd "$dir" && exec node node_modules/next/dist/bin/next start -p $up >"$RUNNER_TEMP/next-$ref.log" 2>&1) &
+            npid=$!
+            node "$RUNNER_TEMP/proxy.mjs" $px $up &
+            ppid=$!
+            for t in $(seq 1 60); do curl -sf -o /dev/null "http://127.0.0.1:$px/" && break; sleep 1; done
+            urls=""
+            for p in $LAB_PATHS; do urls="$urls http://127.0.0.1:$px$p"; done
+            echo "## variant: $ref ($(git -C "$dir" rev-parse --short HEAD))" >> "$GITHUB_STEP_SUMMARY"
+            LH_URLS="$urls" LH_RUNS="$LH_RUNS" LH_FORM_FACTOR="$LH_FORM_FACTOR" LH_OUTPUT_DIR="$GITHUB_WORKSPACE/lab-out/$ref" node scripts/lighthouse-ci.mjs
+            kill $ppid $npid || true
+          done
 
-      - name: Upload Lighthouse reports
+      - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: lighthouse-reports
-          path: lighthouse-ci-output/
-          retention-days: 14
+          path: lab-out/
+          retention-days: 7
           if-no-files-found: ignore
