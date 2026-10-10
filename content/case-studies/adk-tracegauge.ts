@@ -17,7 +17,7 @@ import type { CaseStudy } from "../types";
 // than no number.
 export const adkTracegauge: CaseStudy = {
   slug: "adk-tracegauge",
-  verifiedAt: "2026-08-18",
+  verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
   title: "adk-tracegauge",
   dek: "A build gate for agents built on Google's Agent Development Kit: it fails the build when an agent starts costing more per run, and prints, every single run, the smallest rise it could actually have caught.",
   depth: "full",

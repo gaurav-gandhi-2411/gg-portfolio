@@ -7,7 +7,7 @@ import type { CaseStudy } from "../types";
 // pytest --collect-only) — CURRENT_STATE.md's 597 is a frozen 2026-06-09 snapshot.
 export const dealhunter: CaseStudy = {
   slug: "dealhunter",
-  verifiedAt: "2026-07-31", // wave 19 -- last re-checked against source this session
+  verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
   title: "DealHunter",
   dek: "A flight-search agent that turns a plain-English trip request into two honestly-explained trade-offs, hardened by finding and closing a two-week silent production outage caused by two unrelated bugs hiding behind each other.",
   depth: "full",
