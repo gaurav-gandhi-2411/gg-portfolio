@@ -24,6 +24,19 @@
  */
 const PRESENCE_EVENTS = ["pointerdown", "pointermove", "wheel", "touchstart", "keydown", "scroll"] as const;
 
+/**
+ * Earliest unprompted arrival for the GSAP-backed motion stack (smooth scroll,
+ * scroll-scrubbed depth, nav indicator, hero scrubs), measured from `load`.
+ *
+ * It was 1200ms, which landed the ~50 kB gzip GSAP + ScrollTrigger + Lenis
+ * chunks, their evaluation and the ScrollTrigger refresh inside the window
+ * blocking time is measured in. Three seconds matches the hero field's own minimum. This moves the
+ * work rather than deleting it: a visitor who does anything at all (scroll,
+ * move, touch, press a key) still gets it immediately, because presence beats
+ * the minimum, and one who does nothing gets it a beat later than before.
+ */
+export const MOTION_ARRIVAL_MS = 3000;
+
 /** Asked for only after the minimum has elapsed, never as the way to wait. */
 const IDLE_GRACE_MS = 1000;
 

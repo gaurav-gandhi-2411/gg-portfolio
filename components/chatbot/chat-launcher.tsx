@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 
 /**
  * Wave 16 — the one persistent entry point into the flagship RAG chatbot
