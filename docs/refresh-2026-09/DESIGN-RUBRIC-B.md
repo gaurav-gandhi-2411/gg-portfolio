@@ -39,7 +39,7 @@ Scale per criterion: 0 broken, 1 visible defects, 2 minor defects, 3 clean.
 | b3 | tailwind-merge drops `text-caption` (project-search.tsx:278) | FIXED for that site (#303) | Bracket form. Sibling site `components/metric-provenance.tsx:292` has the same group collision (see D4). |
 | c | Small-text contrast | FIXED (PR 3) | Only failure: `.hero-role-detail` ("via Indium Software") at 11.5px, `opacity:.75`: 3.78:1 light, 4.12:1 dark. Opacity removed: now >= 4.5 in both (test). |
 | d | Menu scrim + active marker | FIXED (#302) | Test asserts written first and failed on the reverted build. `aria-current` already existed; the marker is now more than a tint. |
-| e1 | Half-empty fold at 1440 | FIXED (PR 3) | `.hero-inner` centres at >= 1024px. Linux baselines regenerated for the home route only. |
+| e1 | Half-empty fold at 1440 | FIXED (PR 3) | `.hero-inner` centres at >= 1024px. No Linux baselines regenerated: the home baselines pass unchanged within maxDiffPixelRatio 1%. |
 | e2 | Unlabeled contact icons | VERIFIED, NO CHANGE | All icon links have `aria-label`; hover/focus tooltip already exists. |
 | f | 320px pill overlap in cards | FIXED (PR 3) | Overlaps at 320 on multimodal-fashion-recommender, shelfsense, dealhunter (title glyphs under the pill). Decorative project mark is hidden when the card container is under 230px of content width. 0 overlaps at 320/340/375 after. |
 
