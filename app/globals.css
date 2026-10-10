@@ -14,6 +14,38 @@
 @import "./sections-motion.css";
 
 /*
+ * Metric-matched fallbacks for the self-hosted fonts in app/fonts (see
+ * app/layout.tsx). The numbers are the ones next/font/google generated for
+ * these three families before the fonts were subset, kept verbatim so the
+ * pre-swap layout (and CLS) is unchanged; next/font/local would compute
+ * different values from the subset files.
+ */
+@font-face {
+  font-family: "Space Grotesk Fallback";
+  src: local("Arial");
+  ascent-override: 89.71%;
+  descent-override: 26.62%;
+  line-gap-override: 0%;
+  size-adjust: 109.69%;
+}
+@font-face {
+  font-family: "Fraunces Fallback";
+  src: local("Times New Roman");
+  ascent-override: 84.71%;
+  descent-override: 22.09%;
+  line-gap-override: 0%;
+  size-adjust: 115.45%;
+}
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Arial");
+  ascent-override: 75.79%;
+  descent-override: 22.29%;
+  line-gap-override: 0%;
+  size-adjust: 134.59%;
+}
+
+/*
  * GG Portfolio design tokens (rule 15b).
  * Dark, high-contrast: deep graphite base + one vivid accent (indigo,
  * ratified 2026-07-12).
