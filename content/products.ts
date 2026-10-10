@@ -158,7 +158,7 @@ export const products: Product[] = [
     slug: "reviewiq",
     name: "Samidha Reviews",
     tagline:
-      "Turns a pile of customer reviews in English, Hindi and Hinglish into what people actually keep saying, and flags the ones that look fake.",
+      "Turns a pile of customer reviews in English and Hinglish into what people actually keep saying, and flags the ones that look fake.",
     // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
     liveUrl: "https://api.samidhareviews.xyz/docs",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",

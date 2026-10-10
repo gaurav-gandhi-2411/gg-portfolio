@@ -56,7 +56,14 @@ test.describe("focused controls stay reachable", () => {
       ]
         .filter((el) => {
           const r = el.getBoundingClientRect();
-          return el.id && r.height > 40;
+          // width > 0: a CLOSED MetricProvenance panel is a zero-width,
+          // opacity-0 popover that word-wraps into a very tall box, so
+          // height alone passes it. It is not something a reader can land
+          // on, and inside the hero's scroll-driven plane it moves after the
+          // jump (measured on mobile: docTop 603, scrollIntoView puts it at
+          // 101, then the plane shifts it to 43). The hero's impact panel
+          // put two of these ahead of every real section in the first 8.
+          return el.id && r.height > 40 && r.width > 0;
         })
         .slice(0, 8);
 
