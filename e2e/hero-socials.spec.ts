@@ -84,4 +84,20 @@ test.describe("hero social icons", () => {
       .locator(".hero-social-tip");
     await expect(tip).toHaveAttribute("aria-hidden", "true");
   });
+
+  test("no visible link or button on the homepage is missing an accessible name", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const unnamed = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>("a[href], button")]
+        .filter((el) => el.getBoundingClientRect().width > 0)
+        .filter(
+          (el) =>
+            !(el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") || "").trim()
+        )
+        .map((el) => el.outerHTML.slice(0, 120))
+    );
+    expect(unnamed).toEqual([]);
+  });
 });
