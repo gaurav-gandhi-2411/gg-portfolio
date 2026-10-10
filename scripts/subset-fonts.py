@@ -9,9 +9,11 @@ characters per family, so the files are cut to app/fonts/core-chars.txt.
 
 What changes and what does not:
   - Glyph outlines, kerning/ligature features and every variable axis range
-    are untouched, with ONE exception: Fraunces' SOFT axis is limited to
-    0..SOFT_MAX. The site only ever sets SOFT to 0 or 12 (app/hero.css,
-    app/case-study.css); the other 88% of the axis range is dead weight.
+    are untouched. Only the character set shrinks. Verified width-identical
+    to the files next/font/google shipped across wght 400-700 and the
+    opsz/SOFT/WONK settings the site uses; limiting any axis (tried: SOFT
+    0..12, wght 400..700 for a further 13 kB) shifts advance widths by up
+    to 0.4% and reflows text, so it is deliberately not done.
   - Characters outside core-chars.txt fall through to the metric-matched
     fallback font, exactly as characters outside Google's "latin" subset
     (arrows, Greek, rupee) already did. e2e/font-coverage.spec.ts fails if
@@ -40,26 +42,28 @@ from fontTools.varLib import instancer
 FONTS_DIR = Path(__file__).resolve().parent.parent / "app" / "fonts"
 CHARSET = (FONTS_DIR / "core-chars.txt").read_text(encoding="utf-8").replace("\n", "")
 
-# Highest SOFT value used anywhere: font-variation-settings in app/case-study.css (12).
-SOFT_MAX = 12
-
-# Weights used anywhere: 400 (default), 500 (font-medium), 600 (font-semibold), 700 (UA bold).
-# Nothing sets 100-300 or 800-900, so those ends of the wght axis are dead weight.
-WGHT = (400, 700)
-
 # (css2 family query, output file, axis limits applied after subsetting)
+# Limits stay empty on purpose: instancer re-normalises the axes, which moved advance widths by
+# 0.1-0.4% (measured against the files next/font/google shipped), enough to reflow text and
+# shift every visual-regression baseline. Charset subsetting alone is width-identical.
 FAMILIES: list[tuple[str, str, dict[str, tuple[float, float]]]] = [
-    ("Space+Grotesk:wght@300..700", "space-grotesk-latin-core.woff2", {"wght": WGHT}),
+    ("Space+Grotesk:wght@300..700", "space-grotesk-latin-core.woff2", {}),
     (
         "Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1",
         "fraunces-latin-core.woff2",
-        {"wght": WGHT, "SOFT": (0, SOFT_MAX)},
+        {},
     ),
-    ("JetBrains+Mono:wght@100..800", "jetbrains-mono-latin-core.woff2", {"wght": WGHT}),
+    ("JetBrains+Mono:wght@100..800", "jetbrains-mono-latin-core.woff2", {}),
 ]
 
-# A modern UA so the API answers with woff2 and per-unicode-range blocks.
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36"
+# The exact UA next/font/google sends (node_modules/next/dist/compiled/@next/font/dist/google/
+# fetch-resource.js). The Fonts API keys the FILE it serves on the UA, not just the format: a
+# Chrome/130 UA got a build whose advance widths differ from the one the site shipped
+# (Space Grotesk 600: 179 px vs 189 px for the same string), which would silently reflow text.
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+)
 
 
 def fetch(url: str) -> bytes:

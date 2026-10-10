@@ -21,7 +21,7 @@ import "./globals.css";
 // and per-spread metrics.
 const spaceGrotesk = localFont({
   src: "./fonts/space-grotesk-latin-core.woff2",
-  weight: "400 700",
+  weight: "300 700",
   variable: "--font-space-grotesk",
   display: "swap",
   adjustFontFallback: false,
@@ -30,7 +30,7 @@ const spaceGrotesk = localFont({
 
 const fraunces = localFont({
   src: "./fonts/fraunces-latin-core.woff2",
-  weight: "400 700",
+  weight: "100 900",
   variable: "--font-fraunces",
   display: "swap",
   adjustFontFallback: false,
@@ -39,7 +39,7 @@ const fraunces = localFont({
 
 const jetbrainsMono = localFont({
   src: "./fonts/jetbrains-mono-latin-core.woff2",
-  weight: "400 700",
+  weight: "100 800",
   variable: "--font-jetbrains-mono",
   display: "swap",
   adjustFontFallback: false,
