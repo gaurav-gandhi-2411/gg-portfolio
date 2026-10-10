@@ -166,6 +166,9 @@ test.describe("mobile menu behaviour", () => {
 
   for (const scheme of ["light", "dark"] as const) {
     test(`axe: zero violations with the menu open (${scheme} scheme)`, async ({ page }) => {
+      // axe over the whole page took 10s alone and exceeded 30s once under the
+      // full suite, so the scan is the cost, not a hang.
+      test.slow();
       await page.emulateMedia({ colorScheme: scheme });
       await toggleOf(page).click();
       await expect(menuLinks(page).first()).toBeVisible();
