@@ -130,6 +130,10 @@ test.describe("header pill", () => {
   test("the indicator re-aligns when the pill's geometry changes under it", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1400);
+    // The sliding underline belongs to the inline row. In the collapsed menu
+    // it is display:none and the current item is tinted instead, so both
+    // boxes measure zero and this would pass without checking anything.
+    test.skip(await page.locator(".site-nav-toggle").isVisible(), "inline row only");
 
     await page.evaluate(() => {
       document.getElementById("experience")?.scrollIntoView({ block: "center" });

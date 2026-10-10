@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 
 /**
  * refresh-2026-09 Phase C, owner decision D2 — the dedicated /open-source
@@ -32,11 +33,13 @@ test.describe("Open source", () => {
 
   test("/open-source is reachable from the site nav and the nav marks it active", async ({ page }) => {
     await page.goto("/");
+    await openSiteMenu(page);
     await page
       .getByRole("navigation", { name: "Site" })
       .getByRole("link", { name: "Open source", exact: true })
       .click();
     await expect(page).toHaveURL(/\/open-source$/);
+    await openSiteMenu(page);
     const navLink = page
       .getByRole("navigation", { name: "Site" })
       .getByRole("link", { name: "Open source", exact: true });

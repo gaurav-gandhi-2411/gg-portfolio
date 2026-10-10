@@ -155,16 +155,39 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 | `triageiq:cqr-coverage-k8s` / `-vscode` (split 2026-08-13) | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
-on every count. Actual grounding-verified fabrication rates are **1.9% (k8s) / 9.1% (vscode)**
-(not a blended 3.1%), per `triage-iq/README.md:103-104`; per
+on every count. Grounding-verified fabrication rates as of that 2026-07-12 audit were **1.9% (k8s) / 9.1% (vscode)**
+(stale; current values are in the gate-status paragraph below; not a blended 3.1%), per `triage-iq/README.md:103-104`; per
 `triage-iq/docs/architecture/adr/0028-per-model-eval-audit.md:156-160` it is explicitly
 "informational-only... pending an observation window before any promotion to a hard gate" —
-**not currently a hard gate**. (This matches the earlier concurrent-session pass's independent
+true on 2026-07-12, **superseded since** (see the gate-status paragraph below). (This matches the earlier concurrent-session pass's independent
 finding — cross-confirmed by two separate reads.) Also corrected in the same 2026-07-11/12 audit:
 the previously-quoted retriever Recall@5 (36.7% vscode) was inflated by a proxy-task measurement
 bug; the honest product-task number is 22.4% (vscode) / 23.5% (k8s) — see
 `triage-iq/docs/architecture/adr/0030-phaseC-product-task-feasibility.md`. Used the classifier
 metric instead as a clean, current, positive, fully-corrected number.
+
+**Fabrication gate status (re-verified 2026-10-10 against triage-iq code, `main` @ `877af11`,
+not just README/ADR text):** the "informational" wording above is superseded. Scope is
+**Kubernetes only**, with two separate bounds. (1a) Quality gate:
+`eval/test_quality_regression.py:151-169` `test_k8s_no_fabrication` asserts
+`rate <= baseline["per_repo"]["kubernetes/kubernetes"]["fabrication_rate"]`; the bound is the
+committed `reports/eval_baseline.json` rate and moves with that file. It is **0.0 (0/53) at
+`877af11`** (set by `cd2934f`, 2026-10-08; it was 0.0189 = 1/53 at `bcb1fca`, 2026-09-23), so it
+currently fails on any fabrication. (1b) Grounding ratchet: `eval/test_invariants.py:854-866`
+`test_grounding_ratchet_k8s` asserts `ungrounded_count <= baseline_count`, with
+`_GROUNDING_BASELINE` k8s `ungrounded_count` **1** of 53 (ADR-0061), a looser bound. (2) Both
+run in `.github/workflows/eval-gate.yml` jobs with no `continue-on-error` (only a comment mentions
+it, line 20; blocking since PR #57, ADR-0044), and branch protection on `main` requires both
+contexts ("Structural invariants (no LLM)", "Quality regression (cassette-replayed judge)"); the
+latest `main` run (`877af11`) concluded success. (3) **microsoft/vscode is report-only**:
+`test_vscode_no_fabrication` (`test_quality_regression.py:121-148`) and
+`test_grounding_ratchet_vscode` (`test_invariants.py:869`) assert nothing at n=11 (ADR-0058). So
+triage-iq's README figures (`README.md:128-129`, 0.0% (0/53) k8s, 0.0% (0/11) vscode) match the
+current baseline, but its "hard zero-tolerance gate" label is loose: vscode is not gated and the
+k8s grounding ratchet tolerates 1/53; the site states the code-accurate scope. No test plants a fabricated
+claim to prove the gate fails (the failure path is the `assert`s above, and ADR-0061 records the
+ratchet firing 1 > 0 on the 2026-09-23 recording); the gate tests were not run locally (they need
+GCS-hosted models behind CI's workload identity).
 
 | ID | Claim | Source |
 |---|---|---|
@@ -207,9 +230,11 @@ claim made.
 
 ### ReviewIQ
 
+**Copy consistency pass (2026-10-05, fix/reviewiq-site-copy-hindi-models):** site copy aligned to review-iq's current source of truth. Re-verified against `review-iq/eval/results.json` (blob `c3f3e43dbcd65d1a28a28441ac462ead9ea552bf`, `generated_at 2026-09-19T21:59:11Z`, main at `c686211a8bf69eead5d6bff468d82e0fb4f633c0`, re-verified 2026-10-10): `groq_model_small openai/gpt-oss-20b`, `groq_model_large openai/gpt-oss-120b`, `per_language` has only `en` (n=27) and `hi-en` (n=16), `overall_ci_95` n=43 [0.7324, 0.8294]. `README.md` (blob `fe1e3242a819c0f520542243a6157b1562bf03c7`) line 13 and lines 452-467: English and Hinglish supported, Devanagari Hindi NOT supported (retired scope, ADR 0022 `docs/architecture/adr/0022-hindi-retirement.md`, blob `c5d7dffa1ec94b89bc4ca569590ba58eb0529686`); line 314: primary LLM `openai/gpt-oss-20b` / `openai/gpt-oss-120b`; lines 135-137, 254: llama models retired (the remaining llama mentions, lines 84 and 412, are stale in review-iq's own README and not used as a source). Removed "Hindi" as a supported language and the llama model names from `content/products.ts` and `content/case-studies/reviewiq.ts`; the caveat row is now framed as retired scope, and `content/metrics.json`'s `value` dropped "(threshold 76%)" (it renders on the OG image and non-figure cards; the gate now appears only beside the CI). Guarded by `lib/reviewiq-copy.test.ts`. Résumé files untouched (still carry the old 83.8%/Hindi wording; GG owns them).
+
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en) (threshold 76%, PASS) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; gate 76% only ever beside the CI | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
@@ -496,7 +521,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `reviewiq:cassette-ci` | Cassette-replay CI keyed on sha256(model+prompts); zero live LLM calls | `eval/README.md:5-16,52-57` |
 | `reviewiq:urgency-rubric` | Urgency rewritten tone→signal-based; "poor fit" pattern-match bug diagnosed via cassette replay | `PROMPTS.md:162-192,79-128,7-56,248-251` |
 | `reviewiq:authenticity` | Authenticity on 40 fixtures: P/R/F1 = 1.000, labeled "a starting calibration" | `README.md:151-157`, `docs/compliance.md:74-87` |
-| `reviewiq:gold-label-caveat` | hi/hi-en gold labels LLM-generated, "not published-credible"; gap mostly benchmark-label noise | `spec.md:11-13`, `PROMPTS.md:38-43` |
+| `reviewiq:gold-label-caveat` | Devanagari Hindi is retired scope (not supported, ADR 0022); Hinglish gold labels LLM-generated, "not published-credible"; gap mostly benchmark-label noise | `spec.md:11-13`, `PROMPTS.md:38-43` |
 
 ### Multimodal Fashion Recommender
 

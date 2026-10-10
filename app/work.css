@@ -51,6 +51,30 @@
 .project-card-body {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/*
+ * The metric slot: the same place on every card. margin-top:auto pushes it
+ * (and the links after it) to the card's bottom, so cards of unequal text
+ * length still share one metric offset within a grid row. In the two-column
+ * grid (lg) the slot also reserves one fixed height, sized to the tallest
+ * figure plus its caption, so a card with a short text metric, a bar, or
+ * nothing at all (DealHunter) lines up with the card beside it. Below lg
+ * there is one card per row and nothing to align with, so an empty slot
+ * collapses instead of leaving dead space on a phone.
+ */
+.project-card-metric {
+  margin-top: auto;
+  padding-top: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .project-card-metric {
+    min-height: 7.5rem;
+  }
 }
 
 /*

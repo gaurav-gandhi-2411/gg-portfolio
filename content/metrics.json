@@ -127,7 +127,7 @@
     },
     "reviewiq:extraction-eval": {
       "label": "95% CI 73–83%, n=43, eval 2026-09-19",
-      "value": "78.6% overall (threshold 76%)",
+      "value": "78.6% overall",
       "repo": "gaurav-gandhi-2411/review-iq",
       "source_file": "eval/report.md",
       "source_line": 5,

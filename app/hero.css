@@ -254,8 +254,32 @@ body::after {
   }
 }
 
+/*
+ * Direction B split — identity left, impact panel right. Stacked (impact
+ * below identity) until the two columns have room to sit side by side; the
+ * fold requirement (name/role/Uber/2 numbers/CTA/contact all visible before
+ * scrolling) is what the stacked order and the compact impact card below
+ * are both tuned against, at 375px specifically.
+ */
+.hero-split {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .hero-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+    align-items: start;
+    gap: var(--space-10);
+  }
+}
+
 .hero-copy {
   display: flex;
+  min-width: 0;
   max-width: 54rem;
   flex-direction: column;
   align-items: flex-start;
@@ -276,10 +300,14 @@ body::after {
  * line break, which is both a layout shift and a break of the standing rule
  * that only transform and opacity animate. The axes doing real work at rest
  * is worth more here than the axes doing a trick on hover.
+ *
+ * Direction B: the name itself is now the LCP headline (product-showcase
+ * framing — the identity IS the product), so this carries the same
+ * treatment the old sentence headline did, unanimated for the same reason
+ * (see this file's header note below, "never on the headline").
  */
-.hero-headline {
+.hero-name {
   margin-top: var(--space-6);
-  max-width: 17ch;
   font-family: var(--font-heading);
   /* The floor is the phone size and the ceiling is the 1440 size; the vw
    * term only governs the stretch between them. Both ends were chosen
@@ -290,48 +318,6 @@ body::after {
   letter-spacing: -0.022em;
   text-wrap: pretty;
   color: var(--foreground);
-}
-
-/* The one phrase that matters gets the soft cut and the accent, so it is set
- * differently rather than only coloured differently.
- *
- * background-clip: text paints the gradient into the background positioning
- * area (the padding-box), then clips it to the glyph shapes — but italic
- * ink routinely overhangs its own advance-width box, most visibly on the
- * last glyph of a span, which has no following character to extend that
- * box. With color: transparent, whatever ink falls outside the box gets no
- * paint at all: not clipped-and-still-there, just missing pixels. That is
- * the clipped "s" in "products" GG found — an italic, gradient-filled span
- * ending exactly at a glyph whose ink leans past its box on every viewport
- * width, not a one-off rendering glitch. inline-block turns the span into
- * its own box so extra padding actually enlarges the paint area (a plain
- * inline span's background box is line-box-relative and mostly ignores
- * padding for this purpose); the padding buys the overhang room and the
- * matching negative margin gives that room back so the following word
- * doesn't visibly shift.
- */
-.hero-headline-accent {
-  display: inline-block;
-  padding: 0 0.08em;
-  margin: 0 -0.08em;
-  font-variation-settings: "wght" 600, "opsz" 144, "SOFT" 100, "WONK" 1;
-  font-style: italic;
-  background: linear-gradient(102deg, var(--text-hi) 8%, var(--indigo) 92%);
-  background-clip: text;
-  color: transparent;
-  /* GG's launch-review round three: measured (Range.getBoundingClientRect
-   * on each word, 1440px viewport) every headline word-gap at 11.45-
-   * 11.47px except "AI"->"products", the one gap entirely inside this
-   * italic run, at 12.59px -- about 10% wider, with nothing visually
-   * marking why. The padding/negative-margin pair above already keeps
-   * this span's OWN boundaries (build->AI, products->and) neutral against
-   * the roman text outside it; this is a separate effect, the italic
-   * cut's own space-character advance width at this size/weight/SOFT
-   * setting running wider than roman's. em-relative, not a fixed px
-   * value, since the headline's font-size is itself fluid
-   * (clamp(2.35rem, 6.6vw, 5.2rem)) -- re-measured after this change:
-   * the gap now matches every other word-gap in the headline. */
-  word-spacing: -0.0135em;
 }
 
 .hero-status {
@@ -363,54 +349,53 @@ body::after {
   outline-offset: 2px;
 }
 
-/* Stacks on a phone, runs as one rule-separated line from tablet up. The
- * separators are drawn here rather than placed in the markup so they simply
- * stop existing in the stacked layout, instead of dangling off the end of
- * every line but the last. */
-.hero-byline {
+/* Role + employer, directly under the name. One line of type, two weights:
+ * the title in the page's own foreground, the employer/vendor line quieter —
+ * the reverse of .hero-byline's old all-caps mono treatment, because this
+ * line is now the thing above the fold that answers "who, doing what,
+ * where," not a decorative signature under a sentence headline. */
+.hero-role-line {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  margin-top: var(--space-6);
-  /* GG's launch-review round three: .hero-copy's flex column left-aligns
-   * every child's LAYOUT BOX at the same x (confirmed: both this and
-   * .hero-headline measure left:48 at 1440px) — but a box edge is not
-   * where the eye reads "the text starts." A pixel scan for the first
-   * non-background column found the headline's own ink (Fraunces "I")
-   * starting 2px right of its box, while this byline's ink (JetBrains
-   * Mono "G", near-zero left side-bearing at this weight) starts flush
-   * with its box — different typefaces, different built-in whitespace
-   * before the glyph, same box edge. This nudges the box 2px right so the
-   * INK lines up instead of the box. */
-  margin-left: 2px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-4);
+}
+
+.hero-role-title {
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: var(--text-lead);
+  font-weight: 600;
+}
+
+.hero-role-company {
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: var(--text-caption);
-  line-height: 1.7;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.hero-byline-name {
-  color: var(--foreground);
+.hero-role-detail {
+  color: var(--muted-foreground);
+  opacity: 0.75;
 }
 
-@media (min-width: 768px) {
-  .hero-byline {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3);
-  }
-  .hero-byline > span + span::before {
-    content: "";
-    display: inline-block;
-    width: 1.25rem;
-    height: 1px;
-    margin-right: var(--space-3);
-    background: color-mix(in oklab, var(--border) 80%, transparent);
-    vertical-align: middle;
+.hero-tagline {
+  margin-top: var(--space-5);
+  max-width: 42ch;
+  color: var(--muted-foreground);
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+}
+
+/* Not required in the fold (name/role/Uber/impact/CTA/contact are); cut on
+ * phones so the fold budget goes to the two hard-required rows below it
+ * instead. Visible again from md, where there is room for it without
+ * pushing the impact panel or the CTA row out of the initial viewport. */
+@media (max-width: 767px) {
+  .hero-tagline {
+    display: none;
   }
 }
 
@@ -423,21 +408,16 @@ body::after {
 }
 
 @media (min-width: 768px) {
-  .hero-headline {
+  .hero-name {
     margin-top: var(--space-8);
   }
-  /* GG's launch-review round three: measured (getBoundingClientRect on
-   * each block, 1440px viewport) the actual vertical rhythm as pill to
-   * headline 32px, headline to byline 24px, byline to actions 40px --
-   * a dip then a rise, not a rhythm a reader can name but exactly the
-   * kind of inconsistency that reads as "off" without an obvious cause.
-   * Mobile's own sequence (24, 24, 32 -- .hero-headline and .hero-actions
-   * both fall back to their un-overridden base margins below this
-   * breakpoint) is already flat-then-rising and untouched here. Matching
-   * .hero-headline's own 32px turns the desktop sequence into 32, 32, 40:
-   * two even steps, then more room before the CTA -- a rhythm rather than
-   * a dip. */
-  .hero-byline {
+  /* GG's launch-review round three (original single-column hero): measured
+   * vertical rhythm as pill to headline 32px, headline to byline 24px,
+   * byline to actions 40px. Direction B keeps that same two-even-steps-
+   * then-more-room shape across its own four rows (name, role line,
+   * tagline, actions) rather than reusing the exact numbers, since the
+   * content itself is different now. */
+  .hero-role-line {
     margin-top: var(--space-8);
   }
   .hero-actions {
@@ -515,6 +495,72 @@ body::after {
 .hero-social:hover .hero-social-tip,
 .hero-social:focus-visible .hero-social-tip {
   opacity: 1;
+}
+
+/*
+ * Impact panel — Direction B's right column.
+ *
+ * Deliberately opaque rather than reading the field's own vignette/scrim
+ * contrast budget (this file's own note above, ".hero-scrim", on the exact
+ * margins that copy sitting directly on the field was tuned against): two
+ * numbers a hiring reader has to actually read need their own guaranteed
+ * ground, not a share of a budget computed for the headline. `color-mix`
+ * against --card rather than a flat fill so the field still shows through
+ * faintly at the edges — enough to read as part of the same hero, not a
+ * card dropped on top of it.
+ */
+.hero-impact {
+  width: 100%;
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  border-radius: var(--radius-2xl);
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+  backdrop-filter: blur(16px);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.hero-impact-eyebrow {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.hero-impact-stats {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .hero-impact-stats {
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+}
+
+.hero-impact-stat {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.hero-impact-value {
+  font-family: var(--font-heading);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.hero-impact-label {
+  display: block;
+  margin-top: var(--space-1-5);
+  color: var(--muted-foreground);
+  font-size: var(--text-caption);
+  line-height: 1.4;
 }
 
 /*
@@ -672,15 +718,6 @@ body::after {
   letter-spacing: -0.01em;
 }
 
-/* The name is the first thing to go when the pill has to earn its width
- * back on a phone. The monogram carries the identity on its own, and the
- * home link keeps its accessible name from aria-label either way. */
-@media (max-width: 559px) {
-  .site-nav-name {
-    display: none;
-  }
-}
-
 .site-nav-links {
   position: relative;
   display: flex;
@@ -755,64 +792,108 @@ body::after {
   outline-offset: 2px;
 }
 
-@media (max-width: 419px) {
-  /*
-   * Six items (About/Experience/Projects/Open source/Research/Contact) plus
-   * the monogram no longer fit at 375px on the padding/gap the five-item
-   * version of this block carried (measured overflow: "Contact" laid out
-   * 51px past the right edge of the viewport, present in the DOM but with
-   * its own centre off-screen — not a visual clip, a genuinely untappable
-   * control, caught by e2e/mobile-viewport.spec.ts's reachability check).
-   * Shrinking the link/row gaps alone (the five-item fix's approach) is not
-   * enough room for a sixth item, so this also pulls from the band's own
-   * horizontal inset (`.site-nav`), the pill's asymmetric left padding
-   * (`.site-nav-pill`, normally sized to line up with the content column
-   * below it — that alignment is the first thing this breakpoint gives up),
-   * and the brand link's own right padding. Verified by measuring every
-   * link's `getBoundingClientRect()` at 375px after each change, not by
-   * eyeballing it. Wrapping is still ruled out by the sticky band's fixed
-   * height (see .site-nav's comment).
-   *
-   * CI-only overflow (2026-09-25, fix/horizontal-overflow-375-768): the
-   * six-item measurement above (Contact's right edge at 364px, an 11px
-   * margin) was taken on this repo's Windows dev machine. GitHub Actions'
-   * Ubuntu runner renders the same nav text a few px wider per link
-   * (different font-hinting/substitution under headless Linux Chrome), and
-   * six links compound that into documentElement.scrollWidth landing 9px
-   * over at 375px in real CI — an e2e/no-horizontal-overflow.spec.ts
-   * failure on every single route (the nav is shared site-wide), not
-   * reproducible on Windows regardless of how many times it's measured
-   * there. A first pass cut `.site-nav`'s own horizontal inset from 12px to
-   * 4px per side and closed 8 of the 9px (confirmed on the next real CI
-   * run: 376 vs. 375, not 384) — the remaining 1px plus a real margin this
-   * time comes from here and from `.site-nav-pill`'s own right padding
-   * below, both zeroed rather than re-guessing a second exact-compensation
-   * number: only the RIGHT-side inset actually bears on this overflow (the
-   * left side, near the brand mark, was never the constraint), which is
-   * also why the first pass's presumed 16px of headroom only bought 8px of
-   * real improvement — the left half of that reduction was doing nothing.
-   */
+/* The menu button only exists where the six links no longer fit in one row. */
+.site-nav-toggle {
+  display: none;
+}
+
+/*
+ * Below 768px the six links collapse into a disclosure menu instead of being
+ * squeezed into one row (the old 419px block zeroed every link's padding and
+ * gap to fit six items, which is why the labels ran together as
+ * "AboutExperienceProjects..." at 375px and 390px). The row's own width is
+ * what overflowed; the fix is to stop asking six links to share a phone's
+ * width, not to shave pixels off them. 768px keeps the inline row because it
+ * is measured to fit there (e2e/nav-layout.spec.ts).
+ */
+@media (max-width: 767px) {
   .site-nav-pill {
-    gap: var(--space-1);
-    padding-right: var(--space-0);
-    padding-left: var(--space-2);
+    position: relative;
+    gap: var(--space-2);
+    padding-right: var(--space-2);
+    padding-left: var(--space-4);
   }
 
-  .site-nav-brand {
-    padding-right: var(--space-0-5);
+  .site-nav-toggle {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border-radius: 999px;
+    padding-inline: var(--space-3);
+    color: var(--foreground);
+    font-size: 0.875rem;
+  }
+  .site-nav-toggle:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
+  /* display:none while closed, so the links leave the tab order and the
+   * accessibility tree rather than just being clipped. */
   .site-nav-links {
-    gap: var(--space-0);
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-0-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    background: var(--popover);
+    padding: var(--space-2);
+    box-shadow: var(--shadow-card-hover);
+  }
+  .site-nav-links[data-open="true"] {
+    display: flex;
   }
 
   .site-nav-link {
-    padding-inline: var(--space-0);
-    font-size: var(--text-caption);
+    padding-inline: var(--space-3);
   }
+  /* The sliding underline measures a horizontal row; in a column the current
+   * item is marked with a tint instead (aria-current still carries it). */
+  .site-nav-link-active {
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+  .site-nav-indicator {
+    display: none;
+  }
+}
 
+/*
+ * No JavaScript: the Menu button can never open, so show the links as a
+ * wrapped row inside a pill that grows with them (the band's fixed height
+ * exists for the scroll contraction, which also needs JS).
+ */
+@media (max-width: 767px) and (scripting: none) {
   .site-nav {
-    padding-inline: var(--space-0);
+    height: auto;
+    padding-block: var(--space-3);
+  }
+  .site-nav-pill {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: var(--radius-2xl);
+  }
+  .site-nav-toggle {
+    display: none;
+  }
+  .site-nav-links {
+    position: static;
+    display: flex;
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
   }
 }
 

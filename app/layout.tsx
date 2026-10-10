@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BootLoader } from "@/components/boot-loader";
@@ -19,23 +19,31 @@ import "./globals.css";
 // role. Fraunces stays for display type (font-heading); JetBrains Mono
 // stays for tabular data figures (font-mono) — the "by the numbers" band
 // and per-spread metrics.
-const spaceGrotesk = Space_Grotesk({
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk-latin-core.woff2",
+  weight: "300 700",
   variable: "--font-space-grotesk",
-  subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["Space Grotesk Fallback"],
 });
 
-const fraunces = Fraunces({
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin-core.woff2",
+  weight: "100 900",
   variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["Fraunces Fallback"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-latin-core.woff2",
+  weight: "100 800",
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["JetBrains Mono Fallback"],
 });
 
 const siteUrl = site.url;
