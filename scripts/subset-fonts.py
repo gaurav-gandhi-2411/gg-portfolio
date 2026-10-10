@@ -25,9 +25,10 @@ Run (needs fonttools + brotli; use a throwaway venv, never a global env):
     python -m venv .venv-fonts && .venv-fonts/Scripts/pip install fonttools==4.66.1 brotli
     .venv-fonts/Scripts/python scripts/subset-fonts.py
 
-Licences: all three families are SIL OFL 1.1. The licence texts ship next to the
-subsets (app/fonts/*-OFL.txt, copied from each project's upstream OFL.txt or the
-existing assets/fonts/ copies); keep them with the files if the fonts move.
+Licences: all three families are SIL OFL 1.1. Licence texts:
+app/fonts/JetBrainsMono-OFL.txt (upstream JetBrains/JetBrainsMono OFL.txt) and the
+existing assets/fonts/Fraunces-OFL.txt and SpaceGrotesk-OFL.txt (not duplicated, to keep the
+diff small); keep them with the files if the fonts move.
 
 Output is byte-deterministic for a given upstream file (check with sha256sum).
 
