@@ -1,13 +1,16 @@
 import { expect, test } from "@playwright/test";
+import { openSiteMenu } from "./fixtures/site-menu";
 
 test.describe("site navigation", () => {
   test("every nav link lands on the right destination", async ({ page }) => {
     await page.goto("/");
 
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Projects", exact: true }).click();
     await expect(page).toHaveURL(/\/projects$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("All projects");
 
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Open source", exact: true }).click();
     await expect(page).toHaveURL(/\/open-source$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Open source");
@@ -15,14 +18,17 @@ test.describe("site navigation", () => {
     await page.getByRole("link", { name: "Gaurav Gandhi, home" }).click();
     await expect(page).toHaveURL(/\/$/);
 
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "About", exact: true }).click();
     await expect(page).toHaveURL(/#about$/);
     await expect(page.getByRole("heading", { name: "About me" })).toBeInViewport();
 
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Experience", exact: true }).click();
     await expect(page).toHaveURL(/#experience$/);
     await expect(page.getByRole("heading", { name: "Experience", level: 2 })).toBeInViewport();
 
+    await openSiteMenu(page);
     await page.getByRole("link", { name: "Contact", exact: true }).click();
     await expect(page).toHaveURL(/#contact$/);
     await expect(page.getByRole("heading", { name: "Contact", level: 2 })).toBeInViewport();
@@ -39,6 +45,7 @@ test.describe("site navigation", () => {
 
   test("nav shows an active state on /projects", async ({ page }) => {
     await page.goto("/projects");
+    await openSiteMenu(page);
     const projectsLink = page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: "Projects",
       exact: true,
@@ -48,6 +55,7 @@ test.describe("site navigation", () => {
 
   test("nav shows an active state on a case study route too", async ({ page }) => {
     await page.goto("/work/triageiq");
+    await openSiteMenu(page);
     const projectsLink = page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: "Projects",
       exact: true,
@@ -57,6 +65,7 @@ test.describe("site navigation", () => {
 
   test("nav shows an active state on /open-source", async ({ page }) => {
     await page.goto("/open-source");
+    await openSiteMenu(page);
     const openSourceLink = page.getByRole("navigation", { name: "Site" }).getByRole("link", {
       name: "Open source",
       exact: true,
