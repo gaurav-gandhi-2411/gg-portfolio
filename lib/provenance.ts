@@ -54,11 +54,7 @@ export interface ProvenanceInfo {
 
 const metrics = (metricsJson as { metrics: Record<string, MetricEntry> }).metrics;
 
-/**
- * Refs whose value is a GENERATED snapshot (not hand-typed): the popover's "measured <date>" is the
- * snapshot's own fetch date, never a date typed into the provenance.md row (which would go stale
- * the first week the weekly refresh runs).
- */
+/** Generated refs: "measured <date>" is the snapshot's fetch date, never a date typed into the row. */
 const generatedFetchDates: Record<string, string> = {
   "aetherart:hf-downloads": hfDownloads.fetchedAt,
 };

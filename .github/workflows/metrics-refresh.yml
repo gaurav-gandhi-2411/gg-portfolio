@@ -223,18 +223,14 @@ jobs:
           PORTFOLIO_EXCLUDED_REPOS: ${{ secrets.PORTFOLIO_EXCLUDED_REPOS }}
         run: node scripts/refresh-metrics.mjs
 
-      # AetherArt's Hugging Face download counts are a rolling 30-day figure, so they are generated,
-      # not typed: this writes content/generated/hf-downloads.json, which the site renders under
-      # "as of <fetch date>". R3: exits non-zero on any API/auth/shape error and leaves the committed
-      # snapshot untouched (the site then keeps showing it under its own, older, date). `if: always()`
-      # so a failure in the step above doesn't skip it, and vice versa.
+      # AetherArt's HF download counts (rolling 30 days) are generated, not typed. R3: exits non-zero
+      # on any API/auth/shape error and leaves the committed snapshot (shown "as of <date>") untouched.
       - name: Refresh Hugging Face download counts
         if: always()
         run: node scripts/refresh-hf-downloads.mjs
 
-      # The chatbot index embeds the case-study rows, including these counts; CI's "chatbot index is
-      # up to date" gate would otherwise fail on every weekly snapshot change. Only when the snapshot
-      # actually changed, so quiet weeks stay cheap.
+      # The chatbot index embeds these counts; without a rebuild CI's index-freshness gate would fail
+      # the weekly PR. Only when the snapshot changed.
       - name: Rebuild chatbot index if the HF snapshot changed
         if: always()
         run: |

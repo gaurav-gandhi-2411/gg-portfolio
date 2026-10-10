@@ -1,17 +1,10 @@
-// Unit tests for scripts/refresh-hf-downloads.mjs and for the AetherArt row that renders the
-// committed snapshot. Run: node --test scripts/refresh-hf-downloads.test.mjs
-//
-// Hermetic by construction: the script is spawned as a subprocess against a throwaway local HTTP
-// server (HF_API_URL) and a scratch snapshot path (HF_SNAPSHOT_PATH); no live Hugging Face call,
-// and the committed snapshot is never written.
-//
-// Contract under test (written before the implementation):
-//  - success: exit 0, snapshot written with fetchedAt + the three expected models' 30-day counts
-//  - R3: any HTTP error (401/403/429/500), unreadable body, wrong shape, missing expected model,
-//    or non-integer/negative `downloads` => non-zero exit, loud stderr, and the existing snapshot
-//    is left byte-identical (never silently keep stale, never overwrite with partial data)
-//  - the page row says "last 30 days ... as of <fetchedAt>" so a committed-snapshot fallback is
-//    always labelled with its fetch date
+// Tests for scripts/refresh-hf-downloads.mjs, the freshness verdict, and the AetherArt row.
+// Run: node --test scripts/refresh-hf-downloads.test.mjs
+// Hermetic: the script runs as a subprocess against a local stub HTTP server (HF_API_URL) and a
+// scratch snapshot path (HF_SNAPSHOT_PATH); no live Hugging Face call, committed snapshot untouched.
+// Contract (written first): success writes fetchedAt + the three models' counts; ANY HTTP/shape
+// error exits non-zero with a loud stderr and leaves the old snapshot byte-identical; the page row
+// says "last 30 days ... as of <fetchedAt>" so a committed-snapshot fallback is always dated.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";

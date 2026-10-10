@@ -1,23 +1,14 @@
 // Generates content/generated/hf-downloads.json: the AetherArt page's Hugging Face download
-// counts (aetherart:hf-downloads). Run weekly by .github/workflows/metrics-refresh.yml (refresh
-// job), or locally: node scripts/refresh-hf-downloads.mjs
+// counts (aetherart:hf-downloads). Weekly via metrics-refresh.yml, or: node scripts/refresh-hf-downloads.mjs
+// HF's `downloads` is a rolling 30-day count, so the old hand-typed "124 · 14 · 0" (2026-07-30) went
+// stale within weeks; it is now a generated artifact.
 //
-// Why this exists: the row used to be hand-typed ("124 · 14 · 0", fetched 2026-07-30). HF's
-// `downloads` field is a rolling 30-day count, so any typed value is wrong within weeks; on
-// 2026-10-10 the live figures were 38 / 22 / 0. The number is now a generated artifact.
-//
-// Contract:
-//  - Success: overwrites the snapshot with today's counts and fetch date (UTC).
-//  - R3 (no silent failure): any network/HTTP (401/403/429/5xx)/parse/shape error exits non-zero
-//    with a `::error::` line, and the existing snapshot is NOT touched.
-//  - Fallback: the site build never calls Hugging Face. It renders the last COMMITTED snapshot,
-//    and the page row always carries "as of <fetchedAt>", so a build in an environment that cannot
-//    reach the API shows an honestly dated figure instead of a fresh-looking stale one.
-//
-// Env (all optional; overridable so the tests are hermetic):
-//   HF_API_URL, HF_SNAPSHOT_PATH, HF_FETCH_DATE (YYYY-MM-DD), HF_TOKEN (public models need none).
-//
-// Zero dependencies; Node 20+ (global fetch).
+//  - R3: any network/HTTP (401/403/429/5xx)/parse/shape error exits non-zero with `::error::`,
+//    and the existing snapshot is NOT touched.
+//  - Fallback: the site build never calls Hugging Face; it renders the last COMMITTED snapshot and
+//    the page row always says "as of <fetchedAt>", so an unreachable API shows an honestly dated
+//    figure, never a fresh-looking stale one.
+//  - Env (for hermetic tests): HF_API_URL, HF_SNAPSHOT_PATH, HF_FETCH_DATE, HF_TOKEN (optional).
 
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
