@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-import { onPresenceOrIdle } from "@/lib/motion/after-first-paint";
-import { loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
+import { onIdleOrPresence } from "@/lib/motion/after-first-paint";
+import { inOwnTask, loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
 
 /**
  * Weighted scrolling, and the single clock everything scroll-linked runs on.
@@ -40,23 +40,33 @@ export function ScrollDriver() {
     if (prefersReducedMotion()) return;
 
     let teardownDriver: (() => void) | null = null;
+    let stopped = false;
 
     /**
      * Smoothed scrolling is an enhancement, and the page scrolls natively until
-     * it arrives. 1200ms because there is no reason for it to compete with
-     * first paint, and because a visitor who scrolls gets it immediately
+     * it arrives. It waits for the first idle period after load so it does not
+     * compete with first paint, and a visitor who scrolls gets it immediately
      * anyway: the scroll that triggers this is itself a presence event.
      */
-    const cancel = onPresenceOrIdle(() => {
-      void start();
-    }, 1200);
+    const cancel = onIdleOrPresence(() => {
+      void start().catch(() => {
+        // Chunk failed to load: native scrolling stays, which is complete.
+      });
+    });
 
     async function start() {
       const [{ gsap }, { default: Lenis }] = await Promise.all([loadMotion(), import("lenis")]);
-      teardownDriver = attach(gsap, Lenis);
+      await inOwnTask(() => {
+        // Same guard as useDeferredMotion: the effect may have been torn down
+        // while the chunks were in flight, and teardownDriver would then never
+        // be called for an attach that happens after cleanup.
+        if (stopped) return;
+        teardownDriver = attach(gsap, Lenis);
+      });
     }
 
     return () => {
+      stopped = true;
       cancel();
       teardownDriver?.();
     };
