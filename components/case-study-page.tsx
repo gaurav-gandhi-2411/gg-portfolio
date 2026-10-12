@@ -27,8 +27,8 @@ function SelfReportedTag({ inline = false }: { inline?: boolean }) {
     <span
       className={
         inline
-          ? "text-muted-foreground/80 text-[11px]"
-          : "text-muted-foreground/80 mt-[var(--space-2-5)] block text-[11px]"
+          ? "text-muted-foreground text-[11px]"
+          : "text-muted-foreground mt-[var(--space-2-5)] block text-[11px]"
       }
     >
       {inline ? ` · ${SELF_REPORTED_LABEL}` : SELF_REPORTED_LABEL}

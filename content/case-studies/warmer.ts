@@ -110,7 +110,6 @@ export const warmer: CaseStudy = {
       label: "Cross-language consistency (translation pairs landing in the right band)",
       value: "5.1% → 78.0%",
       sourceRef: "warmer:hinglish-fix",
-      selfReported: true,
     },
     {
       label: "Public Hinglish relatedness benchmark vs. 7 off-the-shelf alternatives",
@@ -143,7 +142,6 @@ export const warmer: CaseStudy = {
       "The eventual breakthrough came from changing the method, not the data: holding the training set fixed and sweeping capacity-control configurations showed every full-parameter variant stuck at noise while every LoRA variant improved, a small-data overfitting signature the earlier attempts had misread as a data problem. The winning LoRA model now ships in production and is published on Hugging Face (hinglish-relatedness-sbert), alongside the public benchmark used to judge it against seven alternatives.",
     ],
     sourceRef: "warmer:lora-reframe",
-    selfReported: true,
   },
   closing: [
     "If you need a model that has to work across code-mixed or low-resource languages, not just English demos, this is the debugging discipline that gets it there: falsify the easy hypothesis, measure the alternative, and don't ship a fix until it's beaten the baseline on held-out data.",

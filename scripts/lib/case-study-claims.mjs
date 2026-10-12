@@ -76,3 +76,18 @@ export function collectCaseStudyClaims(study) {
   }
   return claims;
 }
+
+/**
+ * Case-study-level "overdue for re-verification" verdict. Self-reported claims cannot be re-verified
+ * by anyone from the public side, so they never make a study overdue: a study is overdue only if it
+ * is older than `staleDays` AND has at least one checkable (not self-reported) sourced claim. When
+ * self-reported claims exist the report line says so, so the exclusion is visible, not silent.
+ *
+ * @param {{daysOld: number, staleDays: number, claims: {selfReported?: boolean}[]}} p
+ * @returns {{stale: boolean, selfReportedCount: number}}
+ */
+export function verificationVerdict({ daysOld, staleDays, claims }) {
+  const selfReportedCount = claims.filter((c) => c.selfReported === true).length;
+  const checkable = claims.length - selfReportedCount;
+  return { stale: daysOld > staleDays && checkable > 0, selfReportedCount };
+}

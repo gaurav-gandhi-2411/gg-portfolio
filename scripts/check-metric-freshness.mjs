@@ -80,7 +80,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
-import { classifySelfReported, collectCaseStudyClaims } from "./lib/case-study-claims.mjs";
+import { classifySelfReported, collectCaseStudyClaims, verificationVerdict } from "./lib/case-study-claims.mjs";
+import { PUBLIC_CLAIM_SOURCES, checkAgainstPublicSources, claimAccounting } from "./lib/public-sources.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Overridable for testing the failure path against a fixture that isn't
@@ -888,6 +889,22 @@ async function checkCaseStudyClaims(provenance) {
         claimResults.push({ ...base, status: "NOT_NUMERIC", detail: "no numeric token in displayed text (Task 3's territory, not this check's)" });
         continue;
       }
+      // Private-repo case study, but this claim's number is also published in a public artifact:
+      // check it there (scripts/lib/public-sources.mjs) instead of listing it as UNCHECKED.
+      const publicSources = PUBLIC_CLAIM_SOURCES[`${fileName}|${sourceRef}`];
+      if (publicSources) {
+        claimResults.push({
+          ...base,
+          ...(await checkAgainstPublicSources({
+            tokens,
+            sources: publicSources,
+            text,
+            fetchText,
+            matches: (t, body) => tokenFoundIn(t, extractSourceNumbers(body)),
+          })),
+        });
+        continue;
+      }
       if (repo === undefined) {
         claimResults.push({ ...base, status: "NO_REPO_MAPPING", detail: `"${fileName}" has no entry in CASE_STUDY_REPO` });
         continue;
@@ -999,7 +1016,14 @@ async function checkVerifiedStaleness() {
       continue;
     }
     const daysOld = Math.floor((today - verifiedDate) / (1000 * 60 * 60 * 24));
-    rows.push({ slug: study.slug ?? fileName, verifiedAt: study.verifiedAt, daysOld, stale: daysOld > VERIFIED_STALE_DAYS });
+    // Self-reported claims cannot be re-verified from the public side, so they never make a study
+    // overdue; the report line still says they exist (scripts/lib/case-study-claims.mjs).
+    const verdict = verificationVerdict({
+      daysOld,
+      staleDays: VERIFIED_STALE_DAYS,
+      claims: collectCaseStudyClaims(study),
+    });
+    rows.push({ slug: study.slug ?? fileName, verifiedAt: study.verifiedAt, daysOld, ...verdict });
   }
   return rows;
 }
@@ -1109,8 +1133,8 @@ const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
 const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsPartial.length + claimsUnverifiable.length;
 const claimsSelfReported = claimsByStatus("SELF_REPORTED");
 // Self-reported claims are labelled on the page and have no source to check, so they are not
-// part of the "numeric claims we could check" denominator either.
-const claimsNumericTotal = claimResults.length - claimsNotNumeric.length - claimsSelfReported.length;
+// part of the "numeric claims we could check" denominator either (scripts/lib/public-sources.mjs).
+const claimsNumericTotal = claimAccounting(claimResults).numericTotal;
 
 const svgResults = await checkSvgMetrics(store);
 const svgByStatus = (s) => svgResults.filter((r) => r.status === s);
@@ -1356,7 +1380,8 @@ if (staleVerification.length > 0) {
   lines.push(`### Overdue for re-verification — ${staleVerification.length} case stud${staleVerification.length === 1 ? "y" : "ies"}`);
   lines.push("");
   for (const r of staleVerification) {
-    lines.push(`- \`${r.slug}\`: verifiedAt ${r.verifiedAt}, ${r.daysOld} days ago`);
+    const note = r.selfReportedCount > 0 ? ` (${r.selfReportedCount} self-reported claim(s) excluded: private source)` : "";
+    lines.push(`- \`${r.slug}\`: verifiedAt ${r.verifiedAt}, ${r.daysOld} days ago${note}`);
   }
   lines.push("");
 }
