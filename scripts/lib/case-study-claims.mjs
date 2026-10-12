@@ -78,16 +78,17 @@ export function collectCaseStudyClaims(study) {
 }
 
 /**
- * Case-study-level "overdue for re-verification" verdict. Self-reported claims cannot be re-verified
- * by anyone from the public side, so they never make a study overdue: a study is overdue only if it
- * is older than `staleDays` AND has at least one checkable (not self-reported) sourced claim. When
- * self-reported claims exist the report line says so, so the exclusion is visible, not silent.
+ * Counts for the claim-coverage report. Self-reported claims are labelled on the page and have no
+ * source to compare with, so they leave BOTH the numeric-checkable denominator and the
+ * UNCHECKED-private count; NOT_NUMERIC is excluded as before.
  *
- * @param {{daysOld: number, staleDays: number, claims: {selfReported?: boolean}[]}} p
- * @returns {{stale: boolean, selfReportedCount: number}}
+ * @param {{status: string}[]} results
  */
-export function verificationVerdict({ daysOld, staleDays, claims }) {
-  const selfReportedCount = claims.filter((c) => c.selfReported === true).length;
-  const checkable = claims.length - selfReportedCount;
-  return { stale: daysOld > staleDays && checkable > 0, selfReportedCount };
+export function claimAccounting(results) {
+  const n = (s) => results.filter((r) => r.status === s).length;
+  return {
+    selfReported: n("SELF_REPORTED"),
+    skippedPrivate: n("SKIPPED_PRIVATE_REPO"),
+    numericTotal: results.length - n("NOT_NUMERIC") - n("SELF_REPORTED"),
+  };
 }

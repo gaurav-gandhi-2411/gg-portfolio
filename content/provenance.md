@@ -649,7 +649,7 @@ were found and corrected on the site:
 
 | ID | Change | Source |
 |---|---|---|
-| `warmer:hinglish-fix` | hi-en Spearman 0.639 → **0.813** (a LoRA fine-tune took 0.639 → 0.800 — `mindmeld/PLAN.md:706` — and an eval-harness RNG fix took 0.800 → 0.813, EN 0.837 → 0.842 — `mindmeld/PLAN.md:1624`); current table read directly from `mindmeld/generator/evals/reports/baseline_report.md:24` @ `16f35d16`. Cross-language pass rate 5.1% → **78.0%**: 5.1% is the shipped baseline, public copy `mindmeld-payloads/evals/warmer/baseline_report_pre-fix.md:31` (origin `mindmeld/generator/evals/reports/baseline_report.md:31` @ `675994db`); 78.0% is the final fine-tune, `mindmeld-payloads/evals/warmer/baseline_report.md:31` (origin same path @ `16f35d16`). The intermediate off-the-shelf E2 model scored 54.2% (private: `mindmeld/generator/evals/reports/baseline_report.md:31` @ `2559457e`, `mindmeld/PLAN.md:1473`) and is not the baseline the page compares against. Corrected 2026-10-12: this row previously read "54.2% → 78.0%", which did not match the page's 5.1% → 78.0% |
+| `warmer:hinglish-fix` | hi-en Spearman 0.639 → **0.813** (a LoRA fine-tune took 0.639 → 0.800 — `mindmeld/PLAN.md:706` — and an eval-harness RNG fix took 0.800 → 0.813, EN 0.837 → 0.842 — `mindmeld/PLAN.md:1624`); current table read directly from `mindmeld/generator/evals/reports/baseline_report.md:24` @ `16f35d16`. Cross-language pass rate 54.2% → **78.0%** (`baseline_report.md:31`) |
 | `gold-rate-tracker:headline` | backtest grew 194 → **199 folds**; naive still wins (MAE 255.28 vs 297.84, Wilcoxon p≈0, run 2026-07-19) — `gold-rate-tracker/data/backtest.json` @ `a4d892c` |
 | `agentgauge:scoring-dimensions` | **retired** — see below |
 

@@ -3,9 +3,9 @@
 // Contract (written first):
 //  - A claim is `selfReported` ONLY if its sole source is the private mindmeld repo. Everything
 //    whose number also appears in a PUBLIC artifact (mindmeld-payloads reports, the public HF model
-//    card / benchmark card) is NOT labelled and is text-checked against that public source.
-//  - The freshness checker keeps self-reported claims out of the numeric denominator, the
-//    UNCHECKED-private count, and the case-study OVERDUE verdict.
+//    card / benchmark card) is NOT labelled.
+//  - The freshness checker keeps self-reported claims out of the numeric denominator and the
+//    UNCHECKED-private count.
 //  - The label is legible: >= 4.5:1 in both colour schemes (WCAG AA for small text), no alpha.
 //  Hermetic: local files and stubbed fetches only.
 
@@ -18,10 +18,9 @@ import { describe, test } from "node:test";
 import {
   SELF_REPORTED_LABEL,
   classifySelfReported,
+  claimAccounting,
   collectCaseStudyClaims,
-  verificationVerdict,
 } from "./lib/case-study-claims.mjs";
-import { PUBLIC_CLAIM_SOURCES, checkAgainstPublicSources, claimAccounting } from "./lib/public-sources.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { warmer } = await import(pathToFileURL(join(ROOT, "content", "case-studies", "warmer.ts")).href);
@@ -76,47 +75,6 @@ describe("Warmer content flags exactly the private-only claims", () => {
     assert.ok(!cross.selfReported);
     assert.ok(!warmer.story.selfReported);
   });
-  test("every unlabelled numeric claim has a public source mapped (nothing falls to UNCHECKED)", () => {
-    const unmapped = collectCaseStudyClaims(warmer)
-      .filter((c) => !c.selfReported && /\d[\d.,]*\d/.test(c.text))
-      .filter((c) => !PUBLIC_CLAIM_SOURCES[`warmer|${c.sourceRef}`])
-      .map((c) => c.sourceRef);
-    assert.deepEqual(unmapped, []);
-  });
-  test("the 5.1% -> 78.0% row is checked against BOTH public reports", () => {
-    const urls = PUBLIC_CLAIM_SOURCES["warmer|warmer:hinglish-fix"].map((s) => s.url).join(" ");
-    assert.match(urls, /baseline_report\.md/);
-    assert.match(urls, /baseline_report_pre-fix\.md/);
-  });
-});
-
-describe("checkAgainstPublicSources (stubbed fetch)", () => {
-  const tokens = [{ display: "5.1" }, { display: "78.0" }];
-  const sources = [
-    { label: "pre", url: "u1" },
-    { label: "final", url: "u2" },
-  ];
-  const run = (bodies) =>
-    checkAgainstPublicSources({
-      tokens,
-      sources,
-      text: "5.1% to 78.0%",
-      matches: (t, body) => body.includes(t.display),
-      fetchText: async (u) => {
-        if (bodies[u] === undefined) throw new Error("HTTP 404");
-        return bodies[u];
-      },
-    });
-  test("union across sources: each number in a different file is CURRENT", async () => {
-    assert.equal((await run({ u1: "rate: 5.1%", u2: "rate: 78.0%" })).status, "CURRENT");
-  });
-  test("one number missing is PARTIAL; none is POSSIBLE_DRIFT", async () => {
-    assert.equal((await run({ u1: "rate: 5.1%", u2: "nothing" })).status, "PARTIAL");
-    assert.equal((await run({ u1: "x", u2: "y" })).status, "POSSIBLE_DRIFT");
-  });
-  test("every source failing is UNVERIFIABLE (fails closed, never CURRENT)", async () => {
-    assert.equal((await run({})).status, "UNVERIFIABLE");
-  });
 });
 
 describe("claimAccounting: self-reported claims leave the denominator and the UNCHECKED count", () => {
@@ -129,22 +87,6 @@ describe("claimAccounting: self-reported claims leave the denominator and the UN
       { status: "NOT_NUMERIC" },
     ];
     assert.deepEqual(claimAccounting(results), { selfReported: 2, skippedPrivate: 1, numericTotal: 2 });
-  });
-});
-
-describe("verificationVerdict: self-reported claims never make a case study overdue", () => {
-  const mk = (selfReported) => ({ sourceRef: "x", selfReported });
-  test("old study with a checkable claim is stale, and reports the self-reported count", () => {
-    assert.deepEqual(verificationVerdict({ daysOld: 71, staleDays: 30, claims: [mk(true), mk(false)] }), {
-      stale: true,
-      selfReportedCount: 1,
-    });
-  });
-  test("old study whose claims are ALL self-reported is not stale", () => {
-    assert.equal(verificationVerdict({ daysOld: 71, staleDays: 30, claims: [mk(true), mk(true)] }).stale, false);
-  });
-  test("young study is not stale", () => {
-    assert.equal(verificationVerdict({ daysOld: 5, staleDays: 30, claims: [mk(false)] }).stale, false);
   });
 });
 

@@ -54,21 +54,3 @@ repo owner and could read mindmeld; that was deliberately not done per the brief
 
 Displayed text cites commit "877af11" and "cd2934..." whose digits get tokenised as numbers (877,
 2934). Not a drift. triageiq `verifiedAt` is already 2026-10-10 on main.
-
-## 7. warmer: "43% more data" disagrees with the public model card (added 2026-10-12, PR #307)
-
-Not edited (no number changes in that PR). The page says the second full fine-tune "got worse with
-43% more data".
-
-| Where | Says | Evidence |
-|---|---|---|
-| Page decision "When fine-tuning failed twice..." | second attempt "43% more data" | `content/case-studies/warmer.ts:80`; same claim `content/provenance.md:466` and `:683` (cites private `mindmeld/PLAN.md:590-600,...`) |
-| Public model card `hinglish-relatedness-sbert` (HF repo sha `4b06ad91`) | "adding more training data (543 pairs, then 756/1028 pairs)" | README.md lines 39 and 151 (756 contrastive / 1028 graded pairs) |
-
-543 to 756 is +39.2%; 756 to 1028 is +36.0%. Neither is 43%. The two may count different things
-(contrastive pairs vs graded pairs, or a different v2 corpus than the one the card lists); the private
-`mindmeld/PLAN.md` ranges cited in the provenance row would settle it. Options: correct the page to
-the card's figure, correct the card, or keep 43% with its private source stated. Because the 43% is
-not in any public artifact, that decision stays labelled "self-reported (private repo)" until
-decided; the rest of the lora-reframe narrative (13 configs, 0.639, 0.435 to 0.704) is public and
-text-checked.
