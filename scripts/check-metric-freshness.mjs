@@ -80,6 +80,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { githubApiGet, formatApiErrorLines } from "./lib/github-api.mjs";
+import { checkGeneratedClaim, unreadableForStudy } from "./lib/generated-claims.mjs";
 import {
   claimAccounting,
   classifySelfReported,
@@ -104,6 +105,16 @@ const CASE_STUDIES_INDEX_PATH = join(ROOT, "content", "case-studies", "index.ts"
 const CASE_STUDIES_DIR = join(ROOT, "content", "case-studies");
 const PROVENANCE_PATH = process.env.PROVENANCE_PATH_OVERRIDE ?? join(ROOT, "content", "provenance.md");
 const SUMMARY_PATH = process.env.FRESHNESS_SUMMARY_PATH ?? "/tmp/metric-freshness-summary.md";
+// sourceRefs whose displayed number is GENERATED from a live API into a committed snapshot
+// (scripts/refresh-*.mjs), not typed by hand. A text-presence check against the old literals would
+// be meaningless for these, so checkCaseStudyClaims() routes them to the GENERATED_* statuses
+// instead: the snapshot's age is the freshness signal. The weekly refresh fails loudly when it
+// cannot update the snapshot (R3), so an age past GENERATED_OVERDUE_DAYS means the refresh itself
+// has stopped landing (e.g. its PR is sitting unmerged), which is exactly what to surface.
+const GENERATED_SNAPSHOTS = {
+  "aetherart:hf-downloads": "content/generated/hf-downloads.json",
+};
+const GENERATED_OVERDUE_DAYS = 14;
 const FETCH_TIMEOUT_MS = 20_000;
 // Suggested by the task that requested this check; a case study older than
 // this is flagged regardless of whether numeric drift was also found.
@@ -871,7 +882,10 @@ async function checkCaseStudyClaims(provenance) {
     let study;
     try {
       study = (await import(fileUrl))[exportName];
-    } catch {
+    } catch (err) {
+      // Also name this study's generated snapshot refs as unreadable: a missing/corrupt snapshot
+      // makes the module import fail, and "Could not check" alone would not say which claim.
+      claimResults.push(...unreadableForStudy(fileName, GENERATED_SNAPSHOTS, err.message));
       continue; // already reported by checkVerifiedStaleness
     }
     const repo = Object.hasOwn(CASE_STUDY_REPO, fileName) ? CASE_STUDY_REPO[fileName] : undefined;
@@ -886,6 +900,14 @@ async function checkCaseStudyClaims(provenance) {
       const selfReported = classifySelfReported(claim);
       if (selfReported) {
         claimResults.push({ ...base, ...selfReported });
+        continue;
+      }
+
+      if (Object.hasOwn(GENERATED_SNAPSHOTS, sourceRef)) {
+        claimResults.push({
+          ...base,
+          ...checkGeneratedClaim(ROOT, GENERATED_SNAPSHOTS[sourceRef], text, GENERATED_OVERDUE_DAYS),
+        });
         continue;
       }
 
@@ -1136,6 +1158,10 @@ const claimsNoRepoMapping = claimsByStatus("NO_REPO_MAPPING");
 // numeric-checked in principle but this run's data/config didn't resolve
 // far enough to try — reported separately, not folded into either bucket.
 const claimsChecked = claimsCurrent.length + claimsDrift.length + claimsPartial.length + claimsUnverifiable.length;
+const claimsGenerated = claimsByStatus("GENERATED");
+const claimsGeneratedProblem = [...claimsByStatus("GENERATED_OVERDUE"), ...claimsByStatus("GENERATED_UNREADABLE")];
+// Generated claims are neither "checked against text" nor "unchecked": excluded from the
+// text-presence denominator and reported in their own section.
 const claimsSelfReported = claimsByStatus("SELF_REPORTED");
 // Self-reported claims are labelled on the page and have no source to check, so they are not
 // part of the "numeric claims we could check" denominator either (scripts/lib/case-study-claims.mjs).
@@ -1272,6 +1298,19 @@ if (claimsStructurallyUnverifiable.length > 0) {
   );
   lines.push("");
   for (const r of claimsStructurallyUnverifiable) lines.push(`- \`${r.slug}\` (\`${r.sourceRef}\`): ${r.detail}`);
+  lines.push("");
+}
+
+if (claimsGenerated.length + claimsGeneratedProblem.length > 0) {
+  lines.push(`### ${claimsGenerated.length + claimsGeneratedProblem.length} claim(s) GENERATED from a live API (not text-checked)`);
+  lines.push("");
+  lines.push(
+    "Built from a committed snapshot refreshed weekly (R3: the refresh fails loudly); " +
+      "freshness here is the snapshot's age, not a text-presence check."
+  );
+  lines.push("");
+  for (const r of claimsGenerated) lines.push(`- \`${r.sourceRef}\`: ${r.detail}`);
+  for (const r of claimsGeneratedProblem) lines.push(`- **${r.status}** \`${r.sourceRef}\`: ${r.detail}`);
   lines.push("");
 }
 
@@ -1554,6 +1593,7 @@ console.log(
     `${structurallyUnverifiable.length} structurally unverifiable, ${skipped.length} skipped. ` +
     `claims: ${claimsChecked}/${claimsNumericTotal} numeric claims checked (${claimsCurrent.length} current, ${claimsDrift.length} drift, ${claimsPartial.length} partial drift, ${claimsUnverifiable.length} unverifiable, ${claimsStructurallyUnverifiable.length} structurally unverifiable). ` +
     `${claimsSkippedPrivate.length} claims UNCHECKED (no auth). ` +
+    `${claimsGenerated.length} generated claims current, ${claimsGeneratedProblem.length} generated overdue/unreadable. ` +
     `${claimsSelfReported.length} claims SELF-REPORTED (private repo, labelled). ` +
     `svg: ${svgCurrent.length}/${svgResults.length} current (${svgDrift.length} drift, ${svgMappingStale.length} mapping stale, ${svgUnverifiable.length} unverifiable, ${svgNoEntry.length + svgBadMapping.length} broken mapping). ` +
     `verification: ${staleVerification.length} overdue, ${missingVerification.length} unreadable, of ${verifiedRows.length} case studies. ` +

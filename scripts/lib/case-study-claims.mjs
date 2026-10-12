@@ -89,7 +89,10 @@ export function claimAccounting(results) {
   return {
     selfReported: n("SELF_REPORTED"),
     skippedPrivate: n("SKIPPED_PRIVATE_REPO"),
-    numericTotal: results.length - n("NOT_NUMERIC") - n("SELF_REPORTED"),
+    // GENERATED* claims have their own report section (scripts/lib/generated-claims.mjs).
+    numericTotal:
+      results.length - n("NOT_NUMERIC") - n("SELF_REPORTED") - n("GENERATED") -
+      n("GENERATED_OVERDUE") - n("GENERATED_UNREADABLE"),
   };
 }
 
