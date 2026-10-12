@@ -192,3 +192,45 @@
     display: none;
   }
 }
+
+/* Proof strip — the case study's first short-numeral results, repeated above
+ * the fold from the same data. Reuses the stat-chip value/label type of the
+ * Results section; only the container differs (hairline-ruled, not boxed) so
+ * the two never read as the same component twice. */
+.proof-strip {
+  margin-top: var(--space-8);
+}
+
+.proof-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4) var(--space-10);
+  margin: 0;
+  padding: var(--space-4) 0;
+  list-style: none;
+  border-block: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+
+.proof-strip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 14rem;
+  text-align: center;
+}
+
+.proof-strip-value {
+  color: var(--foreground);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-variation-settings: "wght" 500, "opsz" 96, "SOFT" 12, "WONK" 0;
+  line-height: 1.15;
+}
+
+.proof-strip-label {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
