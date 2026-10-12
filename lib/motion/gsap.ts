@@ -64,6 +64,11 @@ export function loadMotion(): Promise<Motion> {
     gsap.registerPlugin(ScrollTrigger);
     return { gsap, ScrollTrigger };
   })();
+  // A failed load must not be cached, or every later caller gets the same
+  // rejection with no chance of a retry.
+  pending.catch(() => {
+    pending = null;
+  });
   return pending;
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { MOTION_ARRIVAL_MS, onPresenceOrIdle } from "@/lib/motion/after-first-paint";
+import { onIdleOrPresence } from "@/lib/motion/after-first-paint";
 import { inOwnTask, loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
 
 /**
@@ -44,14 +44,15 @@ export function ScrollDriver() {
 
     /**
      * Smoothed scrolling is an enhancement, and the page scrolls natively until
-     * it arrives. MOTION_ARRIVAL_MS because there is no reason for it to
-     * compete with first paint, and because a visitor who scrolls gets it
-     * immediately anyway: the scroll that triggers this is itself a presence
-     * event.
+     * it arrives. It waits for the first idle period after load so it does not
+     * compete with first paint, and a visitor who scrolls gets it immediately
+     * anyway: the scroll that triggers this is itself a presence event.
      */
-    const cancel = onPresenceOrIdle(() => {
-      void start();
-    }, MOTION_ARRIVAL_MS);
+    const cancel = onIdleOrPresence(() => {
+      void start().catch(() => {
+        // Chunk failed to load: native scrolling stays, which is complete.
+      });
+    });
 
     async function start() {
       const [{ gsap }, { default: Lenis }] = await Promise.all([loadMotion(), import("lenis")]);

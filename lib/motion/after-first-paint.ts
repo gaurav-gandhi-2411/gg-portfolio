@@ -25,17 +25,60 @@
 const PRESENCE_EVENTS = ["pointerdown", "pointermove", "wheel", "touchstart", "keydown", "scroll"] as const;
 
 /**
- * Earliest unprompted arrival for the GSAP-backed motion stack (smooth scroll,
- * scroll-scrubbed depth, nav indicator, hero scrubs), measured from `load`.
- *
- * It was 1200ms, which landed the ~50 kB gzip GSAP + ScrollTrigger + Lenis
- * chunks, their evaluation and the ScrollTrigger refresh inside the window
- * blocking time is measured in. Three seconds matches the hero field's own minimum. This moves the
- * work rather than deleting it: a visitor who does anything at all (scroll,
- * move, touch, press a key) still gets it immediately, because presence beats
- * the minimum, and one who does nothing gets it a beat later than before.
+ * Backstop for engines that never report an idle period (or report one very
+ * late on a busy tab). It is a ceiling handed to requestIdleCallback, never the
+ * way the trigger is meant to fire.
  */
-export const MOTION_ARRIVAL_MS = 3000;
+const IDLE_TIMEOUT_MS = 2000;
+
+/** Used only where requestIdleCallback does not exist (Safari). */
+const NO_IDLE_API_DELAY_MS = 200;
+
+/**
+ * Runs `arrive` once, on the first idle period after `load` or on the first
+ * presence event (scroll, wheel, pointer, touch, key), whichever comes first.
+ *
+ * This is what the GSAP-backed motion stack waits on. There is no fixed delay:
+ * the work runs as soon as the browser reports it has nothing better to do, and
+ * is split into per-consumer tasks (see `inOwnTask` in lib/motion/gsap.ts) so
+ * none of it is a long task. The page is already correct without it, so nothing
+ * is waiting on this to look right.
+ *
+ * @returns a teardown that cancels everything if it has not fired yet.
+ */
+export function onIdleOrPresence(arrive: () => void): () => void {
+  let fired = false;
+  let idleHandle: number | null = null;
+  let fallbackTimer: number | null = null;
+
+  const fire = () => {
+    if (fired) return;
+    fired = true;
+    teardown();
+    arrive();
+  };
+
+  const afterLoad = () => {
+    const ric = window.requestIdleCallback;
+    if (ric) idleHandle = ric(fire, { timeout: IDLE_TIMEOUT_MS });
+    else fallbackTimer = window.setTimeout(fire, NO_IDLE_API_DELAY_MS);
+  };
+
+  function teardown() {
+    for (const type of PRESENCE_EVENTS) window.removeEventListener(type, fire);
+    window.removeEventListener("load", afterLoad);
+    if (idleHandle !== null) window.cancelIdleCallback?.(idleHandle);
+    if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+  }
+
+  for (const type of PRESENCE_EVENTS) {
+    window.addEventListener(type, fire, { passive: true, once: true });
+  }
+  if (document.readyState === "complete") afterLoad();
+  else window.addEventListener("load", afterLoad, { once: true });
+
+  return teardown;
+}
 
 /** Asked for only after the minimum has elapsed, never as the way to wait. */
 const IDLE_GRACE_MS = 1000;

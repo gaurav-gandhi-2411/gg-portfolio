@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { MOTION_ARRIVAL_MS, onPresenceOrIdle } from "@/lib/motion/after-first-paint";
+import { onIdleOrPresence } from "@/lib/motion/after-first-paint";
 import { inOwnTask, loadMotion, prefersReducedMotion } from "@/lib/motion/gsap";
 
 type Motion = Awaited<ReturnType<typeof loadMotion>>;
@@ -35,13 +35,15 @@ type Motion = Awaited<ReturnType<typeof loadMotion>>;
  *
  * @param build   Receives gsap and ScrollTrigger; returns its cleanup.
  * @param deps    Same meaning as useEffect's.
- * @param minimumMs Earliest unprompted arrival, measured from `load`. A presence
- *                  event beats it.
+ *
+ * Arrival is the first idle period after `load` or the first presence event,
+ * whichever is first (see onIdleOrPresence); each consumer then builds in its
+ * own task. Nothing is hidden or offset until it runs, so the page is complete
+ * and correct without it, and a load failure leaves that same page in place.
  */
 export function useDeferredMotion(
   build: (motion: Motion) => (() => void) | void,
-  deps: unknown[],
-  minimumMs = MOTION_ARRIVAL_MS
+  deps: unknown[]
 ): void {
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -49,7 +51,7 @@ export function useDeferredMotion(
     let cleanup: (() => void) | void;
     let cancelled = false;
 
-    const cancelTrigger = onPresenceOrIdle(() => {
+    const cancelTrigger = onIdleOrPresence(() => {
       void loadMotion().then((motion) =>
         // Own task per consumer, so the builds are not one long task.
         inOwnTask(() => {
@@ -58,8 +60,10 @@ export function useDeferredMotion(
           if (cancelled) return;
           cleanup = build(motion);
         })
-      );
-    }, minimumMs);
+      ).catch(() => {
+        // Chunk failed to load: stay on the static page, which is complete.
+      });
+    });
 
     return () => {
       cancelled = true;
