@@ -7,12 +7,12 @@ Why this exists (2026-08-25): aetherart-497918 (AetherArt, do-not-delete labeled
 do-not-delete label did nothing to stop the delete call, and the only thing that saved
 it from permanent purge was still being inside GCP's 30-day recovery window when it was
 finally noticed by hand. Audit logs (cloudaudit.googleapis.com/activity) show it was
-deleted twice (2026-08-12 via gaurav.gandhi2411@gmail.com through the Console, then
-again 2026-08-14 via gaurav.gandhi1129@gmail.com through `gcloud projects delete` run by
+deleted twice (2026-08-12 via a retired identity through the Console, then
+again 2026-08-14 via the current owner identity through `gcloud projects delete` run by
 a Claude Code agent session) with nothing in between reporting the state or stopping it.
 mindmeld-c4bba (an old, since-superseded Warmer/Firebase project also carrying a
-do-not-delete label) shows the identical pattern: deleted 2026-08-12 (browser, 2411),
-2026-08-13 (CC agent, 2411), and 2026-08-14 (CC agent, 1129) -- three delete calls
+do-not-delete label) shows the identical pattern: deleted 2026-08-12 (browser, retired identity),
+2026-08-13 (CC agent, retired identity), and 2026-08-14 (CC agent, owner identity) -- three delete calls
 across three days, on a label that was supposed to mean never.
 
 This check exists because nothing else reports the state on its own: a project in
@@ -28,7 +28,8 @@ Design notes:
     projects someone already thought to name, which is exactly the blind spot that let
     this recur. (rule 85a: a control's own construction can encode the same
     narrower-than-advertised-surface assumption it exists to catch elsewhere.)
-  - Runs once per identity in ACCOUNTS_TO_CHECK. A project invisible to one identity is
+  - Runs once per identity returned by load_accounts() (env var or gitignored config file;
+    see ops/accounts.example.json -- real addresses are never committed). A project invisible to one identity is
     not evidence it's safe -- it may only be visible to another (CLAUDE.md's own standing
     note on `gcloud projects list` needing to be run per-identity). Reports explicitly
     which identities were actually checked, not just a bare "0 found" -- an unchecked
@@ -46,7 +47,13 @@ Design notes:
 Usage:
     python ops/check_delete_requested_projects.py [--json report.json]
 
+Configuration (required, fails loudly with exit 2 if absent):
+    GCP_CHECK_ACCOUNTS       comma-separated list of gcloud account emails, OR
+    ops/accounts.local.json  gitignored; copy ops/accounts.example.json and fill in
+                             (override the path with GCP_CHECK_ACCOUNTS_FILE)
+
 Exit codes:
+    2 -- identity configuration missing or malformed (nothing was checked)
     0 -- no CRITICAL (do-not-delete-labeled) project in DELETE_REQUESTED, on every
          identity that could actually be checked
     1 -- at least one CRITICAL project found, OR at least one identity could not be
@@ -55,10 +62,13 @@ Exit codes:
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
@@ -67,16 +77,45 @@ import requests
 # whose arguments include an email address. Resolve the real executable once instead.
 GCLOUD = shutil.which("gcloud.cmd") or shutil.which("gcloud") or "gcloud"
 
-# Every identity historically holding projects in this estate (CLAUDE.md SOLE-IDENTITY
-# MANDATE section). Checking all three, not just the current active one, because a
-# project can be invisible to the account currently authenticated in this shell and
-# still exist under another -- that was true for tiq-billing-probe-1 in an earlier
-# audit and there is no reason to assume it can't be true again here.
-ACCOUNTS_TO_CHECK = [
-    "gaurav.gandhi1129@gmail.com",
-    "gaurav.gandhi2411@gmail.com",
-    "gaurav.gandhi1249@gmail.com",
-]
+# Every identity historically holding projects in this estate must be listed in the
+# config (CLAUDE.md SOLE-IDENTITY MANDATE section). Checking all of them, not just the
+# current active one, because a project can be invisible to the account currently
+# authenticated in this shell and still exist under another -- that was true for
+# tiq-billing-probe-1 in an earlier audit. The addresses live outside git (public repo).
+ACCOUNTS_ENV = "GCP_CHECK_ACCOUNTS"
+ACCOUNTS_FILE_ENV = "GCP_CHECK_ACCOUNTS_FILE"
+DEFAULT_ACCOUNTS_FILE = Path(__file__).resolve().parent / "accounts.local.json"
+
+
+class ConfigError(Exception):
+    """Identity configuration missing or malformed (fail closed, rule 98a)."""
+
+
+def load_accounts(env: Mapping[str, str] | None = None) -> list[str]:
+    """Return the accounts to check from env var or the gitignored config file.
+
+    Raises ConfigError (never returns an empty list) so a missing config cannot look
+    like a clean "0 identities, 0 findings" run.
+    """
+    env = os.environ if env is None else env
+    raw = env.get(ACCOUNTS_ENV, "").strip()
+    if raw:
+        accounts = [a.strip() for a in raw.split(",") if a.strip()]
+    else:
+        path = Path(env.get(ACCOUNTS_FILE_ENV) or DEFAULT_ACCOUNTS_FILE)
+        if not path.is_file():
+            raise ConfigError(
+                f"no accounts configured: set {ACCOUNTS_ENV} (comma-separated) or create "
+                f"{path} from ops/accounts.example.json"
+            )
+        try:
+            accounts = json.loads(path.read_text(encoding="utf-8"))["accounts"]
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ConfigError(f"{path} is unreadable or lacks an 'accounts' list: {exc}") from exc
+    if not accounts or not all(isinstance(a, str) and "@" in a for a in accounts):
+        raise ConfigError("accounts config must be a non-empty list of email addresses")
+    return accounts
+
 
 RESOURCE_MANAGER_URL = (
     "https://cloudresourcemanager.googleapis.com/v1/projects"
@@ -129,12 +168,18 @@ def main() -> int:
     parser.add_argument("--json", help="Optional path to write the full JSON report to")
     args = parser.parse_args()
 
+    try:
+        accounts = load_accounts()
+    except ConfigError as exc:
+        print(f"CONFIG ERROR: {exc}", file=sys.stderr)
+        return 2
+
     checked_at = datetime.now(timezone.utc).isoformat()
     report: dict = {"checked_at": checked_at, "accounts": {}}
     any_critical = False
     any_unverified = False
 
-    for account in ACCOUNTS_TO_CHECK:
+    for account in accounts:
         acct, projects, error = list_delete_requested(account)
         if error is not None:
             print(f"UNVERIFIED  {acct}: {error}")

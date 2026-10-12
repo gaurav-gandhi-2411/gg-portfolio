@@ -1,0 +1,7 @@
+{
+  "accounts": [
+    "owner-identity@example.com",
+    "retired-identity-a@example.com",
+    "retired-identity-b@example.com"
+  ]
+}

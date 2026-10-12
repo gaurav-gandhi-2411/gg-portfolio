@@ -236,9 +236,11 @@ export function ProjectFilter({
           Wave 15: denominator is now the active view's own total (more
           informative once a view can be capped — "4 of 6" beats "4 of 13"
           at telling you how much more there is to see in THIS category). */}
-      <p aria-live="polite" className="text-muted-foreground mt-[var(--space-4)] text-center font-mono text-caption">
-        Showing {displayedCount} of {totalMatching} projects
-      </p>
+      {totalMatching > 0 && (
+        <p aria-live="polite" className="text-muted-foreground mt-[var(--space-4)] text-center font-mono text-caption">
+          Showing {displayedCount} of {totalMatching} projects
+        </p>
+      )}
 
       {overflowSlugs.length > 0 && (
         <>
@@ -282,7 +284,10 @@ export function ProjectFilter({
       )}
 
       {totalMatching === 0 && (
-        <div className="border-border/40 bg-card/40 mt-[var(--space-8)] rounded-xl border px-[var(--space-6)] py-10 text-center">
+        <div
+          role="status"
+          className="border-border/40 bg-card/40 mt-[var(--space-8)] rounded-xl border px-[var(--space-6)] py-10 text-center"
+        >
           {/* Search and category are independent filters, so the message and
               its reset action name whichever one actually produced zero —
               "Nothing in this category yet" would be a wrong label for a

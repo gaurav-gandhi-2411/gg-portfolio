@@ -107,7 +107,13 @@ export function ProjectCard({
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-x-3">
             <Heading className="flex min-w-0 items-center gap-[var(--space-2-5)] font-heading text-lead font-semibold text-foreground">
-              <ProjectMark id={product.slug as ProjectMarkId} hue={hue} size={28} className="mark-idle shrink-0" />
+              {/* Decorative; hidden when the card has under 230px of content width
+                  (a 320px viewport) so a one-word title such as "ShelfSense" has
+                  the room it needs and does not run under the status pill.
+                  Container queries measure the content box, about 50px less than
+                  the card, so a threshold picked against card width hides the
+                  mark on wider phones too. */}
+              <ProjectMark id={product.slug as ProjectMarkId} hue={hue} size={28} className="mark-idle shrink-0 @max-[230px]:hidden" />
               <Link
                 href={`/work/${product.slug}`}
                 className="card-stretch-link focus-visible:outline-ring -my-2 inline-flex min-h-11 items-center transition-colors duration-[var(--dur-base)] ease-[var(--ease-out-soft)] hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none"
