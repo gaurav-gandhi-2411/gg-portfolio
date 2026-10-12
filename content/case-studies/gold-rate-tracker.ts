@@ -95,12 +95,14 @@ export const goldRateTracker: CaseStudy = {
       detail:
         "MAE (₹/g), naive wins by ~17% (Wilcoxon signed-rank p < 0.001, the naive baseline's advantage is real, not noise)",
       sourceRef: "gold-rate-tracker:headline",
+      headline: false, // the naive baseline wins: a caveated/negative row, not proof
     },
     {
       label: "Chronos direction accuracy",
       value: "51.2%",
       detail: "barely above a coin flip, and below the true ~70% regime base rate",
       sourceRef: "gold-rate-tracker:headline",
+      headline: false, // barely above a coin flip: its own detail says so
     },
     {
       label: "Direction-signal promotion gate",

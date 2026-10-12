@@ -121,7 +121,7 @@ test.describe("Case-study proof strip", () => {
   for (const scheme of ["light", "dark"] as const) {
     test(`axe: no serious/critical violations in the strip, ${scheme}`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
-      for (const slug of ["triageiq", "warmer", "gold-rate-tracker"]) {
+      for (const slug of ["triageiq", "warmer", "shelfsense"]) {
         await page.goto(`/work/${slug}`);
         // Scope must match, or a clean result proves nothing.
         await expect(page.locator("[data-proof-strip]")).toHaveCount(1);
@@ -178,7 +178,7 @@ test.describe("Case-study proof strip", () => {
   for (const width of [320, 375, 768, 1440]) {
     test(`no horizontal overflow at ${width}px, popover closed and open`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      for (const slug of ["triageiq", "warmer", "gold-rate-tracker"]) {
+      for (const slug of ["triageiq", "warmer", "shelfsense"]) {
         await page.goto(`/work/${slug}`);
         const trigger = page.locator("[data-proof-item]").last().getByRole("button");
         expect(await overflowOf(page)).toBe(0);

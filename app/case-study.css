@@ -228,16 +228,16 @@
   border-block: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
 }
 
+/* Block flow, not a flex column: as a flex column the value box was measured
+ * shorter than its wrapped text and the label was laid over its last line. */
 .proof-strip-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
+  display: block;
   max-width: 14rem;
   text-align: center;
 }
 
 .proof-strip-value {
+  display: block;
   color: var(--foreground);
   font-family: var(--font-heading);
   font-size: 1.5rem;
@@ -245,7 +245,20 @@
   line-height: 1.15;
 }
 
+/* MetricProvenance's trigger carries -my-2.5 (a 44px tap target that sticks out
+ * 10px above and below a one-line value). For a value that wraps to 2+ lines
+ * the button is as tall as its text, so those -10px margins pulled the label
+ * up over the value's last line (measured: 6.4-7.0px overlap). Here the margins
+ * are zeroed and the target is a 28px minimum instead of 44px: a deliberate
+ * trade for a strip that does not collide with itself (WCAG 2.5.8 needs 24). */
+.proof-strip-value button {
+  margin-block: 0;
+  min-height: 1.75rem;
+}
+
 .proof-strip-label {
+  display: block;
+  margin-top: var(--space-1);
   color: var(--muted-foreground);
   font-size: 0.8125rem;
   line-height: 1.4;
