@@ -212,6 +212,25 @@ if command -v node >/dev/null 2>&1; then
     GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
     STUB_JOBS_TSV="$CI_JOBS" STUB_DISPATCH_LOG="$WORKDIR/dispatch-err.log"
   assert_posts "guard-detector-error" 3
+
+  # Ambiguous / missing detector decisions must fail closed (never post success): swap in a stub
+  # detector that exits 0 and prints exactly STUB_DETECT_OUT (stdout) / STUB_DETECT_ERR (stderr).
+  printf '%s\n' 'process.stdout.write(process.env.STUB_DETECT_OUT ?? "");' \
+    'process.stderr.write(process.env.STUB_DETECT_ERR ?? "");' >"$REPO_DIR/scripts/ask-guard/detect.mjs"
+  set_head "$BASE_PKG" "$BASE_LOCK"
+  stub_case() { # NAME STDOUT STDERR
+    run_case "$1" 1 "$VALID3" \
+      "Relayed ask-live-guard=failure" -- \
+      GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
+      STUB_JOBS_TSV="$CI_JOBS" STUB_DISPATCH_LOG="$WORKDIR/dispatch-$1.log" \
+      STUB_DETECT_OUT="$2" STUB_DETECT_ERR="$3"
+    assert_posts "$1" 3
+  }
+  stub_case "guard-no-decision" "" ""
+  stub_case "guard-both-decisions" $'applicable=false\napplicable=true\n' ""
+  stub_case "guard-false-twice" $'applicable=false\napplicable=false\n' ""
+  stub_case "guard-stderr-only-decision" "" $'applicable=false\n'
+  cp "$SCRIPT_DIR/ask-guard/detect.mjs" "$REPO_DIR/scripts/ask-guard/detect.mjs"
 else
   echo "SKIP: node not found -- skipping the ask-live-guard relay cases."
 fi

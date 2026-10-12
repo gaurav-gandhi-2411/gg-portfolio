@@ -233,15 +233,23 @@ relay_ask_live_guard() {
     git show "$MB:package.json" >"$TMP/bp.json" &&
     git show "$MB:package-lock.json" >"$TMP/bl.json" &&
     DET_OUT=$(node "$SCRIPT_DIR/ask-guard/detect.mjs" --base-pkg "$TMP/bp.json" --base-lock "$TMP/bl.json" \
-      --head-pkg package.json --head-lock package-lock.json 2>&1); } 2>/dev/null; then
+      --head-pkg package.json --head-lock package-lock.json 2>/dev/null); } 2>/dev/null; then
     echo "::error::$CTX: detector could not decide for $BRANCH@$SHA; failing closed."
     ANY_FAILURE=true
     post_status "$CTX" failure "detector could not decide; failing closed" "$CI_RUN_URL"
     return 0
   fi
-  if printf '%s\n' "$DET_OUT" | grep -qx 'applicable=false'; then
+  # Exactly ONE decision line, from stdout only: a PR-controlled lockfile key containing a newline
+  # could print a standalone `applicable=false` line before the real one, so 0 or >1 lines (or
+  # conflicting ones) is "no decision", never a pass.
+  local DECISION
+  DECISION=$(printf '%s\n' "$DET_OUT" | grep -x -E 'applicable=(true|false)' || true)
+  if [ "$(printf '%s\n' "$DECISION" | grep -c .)" != 1 ]; then
+    DECISION=""
+  fi
+  if [ "$DECISION" = "applicable=false" ]; then
     post_status "$CTX" success "not applicable (no /ask-relevant package change)" "$CI_RUN_URL"
-  elif printf '%s\n' "$DET_OUT" | grep -qx 'applicable=true'; then
+  elif [ "$DECISION" = "applicable=true" ]; then
     echo "$CTX applicable (guarded package changed); dispatching $WF"
     gh workflow run "$WF" --repo "$REPO" --ref "$BRANCH" -f base_sha="$MB"
     collect_run "$WF"
@@ -254,7 +262,7 @@ relay_ask_live_guard() {
       post_status "$CTX" failure "live /ask guard ${CONC:-reported no job} (run $RUN_ID)" "https://github.com/$REPO/actions/runs/$RUN_ID"
     fi
   else
-    echo "::error::$CTX: detector gave no applicability decision; failing closed."
+    echo "::error::$CTX: detector gave no (or an ambiguous) applicability decision; failing closed."
     ANY_FAILURE=true
     post_status "$CTX" failure "detector gave no decision; failing closed" "$CI_RUN_URL"
   fi
