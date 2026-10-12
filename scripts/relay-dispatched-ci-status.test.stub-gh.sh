@@ -16,6 +16,11 @@ case "$1" in
         exit "${STUB_WATCH_EXIT:-0}"
         ;;
       view)
+        # After `gh workflow run ask-live-guard.yml` the run being viewed is the guard's.
+        if [ -n "${STUB_DISPATCH_LOG:-}" ] && grep -q "ask-live-guard.yml" "$STUB_DISPATCH_LOG" 2>/dev/null; then
+          printf '%s\n' "${STUB_GUARD_JOBS_TSV:-}"
+          exit 0
+        fi
         printf '%s\n' "${STUB_RUN_VIEW_OUTPUT:-${STUB_JOBS_TSV:-}}"
         exit "${STUB_RUN_VIEW_EXIT:-0}"
         ;;
@@ -24,6 +29,10 @@ case "$1" in
         exit 1
         ;;
     esac
+    ;;
+  workflow)
+    printf '%s\n' "$*" >>"${STUB_DISPATCH_LOG:-/dev/null}"
+    exit 0
     ;;
   api)
     case "$2" in

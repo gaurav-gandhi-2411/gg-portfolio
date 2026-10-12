@@ -38,16 +38,36 @@ chmod +x "$STUB_BIN_DIR/sleep"
 # Repo-shaped tree (scripts/ and .github/ as siblings, like the real repo)
 # so the relay script's own SCRIPT_DIR/../.github/required-checks.json
 # resolution finds THIS tree's config, shared and rewritten per case below.
+# REPO_DIR is a clone of a local ORIGIN_DIR holding main's package.json +
+# package-lock.json, so the ask-live-guard path's `git fetch origin main` /
+# merge-base work for real; cases overwrite the working-tree (head) copies.
+ORIGIN_DIR="$WORKDIR/origin"
 REPO_DIR="$WORKDIR/repo"
-mkdir -p "$REPO_DIR/scripts" "$REPO_DIR/.github"
-cp "$RELAY_SCRIPT_SRC" "$REPO_DIR/scripts/relay-dispatched-ci-status.sh"
-# The script under test does `git rev-parse HEAD` -- give it a real repo.
-git init -q "$REPO_DIR"
+git init -q -b main "$ORIGIN_DIR"
+git -C "$ORIGIN_DIR" config user.email "test@example.com"
+git -C "$ORIGIN_DIR" config user.name "test"
+BASE_PKG='{"name":"t","dependencies":{"next":"1.0.0","left-pad":"1.0.0"}}'
+BASE_LOCK='{"lockfileVersion":3,"packages":{"":{},"node_modules/next":{"version":"1.0.0","integrity":"sha-a"},"node_modules/left-pad":{"version":"1.0.0","integrity":"sha-b"}}}'
+GUARDED_LOCK='{"lockfileVersion":3,"packages":{"":{},"node_modules/next":{"version":"1.0.1","integrity":"sha-c"},"node_modules/left-pad":{"version":"1.0.0","integrity":"sha-b"}}}'
+printf '%s' "$BASE_PKG" >"$ORIGIN_DIR/package.json"
+printf '%s' "$BASE_LOCK" >"$ORIGIN_DIR/package-lock.json"
+git -C "$ORIGIN_DIR" add package.json package-lock.json
+git -C "$ORIGIN_DIR" commit -q -m "init"
+git clone -q "$ORIGIN_DIR" "$REPO_DIR"
 git -C "$REPO_DIR" config user.email "test@example.com"
 git -C "$REPO_DIR" config user.name "test"
-git -C "$REPO_DIR" commit -q --allow-empty -m "init"
+mkdir -p "$REPO_DIR/scripts/ask-guard" "$REPO_DIR/.github"
+cp "$RELAY_SCRIPT_SRC" "$REPO_DIR/scripts/relay-dispatched-ci-status.sh"
+cp "$SCRIPT_DIR/ask-guard/detect.mjs" "$SCRIPT_DIR/ask-guard/guarded-packages.json" "$REPO_DIR/scripts/ask-guard/"
+
+# set_head PKG_JSON LOCK_JSON: the PR head's package files (working tree).
+set_head() {
+  printf '%s' "$1" >"$REPO_DIR/package.json"
+  printf '%s' "$2" >"$REPO_DIR/package-lock.json"
+}
 
 VALID='{"branch":"main","contexts":["build","e2e"]}'
+VALID3='{"branch":"main","contexts":["build","e2e","ask-live-guard"]}'
 FAILURES=0
 LAST_POSTS_COUNT=0
 
@@ -146,6 +166,55 @@ run_case "missing-context" 1 "$VALID" \
   GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
   STUB_JOBS_TSV=$'build\tsuccess'
 assert_posts "missing-context" 1
+
+# --- required context from a separate workflow (ask-live-guard) ---
+if command -v node >/dev/null 2>&1; then
+  CI_JOBS=$'build\tsuccess\ne2e\tsuccess'
+
+  # Before the fix this was the live regression: exit 1, "not found among run's job names".
+  set_head "$BASE_PKG" "$BASE_LOCK"
+  run_case "guard-not-applicable" 0 "$VALID3" \
+    "Relayed ask-live-guard=success" "not applicable (no /ask-relevant package change)" \
+    "All required contexts relayed successfully" -- \
+    GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
+    STUB_JOBS_TSV="$CI_JOBS" STUB_DISPATCH_LOG="$WORKDIR/dispatch-na.log"
+  assert_posts "guard-not-applicable" 3
+  if grep -q "ask-live-guard.yml" "$WORKDIR/dispatch-na.log" 2>/dev/null; then
+    echo "FAIL [guard-not-applicable]: dispatched the guard workflow although not applicable"
+    FAILURES=$((FAILURES + 1))
+  fi
+
+  # A bump of a guarded package (next) must run the real guard, not be waved through.
+  set_head "$BASE_PKG" "$GUARDED_LOCK"
+  run_case "guard-applicable-pass" 0 "$VALID3" \
+    "applicable (guarded package changed); dispatching ask-live-guard.yml" \
+    "Relayed ask-live-guard=success" "live /ask guard passed" -- \
+    GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
+    STUB_JOBS_TSV="$CI_JOBS" STUB_GUARD_JOBS_TSV=$'ask-live-guard\tsuccess' \
+    STUB_DISPATCH_LOG="$WORKDIR/dispatch-pass.log"
+  assert_posts "guard-applicable-pass" 3
+  if ! grep -q "workflow run ask-live-guard.yml" "$WORKDIR/dispatch-pass.log"; then
+    echo "FAIL [guard-applicable-pass]: guard workflow was never dispatched"
+    FAILURES=$((FAILURES + 1))
+  fi
+
+  run_case "guard-applicable-fail" 1 "$VALID3" \
+    "Relayed ask-live-guard=failure" "live /ask guard failure" -- \
+    GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
+    STUB_JOBS_TSV="$CI_JOBS" STUB_GUARD_JOBS_TSV=$'ask-live-guard\tfailure' \
+    STUB_DISPATCH_LOG="$WORKDIR/dispatch-fail.log"
+  assert_posts "guard-applicable-fail" 3
+
+  # Detector cannot decide (head lockfile unparseable): must post failure, never success.
+  set_head "$BASE_PKG" 'not json'
+  run_case "guard-detector-error" 1 "$VALID3" \
+    "detector could not decide" "Relayed ask-live-guard=failure" -- \
+    GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42" STUB_WATCH_EXIT="0" \
+    STUB_JOBS_TSV="$CI_JOBS" STUB_DISPATCH_LOG="$WORKDIR/dispatch-err.log"
+  assert_posts "guard-detector-error" 3
+else
+  echo "SKIP: node not found -- skipping the ask-live-guard relay cases."
+fi
 
 if [ "$FAILURES" -ne 0 ]; then
   echo "$FAILURES assertion(s) failed."
