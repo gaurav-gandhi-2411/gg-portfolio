@@ -8,7 +8,7 @@ import { Monogram } from "@/components/monogram";
 import { site } from "@/content/site";
 import { prefersReducedMotion } from "@/lib/motion/gsap";
 import { useDeferredMotion } from "@/lib/motion/use-deferred-motion";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 
 /**
  * The header, rebuilt as an object on the page rather than a strip of text
