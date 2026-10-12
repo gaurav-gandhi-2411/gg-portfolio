@@ -31,3 +31,20 @@ export function checkGeneratedClaim(root, rel, displayedText, overdueDays, nowMs
   }
   return { status: "GENERATED", detail: `${rel} fetched ${snap.fetchedAt} (${ageDays}d ago)` };
 }
+
+/**
+ * Results for a case study whose module failed to import (e.g. its snapshot JSON is missing or
+ * corrupt): one GENERATED_UNREADABLE per generated sourceRef of that study. By convention the ref
+ * is prefixed with the study's file name ("aetherart:hf-downloads" belongs to "aetherart").
+ */
+export function unreadableForStudy(fileName, snapshots, reason) {
+  return Object.entries(snapshots)
+    .filter(([ref]) => ref.startsWith(`${fileName}:`))
+    .map(([sourceRef, rel]) => ({
+      slug: fileName,
+      sourceRef,
+      kind: "row",
+      status: "GENERATED_UNREADABLE",
+      detail: `${rel}: case study module failed to import, snapshot missing or corrupt? (${reason})`,
+    }));
+}
