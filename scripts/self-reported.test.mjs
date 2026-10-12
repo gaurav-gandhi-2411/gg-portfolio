@@ -1,13 +1,7 @@
-// Tests for Warmer verifiability labelling. Run: node --test scripts/self-reported.test.mjs
-//
-// Contract (written first):
-//  - A claim is `selfReported` ONLY if its sole source is the private mindmeld repo. Everything
-//    whose number also appears in a PUBLIC artifact (mindmeld-payloads reports, the public HF model
-//    card / benchmark card) is NOT labelled.
-//  - The freshness checker keeps self-reported claims out of the numeric denominator and the
-//    UNCHECKED-private count.
-//  - The label is legible: >= 4.5:1 in both colour schemes (WCAG AA for small text), no alpha.
-//  Hermetic: local files and stubbed fetches only.
+// Warmer verifiability labelling. Run: node --test scripts/self-reported.test.mjs (hermetic).
+// `selfReported` ONLY if the sole source is the private mindmeld repo (anything also in a public
+// artifact is NOT labelled); self-reported claims leave the numeric denominator and UNCHECKED count;
+// the label is >= 4.5:1 in both colour schemes, no alpha.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
