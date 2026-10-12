@@ -8,7 +8,7 @@ import {
   subscribeProvenance,
 } from "@/lib/provenance-open-store";
 import type { ProvenanceInfo } from "@/lib/provenance";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 
 /**
  * Wraps a case-study metric (results/decisions/story) in a source-reveal
@@ -289,7 +289,7 @@ export function MetricProvenance({
           // check reads computed overflow regardless of the opacity-0/
           // pointer-events-none visual hiding below, so an unconditional
           // overflow-y-auto flagged every closed panel on every route.
-          "border-border/60 bg-popover text-popover-foreground shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-0 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border-0 p-0 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
+          "border-border/60 bg-popover shadow-card-hover pointer-events-none absolute left-0 top-full z-20 mt-[var(--space-2)] w-0 max-w-[calc(100vw-3rem)] overflow-hidden rounded-lg border-0 p-0 text-left font-sans text-caption normal-case opacity-0 transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-out-soft)]",
           "data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 data-[open=true]:max-h-64 data-[open=true]:w-72 data-[open=true]:overflow-x-auto data-[open=true]:overflow-y-auto data-[open=true]:border data-[open=true]:p-4"
         )}
       >
