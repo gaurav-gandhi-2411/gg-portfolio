@@ -63,8 +63,10 @@ export const MODELS = {
   // Groq's own named replacement for it. The verifier stays on a different
   // model family below, which is the property that mattered here and is
   // unaffected by the swap.
-  curator: { model: "openai/gpt-oss-120b" },
-  framer: { model: "openai/gpt-oss-120b" },
+  // 2026-10-12: curator and framer moved to gpt-oss-20b (own per-model Groq limits, off the
+  // pool TriageIQ production uses). The verifier is unchanged.
+  curator: { model: "openai/gpt-oss-20b" },
+  framer: { model: "openai/gpt-oss-20b" },
   // Different model family than curator/framer (OpenAI OSS) — Qwen (Alibaba), for genuine
   // independence on the verifier's re-check, not a second vote from the same family. See this
   // file's header comment for why this is qwen/qwen3.8-27b and not qwen/qwen3.6-27b.

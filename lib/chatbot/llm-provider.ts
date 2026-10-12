@@ -24,8 +24,14 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
  * reported as `provider_unavailable` rather than as a refusal indistinguishable
  * from an off-topic question, so the canary names the cause the first time
  * instead of the third day.
+ *
+ * 2026-10-12: moved from openai/gpt-oss-120b to openai/gpt-oss-20b. Groq rate limits are
+ * per model within the organization (console.groq.com/docs/rate-limits lists a row per
+ * model id; the TriageIQ August bake-off saw 20b hit its daily cap while 120b kept serving,
+ * docs/eval/bakeoff_prereg_2026-08-29.md B3 in gaurav-gandhi-2411/triage-iq). On 120b the
+ * chatbot shared a pool with TriageIQ production; on 20b it does not.
  */
-const GROQ_MODEL = "openai/gpt-oss-120b";
+const GROQ_MODEL = "openai/gpt-oss-20b";
 
 export interface ChatCompletionResult {
   /** Raw JSON-mode string from the model (caller parses it). */

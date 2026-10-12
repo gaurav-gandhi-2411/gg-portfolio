@@ -133,7 +133,7 @@ function loadCassette(id) {
  * disabled. Loud and passing is the honest state here; silent and passing is
  * what this replaces.
  */
-const SHIPPED_MODEL = "openai/gpt-oss-120b";
+const SHIPPED_MODEL = "openai/gpt-oss-20b";
 
 function writeCassette(id, groqResponse, tokensIn, tokensOut) {
   if (!existsSync(CASSETTES_DIR)) mkdirSync(CASSETTES_DIR, { recursive: true });

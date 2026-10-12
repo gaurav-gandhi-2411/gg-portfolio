@@ -12,7 +12,12 @@
 // Keeping the old rate means a cassette or a log line recorded against the
 // old model still prices correctly.
 export const GROQ_PRICING_USD_PER_MILLION_TOKENS = {
-  // Current. Groq's named replacement for the retired model below.
+  // Current (2026-10-12). Rates from console.groq.com/docs/model/openai/gpt-oss-20b.
+  "openai/gpt-oss-20b": {
+    input: 0.075,
+    output: 0.3,
+  },
+  // Previous chatbot model; kept so cassettes and logs recorded against it still price correctly.
   "openai/gpt-oss-120b": {
     input: 0.15,
     output: 0.6,
@@ -24,7 +29,7 @@ export const GROQ_PRICING_USD_PER_MILLION_TOKENS = {
   },
 } as const;
 
-const MODEL_ID = "openai/gpt-oss-120b";
+const MODEL_ID = "openai/gpt-oss-20b";
 
 /**
  * Estimates the USD cost of one chat completion call given token counts,
