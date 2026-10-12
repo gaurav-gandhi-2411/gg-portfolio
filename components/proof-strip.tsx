@@ -17,13 +17,23 @@ const MIN_ITEMS = 2;
  * top of the page. It holds no numbers of its own: every item is a row of
  * `study.results`, passed through unchanged, with the same sourceRef-derived
  * provenance disclosure the Results section uses, so the freshness and
- * consistency checks that cover `results` cover the strip too. Rows without
+ * consistency checks that cover `results` cover the strip too. Eligible rows:
+ * not prose, value contains a digit (text such as "installable from PyPI"
+ * is not a number), at most 30 chars, and not opted out. The only opt-out is
+ * `headline: false` on a row that is explicitly a baseline / "before" number
+ * (content/types.ts), never for picking favourites. Rows without
  * a resolvable provenance entry are skipped rather than shown unsourced.
  * Selection is positional (the first eligible rows), not curated.
  */
 export function ProofStrip({ study, repoUrl }: { study: CaseStudy; repoUrl?: string }) {
   const items = (study.results ?? [])
-    .filter((r) => r.format !== "prose" && r.value.length <= MAX_VALUE_LENGTH)
+    .filter(
+      (r) =>
+        r.format !== "prose" &&
+        r.headline !== false &&
+        /\d/.test(r.value) &&
+        r.value.length <= MAX_VALUE_LENGTH
+    )
     .map((result) => ({
       result,
       provenance: getProvenance(result.sourceRef, repoUrl, study.verifiedAt),
@@ -40,7 +50,7 @@ export function ProofStrip({ study, repoUrl }: { study: CaseStudy; repoUrl?: str
           <li
             key={result.sourceRef + result.label}
             data-proof-item
-            className="proof-strip-item relative"
+            className="proof-strip-item"
           >
             <span data-proof-value className="proof-strip-value">
               {/* "Headline:" keeps this trigger's accessible name distinct from

@@ -197,8 +197,24 @@
  * the fold from the same data. Reuses the stat-chip value/label type of the
  * Results section; only the container differs (hairline-ruled, not boxed) so
  * the two never read as the same component twice. */
+/* The provenance panel is positioned against the nearest positioned ancestor.
+ * Below 1024px that is the strip itself, so a panel opened from a right-hand
+ * item stays inside the content column. Anchored to the item instead, it
+ * overran the viewport on phones, and that overrun enlarges the layout
+ * viewport, which defeats MetricProvenance's own clamp. */
 .proof-strip {
+  position: relative;
   margin-top: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .proof-strip {
+    position: static;
+  }
+
+  .proof-strip-item {
+    position: relative;
+  }
 }
 
 .proof-strip-row {
@@ -233,4 +249,28 @@
   color: var(--muted-foreground);
   font-size: 0.8125rem;
   line-height: 1.4;
+}
+
+/* Compact on phones: a grid of narrow columns instead of one stacked item per
+ * line, so three items cost two short rows above the section nav. Labels
+ * wrap; none are clipped. */
+@media (max-width: 480px) {
+  .proof-strip-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    gap: var(--space-3) var(--space-2);
+    padding: var(--space-3) 0;
+  }
+
+  .proof-strip-item {
+    max-width: none;
+  }
+
+  .proof-strip-value {
+    font-size: 1.25rem;
+  }
+
+  .proof-strip-label {
+    font-size: 0.75rem;
+  }
 }

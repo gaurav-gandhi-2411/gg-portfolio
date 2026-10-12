@@ -167,6 +167,14 @@ export interface CaseStudy {
      * number/ratio/quantity, which is most rows and stays the default.
      */
     format?: "prose";
+    /**
+     * `false` keeps this row out of the case-study proof strip
+     * (components/proof-strip.tsx) while it still renders in Results. Use it
+     * ONLY for a row that is explicitly a baseline / "before" number, which
+     * would read as a headline once lifted out of its comparison. Never a
+     * way to hand-pick which good numbers lead.
+     */
+    headline?: false;
   }[];
   /** The hardest documented engineering/debugging story. */
   story?: {
