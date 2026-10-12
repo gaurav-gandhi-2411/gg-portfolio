@@ -258,6 +258,9 @@ jobs:
       - name: check-metric-freshness.mjs forced-error self-test
         run: node scripts/check-metric-freshness.forced-error.smoketest.mjs
 
+      - name: self-reported (private repo) claim labelling tests
+        run: node --test scripts/self-reported.test.mjs
+
       - name: content-pipeline extractor.mjs forced-error self-test
         run: node scripts/content-pipeline/extractor.smoketest.mjs
 

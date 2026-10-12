@@ -337,7 +337,7 @@ export function MetricProvenance({
             ))}
           </ul>
         )}
-        <p className="text-muted-foreground/80 mt-[var(--space-2-5)] text-[11px]">
+        <p className="text-muted-foreground mt-[var(--space-2-5)] text-[11px]">
           {info.tier === "structured" && info.citations.some((c) => c.commitSha) && (
             <>commit {info.citations.find((c) => c.commitSha)?.commitSha?.slice(0, 7)} · </>
           )}
