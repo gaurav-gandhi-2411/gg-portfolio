@@ -73,11 +73,13 @@ export const warmer: CaseStudy = {
       title: "Compile Dart to WebAssembly, decided by measurement",
       body: "The --wasm target was adopted only after an isolated preview measured the difference: total blocking time 221ms → 13.5ms and 417 KB less page weight versus the default JavaScript build.",
       sourceRef: "warmer:wasm-decision",
+      selfReported: true,
     },
     {
       title: "When fine-tuning failed twice, change the method, not the data",
       body: "Two full-parameter fine-tuning attempts both regressed held-out accuracy, the second got worse with 43% more data, falsifying the \"more data fixes it\" hypothesis. The eventual win held the data fixed and swept the method instead: every full-parameter and frozen-layer config stayed within noise, every LoRA config beat the baseline, three of them CI-significantly. The shipped model is that LoRA fine-tune, published openly on Hugging Face with the benchmark that judges it.",
       sourceRef: "warmer:lora-reframe",
+      selfReported: true,
     },
   ],
   results: [
@@ -122,12 +124,14 @@ export const warmer: CaseStudy = {
       label: "Test suite",
       value: "160/160 generator · 94/94 app · 2/2 emulator integration",
       sourceRef: "warmer:tests",
+      selfReported: true,
     },
     {
       label: "Web perf (tracked budget)",
       value: "FCP 992ms (≤1800ms) · TBT 26ms (≤200ms) · CLS 0",
       detail: "LCP is deliberately not budgeted, this CanvasKit-rendered app fires zero LCP entries by design (no traditional largest-contentful DOM element for the Paint Timing API to key off), confirmed via a live PerformanceObserver check; FCP is the tracked load-speed proxy instead",
       sourceRef: "warmer:perf-budget",
+      selfReported: true,
     },
   ],
   story: {
