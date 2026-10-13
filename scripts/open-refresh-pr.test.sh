@@ -54,7 +54,7 @@ created_before_closed() {
 
 run() {
   : >"$LOG"
-  PATH="$W/bin:$PATH" GH_TOKEN=x GITHUB_RUN_ID=4242 GITHUB_RUN_ATTEMPT=1 \
+  PATH="$W/bin:$PATH" GH_TOKEN=x GITHUB_RUN_ID=4242 GITHUB_RUN_ATTEMPT="${ATTEMPT_OVERRIDE:-1}" \
     REFRESH_DATE=20261013 RELAY_SCRIPT="$W/scripts/relay-dispatched-ci-status.sh" \
     SUMMARY_PATH="$W/summary.md" bash "$SCRIPT" >"$W/out.txt" 2>&1
   RC=$?
@@ -102,6 +102,40 @@ echo "case 5: gh pr list fails -> fail closed"
 STUB_DIFF_EXIT=1 STUB_LIST_EXIT=1 run
 check "non-zero exit" [ "$RC" -ne 0 ]
 check "nothing pushed" hasnt 'git push'
+
+echo "case 6: identity-drift parameterisation (changes, one prior PR)"
+IDB='chore/identity-drift-20261013-4242'
+REFRESH_BRANCH_PREFIX=chore/identity-drift DIFF_PATHS=content/identity-state.json \
+  ADD_PATHS=content/identity-state.json COMMIT_MSG="chore(identity): weekly identity-drift check" \
+  PR_TITLE="chore(identity): weekly identity-drift check" \
+  STUB_DIFF_EXIT=1 STUB_OPEN_PRS="12" run
+check "exit 0" [ "$RC" -eq 0 ]
+check "list filtered by identity-drift prefix" has 'pr list .*startswith\("chore/identity-drift"\)'
+check "diff checks identity-state only" has 'git diff --quiet content/identity-state.json$'
+check "plain push of identity branch" has "git push origin $IDB:refs/heads/$IDB"
+check "PR created with identity title" has 'gh pr create --title chore\(identity\): weekly identity-drift check'
+check "relay called with identity branch" has "relay $IDB"
+check "old PR superseded" has 'gh pr close 12 .*Superseded by'
+check "no force" hasnt "$FORCE_RE"
+check "no branch deletion" hasnt "$DELETE_RE"
+
+echo "case 7: content-pipeline parameterisation (pre-commit hook, re-run attempt)"
+CPB='chore/content-pipeline-20261013-4242-a2'
+ATTEMPT_OVERRIDE=2 REFRESH_BRANCH_PREFIX=chore/content-pipeline DIFF_PATHS=content/provenance.md \
+  ADD_PATHS="content/provenance.md content/chatbot/index.json" PRE_COMMIT_CMD="echo PRECOMMIT-RAN >>$LOG" \
+  COMMIT_MSG="chore(content): x" PR_TITLE="chore(content): x" STUB_DIFF_EXIT=1 STUB_OPEN_PRS="" run
+check "exit 0" [ "$RC" -eq 0 ]
+check "attempt suffix on branch" has "git push origin $CPB:refs/heads/$CPB"
+check "pre-commit hook ran" has 'PRECOMMIT-RAN'
+check "hook ran before commit" [ "$(first_line PRECOMMIT-RAN)" -lt "$(first_line 'git commit')" ]
+check "both paths added" has 'git add content/provenance.md content/chatbot/index.json'
+
+echo "case 7b: content-pipeline nothing to propose skips hook"
+REFRESH_BRANCH_PREFIX=chore/content-pipeline DIFF_PATHS=content/provenance.md \
+  PRE_COMMIT_CMD="echo PRECOMMIT-RAN >>$LOG" STUB_DIFF_EXIT=0 STUB_OPEN_PRS="5" run
+check "hook not run" hasnt 'PRECOMMIT-RAN'
+check "stale PR closed" has 'gh pr close 5'
+check "no branch deletion" hasnt "$DELETE_RE"
 
 if [ "$fails" -ne 0 ]; then echo "$fails check(s) failed"; exit 1; fi
 echo "all checks passed"

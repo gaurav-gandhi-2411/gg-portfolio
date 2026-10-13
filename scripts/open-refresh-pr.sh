@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# The "Open PR if anything changed" logic of metrics-refresh.yml's refresh job.
+# The "open a PR if anything changed" logic of metrics-refresh.yml's refresh,
+# content-pipeline and identity-drift jobs (parameterised by env; defaults are
+# the refresh job's).
 #
 # Why a unique branch per run: repository ruleset 'no-force-push-no-delete-all-
 # branches' rejects non-fast-forward pushes and branch deletion on (almost)
@@ -19,9 +21,21 @@
 # >1 is appended so a re-run attempt never collides with attempt 1's branch),
 # SUMMARY_PATH (PR body), REFRESH_DATE (test override of today's UTC date),
 # RELAY_SCRIPT (test override).
+# Per-job parameters (defaults = metrics-refresh job): REFRESH_BRANCH_PREFIX
+# (e.g. chore/identity-drift; open PRs whose head ref starts with it are the
+# ones superseded/closed), DIFF_PATHS and ADD_PATHS (space-separated),
+# COMMIT_MSG, PR_TITLE, NOTHING_COMMENT (close comment), PRE_COMMIT_CMD
+# (optional bash, run only when there are changes and before committing, e.g.
+# a chatbot index rebuild).
 set -euo pipefail
 
-PREFIX="chore/metrics-refresh"
+PREFIX="${REFRESH_BRANCH_PREFIX:-chore/metrics-refresh}"
+DIFF_PATHS="${DIFF_PATHS:-content/metrics.json content/generated/hf-downloads.json}"
+ADD_PATHS="${ADD_PATHS:-content/metrics.json content/generated/hf-downloads.json content/chatbot/index.json}"
+COMMIT_MSG="${COMMIT_MSG:-chore(metrics): weekly metric refresh from source repos}"
+PR_TITLE="${PR_TITLE:-chore(metrics): weekly metric refresh}"
+NOTHING_COMMENT="${NOTHING_COMMENT:-The latest refresh found nothing to propose — closing. Reopens automatically (as a fresh PR) if drift shows up again.}"
+PRE_COMMIT_CMD="${PRE_COMMIT_CMD:-}"
 SUMMARY_PATH="${SUMMARY_PATH:-/tmp/metrics-summary.md}"
 RELAY_SCRIPT="${RELAY_SCRIPT:-scripts/relay-dispatched-ci-status.sh}"
 RUN_ID="${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
@@ -35,30 +49,32 @@ if [ "$ATTEMPT" != "1" ]; then BRANCH="$BRANCH-a$ATTEMPT"; fi
 open_prs=$(gh pr list --state open --limit 100 --json number,headRefName \
   --jq ".[] | select(.headRefName | startswith(\"$PREFIX\")) | .number")
 
-if git diff --quiet content/metrics.json content/generated/hf-downloads.json; then
-  echo "No metric changes — no PR this week."
+# shellcheck disable=SC2086 # space-separated path lists, intentionally word-split
+if git diff --quiet $DIFF_PATHS; then
+  echo "Nothing to propose ($PREFIX) — no PR this week."
   # A prior week's PR may still be open with nothing left to propose; close it
   # (branch kept — the ruleset forbids deleting it).
   for n in $open_prs; do
-    gh pr close "$n" \
-      --comment "This week's refresh found nothing to propose — closing. Reopens automatically (as a fresh PR) if drift shows up again."
+    gh pr close "$n" --comment "$NOTHING_COMMENT"
   done
   exit 0
 fi
+
+if [ -n "$PRE_COMMIT_CMD" ]; then bash -c "$PRE_COMMIT_CMD"; fi
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
 git checkout -b "$BRANCH"
-git add content/metrics.json content/generated/hf-downloads.json
-# Modified only when the HF snapshot changed (rebuild step); a no-op otherwise.
-git add content/chatbot/index.json
-git commit -m "chore(metrics): weekly metric refresh from source repos"
+# Refresh job: content/chatbot/index.json changes only when the HF snapshot did.
+# shellcheck disable=SC2086
+git add $ADD_PATHS
+git commit -m "$COMMIT_MSG"
 # Plain push of a brand-new branch: fast-forward by construction, no --force.
 git push origin "$BRANCH:refs/heads/$BRANCH"
 
 pr_url=$(gh pr create \
-  --title "chore(metrics): weekly metric refresh" \
+  --title "$PR_TITLE" \
   --body-file "$SUMMARY_PATH" \
   --base main --head "$BRANCH")
 new_pr="${pr_url##*/}"
