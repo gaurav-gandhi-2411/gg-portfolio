@@ -129,7 +129,13 @@ export function OwnPackagesGroup({
                   : ""}
               </span>
             ) : (
-              <span className="text-muted-foreground text-caption">Version unavailable right now.</span>
+              // data-live-value on the fallback too: whether the lookup came
+              // back is itself live data, so both outcomes are masked in the
+              // visual-regression screenshots. Unmasked, one failed fetch at
+              // build time made the home page 27px taller than its baseline.
+              <span data-live-value className="text-muted-foreground text-caption">
+                Version unavailable right now.
+              </span>
             )}
             <p className="flex flex-wrap gap-x-5 gap-y-[var(--space-2)] text-sm">
               <InlineLink href={pkg.pypiUrl}>PyPI ↗</InlineLink>
