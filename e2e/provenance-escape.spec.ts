@@ -42,7 +42,9 @@ test.describe("MetricProvenance Escape handling", () => {
   test("Escape while closed does nothing (focus stays where it was)", async ({ page }) => {
     await page.goto("/work/triageiq");
     const trigger = page.getByRole("button", { name: TRIGGER });
-    const other = page.getByRole("button", { name: /show source for LLM fabrication rate/ });
+    const other = page.getByRole("button", {
+      name: /show source for LLM fabrication rate/,
+    });
     await other.focus();
     await page.keyboard.press("Escape");
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -57,7 +59,9 @@ test.describe("MetricProvenance Escape handling", () => {
     await trigger.click();
     await page.mouse.click(2, 2);
     await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    const other = page.getByRole("button", { name: /show source for LLM fabrication rate/ });
+    const other = page.getByRole("button", {
+      name: /show source for LLM fabrication rate/,
+    });
     await other.focus();
     await page.keyboard.press("Escape");
     await expect(other).toBeFocused();

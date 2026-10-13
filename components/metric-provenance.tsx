@@ -344,6 +344,7 @@ export function MetricProvenance({
                     href={c.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    tabIndex={open ? undefined : -1}
                     className="text-accent focus-visible:outline-ring underline decoration-1 underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
                   >
                     {c.file}
