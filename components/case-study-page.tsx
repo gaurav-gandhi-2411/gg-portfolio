@@ -4,6 +4,7 @@ import { LinkButton } from "@/components/link-button";
 import { MetricProvenance } from "@/components/metric-provenance";
 import { PrintButton } from "@/components/print-button";
 import { ProjectMark, type ProjectMarkId } from "@/components/project-mark";
+import { ProofStrip } from "@/components/proof-strip";
 import { StepCurve } from "@/components/step-curve";
 import { availability } from "@/content/availability";
 import { products as allProducts } from "@/content/products";
@@ -131,6 +132,8 @@ export function CaseStudyPage({
           <PrintButton />
         </p>
       </div>
+
+      <ProofStrip study={study} repoUrl={product?.repoUrl} />
 
       {/* The wayfinding rail — the exact pill shape
           components/project-filter.tsx's category filters use, reused here
