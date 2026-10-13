@@ -12,6 +12,7 @@ import { PointerField } from "@/components/pointer-field";
 import { SectionCardMotion } from "@/components/section-card-motion";
 import { SiteNav } from "@/components/site-nav";
 import { site } from "@/content/site";
+import { resolveBuildSha } from "@/lib/build-sha";
 import "./globals.css";
 
 // Wave 4: editorial system. Space Grotesk replaces Inter as the body/UI
@@ -67,6 +68,9 @@ export const metadata: Metadata = {
   // variants into ambiguous duplicates. Relative path resolves against
   // metadataBase above (rule: Next's metadata docs, generate-metadata.md).
   alternates: { canonical: "/" },
+  // Deploy provenance: lets scripts/check-prod-build-sha.mjs prove production == main HEAD.
+  // Rendered at build time into static HTML, so it does not affect static rendering or ISR.
+  other: { "build-sha": resolveBuildSha() },
   openGraph: {
     title: homeTitle,
     description:
