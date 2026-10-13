@@ -96,12 +96,37 @@ done <<<"$CONTEXTS"
 
 echo "Required contexts (from $CONFIG_FILE): $(printf '%s' "$CONTEXTS" | tr '\n' ',' | sed 's/,$//')"
 
-# collect_run WORKFLOW_FILE: find the workflow_dispatch run of WORKFLOW_FILE for
+# is_transient_gh_error ERR: true for errors worth retrying (HTTP 5xx/429, network-level
+# failures, or no error text at all); false for the rest (4xx such as 401/403/404: futile).
+is_transient_gh_error() {
+  [ -z "$1" ] && return 0
+  printf '%s' "$1" | grep -Eiq 'HTTP (5[0-9]{2}|429)|"status": *"?(5[0-9]{2}|429)|timed? ?out|timeout|connection (reset|refused|closed)|unexpected EOF|no such host|temporary failure|TLS handshake|network is unreachable'
+}
+
+# fail_unreadable WF CONTEXTS ATTEMPTS ERR: job conclusions could not be read -- post `failure`
+# for each context (best effort; the posts may be what is failing) so the PR shows red with the
+# reason instead of pending forever, then exit 1. Never posts success.
+fail_unreadable() {
+  local WF="$1" CTXS="$2" N="$3" E MSG C PLURAL="s"
+  [ "$N" = 1 ] && PLURAL=""
+  E=$(printf '%s' "$4" | tr '\n\t' '  ')
+  MSG="could not read job conclusions after $N attempt$PLURAL: $E"
+  echo "::error::$WF for $BRANCH@$SHA: $MSG -- failing closed."
+  while IFS= read -r C; do
+    [ -z "$C" ] && continue
+    gh api "repos/$REPO/statuses/$SHA" -f state=failure -f context="$C" \
+      -f description="${MSG:0:140}" \
+      -f target_url="https://github.com/$REPO/actions/runs/$RUN_ID" >/dev/null 2>&1 || true
+  done <<<"$CTXS"
+  exit 1
+}
+
+# collect_run WORKFLOW_FILE CONTEXTS_TO_FAIL: find the workflow_dispatch run of WORKFLOW_FILE for
 # $BRANCH@$SHA, wait for it, and set RUN_ID / JOBS_TSV / JOB_NAMES_SEEN. Exits 1
 # (fail closed) if the run or its jobs cannot be found. Used for ci.yml and for
 # required contexts that come from a separate workflow (ask-live-guard.yml).
 collect_run() {
-  local WF="$1"
+  local WF="$1" FAIL_CONTEXTS="$2"
   # Retry loop: `gh run list` can transiently miss the dispatched run before
   # GitHub's API reflects it. Captured via `&&`/`||` rather than a bare
   # assignment so a `gh` failure doesn't trip `set -e` mid-loop (which would
@@ -125,43 +150,59 @@ collect_run() {
     exit 1
   fi
 
-  # Block until the dispatched run finishes. `|| true`: a failing CI run is a
-  # legitimate, expected outcome this script still needs to relay (as a
-  # failure status) rather than treat as a reason to abort early.
-  gh run watch "$RUN_ID" --repo "$REPO" --exit-status || true
-
-  # Bug fix (2026-09-23 operational test, PR #124): this used to read straight
-  # from `< <(gh run view ... --jq ...)` — a process substitution. `set -e`
-  # does NOT see failures inside a process substitution; if that `gh run view`
-  # call hit a transient hiccup (e.g. the run API not yet reflecting per-job
-  # conclusions in the instant right after `gh run watch` reports completion)
-  # it silently produced zero lines, the while loop below ran zero iterations,
-  # and the whole script exited 0 having posted nothing — a real dispatch
-  # (run 35826364013) did exactly this: build/e2e both genuinely passed, but
-  # no commit status was ever posted and no error appeared anywhere in the
-  # log. Capturing into a variable first, with a retry, makes a transient miss
-  # recoverable and a persistent one loud (rule 98a: "couldn't verify" must
-  # fail closed, not silently pass).
+  # Read the run's final per-job conclusions, retrying TRANSIENT failures with bounded backoff
+  # before failing closed. Why the loop wraps BOTH `gh run watch` and `gh run view`: `gh run
+  # watch` itself dies on an HTTP 5xx and its failure is (deliberately) swallowed -- a failing
+  # CI run is an expected outcome to relay, not a reason to abort -- so it can return while the
+  # source run is still in progress. The jobs then read back with an EMPTY conclusion, which the
+  # relay used to post as `failure`, falsely marking a healthy bot PR red (verifier, run
+  # 38330790108). So a run that is not `completed` is "not read yet" (re-watch + retry), never a
+  # conclusion. Non-transient errors (4xx: 401/403/404...) fail immediately -- retrying cannot
+  # fix them. Success is never posted on any error path; exhausted retries post `failure`.
+  #
+  # History of this read (PR #124): it used to be `< <(gh run view ...)`, a process
+  # substitution that `set -e` cannot see, so a transient miss produced zero lines and the
+  # script exited 0 having posted nothing (run 35826364013). Capturing into a variable first
+  # makes a miss recoverable and a persistent one loud (rule 98a: fail closed, not silent pass).
+  local DELAYS=(2 5 10 20) MAX_ATTEMPTS=5 ATTEMPT=0 NEED_WATCH=true OUT="" RUN_STATUS="" ERR="" DELAY
   JOBS_TSV=""
-  LAST_RUN_VIEW_ERR=""
-  for _ in $(seq 1 5); do
-    JOBS_TSV=$(gh run view "$RUN_ID" --repo "$REPO" --json jobs --jq '.jobs[] | [.name, .conclusion] | @tsv' 2>&1) && LAST_RUN_VIEW_ERR="" || {
-      LAST_RUN_VIEW_ERR="$JOBS_TSV"
+  while :; do
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ "$NEED_WATCH" = true ]; then
+      gh run watch "$RUN_ID" --repo "$REPO" --exit-status || true
+    fi
+    NEED_WATCH=false
+    if OUT=$(gh run view "$RUN_ID" --repo "$REPO" --json status,jobs \
+      --jq '.status, (.jobs[] | [.name, .conclusion] | @tsv)' 2>&1); then
+      RUN_STATUS=$(printf '%s\n' "$OUT" | head -n 1)
+      JOBS_TSV=$(printf '%s\n' "$OUT" | tail -n +2)
+      if [ -z "$OUT" ]; then
+        ERR="empty response from gh run view"
+      elif [ "$RUN_STATUS" != "completed" ]; then
+        ERR="run status is '$RUN_STATUS', not completed"
+        NEED_WATCH=true
+      elif [ -z "$JOBS_TSV" ]; then
+        ERR="run completed but gh run view returned no jobs"
+      else
+        break
+      fi
       JOBS_TSV=""
-    }
-    [ -n "$JOBS_TSV" ] && break
-    sleep 5
+    else
+      ERR="$OUT"
+      JOBS_TSV=""
+      if ! is_transient_gh_error "$ERR"; then
+        fail_unreadable "$WF" "$FAIL_CONTEXTS" "$ATTEMPT" "$ERR"
+      fi
+    fi
+    [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ] || fail_unreadable "$WF" "$FAIL_CONTEXTS" "$ATTEMPT" "$ERR"
+    DELAY=${DELAYS[$((ATTEMPT - 1))]}
+    sleep $((DELAY + RANDOM % (DELAY / 2 + 1))) # jitter: up to DELAY/2 extra seconds
   done
-
-  if [ -z "$JOBS_TSV" ]; then
-    echo "::error::gh run view $RUN_ID returned no jobs after the run completed — cannot relay required status for $WF run for $BRANCH@$SHA. Required checks will stay unregistered; branch protection will block this PR until this is retried.${LAST_RUN_VIEW_ERR:+ Last gh error: $LAST_RUN_VIEW_ERR}"
-    exit 1
-  fi
 
   JOB_NAMES_SEEN=$(printf '%s\n' "$JOBS_TSV" | cut -f1 | tr '\n' ',' | sed 's/,$//')
 }
 
-collect_run ci.yml
+collect_run ci.yml "$CONTEXTS"
 
 POSTED_COUNT=0
 ANY_FAILURE=false
@@ -252,7 +293,7 @@ relay_ask_live_guard() {
   elif [ "$DECISION" = "applicable=true" ]; then
     echo "$CTX applicable (guarded package changed); dispatching $WF"
     gh workflow run "$WF" --repo "$REPO" --ref "$BRANCH" -f base_sha="$MB"
-    collect_run "$WF"
+    collect_run "$WF" "$CTX"
     local CONC
     CONC=$(printf '%s\n' "$JOBS_TSV" | awk -F'\t' -v j="$CTX" '$1 == j {print $2}')
     if [ "$CONC" = "success" ]; then

@@ -13,15 +13,47 @@ case "$1" in
         exit "${STUB_RUN_LIST_EXIT:-0}"
         ;;
       watch)
+        printf 'x
+' >>"${STUB_POSTS_LOG:-/dev/null}.watch"
         exit "${STUB_WATCH_EXIT:-0}"
         ;;
       view)
+        # Output mimics the relay's --jq: first line is the run status, then one
+        # "name<TAB>conclusion" line per job. STUB_VIEW_SEQ is a comma list consumed
+        # one token per call (the last repeats): a 3-digit token is a failing call
+        # ("HTTP <n>"), "empty" is a successful call with no output, anything else is
+        # the run status (in_progress also blanks every job conclusion, like the real API).
+        printf 'x
+' >>"${STUB_POSTS_LOG:-/dev/null}.view"
+        TOK="completed"
+        if [ -n "${STUB_VIEW_SEQ:-}" ]; then
+          N=$(wc -l <"${STUB_POSTS_LOG}.view" | tr -d ' ')
+          IFS=',' read -r -a TOKS <<<"$STUB_VIEW_SEQ"
+          [ "$N" -gt "${#TOKS[@]}" ] && N="${#TOKS[@]}"
+          TOK="${TOKS[$((N - 1))]}"
+        fi
+        case "$TOK" in
+          [0-9][0-9][0-9])
+            echo "HTTP $TOK: stub error (https://api.github.com/repos/o/r/actions/runs/42)" >&2
+            exit 1
+            ;;
+          empty) exit 0 ;;
+        esac
         # After `gh workflow run ask-live-guard.yml` the run being viewed is the guard's.
         if [ -n "${STUB_DISPATCH_LOG:-}" ] && grep -q "ask-live-guard.yml" "$STUB_DISPATCH_LOG" 2>/dev/null; then
-          printf '%s\n' "${STUB_GUARD_JOBS_TSV:-}"
-          exit 0
+          JOBS="${STUB_GUARD_JOBS_TSV:-}"
+        else
+          JOBS="${STUB_RUN_VIEW_OUTPUT:-${STUB_JOBS_TSV:-}}"
         fi
-        printf '%s\n' "${STUB_RUN_VIEW_OUTPUT:-${STUB_JOBS_TSV:-}}"
+        printf '%s
+' "$TOK"
+        if [ "$TOK" = "in_progress" ]; then
+          printf '%s
+' "$JOBS" | awk -F'	' 'BEGIN{OFS="	"} NF{print $1, ""}'
+        else
+          printf '%s
+' "$JOBS"
+        fi
         exit "${STUB_RUN_VIEW_EXIT:-0}"
         ;;
       *)

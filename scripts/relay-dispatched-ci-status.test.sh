@@ -167,6 +167,76 @@ run_case "missing-context" 1 "$VALID" \
   STUB_JOBS_TSV=$'build\tsuccess'
 assert_posts "missing-context" 1
 
+# --- transient API errors while reading job conclusions (the false-red bug) ---
+# count_calls NAME KIND: how many times the stub saw `gh run view`/`gh run watch` in a case.
+count_calls() {
+  if [ -f "$WORKDIR/posts-$1.log.$2" ]; then wc -l <"$WORKDIR/posts-$1.log.$2" | tr -d ' '; else echo 0; fi
+}
+assert_calls() { # NAME KIND EXPECTED
+  local got
+  got=$(count_calls "$1" "$2")
+  if [ "$got" != "$3" ]; then
+    echo "FAIL [$1]: gh run $2 called $got times, expected $3"
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+assert_no_success_post() { # NAME
+  if grep -q "state=success" "$WORKDIR/posts-$1.log"; then
+    echo "FAIL [$1]: posted a success status on an error path"
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+RELAY_ENV=(GITHUB_REPOSITORY="test-owner/test-repo" STUB_RUN_ID="42")
+OKJOBS=$'build	success
+e2e	success'
+
+# HTTP 502 on the first read, success on the second: retried, relayed as success.
+run_case "view-502-then-success" 0 "$VALID"   "Relayed build=success" "Relayed e2e=success" "All required contexts relayed successfully" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="502,completed"
+assert_posts "view-502-then-success" 2
+assert_calls "view-502-then-success" view 2
+
+# Empty output (API returned nothing) is transient too.
+run_case "view-empty-then-success" 0 "$VALID"   "Relayed e2e=success" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="empty,completed"
+assert_posts "view-empty-then-success" 2
+assert_calls "view-empty-then-success" view 2
+
+# The real false-red mechanism: `gh run watch` dies on a 5xx (exit != 0, swallowed) while the source
+# run is still in progress, so every job conclusion reads empty. Must re-watch and wait, never relay.
+run_case "watch-returns-early-in-progress" 0 "$VALID"   "Relayed build=success" "Relayed e2e=success" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="1" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="in_progress,completed"
+assert_posts "watch-returns-early-in-progress" 2
+assert_calls "watch-returns-early-in-progress" view 2
+assert_calls "watch-returns-early-in-progress" watch 2
+if grep -q "state=failure" "$WORKDIR/posts-watch-returns-early-in-progress.log"; then
+  echo "FAIL [watch-returns-early-in-progress]: posted a failure for a still-running source run"
+  FAILURES=$((FAILURES + 1))
+fi
+
+# 5xx on every attempt: fail closed after 5 attempts (initial + 4 retries), failure posted, never success.
+run_case "view-502-exhausted" 1 "$VALID"   "could not read job conclusions after 5 attempts" "HTTP 502" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="502"
+assert_posts "view-502-exhausted" 2
+assert_calls "view-502-exhausted" view 5
+assert_no_success_post "view-502-exhausted"
+
+# Run never leaves in_progress: same fail-closed outcome, never a success.
+run_case "run-never-completes" 1 "$VALID"   "could not read job conclusions after 5 attempts" "in_progress" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="1" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="in_progress"
+assert_posts "run-never-completes" 2
+assert_no_success_post "run-never-completes"
+
+# A genuine failure conclusion on a completed run: relayed as failure at once, no retries.
+run_case "real-failure-no-retry" 1 "$VALID"   "Relayed build=success" "Relayed e2e=failure" --   "${RELAY_ENV[@]}" STUB_WATCH_EXIT="1" STUB_JOBS_TSV=$'build	success
+e2e	failure'
+assert_posts "real-failure-no-retry" 2
+assert_calls "real-failure-no-retry" view 1
+assert_calls "real-failure-no-retry" watch 1
+
+# Non-transient errors (4xx) fail immediately: one attempt, no backoff, failure posted.
+for CODE in 404 401; do
+  run_case "view-$CODE-no-retry" 1 "$VALID"     "could not read job conclusions after 1 attempt" "HTTP $CODE" --     "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="$CODE"
+  assert_posts "view-$CODE-no-retry" 2
+  assert_calls "view-$CODE-no-retry" view 1
+  assert_no_success_post "view-$CODE-no-retry"
+done
+
 # --- required context from a separate workflow (ask-live-guard) ---
 if command -v node >/dev/null 2>&1; then
   CI_JOBS=$'build\tsuccess\ne2e\tsuccess'
