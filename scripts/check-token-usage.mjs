@@ -138,8 +138,9 @@ function stripComments(src) {
  * Pre-existing, deliberate exceptions, each citing the reasoning already on
  * record beside the code — not a way to silence the check, a way to record
  * a judgment call the same way an inline suppression comment would, in a
- * codebase-wide list that's easy to audit. Keyed by file:line so moving the
- * line forces a conscious re-check rather than silently following the code.
+ * codebase-wide list that's easy to audit. Keyed by `file::match` (the literal
+ * offending text), so an unrelated edit above the exemption does not turn it
+ * into a violation; the older `file:line:match` form is still accepted.
  */
 const ALLOWLIST = new Set([
   // -my-[5px] is deliberately off the spacing scale: it keeps a 44px tap

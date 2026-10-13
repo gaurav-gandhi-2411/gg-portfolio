@@ -63,3 +63,27 @@ New findings for GG (not implemented):
 - G8: site content still says "English, Hindi and Hinglish" (content/products.ts, content/case-studies/reviewiq.ts) and names llama models for review-iq; review-iq's eval/README say gpt-oss and Hindi retired (ADR 0022).
 - G9: the TriageIQ case study and provenance.md call the fabrication gate "informational"; the triage-iq README and ADR-0044 say it is a hard gate.
 - G10: `content/resume-metrics.json` `resume_pdf_sha256` does not match the live PDF.
+
+## Focus-ring audit and deferred a11y/UI items (2026-10-13)
+
+Audit method: Playwright tabs through /, /projects, /work/triageiq, /open-source, /research and /ask (desktop 1440, light and dark, reduced motion) and, at every stop, reads the computed outline or box-shadow ring, its contrast against the adjacent background, clipping by overflow ancestors and the viewport, and the visual order. 446 stops after the fixes in this PR. Not covered: the mobile project, hover-only states, and focus on elements that appear only after interaction (open menus, the ask answer area).
+
+Fixed in this PR: the 4 text inputs whose ring was `ring-ring/50` (2.25:1 light, 2.43:1 dark, now 5.3:1 or better), and the citation links inside closed provenance panels, which were tab stops with an invisible, clipped ring (now `tabindex=-1` while closed).
+
+Needs a design decision (not fixed):
+
+- Hero tab order: DOM order is status pill, then the socials row (y=658), then the headline stats (y=346), so focus jumps back up the page after Email. Fixing means reordering the hero DOM or the layout.
+- `components/search-methodology.tsx` line 145: `InlineLink className="text-caption"` goes through tailwind-merge, which reads `text-caption` as a colour and drops InlineLink's `text-foreground`. Size is correct (11.52px), but the link renders muted (rgb 83,86,95 light) instead of foreground (rgb 20,21,26). Measured on /projects with the methodology disclosure open. Bracket form `[font-size:var(--text-caption)]` would restore the colour, which is a visible change, so it is left for a decision.
+- The `.hero-status` link is flagged as clipped by `.hero-mask` (`overflow: clip`) by the audit, but the mask has `overflow-clip-margin: 12px` and the ring needs 4px, so this is an audit false positive and not a defect.
+
+Deferred items reported by earlier sessions (not worked in this PR):
+
+- D1: homepage inline link rows are under 24px tall ("Pull request ↗", "PyPI ↗").
+- D2: the /projects search input is 42px tall.
+- D3: literal font sizes outside the hero have not been audited.
+- Filter pills do nothing on a tap before hydration. Progressive enhancement option: real `<a href="?category=...">` links.
+- /work/adk-tracegauge overflows horizontally at 320px (scrollWidth 340 vs 320) because of a `min-w-[26rem]` table.
+- The home Work-section pills move +28px about 2s after load (cause not identified).
+- Clicking the nav scrim leaves focus on body.
+- Checker call-site wiring is untested: the pushes of `unreadableForStudy`, `publicSources` and `selfReported` in `scripts/check-metric-freshness.mjs`.
+- `scripts/check-metric-freshness.mjs` `CHANGELOG_TRANSITION_PATTERN` drops any number inside an `A -> B` span, so cited transition values such as `52,494` in "Catalogue size: 61,883 -> 52,494 items" and `0.813` after an arrow are never seen (3 false drift flags on 2026-10-05).

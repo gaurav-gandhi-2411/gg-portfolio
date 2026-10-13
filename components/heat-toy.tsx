@@ -283,7 +283,7 @@ export function HeatToy() {
           disabled={won}
           placeholder="Your guess…"
           autoComplete="off"
-          className="w-full rounded-md border border-border bg-card px-[var(--space-3)] py-[var(--space-2)] text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="w-full rounded-md border border-border bg-card px-[var(--space-3)] py-[var(--space-2)] text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <button
           type="submit"

@@ -446,7 +446,7 @@ export function AskPanel() {
           // project, the architecture," ending on a bare comma). Also
           // covers real typed VALUE text overflowing the box the same way,
           // which had the identical silent-clip problem.
-          className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring min-h-11 w-full truncate rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-border bg-card text-foreground focus-visible:ring-ring focus-visible:border-ring min-h-11 w-full truncate rounded-md border px-[var(--space-3)] py-[var(--space-2-5)] text-sm focus-visible:outline-none focus-visible:ring-2"
         />
         <button
           type="submit"
