@@ -215,7 +215,7 @@ export function ProjectSearch({ products }: { products: Product[] }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Try: reduces on-call issue triage time"
-        className="border-border bg-card text-foreground focus-visible:ring-ring/50 focus-visible:border-ring w-full rounded-md border px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
+        className="border-border bg-card text-foreground focus-visible:ring-ring focus-visible:border-ring w-full rounded-md border px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2"
       />
 
       {/* No "no match" popover here: the grid below already says so, with the

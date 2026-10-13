@@ -133,7 +133,7 @@ export function TriageiqClassifyToy() {
           // Focus ring matches heat-toy.tsx's input — the stronger of the two
           // treatments (design-review, wave 11: this input is newly prominent
           // now that the disclosure renders inline in the Work section).
-          className="border-border bg-card text-foreground w-full rounded-md border px-[var(--space-3)] py-[var(--space-2)] text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring"
+          className="border-border bg-card text-foreground w-full rounded-md border px-[var(--space-3)] py-[var(--space-2)] text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring"
         />
         <button
           type="submit"
