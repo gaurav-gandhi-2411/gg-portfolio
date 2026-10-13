@@ -271,6 +271,14 @@ export function MetricProvenance({
         // an unconditional 0 would add an invisible tab stop to every
         // metric on the page even when its panel is shut.
         tabIndex={open ? 0 : -1}
+        // The tabIndex above only stops the Tab key. A closed panel is still
+        // in the DOM at opacity 0 / width 0, so without this a screen reader
+        // in browse mode reads every closed panel's text and reaches its
+        // links (PR #325 verifier). `inert` removes the subtree from the
+        // accessibility tree and from focus while shut; the trigger's
+        // aria-controls pointing at it stays valid. React 19 takes a
+        // boolean here and omits the attribute when false.
+        inert={!open}
         className={cn(
           // Mobile audit follow-up (2026-08-14): document.documentElement
           // .scrollWidth was registering ink overflow on every case-study
