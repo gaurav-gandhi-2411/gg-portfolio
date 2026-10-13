@@ -234,7 +234,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; gate 76% only ever beside the CI | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; the gate (76% in `eval/report.md:5`) is not rendered as a number on the site, the drawer detail says only "PASS on review-iq's own CI regression gate" (GG rule: a bare gate number may only render alongside its CI) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to

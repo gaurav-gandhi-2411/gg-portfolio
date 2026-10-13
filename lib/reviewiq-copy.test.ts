@@ -40,3 +40,20 @@ test("review-iq copy names no retired llama models", () => {
 test("review-iq extraction metric does not render the gate as a standalone value", () => {
   assert.doesNotMatch(metrics.metrics["reviewiq:extraction-eval"].value, /threshold/i);
 });
+
+/**
+ * GG's rule: a bare gate number may only render alongside its CI. The provenance drawer shows an
+ * entry's `detail` as its own line, so "gate 76%, PASS" rendered the gate as a standalone number
+ * under the 78.6% row. The gate is stated without a number instead.
+ */
+test("review-iq case study never renders a bare gate or threshold percentage", () => {
+  // The verifiedAt line is a source comment quoting the old wording; it is never rendered.
+  const rendered = caseStudy.split(/\r?\n/).filter((l) => !/^\s*verifiedAt:/.test(l)).join("\n");
+  assert.doesNotMatch(rendered, /\bgate\s+\d+(\.\d+)?\s*%/i);
+  assert.doesNotMatch(rendered, /\bthreshold\s+\d+(\.\d+)?\s*%/i);
+});
+
+test("review-iq extraction row keeps its exact display value and a number-free gate detail", () => {
+  assert.ok(caseStudy.includes('value: "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"'));
+  assert.ok(caseStudy.includes('detail: "PASS on review-iq\'s own CI regression gate'));
+});
