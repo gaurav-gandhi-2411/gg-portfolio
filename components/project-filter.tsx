@@ -41,6 +41,16 @@ function emit() {
 }
 
 /**
+ * false in the prerendered HTML, true once React has hydrated this component
+ * (useSyncExternalStore uses the server snapshot during hydration, then the
+ * client one). Exposed as `data-hydrated` on the pill group so e2e can wait on
+ * "the pills now have handlers" instead of a timeout; see e2e/filters.spec.ts.
+ */
+const subscribeNever = () => () => {};
+const useHydrated = () =>
+  useSyncExternalStore(subscribeNever, () => true, () => false);
+
+/**
  * Wave 13 — category filter for the Work section and /projects.
  *
  * Design notes, all deliberate:
@@ -98,6 +108,7 @@ export function ProjectFilter({
   capAllAt4?: boolean;
 }) {
   const active = useSyncExternalStore(subscribe, readCategoryFromUrl, () => "all" as Active);
+  const hydrated = useHydrated();
 
   // Round 7 (GG's launch review) — ProjectSearch (the /projects combobox)
   // publishes which slugs its own score > 0 ranking matched; null means no
@@ -195,6 +206,7 @@ export function ProjectFilter({
       <div
         role="group"
         aria-label="Filter projects by category"
+        data-hydrated={hydrated}
         className="flex flex-wrap justify-start gap-x-[var(--space-2)] gap-y-[var(--space-4)] sm:justify-center"
       >
         <button

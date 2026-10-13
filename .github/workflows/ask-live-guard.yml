@@ -24,6 +24,15 @@ name: Ask live guard
 
 on:
   pull_request:
+  # Dispatched by scripts/relay-dispatched-ci-status.sh for bot PRs (GITHUB_TOKEN-pushed branches
+  # get no pull_request run) when the detector finds a guarded package change. Runs on the bot
+  # branch itself: head = github.sha, base = the merge-base the relay computed.
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Merge-base of the PR branch and its base (what pull_request.base.sha provides)
+        type: string
+        required: true
 
 concurrency:
   group: ask-live-guard-${{ github.ref }}
@@ -42,7 +51,7 @@ jobs:
       - name: Checkout (PR head, full history for merge-base)
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - name: Setup Node
@@ -53,7 +62,7 @@ jobs:
       - name: Detect whether this PR changes a guarded /ask package
         id: detect
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
         run: |
           set -euo pipefail
           # merge-base, not base tip: only what THIS PR changes, even if the base has moved on.
@@ -78,7 +87,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/ask-guard/preview.mjs wait-preview
 
       - name: Live /ask request against the preview

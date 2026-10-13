@@ -226,6 +226,11 @@ jobs:
       - name: Relay script regression test
         run: bash scripts/relay-dispatched-ci-status.test.sh
 
+      # scripts/open-refresh-pr.sh is the metrics-refresh PR step; the ruleset forbids
+      # force-push and branch deletion, so this asserts it never does either.
+      - name: Open-refresh-PR script regression test
+        run: bash scripts/open-refresh-pr.test.sh
+
       # scripts/check-required-checks-drift.sh is the thing that keeps
       # .github/required-checks.json (which scripts/relay-dispatched-ci-
       # status.sh trusts) honest against live branch protection -- stubbed-

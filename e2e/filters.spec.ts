@@ -25,6 +25,24 @@ async function visibleCardCount(page: import("@playwright/test").Page) {
     .evaluateAll((cards) => cards.filter((c) => getComputedStyle(c).display !== "none").length);
 }
 
+/**
+ * `goto` resolves on the `load` event, which fires BEFORE React has hydrated:
+ * measured 300-800ms later at 4x CPU slowdown on every commit tried (see PR).
+ * A click before the page's JS has run is dropped outright (the pills have no
+ * handler yet; see the forced test below), and one that lands mid-hydration
+ * may only take effect after a delay the assertions do not wait for. Either reads
+ * as a flaky filter. Wait for ProjectFilter's own hydration signal first.
+ */
+async function gotoHydrated(
+  page: import("@playwright/test").Page,
+  url: string,
+  waitUntil?: "domcontentloaded" | "load",
+) {
+  await page.goto(url, { waitUntil });
+  // A signal wait, not a timing assumption: generous so a loaded runner can't trip it.
+  await expect(page.locator('[data-hydrated="true"]').first()).toBeAttached({ timeout: 20_000 });
+}
+
 const PATHS: { path: string; capsAll: boolean }[] = [
   { path: "/", capsAll: true },
   { path: "/projects", capsAll: false },
@@ -35,7 +53,7 @@ for (const { path, capsAll } of PATHS) {
     test(`clicking each category pill caps to ${TEASE_LIMIT} when the category has more (${path})`, async ({
       page,
     }) => {
-      await page.goto(path);
+      await gotoHydrated(page, path);
       const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
       const totalCards = await page.locator(".project-grid article").count();
       const pills = filterGroup.getByRole("button");
@@ -104,7 +122,7 @@ for (const { path, capsAll } of PATHS) {
     });
 
     test(`keyboard activation filters identically to a click (${path})`, async ({ page }) => {
-      await page.goto(path);
+      await gotoHydrated(page, path);
       const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
       const secondPill = filterGroup.getByRole("button").nth(1);
       await secondPill.focus();
@@ -150,3 +168,24 @@ for (const { path, capsAll } of PATHS) {
     });
   });
 }
+
+test("a click after navigation is honored even when JS arrives late (forced hydration race)", async ({
+  page,
+}) => {
+  // Hold every script chunk for 1.5s so the HTML is on screen, pills included,
+  // well before React can attach a handler. Before this wait existed the click
+  // below landed in that gap and was silently dropped (URL unchanged, pill
+  // never aria-pressed): measured with exactly this interception.
+  await page.route("**/_next/static/chunks/**", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await gotoHydrated(page, "/", "domcontentloaded");
+  const pill = page
+    .getByRole("group", { name: "Filter projects by category" })
+    .getByRole("button")
+    .nth(1);
+  await pill.click();
+  await expect(page).toHaveURL(/[?&]category=/);
+  await expect(pill).toHaveAttribute("aria-pressed", "true");
+});
