@@ -145,7 +145,7 @@ const ALLOWLIST = new Set([
   // -my-[5px] is deliberately off the spacing scale: it keeps a 44px tap
   // target from bulking out the pill row visually, documented at length in
   // the comment immediately above it in components/project-filter.tsx.
-  "components/project-filter.tsx:175:-my-[5px]",
+  "components/project-filter.tsx::-my-[5px]",
   // Pre-existing debt, not fixed here: `var(--ease-out, ease-out)` — the
   // custom property `--ease-out` is never defined anywhere in this
   // codebase (confirmed by grep), so the literal `ease-out` fallback is
@@ -215,7 +215,9 @@ function scan(file, re, kind, suggest) {
     let m;
     while ((m = re.exec(line))) {
       const key = `${rel}:${idx + 1}:${m[0]}`;
-      if (ALLOWLIST.has(key)) continue;
+      // `file::match` entries are line-independent: an unrelated edit above the
+      // exemption must not turn it into a violation.
+      if (ALLOWLIST.has(key) || ALLOWLIST.has(`${rel}::${m[0]}`)) continue;
       violations.push({
         where: `${rel}:${idx + 1}`,
         kind,
