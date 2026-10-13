@@ -98,6 +98,7 @@ export const warmer: CaseStudy = {
       value: "−0.003",
       detail: "literally no correlation, same eval, same file and line, at the pre-fix commit",
       sourceRef: "warmer:hinglish-baseline",
+      headline: false,
     },
     {
       label: "Cluster separation, base vs fine-tuned (mean silhouette, raw embeddings)",
