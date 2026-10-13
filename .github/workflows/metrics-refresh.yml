@@ -395,52 +395,26 @@ jobs:
             exit 0
           fi
 
-          BRANCH="chore/content-pipeline"
-
-          if git diff --quiet content/provenance.md; then
-            echo "No proposals reached the PR bar this week."
-            # See the identical close-on-clean comment in the refresh job
-            # above — same reasoning, same fixed-branch-per-job pattern.
-            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
-            if [ -n "$existing" ]; then
-              gh pr close "$existing" --delete-branch \
-                --comment "This week's run found no proposals reaching the PR bar — closing. Reopens automatically (as a fresh PR) if a new proposal clears all three stages."
-            fi
-            exit 0
-          fi
-
-          # 2026-08-10: the pre-commit hook that normally keeps
-          # content/chatbot/index.json in sync with provenance.md only runs
-          # on a human's local commit — this job commits with GITHUB_TOKEN,
-          # so a proposal PR always shipped with a stale index and failed
-          # ci.yml's "Verify chatbot index is up to date" step (PR #59).
-          # npm ci is new to this job specifically for build-index.mjs — the
-          # other scripts here are dependency-free by design (see
-          # lib/chatbot/embed.mjs's header), this is the one exception.
-          npm ci
-          node scripts/chatbot/build-index.mjs
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git checkout -B "$BRANCH"
-          git add content/provenance.md content/chatbot/index.json
-          git commit -m "chore(content): weekly curated content proposals (LLM-consensus)"
-          git push --force origin "$BRANCH:refs/heads/$BRANCH"
-
-          if ! gh pr create \
-            --title "chore(content): weekly curated content proposals" \
-            --body-file /tmp/content-pipeline-summary.md \
-            --base main --head "$BRANCH"; then
-            gh pr edit "$BRANCH" --body-file /tmp/content-pipeline-summary.md
-          fi
-
-          # Same GITHUB_TOKEN anti-recursion workaround as the metrics-refresh
-          # job above — PRs opened with GITHUB_TOKEN don't trigger
-          # pull_request-triggered workflows, so dispatch ci.yml explicitly.
-          gh workflow run ci.yml --ref "$BRANCH"
-          # Same required-status-check relay as the refresh job above.
-          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
+          # Logic lives in scripts/open-refresh-pr.sh (tested by open-refresh-pr.test.sh): unique
+          # branch per run, never a force-push or branch deletion (ruleset
+          # 'no-force-push-no-delete-all-branches'). Stale branches with this prefix accumulate by
+          # design (<= 52/yr) until GG cleans them up via the ruleset disable/re-enable procedure.
+          export REFRESH_BRANCH_PREFIX="chore/content-pipeline"
+          export DIFF_PATHS="content/provenance.md"
+          export ADD_PATHS="content/provenance.md content/chatbot/index.json"
+          export COMMIT_MSG="chore(content): weekly curated content proposals (LLM-consensus)"
+          export PR_TITLE="chore(content): weekly curated content proposals"
+          export SUMMARY_PATH="/tmp/content-pipeline-summary.md"
+          export NOTHING_COMMENT="This week's run found no proposals reaching the PR bar — closing. Reopens automatically (as a fresh PR) if a new proposal clears all three stages."
+          # 2026-08-10: the pre-commit hook that normally keeps content/chatbot/index.json in
+          # sync with provenance.md only runs on a human's local commit — this job commits with
+          # GITHUB_TOKEN, so a proposal PR always shipped with a stale index and failed ci.yml's
+          # "Verify chatbot index is up to date" step (PR #59). npm ci is new to this job
+          # specifically for build-index.mjs — the other scripts here are dependency-free by
+          # design (see lib/chatbot/embed.mjs's header), this is the one exception. The script
+          # runs this only when there are changes to propose.
+          export PRE_COMMIT_CMD="npm ci && node scripts/chatbot/build-index.mjs"
+          bash scripts/open-refresh-pr.sh
 
   identity-drift:
     # Wave 16 — pure deterministic fact-check, no LLM: does the README still
@@ -479,41 +453,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH="chore/identity-drift"
-
-          if git diff --quiet content/identity-state.json; then
-            echo "No identity drift this week."
-            # See the identical close-on-clean comment in the refresh job
-            # above — same reasoning, same fixed-branch-per-job pattern.
-            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
-            if [ -n "$existing" ]; then
-              gh pr close "$existing" --delete-branch \
-                --comment "This week's run found no identity drift — closing. Reopens automatically (as a fresh PR) if drift is found again."
-            fi
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git checkout -B "$BRANCH"
-          git add content/identity-state.json
-          git commit -m "chore(identity): weekly identity-drift check"
-          git push --force origin "$BRANCH:refs/heads/$BRANCH"
-
-          if ! gh pr create \
-            --title "chore(identity): weekly identity-drift check" \
-            --body-file /tmp/identity-drift-summary.md \
-            --base main --head "$BRANCH"; then
-            gh pr edit "$BRANCH" --body-file /tmp/identity-drift-summary.md
-          fi
-
-          # Same GITHUB_TOKEN anti-recursion workaround as the metrics-refresh
-          # job above — PRs opened with GITHUB_TOKEN don't trigger
-          # pull_request-triggered workflows, so dispatch ci.yml explicitly.
-          gh workflow run ci.yml --ref "$BRANCH"
-          # Same required-status-check relay as the refresh job above.
-          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
+          # Logic lives in scripts/open-refresh-pr.sh (tested by open-refresh-pr.test.sh): unique
+          # branch per run, never a force-push or branch deletion (ruleset
+          # 'no-force-push-no-delete-all-branches'). Stale branches with this prefix accumulate by
+          # design (<= 52/yr) until GG cleans them up via the ruleset disable/re-enable procedure.
+          export REFRESH_BRANCH_PREFIX="chore/identity-drift"
+          export DIFF_PATHS="content/identity-state.json"
+          export ADD_PATHS="content/identity-state.json"
+          export COMMIT_MSG="chore(identity): weekly identity-drift check"
+          export PR_TITLE="chore(identity): weekly identity-drift check"
+          export SUMMARY_PATH="/tmp/identity-drift-summary.md"
+          export NOTHING_COMMENT="This week's run found no identity drift — closing. Reopens automatically (as a fresh PR) if drift is found again."
+          bash scripts/open-refresh-pr.sh
 
       # A README rename is a real content decision, but the PR above is a
       # weekly-rotating chore branch that can sit unmerged (or unaddressed)
