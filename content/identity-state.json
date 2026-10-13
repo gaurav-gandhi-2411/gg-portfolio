@@ -7,7 +7,7 @@
       "repoVisibility": "public",
       "repoArchived": false,
       "liveUrl": "https://triage-iq-orcin.vercel.app/",
-      "httpStatus": 200,
+      "httpStatus": 500,
       "demoUrl": null
     },
     "warmer": {
