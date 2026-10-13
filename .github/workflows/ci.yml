@@ -217,6 +217,10 @@ jobs:
       - name: Vercel ignored-build-step tests
         run: node --experimental-strip-types --test lib/vercel-ignore.test.ts
 
+      # The build-sha meta tag is how production == main HEAD is proven.
+      - name: Build-SHA resolver and production checker tests
+        run: node --experimental-strip-types --test lib/build-sha.test.ts scripts/check-prod-build-sha.test.mjs
+
       # scripts/relay-dispatched-ci-status.sh's history is three silent
       # failures in a row (see its header) -- this runs the current version
       # against a stubbed `gh` covering the config-missing, malformed,
