@@ -248,54 +248,14 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          SUMMARY_PATH: /tmp/metrics-summary.md
         run: |
-          BRANCH="chore/metrics-refresh"
-
-          if git diff --quiet content/metrics.json content/generated/hf-downloads.json; then
-            echo "No metric changes — no PR this week."
-            # A prior week's PR may still be open with nothing left to
-            # propose (its underlying drift already landed some other way,
-            # or reverted on its own) — close it rather than leaving a stale
-            # bot PR sitting open with no diff to review.
-            existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
-            if [ -n "$existing" ]; then
-              gh pr close "$existing" --delete-branch \
-                --comment "This week's refresh found nothing to propose — closing. Reopens automatically (as a fresh PR) if drift shows up again."
-            fi
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git checkout -B "$BRANCH"
-          git add content/metrics.json content/generated/hf-downloads.json
-          # Modified only when the HF snapshot changed (rebuild step above); a no-op otherwise.
-          git add content/chatbot/index.json
-          git commit -m "chore(metrics): weekly metric refresh from source repos"
-          # The refresh branch is owned by this workflow alone; force-push
-          # replaces any stale unmerged run with the freshest numbers
-          # (explicit single refspec per repo rule 38 — never --mirror/--all).
-          git push --force origin "$BRANCH:refs/heads/$BRANCH"
-
-          if ! gh pr create \
-            --title "chore(metrics): weekly metric refresh" \
-            --body-file /tmp/metrics-summary.md \
-            --base main --head "$BRANCH"; then
-            # PR from a previous week still open — refresh its body instead.
-            gh pr edit "$BRANCH" --body-file /tmp/metrics-summary.md
-          fi
-
-          # PRs created with GITHUB_TOKEN don't trigger pull_request
-          # workflows (GitHub anti-recursion rule), so the required `build`
-          # check would sit absent forever. Dispatch CI onto the branch
-          # explicitly — the check run lands on the same SHA the PR points
-          # at, which satisfies branch protection.
-          gh workflow run ci.yml --ref "$BRANCH"
-          # ...but a dispatched run still doesn't register against branch
-          # protection's required-status-check bookkeeping on its own — see
-          # scripts/relay-dispatched-ci-status.sh's header for the mechanism.
-          bash scripts/relay-dispatched-ci-status.sh "$BRANCH"
+          # Logic lives in scripts/open-refresh-pr.sh (regression-tested by
+          # open-refresh-pr.test.sh): a unique branch per run, never a force-push
+          # or branch deletion (ruleset 'no-force-push-no-delete-all-branches').
+          # Stale chore/metrics-refresh-* branches accumulate by design (<= 52/yr)
+          # until GG cleans them up via the ruleset disable/re-enable procedure.
+          bash scripts/open-refresh-pr.sh
 
       # Wave 14: new-repo discovery doesn't change any tracked file (it's
       # "GG published something and didn't tell us," not a value drift), so
