@@ -62,6 +62,7 @@ export function MetricProvenance({
 }) {
   const panelId = useId();
   const wrapperRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLSpanElement>(null);
   const openId = useSyncExternalStore(
     subscribeProvenance,
@@ -88,6 +89,26 @@ export function MetricProvenance({
     }
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open, panelId]);
+
+  // Escape dismisses the panel and hands focus back to the trigger (APG
+  // disclosure/popover). Document-level and attached only while open, so a
+  // closed panel never reacts to Escape and a page of a dozen of these adds
+  // no idle listeners. Focus is only moved when it is inside this widget or
+  // has fallen to <body>: if the user has since tabbed to an unrelated
+  // control, Escape closes the panel but must not yank focus away from it.
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key !== "Escape" || getOpenProvenance() !== panelId) return;
+      const active = document.activeElement;
+      const focusInside =
+        !active || active === document.body || !!wrapperRef.current?.contains(active);
+      setOpenProvenance(null);
+      if (focusInside) triggerRef.current?.focus();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, panelId]);
 
   /*
@@ -210,6 +231,7 @@ export function MetricProvenance({
   return (
     <span ref={wrapperRef} className={cn("group/prov inline-block", selfAnchor && "relative")}>
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
