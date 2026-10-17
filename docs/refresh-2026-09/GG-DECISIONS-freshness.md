@@ -72,3 +72,45 @@ the card's figure, correct the card, or keep 43% with its private source stated.
 not in any public artifact, that decision stays labelled "self-reported (private repo)" until
 decided; the rest of the lora-reframe narrative (13 configs, 0.639, 0.435 to 0.704) is public and
 text-checked.
+
+## 8. Re-verification of reviewiq and aetherart, 2026-10-13: verifiedAt NOT bumped on either
+
+Rule applied: bump `verifiedAt` only where every displayed number re-verifies today. Neither passed,
+so no number and no date was edited. Sources read via `gh api` at review-iq main `3d13cd9` and
+AetherArt main `10eb31c`. `check-metric-freshness.mjs` reports no drift for either (it is a
+text-presence check on `metrics.json` entries and does not cover case-study prose), which is why
+these were found by reading, not by the checker. Warmer left alone as instructed.
+
+### 8a. reviewiq: three displayed claims no longer match the source (decision needed)
+
+| Displayed (content/case-studies/reviewiq.ts) | Source today | Status |
+|---|---|---|
+| Result row "Authenticity scoring (40 fixtures): precision/recall/F1 = 1.000", "a starting calibration" | `docs/compliance.md:76`: "The authenticity scorer has no published accuracy figure ... An earlier 40-item fixture set (21 positive) was in-sample and its result is not reproducible; it is kept only as a quarantined historical file ... and is not cited as a measurement." `README.md:424-427`: the `/v2/authenticity*` routes were removed (Session 15d D5, Session 17 W6) "because the flag is unmeasurable"; "Not measured: no authenticity labels exist for the held-out set". | CONTRADICTED. The row, the dek ("authenticity signals"), the problem text ("an authenticity score", "likely-fake ones") and `provenance.md` `reviewiq:authenticity` all describe a live, measured feature. |
+| Decision "cut token cost 27.9% in v0.5.0, at a measured accuracy cost of 1.4 percentage points" | `README.md:260` (historical table, flagged not like-for-like): v0.5.0 routed 84.4%, "27.9% token reduction vs all-large"; v0.4.0 direct 85.8%. 85.8 - 84.4 = 1.4 by subtraction, but no source line states "1.4 percentage points", and the provenance row cites `README.md:139-147`, which now holds unrelated text. | 27.9% verifies; 1.4pp is derived, not published, and the citation is stale. |
+| Everything else checked | 78.6% (CI 73-83%, n=43, 2026-09-19) matches `eval/report.md:5` and `eval/results.json` (`overall_score 0.78599`, `overall_ci_95` 0.7324 to 0.8294, `passed true`); gpt-oss-20b / 120b, argon2id, Postgres RLS, Cloud Run asia-south1, `assert_privacy_safe()`, Devanagari retired scope, "NOT PURSUED" (`PROMPTS.md:7`) all verify. | OK |
+
+Options: remove or rewrite the authenticity row and copy to say the feature was removed because it
+could not be measured (the honest story, and consistent with the site's other self-correction
+narratives); cite the 1.4pp as a derived figure or drop it. Not done here: removing a result row
+changes the product narrative, which is GG's call.
+
+### 8b. aetherart: one displayed number is mis-scoped, everything else verifies
+
+Verified against AetherArt `README.md`, `docs/lab_notebook.md`, `docs/MODEL_VERDICT.md`,
+`reports/what_didnt_work.md`, `docs/paper/measurement_defects.md`: 6.2 GB and 2.6 GB VRAM; HPS 0.239
+(0.2391), ImageReward 1.479 (1.4786), CLIP 0.359; 360-run benchmark, range 0.130 vs 0.007, 18x; 229
+tests, ~60 s; rank-4 vs rank-8 CLIP (0.3384 vs 0.3337) and data-20 over data-80; INT8 2210 MB vs FP16
+1803 MB (+407); 80 images, 4 h 26 min, ~$3.50, 45 MB; loss 0.008 to ~0.08; CLIP-blind 9/9 revised to
+4/9; ukiyo-e promotion 3.18xSEM to 0.58xSEM (`MODEL_VERDICT.md` 354); five measurement defects; all
+three HF models `private: false`. The HF row is generated from `content/generated/hf-downloads.json`
+(as of 2026-10-10: 38 / 23 / 0; HF live today reads 34 / 23 / 0, an expected rolling-window move,
+the as-of date is shown, not a defect).
+
+Mismatch: decision "HPSv2.1 and ImageReward as the real quality metric" says "Nine experiments run
+across both SD 2.1 and SDXL found that CLIP score is structurally blind...". The README attributes
+the nine to the SD 2.1 study only (9/9, recomputed 4/9); the SDXL replication is seven experiments
+(3/7, "architecture-dependent; SDXL is less CLIP-blind"). The nine is not an SD 2.1 plus SDXL count.
+Suggested wording: "Nine SD 2.1 experiments (and a seven-experiment SDXL replication) ...". Not
+edited here, and `verifiedAt` stays 2026-07-31 (74 days, still flagged overdue by the checker) until
+GG picks the wording; once fixed, the rest re-verified today and the date can be bumped to the day
+of that fix.

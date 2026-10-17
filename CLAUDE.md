@@ -1,9 +1,12 @@
 # gg-portfolio — Claude Code notes
 
-## Parallel sessions: worktrees required, never a shared checkout
+## Parallel sessions: never share a checkout; use the single `gg-portfolio-wt-work` worktree
 
 If more than one Claude Code session may be working in this repo at the same time,
-each session must work in its own `git worktree`, never in a shared checkout. Two
+no session may use a shared checkout that another session is using. The isolation
+mechanism is the SINGLE reusable `gg-portfolio-wt-work` worktree (user-level
+CLAUDE.md "Workspace and disk hygiene (all projects)" rules 1 and 3, and rule 56a),
+not per-task worktrees. Two
 sessions checking out different branches in the same working directory is not safe —
 `HEAD` is a single pointer per checkout, and one session's `git checkout` silently
 moves it out from under the other.
@@ -21,19 +24,22 @@ re-checking `git branch --show-current` first could have kept editing files that
 now the wrong branch's content, or built a commit message describing changes that
 weren't actually staged.
 
-**Before starting work in this repo, run `git worktree list`.** If another worktree
-already exists for the branch you're about to touch, use it — do not check that
-branch out a second time anywhere else; `git worktree add` will refuse for exactly
-this reason if you try. If no worktree exists yet for your branch, create one:
+**Before starting work in this repo, run `git worktree list`.** If
+`gg-portfolio-wt-work` exists, use it: `git switch` between task branches inside it,
+never add a second extra worktree (the PreToolUse guard denies a second one). If it
+does not exist and the primary checkout is in use, create exactly one:
 
 ```
-git worktree add ../gg-portfolio-<short-workstream-name> <branch>
+git worktree add ../gg-portfolio-wt-work --detach origin/main
 ```
+
+Remove it when no longer needed and never keep it past its PR's merge. Scratch files
+go only under `%TEMP%\claude\gg-portfolio\<YYYYMMDD>`.
 
 Do not use the primary `gg-portfolio` checkout directory for direct feature work
-once more than one workstream is active — treat it as the base clone worktrees are
+while another workstream is active — treat it as the base clone the worktree is
 created from, and keep its own `HEAD` in a detached or otherwise unclaimed state so
-it never contends with a dedicated worktree for the same branch.
+it never contends with the worktree for the same branch.
 
 # Run the e2e suite after touching content labels, metric IDs, or rendered copy
 
