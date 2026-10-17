@@ -53,7 +53,7 @@ export const aetherart: CaseStudy = {
     },
     {
       title: "HPSv2.1 and ImageReward as the real quality metric, CLIP demoted to comparison-only",
-      body: "Nine experiments run across both SD 2.1 and SDXL found that CLIP score is structurally blind to rendering-level changes, things like quantization mode, sampling scheduler, or the presence of the style trigger word, while it stays responsive to semantic changes like what's actually depicted in the prompt. That made CLIP unsafe to use as the sole quality gate for engineering decisions.",
+      body: "Nine experiments on SD 2.1, and a seven-experiment replication on SDXL, found that CLIP score is structurally blind to rendering-level changes, things like quantization mode, sampling scheduler, or the presence of the style trigger word, while it stays responsive to semantic changes like what's actually depicted in the prompt. That made CLIP unsafe to use as the sole quality gate for engineering decisions.",
       sourceRef: "aetherart:clip-blindness",
     },
     {

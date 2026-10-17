@@ -7,11 +7,11 @@ export const reviewiq: CaseStudy = {
   slug: "reviewiq",
   verifiedAt: "2026-10-05", // 2026-10-05: copy aligned to review-iq README/ADR 0022/eval results.json (no Hindi support claim, gpt-oss models). Earlier: issue #123 -- re-checked extraction-eval numbers against review-iq's regenerated eval/report.md; n=43 and eval date added to the rendered figures (Step 1). Step 2 (same day): standardized the public display to "78.6% (95% CI 73-83%, n=43, eval 2026-09-19)" per GG's decision, dropped the en/hi-en per-language accuracy breakdown from public copy, and moved "gate 76%" so it only ever renders next to the CI, never alone -- no underlying number changed, this is a wording/format correction only.
   title: "Samidha Reviews",
-  dek: "Turns customer-review text in English and Hinglish into structured sentiment, urgency, and authenticity signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
+  dek: "Turns customer-review text in English and Hinglish into structured sentiment and urgency signals, caught and fixed a safety-scoring bug using cassette-replay CI, without spending a single new API call.",
   depth: "full",
   problem: [
-    "Indian D2C (direct-to-consumer) sellers get customer reviews in English and Hinglish (romanized, code-mixed Hindi-English, \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones, or the likely-fake ones, doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
-    "Samidha Reviews (built and shipped under the name ReviewIQ, live-rebranded since) turns unstructured review text into structured data: sentiment, pros/cons, an urgency flag, and an authenticity score, so a seller can triage what actually needs attention instead of reading everything.",
+    "Indian D2C (direct-to-consumer) sellers get customer reviews in English and Hinglish (romanized, code-mixed Hindi-English, \"yeh product bahut accha hai\" written in Latin letters), and reading all of them manually to catch the urgent or safety-related ones doesn't scale. Most review-analysis tools don't natively handle Hinglish at all.",
+    "Samidha Reviews (built and shipped under the name ReviewIQ, live-rebranded since) turns unstructured review text into structured data: sentiment, pros/cons, and an urgency flag, so a seller can triage what actually needs attention instead of reading everything.",
   ],
   approach: [
     "A review first passes through a sanitizer that strips personally identifiable information, then a language detector classifies it as English or Hinglish, which routes it to a language-branched prompt (a prompt template tuned for that language's phrasing).",
@@ -51,7 +51,7 @@ export const reviewiq: CaseStudy = {
     },
     {
       title: "Tiered routing: try the small model first, escalate on failure",
-      body: "Sending every review to the large model would be simpler, but wasteful. Routing simple cases to the small model first and escalating only on validation failure or low confidence cut token cost 27.9% in v0.5.0, at a measured accuracy cost of 1.4 percentage points, both numbers published, not just the win.",
+      body: "Sending every review to the large model would be simpler, but wasteful. Routing simple cases to the small model first and escalating only on validation failure or low confidence cut token cost 27.9% in v0.5.0. The same historical table lists 84.4% overall for that routed release and 85.8% for the direct-LLM v0.4.0 before it (46 fixtures each), a 1.4-point gap derived here by subtraction, not a published figure.",
       sourceRef: "reviewiq:tiered-routing",
     },
     {
@@ -73,10 +73,11 @@ export const reviewiq: CaseStudy = {
       sourceRef: "reviewiq:extraction-eval",
     },
     {
-      label: "Authenticity scoring (40 fixtures)",
-      value: "precision/recall/F1 = 1.000",
-      detail: "the repo's own caveat: this is \"a starting calibration,\" not proof it holds in the real world",
+      label: "Honest caveat: authenticity scoring has no published accuracy figure",
+      value: "No published accuracy figure; an earlier 40-item fixture result (21 positive) was in-sample and is not cited as a measurement",
+      detail: "the authenticity routes were removed from the product because the flag is unmeasurable: no authenticity labels exist for the held-out set",
       sourceRef: "reviewiq:authenticity",
+      format: "prose",
     },
     {
       label: "Honest caveat: Devanagari Hindi is retired scope",
