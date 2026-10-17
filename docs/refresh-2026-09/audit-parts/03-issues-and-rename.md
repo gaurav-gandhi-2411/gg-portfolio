@@ -148,7 +148,7 @@ myself (not trusting the issue's list) gives **four** repos today, not the two t
 | unlisted repo 2 (owner decision D3) | **No** | 2026-09-18 | Real, missing from the issue |
 
 Both unlisted repo 1 and unlisted repo 2 (owner decision D3) are the repos spec.md's constraints
-section already names ("Konnect / fashion take-home repos... not listed publicly unless GG
+section already names ("the two earlier take-home repos (unlisted per D3)... not listed publicly unless GG
 approves (D3)") — so their *absence from the site* is intentional per D3, but their absence from
 this bot issue is not a decision anyone made; it's a live automation defect (see below), and it
 means the issue's own "these are the new repos" claim is currently **incomplete**, not just stale.
@@ -209,7 +209,7 @@ failure silently renders as "no new repos" — the exact fail-open shape, not fa
    `scripts/refresh-metrics.mjs` so this line item stops recurring every week.
 3. Unlisted repo 1, unlisted repo 2 (owner decision D3) — real, currently invisible to the automation
    due to the 403 above, and covered by spec's D3 (not listed publicly pending GG's decision on the
-   take-home-adjacent status). Recommend: once D3 is decided, either add both to
+   unlisted status). Recommend: once D3 is decided, either add both to
    `KNOWN_NON_PRODUCT_REPOS` with a comment citing D3 (if the decision is "never list"), or leave
    unlisted with an explicit skip-reason if D3 resolves to "pending" — either way, don't leave them
    silently undetected.

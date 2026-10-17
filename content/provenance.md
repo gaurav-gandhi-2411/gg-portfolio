@@ -53,7 +53,7 @@ sources: `reports/resume-rework-2026-07-17.md`.
 
 | ID | Claim | Source |
 |---|---|---|
-| `resume:contact-email` | `gauravgandhi429@gmail.com` | Resume PDF p.1 header; GG's explicit choice over the account email `gg5678g@gmail.com` (2026-07-12 conversation) |
+| `resume:contact-email` | `gauravgandhi429@gmail.com` | Resume PDF p.1 header; GG's explicit choice over the secondary address (2026-07-12 conversation) |
 | `resume:contact-linkedin` | `https://www.linkedin.com/in/gauravgandhi03/` | Resume PDF p.1 header hyperlink annotation, extracted via PDF `/Annots` `/URI` (anchor text alone was not machine-readable as plain text) |
 | `resume:contact-github` | `https://github.com/gaurav-gandhi-2411` | Resume PDF p.1 header hyperlink annotation, same extraction method |
 
@@ -234,7 +234,7 @@ claim made.
 
 | ID | Claim | Source |
 |---|---|---|
-| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; gate 76% only ever beside the CI | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
+| `reviewiq:extraction-eval` | 78.6% overall extraction accuracy, n=43 (27 en, 16 hi-en), displayed as "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)"; the gate (76% in `eval/report.md:5`) is not rendered as a number on the site, the drawer detail says only "PASS on review-iq's own CI regression gate" (GG rule: a bare gate number may only render alongside its CI) | `review-iq/eval/report.md:5,11-12`, `review-iq/eval/results.json`, generated 2026-09-19, commit `e7186c9` |
 
 **Correction, including a disagreement with the earlier concurrent-session pass:** that pass
 kept 85.8% as "verified as originally drafted, no correction needed," sourced to
