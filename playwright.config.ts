@@ -59,7 +59,9 @@ export default defineConfig({
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${PORT}`,
+    // Disk hygiene rule 5: keep trace/video only for failing tests (failure evidence in CI).
     trace: "retain-on-failure",
+    video: "retain-on-failure",
     screenshot: "only-on-failure",
   },
   projects: [
