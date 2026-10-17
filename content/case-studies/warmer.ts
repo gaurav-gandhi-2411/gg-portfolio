@@ -77,7 +77,7 @@ export const warmer: CaseStudy = {
     },
     {
       title: "When fine-tuning failed twice, change the method, not the data",
-      body: "Two full-parameter fine-tuning attempts both regressed held-out accuracy, the second got worse with 43% more data, falsifying the \"more data fixes it\" hypothesis. The eventual win held the data fixed and swept the method instead: every full-parameter and frozen-layer config stayed within noise, every LoRA config beat the baseline, three of them CI-significantly. The shipped model is that LoRA fine-tune, published openly on Hugging Face with the benchmark that judges it.",
+      body: "Two full-parameter fine-tuning attempts both regressed held-out accuracy, the second got worse after adding more training data (543 pairs, then 756/1028 pairs), falsifying the \"more data fixes it\" hypothesis. The eventual win held the data fixed and swept the method instead: every full-parameter and frozen-layer config stayed within noise, every LoRA config beat the baseline, three of them CI-significantly. The shipped model is that LoRA fine-tune, published openly on Hugging Face with the benchmark that judges it.",
       sourceRef: "warmer:lora-reframe",
       selfReported: true,
     },
