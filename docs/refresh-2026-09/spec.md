@@ -89,7 +89,7 @@ Optional eval (recommended, cheap): blind multi-LLM "recruiter 10-second scan" o
 - Claude Max: never use or set ANTHROPIC_API_KEY.
 - No metric stated without source; distinguish verified vs believed in all reports.
 - No force-push to `main`; all changes via PR with verifier sign-off.
-- Konnect / fashion take-home repos: not listed publicly unless GG approves (D3).
+- The two earlier take-home repos (unlisted per D3): not listed publicly unless GG approves (D3).
 
 ## 7. Decisions needed from GG
 
