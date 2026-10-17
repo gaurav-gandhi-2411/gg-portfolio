@@ -1,0 +1,61 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> gg-portfolio@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 347ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 30.9s
+  Running TypeScript ...
+  Finished TypeScript in 17.4s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/54) ...
+  Generating static pages using 15 workers (13/54) 
+  Generating static pages using 15 workers (26/54) 
+  Generating static pages using 15 workers (40/54) 
+✓ Generating static pages using 15 workers (54/54) in 5.8s
+  Finalizing page optimization ...
+
+Route (app)                                 Revalidate  Expire
+┌ ○ /                                               6h      1y
+├ ○ /_not-found
+├ ƒ /api/chat
+├ ○ /ask
+├ ○ /icon.svg
+├ ○ /open-source                                    6h      1y
+├ ○ /opengraph-image
+├ ○ /projects                                       6h      1y
+├   /projects/[category]
+│ ├ ● /projects/llm-agents                          6h      1y
+│ ├ ● /projects/retrieval                           6h      1y
+│ ├ ● /projects/vision                              6h      1y
+│ └ ● [+3 more paths]
+├ ○ /research
+├ ○ /robots.txt
+├ ○ /sitemap.xml
+├   /warmup/[service]
+│ ├ ● /warmup/aetherart
+│ ├ ● /warmup/style-maitri
+│ └ ● /warmup/dealhunter
+├   /warmup/[service]/opengraph-image
+│ ├ ● /warmup/aetherart/opengraph-image
+│ ├ ● /warmup/style-maitri/opengraph-image
+│ └ ● /warmup/dealhunter/opengraph-image
+├   /work/[slug]
+│ ├ ● /work/warmer                                  6h      1y
+│ ├ ● /work/style-maitri
+│ ├ ● /work/triageiq
+│ └ ● [+12 more paths]
+└   /work/[slug]/opengraph-image
+  ├ ● /work/warmer/opengraph-image
+  ├ ● /work/style-maitri/opengraph-image
+  ├ ● /work/triageiq/opengraph-image
+  └ ● [+12 more paths]
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -1,0 +1,138 @@
+{
+ "itemsMeasured": 208,
+ "overlapCount": 0,
+ "overlaps": [],
+ "overflow": [
+  {
+   "w": 320,
+   "s": "adk-tracegauge",
+   "sw": 340,
+   "cw": 320
+  }
+ ],
+ "stripsAt390": {
+  "adk-tracegauge": 2,
+  "aetherart": 3,
+  "agentgauge": 3,
+  "dealhunter": 2,
+  "eval-defect-bench": 2,
+  "expense-tracker": 0,
+  "gold-rate-tracker": 0,
+  "multimodal-fashion-recommender": 3,
+  "reclaim": 0,
+  "reviewiq": 0,
+  "shelfsense": 3,
+  "style-maitri": 3,
+  "tracegauge": 0,
+  "triageiq": 3,
+  "warmer": 2
+ },
+ "domMismatch": []
+}
+TAP390 {
+ "adk-tracegauge|78.2s": [
+  44,
+  28
+ ],
+ "adk-tracegauge|3.10 through 3.14": [
+  136.96875,
+  28
+ ],
+ "aetherart|6.2GB": [
+  52.5625,
+  28
+ ],
+ "aetherart|HPS 0.239 · ImageReward 1.479": [
+  112.09375,
+  69
+ ],
+ "aetherart|229 tests, ~60 seconds": [
+  108.65625,
+  46
+ ],
+ "agentgauge|0.0537": [
+  58.140625,
+  28
+ ],
+ "agentgauge|0.59%": [
+  50.078125,
+  28
+ ],
+ "agentgauge|−13.3pp": [
+  61.5,
+  28
+ ],
+ "dealhunter|31/31 (100%)": [
+  101.75,
+  28
+ ],
+ "dealhunter|6/10": [
+  44,
+  28
+ ],
+ "eval-defect-bench|0 / 3": [
+  44,
+  28
+ ],
+ "eval-defect-bench|15 / 30 (50%)": [
+  104.421875,
+  28
+ ],
+ "multimodal-fashion-recommender|3.06× (0.0328)": [
+  108.65625,
+  46
+ ],
+ "multimodal-fashion-recommender|0.0107": [
+  57.09375,
+  28
+ ],
+ "multimodal-fashion-recommender|0.0208 / 0.0172": [
+  108.65625,
+  46
+ ],
+ "shelfsense|0.5693": [
+  59.0625,
+  28
+ ],
+ "shelfsense|0.8956": [
+  59.671875,
+  28
+ ],
+ "shelfsense|3.2663 → 0.6112": [
+  108.65625,
+  46
+ ],
+ "style-maitri|93.8% (n=211)": [
+  108.65625,
+  46
+ ],
+ "style-maitri|52,494 items across 8 stores": [
+  108.671875,
+  69
+ ],
+ "style-maitri|15 of 32": [
+  61.171875,
+  28
+ ],
+ "triageiq|89.8%": [
+  48.9375,
+  28
+ ],
+ "triageiq|87.1%": [
+  44,
+  28
+ ],
+ "triageiq|76.2%": [
+  47.796875,
+  28
+ ],
+ "warmer|0.813": [
+  44.25,
+  28
+ ],
+ "warmer|5.1% → 78.0%": [
+  112.28125,
+  28
+ ]
+}
+MINGAP 3
