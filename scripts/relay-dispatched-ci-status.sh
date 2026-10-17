@@ -98,9 +98,11 @@ echo "Required contexts (from $CONFIG_FILE): $(printf '%s' "$CONTEXTS" | tr '\n'
 
 # is_transient_gh_error ERR: true for errors worth retrying (HTTP 5xx/429, network-level
 # failures, or no error text at all); false for the rest (4xx such as 401/403/404: futile).
+# Exception: an HTTP 403/429 whose text says "rate limit" (primary or secondary limit) is
+# transient -- it clears with time. A plain 403 (permissions) stays non-transient: fails at once.
 is_transient_gh_error() {
   [ -z "$1" ] && return 0
-  printf '%s' "$1" | grep -Eiq 'HTTP (5[0-9]{2}|429)|"status": *"?(5[0-9]{2}|429)|timed? ?out|timeout|connection (reset|refused|closed)|unexpected EOF|no such host|temporary failure|TLS handshake|network is unreachable'
+  printf '%s' "$1" | grep -Eiq 'HTTP (5[0-9]{2}|429)|"status": *"?(5[0-9]{2}|429)|timed? ?out|timeout|connection (reset|refused|closed)|unexpected EOF|no such host|temporary failure|TLS handshake|network is unreachable|rate limit'
 }
 
 # fail_unreadable WF CONTEXTS ATTEMPTS ERR: job conclusions could not be read -- post `failure`

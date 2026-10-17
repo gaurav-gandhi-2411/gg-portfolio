@@ -38,6 +38,10 @@ case "$1" in
             exit 1
             ;;
           empty) exit 0 ;;
+          ratelimit)
+            echo "HTTP 403: API rate limit exceeded for installation (https://api.github.com/repos/o/r/actions/runs/42)" >&2
+            exit 1
+            ;;
         esac
         # After `gh workflow run ask-live-guard.yml` the run being viewed is the guard's.
         if [ -n "${STUB_DISPATCH_LOG:-}" ] && grep -q "ask-live-guard.yml" "$STUB_DISPATCH_LOG" 2>/dev/null; then

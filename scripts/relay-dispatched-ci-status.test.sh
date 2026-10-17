@@ -237,6 +237,23 @@ for CODE in 404 401; do
   assert_no_success_post "view-$CODE-no-retry"
 done
 
+# HTTP 403 "rate limit" is transient (retried); a plain 403 (permissions) fails at once.
+run_case "view-ratelimit-then-success" 0 "$VALID" "Relayed e2e=success" -- \
+  "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="ratelimit,completed"
+assert_posts "view-ratelimit-then-success" 2
+assert_calls "view-ratelimit-then-success" view 2
+run_case "view-403-no-retry" 1 "$VALID" "could not read job conclusions after 1 attempt" "HTTP 403" -- \
+  "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV="$OKJOBS" STUB_VIEW_SEQ="403"
+assert_calls "view-403-no-retry" view 1
+assert_no_success_post "view-403-no-retry"
+
+# Non-success conclusions on a completed run are failures, exactly as before this change.
+for CONC in cancelled skipped timed_out; do
+  run_case "conclusion-$CONC" 1 "$VALID" "Relayed build=success" "Relayed e2e=failure" -- \
+    "${RELAY_ENV[@]}" STUB_WATCH_EXIT="0" STUB_JOBS_TSV=$'build\tsuccess\ne2e\t'"$CONC"
+  assert_calls "conclusion-$CONC" view 1
+done
+
 # --- required context from a separate workflow (ask-live-guard) ---
 if command -v node >/dev/null 2>&1; then
   CI_JOBS=$'build\tsuccess\ne2e\tsuccess'
