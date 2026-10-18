@@ -38,7 +38,7 @@ test.describe("route transitions", () => {
     await expect(page).toHaveURL(/\/projects$/);
     // The destination page must stay interactive immediately after the nav
     // commits — prove it by driving another interaction right away.
-    const firstPill = page.getByRole("group", { name: "Filter projects by category" }).getByRole("button").first();
+    const firstPill = page.getByRole("group", { name: "Filter projects by category" }).getByRole("link").first();
     await expect(firstPill).toBeVisible();
     await expect(firstPill).toBeEnabled();
   });

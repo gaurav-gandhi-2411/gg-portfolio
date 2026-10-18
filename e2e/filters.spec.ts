@@ -28,8 +28,8 @@ async function visibleCardCount(page: import("@playwright/test").Page) {
 /**
  * `goto` resolves on the `load` event, which fires BEFORE React has hydrated:
  * measured 300-800ms later at 4x CPU slowdown on every commit tried (see PR).
- * A click before the page's JS has run is dropped outright (the pills have no
- * handler yet; see the forced test below), and one that lands mid-hydration
+ * A click before the page's JS has run is dropped outright (the pills are plain links until then and
+ * navigate away; see the forced test below), and one that lands mid-hydration
  * may only take effect after a delay the assertions do not wait for. Either reads
  * as a flaky filter. Wait for ProjectFilter's own hydration signal first.
  */
@@ -56,7 +56,7 @@ for (const { path, capsAll } of PATHS) {
       await gotoHydrated(page, path);
       const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
       const totalCards = await page.locator(".project-grid article").count();
-      const pills = filterGroup.getByRole("button");
+      const pills = filterGroup.getByRole("link");
       const pillCount = await pills.count();
       expect(pillCount).toBeGreaterThan(1); // "All" + at least one category
 
@@ -74,7 +74,7 @@ for (const { path, capsAll } of PATHS) {
         expect(visible, `after clicking "${label}"`).toBe(expectedVisible);
         expect(visible, `"${label}" must actually narrow the set`).toBeLessThan(totalCards);
         await expect(page).toHaveURL(/[?&]category=/);
-        await expect(pill).toHaveAttribute("aria-pressed", "true");
+        await expect(pill).toHaveAttribute("aria-current", "true");
 
         // Wave-14 fix, still true: the result count must be VISIBLE, not
         // sr-only. Wave 15: the denominator is now the category's own total,
@@ -124,21 +124,21 @@ for (const { path, capsAll } of PATHS) {
     test(`keyboard activation filters identically to a click (${path})`, async ({ page }) => {
       await gotoHydrated(page, path);
       const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
-      const secondPill = filterGroup.getByRole("button").nth(1);
+      const secondPill = filterGroup.getByRole("link").nth(1);
       await secondPill.focus();
       await expect(secondPill).toBeFocused();
       await secondPill.press("Enter");
 
       await expect(page).toHaveURL(/[?&]category=/);
-      await expect(secondPill).toHaveAttribute("aria-pressed", "true");
+      await expect(secondPill).toHaveAttribute("aria-current", "true");
       expect(await visibleCardCount(page)).toBeGreaterThan(0);
     });
 
     test(`a deep link with ?category= applies the filter on load (${path})`, async ({ page }) => {
       await page.goto(`${path}?category=vision`);
       const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
-      const visionPill = filterGroup.getByRole("button", { name: /Vision & Generative/ });
-      await expect(visionPill).toHaveAttribute("aria-pressed", "true");
+      const visionPill = filterGroup.getByRole("link", { name: /Vision & Generative/ });
+      await expect(visionPill).toHaveAttribute("aria-current", "true");
 
       const totalCards = await page.locator(".project-grid article").count();
       const visible = await visibleCardCount(page);
@@ -183,9 +183,69 @@ test("a click after navigation is honored even when JS arrives late (forced hydr
   await gotoHydrated(page, "/", "domcontentloaded");
   const pill = page
     .getByRole("group", { name: "Filter projects by category" })
-    .getByRole("button")
+    .getByRole("link")
     .nth(1);
   await pill.click();
   await expect(page).toHaveURL(/[?&]category=/);
-  await expect(pill).toHaveAttribute("aria-pressed", "true");
+  await expect(pill).toHaveAttribute("aria-current", "true");
 });
+
+/**
+ * Pills are real <a href> links (so they work before hydration / without JS)
+ * upgraded after hydration. These pin the upgrade: a plain click filters in
+ * place with NO document request, while modified clicks are left to the
+ * browser (the pill's handler must not preventDefault them).
+ */
+for (const path of ["/", "/projects"]) {
+  test(`a plain pill click filters in place with no document navigation (${path})`, async ({
+    page,
+  }) => {
+    await gotoHydrated(page, path);
+    const pill = page
+      .getByRole("group", { name: "Filter projects by category" })
+      .getByRole("link")
+      .nth(1);
+    const startPath = new URL(page.url()).pathname;
+    const documentRequests: string[] = [];
+    page.on("request", (req) => {
+      if (req.resourceType() === "document") documentRequests.push(req.url());
+    });
+    await pill.click();
+    await expect(pill).toHaveAttribute("aria-current", "true");
+    await expect(page).toHaveURL(/[?&]category=/);
+    expect(new URL(page.url()).pathname, "stays on the same page").toBe(startPath);
+    expect(documentRequests, "no document request").toEqual([]);
+  });
+
+  test(`a modified click on a pill is not intercepted (${path})`, async ({ page }) => {
+    await gotoHydrated(page, path);
+    const pill = page
+      .getByRole("group", { name: "Filter projects by category" })
+      .getByRole("link")
+      .nth(1);
+    await expect(pill).toHaveAttribute("href", /^\/projects\/[a-z-]+$/);
+    // React's root listener runs before this document-level bubble listener,
+    // so it sees whether the pill's own onClick called preventDefault. The
+    // listener then cancels the synthetic click's real navigation.
+    const prevented = await pill.evaluate((el) => {
+      const out: Record<string, boolean> = {};
+      const probe = (key: string, init: MouseEventInit) => {
+        const guard = (e: Event) => {
+          out[key] = e.defaultPrevented;
+          e.preventDefault();
+        };
+        document.addEventListener("click", guard, { once: true });
+        el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, ...init }));
+        document.removeEventListener("click", guard);
+      };
+      probe("ctrl", { ctrlKey: true });
+      probe("meta", { metaKey: true });
+      probe("shift", { shiftKey: true });
+      probe("alt", { altKey: true });
+      probe("middle", { button: 1 });
+      return out;
+    });
+    expect(prevented).toEqual({ ctrl: false, meta: false, shift: false, alt: false, middle: false });
+    expect(page.url(), "a modified click must not filter in place").not.toMatch(/[?&]category=/);
+  });
+}

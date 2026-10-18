@@ -89,8 +89,10 @@ for (const route of ROUTES) {
 
 test("axe: zero violations on a filtered /projects view", async ({ page }) => {
   await gotoSettled(page, "/projects");
+  // Pills are real links: a click before hydration navigates to the category page, so wait for the handler.
+  await expect(page.locator('[data-hydrated="true"]').first()).toBeAttached({ timeout: 20_000 });
   const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
-  await filterGroup.getByRole("button").nth(1).click();
+  await filterGroup.getByRole("link").nth(1).click();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });
@@ -168,8 +170,10 @@ test("axe: zero violations while a project card is genuinely hovered (desktop on
 test("axe: zero violations while a filtered view AND hover are both active", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "mobile", "hover: hover doesn't apply on touch");
   await gotoSettled(page, "/projects");
+  // Pills are real links: a click before hydration navigates to the category page, so wait for the handler.
+  await expect(page.locator('[data-hydrated="true"]').first()).toBeAttached({ timeout: 20_000 });
   const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
-  await filterGroup.getByRole("button").nth(1).click();
+  await filterGroup.getByRole("link").nth(1).click();
   const visibleCards = page.locator(".project-grid article:visible");
   const count = await visibleCards.count();
   test.skip(count < 2, "need at least 2 visible cards after filtering to exercise the sibling-recede rule");

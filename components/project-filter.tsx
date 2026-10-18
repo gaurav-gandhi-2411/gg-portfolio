@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore, type MouseEvent } from "react";
 import {
   clearSearch,
   getSearchMatch,
@@ -66,10 +66,11 @@ const useHydrated = () =>
  *   Suspense boundary — losing SSR/no-JS content for a query param read.
  * - Initial state is always "all" (matches the server HTML, no hydration
  *   mismatch); a deep-linked ?category= applies right after hydration.
- * - No-JS: every card stays visible and the pills are inert — filtering
- *   is an enhancement, never a gate on content.
- * - Buttons with aria-pressed (single-select toggle group), visible focus
- *   ring, result count announced politely for screen readers.
+ * - No-JS: every card stays visible and the pills navigate to the category
+ *   pages — filtering is an enhancement, never a gate on content.
+ * - Real links (<a href>: "All" -> /projects, a category -> its server-rendered
+ *   /projects/[category] page) so a tap before hydration or with JS off works;
+ *   aria-current marks the active pill, visible focus ring, result count announced politely for screen readers.
  *
  * Wave 15 — progressive disclosure: any active view beyond TEASE_LIMIT
  * matching cards caps to the first 4 (in content/products.ts order) with a
@@ -115,6 +116,19 @@ export function ProjectFilter({
   // query is active, so category filtering alone applies exactly as before
   // (and matches the SSR/no-JS snapshot below, which never has a query).
   const searchMatch = useSyncExternalStore(subscribeSearchMatch, getSearchMatch, getServerSearchMatch);
+
+  // Pills are real <a href> links (server-rendered, so a tap before hydration
+  // or with JS off navigates to the category page). After hydration a plain
+  // left-click is upgraded to the instant in-place filter; modified clicks
+  // (ctrl/meta/shift/alt, middle button) are left to the browser so
+  // "open in new tab" works.
+  function onPillClick(e: MouseEvent<HTMLAnchorElement>, next: Active) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      return;
+    }
+    e.preventDefault();
+    select(next);
+  }
 
   function select(next: Active) {
     const url = new URL(window.location.href);
@@ -170,7 +184,7 @@ export function ProjectFilter({
  */
 
   // gap-1, not a relied-on JSX text-node space before the count span: a
-  // flex container (this button is inline-flex, for vertical centering)
+  // flex container (this pill is inline-flex, for vertical centering)
   // wraps each contiguous run of text in its own anonymous flex item, and
   // whitespace sitting at the boundary between two flex items collapses
   // away instead of rendering — "All " + <span>14</span> becomes "All14"
@@ -209,10 +223,11 @@ export function ProjectFilter({
         data-hydrated={hydrated}
         className="flex flex-wrap justify-start gap-x-[var(--space-2)] gap-y-[var(--space-4)] sm:justify-center"
       >
-        <button
-          type="button"
-          aria-pressed={active === "all"}
-          onClick={() => select("all")}
+        <Link
+          href="/projects"
+          prefetch={false}
+          aria-current={active === "all" ? "true" : undefined}
+          onClick={(e) => onPillClick(e, "all")}
           className={`${pillBase} ${active === "all" ? pillOn : pillOff}`}
         >
           {/* No opacity dim on the count: text-muted-foreground alone is
@@ -226,17 +241,18 @@ export function ProjectFilter({
               per-badge (wave 14, caught once this suite actually clicked
               a filter into the state where "All 12" goes inactive). */}
           All <span className="font-mono text-caption">{cats.length}</span>
-        </button>
+        </Link>
         {CATEGORIES.map((c) => (
-          <button
+          <Link
             key={c.id}
-            type="button"
-            aria-pressed={active === c.id}
-            onClick={() => select(c.id)}
+            href={`/projects/${c.id}`}
+            prefetch={false}
+            aria-current={active === c.id ? "true" : undefined}
+            onClick={(e) => onPillClick(e, c.id)}
             className={`${pillBase} ${active === c.id ? pillOn : pillOff}`}
           >
             {c.label} <span className="font-mono text-caption">{counts.get(c.id)}</span>
-          </button>
+          </Link>
         ))}
       </div>
 

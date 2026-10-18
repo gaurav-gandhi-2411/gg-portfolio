@@ -25,7 +25,7 @@ test.describe("shared interactive components use the site's motion tokens", () =
 
   test("a category filter pill transitions on --dur-fast / --ease-out-soft", async ({ page }) => {
     await page.goto("/projects");
-    const pill = page.getByRole("group", { name: "Filter projects by category" }).getByRole("button").first();
+    const pill = page.getByRole("group", { name: "Filter projects by category" }).getByRole("link").first();
     const timing = await pill.evaluate((el) => {
       const style = getComputedStyle(el);
       return { duration: style.transitionDuration, easing: style.transitionTimingFunction };
