@@ -1,7 +1,15 @@
 {
   "accounts": [
-    "owner-identity@example.com",
-    "retired-identity-a@example.com",
-    "retired-identity-b@example.com"
+    { "email": "owner-identity@example.com", "on_this_machine": true },
+    {
+      "email": "retired-identity-a@example.com",
+      "on_this_machine": false,
+      "reason": "retired identity; intentionally not authenticated here (sole-identity mandate)"
+    },
+    {
+      "email": "retired-identity-b@example.com",
+      "on_this_machine": false,
+      "reason": "retired identity; intentionally not authenticated here (sole-identity mandate)"
+    }
   ]
 }
