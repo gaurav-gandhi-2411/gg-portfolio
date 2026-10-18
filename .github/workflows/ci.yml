@@ -213,9 +213,11 @@ jobs:
 
       # scripts/vercel-ignore.sh decides which Vercel deployments are skipped.
       # A wrong "skip" on a production deploy ships a stale site, so its
-      # tests run here (npm run test:unit is not otherwise part of CI).
-      - name: Vercel ignored-build-step tests
-        run: node --experimental-strip-types --test lib/vercel-ignore.test.ts
+      # tests run here. This step runs EVERY lib/**/*.test.ts (vercel-ignore, the
+      # reviewiq-copy wording guard, chatbot, search, ...): lib/reviewiq-copy.test.ts
+      # merged in #329 but no CI step ran it, so the guard was dead code.
+      - name: Lib unit tests (npm run test:unit)
+        run: npm run test:unit
 
       # The build-sha meta tag is how production == main HEAD is proven.
       - name: Build-SHA resolver and production checker tests
