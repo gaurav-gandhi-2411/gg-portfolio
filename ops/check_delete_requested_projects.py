@@ -73,8 +73,9 @@ Exit codes:
     2 -- identity configuration missing or malformed (nothing was checked)
     0 -- every on-machine account CHECKED with no CRITICAL project, every off-machine
          account EXPECTED_ABSENT, no unlisted authenticated identity
-    1 -- anything else (CRITICAL project, UNVERIFIED, DRIFT, UNLISTED identity, or
-         `gcloud auth list` unreadable) -- fail closed
+    1 -- anything else (CRITICAL project, UNVERIFIED incl. incomplete pagination, DRIFT,
+         UNLISTED identity, `gcloud auth list` unreadable, or --json report unwritable)
+         -- fail closed
 """
 
 import argparse
@@ -178,6 +179,10 @@ RESOURCE_MANAGER_URL = (
 )
 
 
+# Upper bound on pages followed per identity; exceeding it is UNVERIFIED, not a pass.
+MAX_PAGES = 50
+
+
 def get_access_token(account: str) -> str | None:
     try:
         result = subprocess.run(
@@ -225,22 +230,42 @@ def list_delete_requested(account: str) -> tuple[str, list[dict] | None, str | N
     token = get_access_token(account)
     if token is None:
         return account, None, "not authenticated locally (gcloud auth print-access-token failed)"
-    try:
-        resp = requests.get(
-            RESOURCE_MANAGER_URL,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=30,
-        )
-    except requests.RequestException as exc:
-        return account, None, f"request failed: {exc}"
-    if resp.status_code != 200:
-        return account, None, f"HTTP {resp.status_code}: {resp.text[:300]}"
-    try:
-        projects = resp.json().get("projects", [])
-    except (ValueError, AttributeError) as exc:
-        return account, None, f"unparseable response: {exc}"
-    if not isinstance(projects, list):
-        return account, None, "unparseable response: 'projects' is not a list"
+    projects: list[dict] = []
+    seen_tokens: set[str] = set()
+    page_token: str | None = None
+    for _ in range(MAX_PAGES):
+        try:
+            resp = requests.get(
+                RESOURCE_MANAGER_URL,
+                headers={"Authorization": f"Bearer {token}"},
+                params={"pageToken": page_token} if page_token else None,
+                timeout=30,
+            )
+        except requests.RequestException as exc:
+            return account, None, f"request failed: {exc}"
+        if resp.status_code != 200:
+            return account, None, f"HTTP {resp.status_code}: {resp.text[:300]}"
+        try:
+            body = resp.json()
+            page = body.get("projects", [])
+            next_token = body.get("nextPageToken")
+        except (ValueError, AttributeError) as exc:
+            return account, None, f"unparseable response: {exc}"
+        if not isinstance(page, list):
+            return account, None, "unparseable response: 'projects' is not a list"
+        projects.extend(page)
+        if next_token is None or next_token == "":
+            break
+        # Fail closed: a token we cannot trust means later pages were never read, and an
+        # unread page is not a clean page (rule 98a).
+        if not isinstance(next_token, str):
+            return account, None, f"malformed nextPageToken: {next_token!r}"
+        if next_token in seen_tokens:
+            return account, None, "pagination loop: repeated nextPageToken"
+        seen_tokens.add(next_token)
+        page_token = next_token
+    else:
+        return account, None, f"pagination incomplete: more than {MAX_PAGES} pages"
     return account, projects, None
 
 
@@ -346,8 +371,13 @@ def main() -> int:
     print(f"\nSUMMARY: {json.dumps(counts, sort_keys=True)} unlisted_authenticated={n_unlisted}")
 
     if args.json:
-        with open(args.json, "w", encoding="utf-8") as f:
-            json.dump(report, f, indent=2)
+        try:
+            with open(args.json, "w", encoding="utf-8") as f:
+                json.dump(report, f, indent=2)
+        except OSError as exc:
+            # An unwritable report must not look like a pass the caller can rely on.
+            print(f"\nREPORT ERROR: could not write {args.json}: {exc}", file=sys.stderr)
+            return 1
         print(f"\nFull report written to {args.json}")
 
     if any_unverified:

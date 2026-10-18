@@ -104,6 +104,7 @@ def _run(
     auth_exc: Exception | None = None,
     token_fail: bool = False,
     resp: _Resp | None = None,
+    get: object = None,
 ) -> tuple[int, dict, list[list[str]]]:
     mod = _load()
     cfg = tmp_path / "cfg.json"
@@ -124,7 +125,7 @@ def _run(
         return _Proc("tok\n")
 
     monkeypatch.setattr(mod.subprocess, "run", fake_run)
-    monkeypatch.setattr(mod.requests, "get", lambda *a, **k: resp or _Resp(body={}))
+    monkeypatch.setattr(mod.requests, "get", get or (lambda *a, **k: resp or _Resp(body={})))
     monkeypatch.delenv("GCP_CHECK_ACCOUNTS", raising=False)
     monkeypatch.setenv("GCP_CHECK_ACCOUNTS_FILE", str(cfg))
     monkeypatch.setattr(sys, "argv", ["prog", "--json", str(out)])
@@ -254,3 +255,117 @@ def test_entry_without_field_defaults_to_on_machine_fail_closed(monkeypatch, tmp
     # and operationally: such an unauthenticated account fails the run
     code, rep, _ = _run(monkeypatch, tmp_path, [OWNER, {"email": RETIRED}], authed=[OWNER])
     assert code == 1 and rep["accounts"][RETIRED]["status"] == "UNVERIFIED"
+
+
+# ---- pagination: a project on a later page must not be missed (fail closed otherwise) ----
+
+CRIT = {"projectId": "prod-p2", "name": "DO NOT DEL", "labels": {"do-not-delete": "true"}}
+
+
+def _paged(pages: dict):
+    """requests.get stub serving `pages` keyed by the pageToken sent (None = first page)."""
+    seen: list = []
+
+    def get(*a: object, **k: dict) -> _Resp:
+        token = (k.get("params") or {}).get("pageToken")
+        seen.append(token)
+        return _Resp(body=pages[token])
+
+    get.seen = seen  # type: ignore[attr-defined]
+    return get
+
+
+def test_target_project_only_on_page_two_is_found(monkeypatch, tmp_path) -> None:
+    get = _paged(
+        {
+            None: {"projects": [{"projectId": "p1", "name": "x"}], "nextPageToken": "t2"},
+            "t2": {"projects": [CRIT]},
+        }
+    )
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=get)
+    assert code == 1  # the do-not-delete project on page 2 is CRITICAL
+    ids = [p["projectId"] for p in rep["accounts"][OWNER]["projects"]]
+    assert ids == ["p1", "prod-p2"] and get.seen == [None, "t2"]
+
+
+def test_empty_final_page_token_ends_pagination_cleanly(monkeypatch, tmp_path) -> None:
+    get = _paged({None: {"projects": [], "nextPageToken": ""}})
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=get)
+    assert code == 0 and rep["accounts"][OWNER]["status"] == "CHECKED"
+
+
+def test_repeated_page_token_fails_closed(monkeypatch, tmp_path) -> None:
+    get = _paged(
+        {
+            None: {"projects": [], "nextPageToken": "loop"},
+            "loop": {"projects": [], "nextPageToken": "loop"},
+        }
+    )
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=get)
+    assert code == 1 and rep["accounts"][OWNER]["status"] == "UNVERIFIED"
+    assert "loop" in rep["accounts"][OWNER]["error"]
+
+
+def test_page_cap_exceeded_fails_closed(monkeypatch, tmp_path) -> None:
+    mod = _load()
+    calls: list = []
+
+    def endless(*a: object, **k: dict) -> _Resp:
+        calls.append(1)
+        return _Resp(body={"projects": [], "nextPageToken": f"t{len(calls)}"})
+
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=endless)
+    assert code == 1 and rep["accounts"][OWNER]["status"] == "UNVERIFIED"
+    assert len(calls) == mod.MAX_PAGES  # stops at the cap, never runs unbounded
+
+
+@pytest.mark.parametrize("bad", [123, ["t"], {"a": 1}, True])
+def test_malformed_page_token_fails_closed(monkeypatch, tmp_path, bad) -> None:
+    get = _paged({None: {"projects": [], "nextPageToken": bad}})
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=get)
+    assert code == 1 and rep["accounts"][OWNER]["status"] == "UNVERIFIED"
+
+
+def test_error_on_later_page_is_unverified_not_partial_pass(monkeypatch, tmp_path) -> None:
+    def get(*a: object, **k: dict) -> _Resp:
+        if (k.get("params") or {}).get("pageToken"):
+            return _Resp(status=500)
+        return _Resp(body={"projects": [], "nextPageToken": "t2"})
+
+    code, rep, _ = _run(monkeypatch, tmp_path, NORMAL, authed=[OWNER], get=get)
+    assert code == 1 and rep["accounts"][OWNER]["status"] == "UNVERIFIED"
+
+
+# ---- on_this_machine: only an exact JSON boolean false marks an identity off-machine ----
+
+
+@pytest.mark.parametrize("val", ["false", 0, None, "no", []])
+def test_falsy_ish_on_this_machine_is_not_accepted_as_false(monkeypatch, tmp_path, val) -> None:
+    mod = _load()
+    accts = [OWNER, {"email": RETIRED, "on_this_machine": val}]
+    cfg = tmp_path / "f.json"
+    cfg.write_text(json.dumps({"accounts": accts}))
+    with pytest.raises(mod.ConfigError):
+        mod.load_account_specs({"GCP_CHECK_ACCOUNTS_FILE": str(cfg)})
+    code, _, calls = _run(monkeypatch, tmp_path, accts, authed=[OWNER])
+    assert code == 2 and calls == []  # config error: nothing was checked
+
+
+# ---- report write failure must not be a silent pass ----
+
+
+def test_unwritable_report_path_exits_nonzero_with_clear_error(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    mod = _load()
+    cfg = tmp_path / "cfg.json"
+    cfg.write_text(json.dumps({"accounts": [OWNER]}))
+    monkeypatch.delenv("GCP_CHECK_ACCOUNTS", raising=False)
+    monkeypatch.setenv("GCP_CHECK_ACCOUNTS_FILE", str(cfg))
+    monkeypatch.setattr(mod, "list_authenticated", lambda scope: {OWNER})
+    monkeypatch.setattr(mod, "list_delete_requested", lambda acct: (acct, [], None))
+    # A directory cannot be opened for writing, on every OS, without touching real paths.
+    monkeypatch.setattr(sys, "argv", ["prog", "--json", str(tmp_path)])
+    assert mod.main() == 1
+    err = capsys.readouterr().err
+    assert "REPORT ERROR" in err and str(tmp_path) in err
