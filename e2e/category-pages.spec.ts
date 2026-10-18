@@ -25,8 +25,10 @@ test("clicking See all on a capped home category lands on its /projects/[categor
   page,
 }) => {
   await page.goto("/");
+  // Pills are real links: a click before hydration navigates to the category page, so wait for the handler.
+  await expect(page.locator('[data-hydrated="true"]').first()).toBeAttached({ timeout: 20_000 });
   const filterGroup = page.getByRole("group", { name: "Filter projects by category" });
-  const pills = filterGroup.getByRole("button");
+  const pills = filterGroup.getByRole("link");
   const pillCount = await pills.count();
 
   // Find the first category pill whose total exceeds the tease limit (4) —

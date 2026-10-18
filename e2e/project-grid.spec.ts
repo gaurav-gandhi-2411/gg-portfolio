@@ -91,8 +91,10 @@ test.describe("project grid rhythm", () => {
   }) => {
     await page.goto("/projects");
     await page.waitForTimeout(1200);
+    // Pills are real links: a click before hydration would navigate away.
+    await expect(page.locator('[data-hydrated="true"]').first()).toBeAttached({ timeout: 20_000 });
 
-    const pills = page.getByRole("group", { name: "Filter projects by category" }).getByRole("button");
+    const pills = page.getByRole("group", { name: "Filter projects by category" }).getByRole("link");
     const count = await pills.count();
 
     for (let i = 1; i < count; i++) {
@@ -229,7 +231,7 @@ test.describe("filter pill tap targets", () => {
     const overlaps = await page.evaluate(() => {
       const pills = [
         ...document.querySelectorAll<HTMLElement>(
-          '[aria-label="Filter projects by category"] button'
+          '[aria-label="Filter projects by category"] a'
         ),
       ];
       const boxes = pills.map((p) => ({
@@ -264,7 +266,7 @@ test.describe("filter pill tap targets", () => {
     const wrong = await page.evaluate(() => {
       const pills = [
         ...document.querySelectorAll<HTMLElement>(
-          '[aria-label="Filter projects by category"] button'
+          '[aria-label="Filter projects by category"] a'
         ),
       ];
       const bad: string[] = [];

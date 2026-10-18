@@ -132,7 +132,7 @@ test.describe("Tap target sizing (375px)", () => {
 
   test("category filter chips meet the 44px minimum", async ({ page }) => {
     await page.goto("/projects");
-    await assertAtLeast44(page.getByRole("button", { name: /^All \d+$/ }));
+    await assertAtLeast44(page.getByRole("link", { name: /^All \d+$/ }));
   });
 
   test("project card footer links (Case study / Live / Source) meet the 44px minimum", async ({
