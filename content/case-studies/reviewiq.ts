@@ -69,7 +69,7 @@ export const reviewiq: CaseStudy = {
     {
       label: "Overall extraction accuracy",
       value: "78.6% (95% CI 73–83%, n=43, eval 2026-09-19)",
-      detail: "PASS on review-iq's own CI regression gate (a regression detector, not a real-world accuracy claim)",
+      detail: "PASS on review-iq's own CI regression gate 76%, PASS (a regression detector, not a real-world accuracy claim)",
       sourceRef: "reviewiq:extraction-eval",
     },
     {
