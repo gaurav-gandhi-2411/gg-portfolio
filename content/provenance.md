@@ -1349,3 +1349,44 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
+
+## Wave 15 pipeline proposals — 2026-10-19 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a measurable LLM performance result verifiable in the README, not redundant with existing copy, but lacks an explicit recent date.; verifier: The draft accurately reflects the specific metrics (mean score, percentage, sample size, and confidence interval) and terminology present in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:45`
+  Draft: "Measured LLM synthesis quality, achieving a mean judge score of 12.09 / 15 (80.6%) across 64 cases (95 % CI [11.64, 12.52])."
+  Suggested provenance ID: `triage-iq-llm-synthesis`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable LLM synthesis accuracy (skill) and is directly present in the README, but lacks a date so its recency is uncertain while not duplicating existing copy.; verifier: The draft accurately reflects the specific metrics (68.8%, 44/64, Wilson 95% CI [56.6, 78.8]) and terminology (LLM synthesis, component accuracy, exact string match) found in the source text without adding unsupported claims or tone drift.)
+  Source: `README.md:46`
+  Draft: "Measured component accuracy of the LLM synthesis system, achieving 68.8% exact‑string matches (44/64) with a 95% Wilson confidence interval of 56.6%–78.8%."
+  Suggested provenance ID: `triage-iq-llm-synthesis-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Demonstrates a measurable ML improvement and is directly verifiable in the README, but lacks a timestamp and adds new detail not covered in the existing copy.; verifier: The draft accurately reflects the specific metric (+6.95pp), model (LightGBM), and context (k8s bucket) provided in the source text without adding unsupported claims or tone drift.)
+  Source: `README.md:82`
+  Draft: "Improved model performance by 6.95 percentage points over the majority baseline using LightGBM in the k8s bucket."
+  Suggested provenance ID: `triage-iq-readme`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — The fact demonstrates modeling skill and is directly present in the README, but lacks a recent timestamp, making it less current.; verifier: The draft accurately reflects the specific metrics (68% zero rate, 55% lumpy/erratic), feature sets (SNAP, lags, hierarchy), and modeling conclusions (Tweedie loss, global model) present in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed that a cross‑series global model using a compound‑Poisson (Tweedie) loss was needed after EDA revealed a 68% zero rate and 55% of series classified as lumpy/erratic, and identified SNAP flags plus lag‑7/14/28 features and hierarchy encodings (store_id, cat_id, dept_id) as critical."
+  Suggested provenance ID: `shelfsense-m5-eda`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates forecasting skill with a stratified sample and measurable WRMSSE, is directly quoted in the README, not covered by existing copy, but lacks an explicit recent timestamp.; verifier: All specific numbers (1,000, 334/333/333, 0.6541, 0.8377, 30,490) and the causal logic regarding the sample size and score reproduction are accurately reflected in the source text without tone drift.)
+  Source: `README.md:109`
+  Draft: "Built a stratified sample of 1,000 series (334 FOODS‑top, 333 HOUSEHOLD‑mid, 333 HOBBIES‑low) to make model iteration feasible, achieving ETS WRMSSE 0.6541 on the sample and reproducing the public Kaggle score of 0.8377 despite covering only a fraction of the 30,490‑series catalog."
+  Suggested provenance ID: `shelfsense-m5-readme`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates valuable debugging and performance‑tradeoff skill and is directly quoted from the README, but lacks a recent date and adds new information not covered in existing copy.; verifier: The draft accurately reflects the specific numbers (442/1000, 3 hours, 12 hours, 558), the causal relationship between the crash and the decision to stop, and the conclusion about the structural nature of the failure as stated in the source.)
+  Source: `README.md:111`
+  Draft: "Diagnosed that SARIMA crashed after 3 hours on 442 of 1,000 series, avoiding a further ~12‑hour sequential run for the remaining 558 series, and documented the structural failure of sparse HOBBIES series for classical models."
+  Suggested provenance ID: `sarima-crash-diagnosis`
+- **gaurav-gandhi-2411/review-iq** (curator 3/5 — Demonstrates model calibration skill and is verbatim in the README, but lacks a recent timestamp, so it isn’t current.; verifier: The draft accurately reflects the specific numbers (9/33 checks, tolerance <= 2) and the action taken (dropped from active panel) as stated in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:484`
+  Draft: "Identified calibration issues and removed the allam-2-7b model from the active panel after it failed 9 of 33 control‑set field checks, exceeding the allowed tolerance of 2."
+  Suggested provenance ID: `review-iq:calibration-drop`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — The fact demonstrates a measurable analysis skill and is directly quoted from the README, but lacks a recent date, so it’s not current though not redundant with existing copy.; verifier: The draft accurately reflects the specific numerical values, retrieval statistics, and recommendations found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:202`
+  Draft: "Measured fused similarity scores for users browsing a single colour across many product types and found the lowest values (0.33–0.38). The model still retrieved the correct colour (5/5 Black recommendations for a Black‑only buyer) but with weak confidence, suggesting a colour‑aware re‑ranking step would improve results."
+  Suggested provenance ID: `readme:single-colour-low-similarity`
+- **gaurav-gandhi-2411/AetherArt** (curator 4/5 — Shows concrete evaluation skill and is directly verifiable in the README, but lacks a recent timestamp and isn’t redundant with current copy.; verifier: The draft accurately reflects the source's description of the 500/1000/1500 sweep, the specific metrics used (HPSv2.1 + ImageReward), and the selection of the winning checkpoint, without adding unsupported claims or altering the tone.)
+  Source: `README.md:59`
+  Draft: "Evaluated 500, 1000, and 1500 checkpoint sweeps with HPSv2.1 and ImageReward, then selected the highest‑scoring checkpoint (see the winning‑checkpoint grid)."
+  Suggested provenance ID: `checkpoint-selection`
