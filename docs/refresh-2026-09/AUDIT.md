@@ -235,7 +235,7 @@ carried over from the spec's own baseline without independent re-check.
 | F13 | Site "14 projects · 12 live" vs. actual 9 live | **Open, now exact.** 14 correct; "12 live" wrong by the site's own link-based definition — actual is 9. |
 | F14 | PyPI downloads shown raw, no mirror/CI caveat | **Open.** See §6 above for full analysis. |
 | F15 | 3 open bot issues, 9 open PRs, several 5+ weeks stale | **Open, identical to baseline.** 7 of 9 PRs ≥36 days old — "several" is if anything understated. |
-| F16 | GH profile email (`gaurav.gandhi2411@`) differs from resume/README (`gauravgandhi429@`) | **New, open, low-medium severity.** Not incorrect, but a second identity on a "every number sourced" page. |
+| F16 | GH profile email (`[old personal email address, redacted]`) differs from resume/README (`gauravgandhi429@`) | **New, open, low-medium severity.** Not incorrect, but a second identity on a "every number sourced" page. |
 | F17 | Style Maitri catalogue size: site/README exact "52,494" vs. resume rounded "52,000" | **New, open, minor.** Compatible, not contradictory; worth normalizing for consistency. |
 | F18 | GH profile `company` field says "Uber" only, omitting "via Indium Software" (site/README both name it) | **New, open, low severity.** Not false, an acceptable simplification candidate. |
 | F19 | ~~Resume claims "contributed two upstream pull requests to google/adk-python"; verified 0 of 8 merged~~ | ~~**New, open, highest severity of F16–F19** — see §1 finding #1 above.~~ **Retracted — see Erratum.** |
