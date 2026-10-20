@@ -51,9 +51,21 @@ on:
   # check has to be started explicitly. Still needed — the trigger above
   # covers base-branch breadth, not the GITHUB_TOKEN case.
   workflow_dispatch:
+  # Merges made with a workflow token (the dependabot auto-merge job, other bot
+  # merges) do not fire push workflows, so such a main commit gets no CI run at
+  # all: 0b1f35c (dependabot PR #343 merge) had none, and a broken main could
+  # sit untested until the next human push. A nightly run on main closes that
+  # gap. It runs on the default branch HEAD, off the hour to dodge the
+  # top-of-hour scheduler queue. It reports on main as it is; it cannot
+  # attribute a failure to a particular commit.
+  schedule:
+    - cron: "17 3 * * *"
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # The schedule event gets its own group: on main it shares github.ref with
+  # push runs, and cancel-in-progress would let a nightly run cancel a real
+  # push run (or be cancelled by one) on the same ref.
+  group: ci-${{ github.ref }}${{ github.event_name == 'schedule' && '-schedule' || '' }}
   cancel-in-progress: true
 
 jobs:
