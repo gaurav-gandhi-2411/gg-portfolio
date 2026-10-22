@@ -62,7 +62,7 @@ test.describe("Case-study metric provenance", () => {
 
     const panel = page.getByRole("group", { name: /Source for Component classifier top-3 accuracy \(vscode\)/ });
     await expect(panel).toHaveCSS("opacity", "1");
-    await expect(panel).toContainText("README.md");
+    await expect(panel).toContainText("docs/EVALUATION.md");
     const link = panel.getByRole("link").first();
     await expect(link).toHaveAttribute("href", /github\.com\/gaurav-gandhi-2411\/triage-iq\/blob\//);
 
