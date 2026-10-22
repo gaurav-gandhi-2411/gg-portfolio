@@ -151,8 +151,8 @@ confirmed 200 in `reports/prelaunch_hardening_2026-07-12.md:63`.
 
 | ID | Claim | Source |
 |---|---|---|
-| `triageiq:classifier-top3-k8s` / `triageiq:classifier-top3-vscode` | Component classifier top-3 accuracy: k8s 87.1% (README.md:81), vscode 89.8% (README.md:79); top-1 secondaries 60.5% / 76.5% sit one line below each. **Split 2026-08-13** from the single `triageiq:classifier-top3` entry, which anchored a four-number claim to one line and so could not be correct for more than one of them. | **Wave 19 correction (2026-07-31):** retrained via a one-vs-rest multi-label supervision fix, landed 2026-07-24 — `triage-iq/README.md:78-82`, `docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`. Prior value (82.5%/90.4% top-3) is superseded, was current at the case study's 2026-07-26 writing but the fix had already shipped by then — see the wave-19 provenance-failure note below. |
-| `triageiq:cqr-coverage-k8s` / `-vscode` (split 2026-08-13) | Resolution-time interval coverage after Conformal Quantile Regression: 76.2% (k8s) / 74.6% (vscode) vs. an 80% nominal target, matching the live-serving artifact | `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
+| `triageiq:classifier-top3-k8s` / `triageiq:classifier-top3-vscode` | Component classifier top-3 accuracy: k8s 85.99% (docs/EVALUATION.md:9), vscode 85.82% (docs/EVALUATION.md:7); top-1 secondaries 54.84% / 69.98% sit one line below each. **Split 2026-08-13** from the single `triageiq:classifier-top3` entry, which anchored a four-number claim to one line and so could not be correct for more than one of them. | **Correction 2026-10-23:** 87.1% (k8s) / 89.8% (vscode) → 85.99% [83.16, 88.41] (n=671) / 85.82% [82.17, 88.82] (n=423), `triage-iq/docs/EVALUATION.md:9,7` @ `3bcd086` (47-class retrain, ADR-0057; the superseded 87.1%/89.8% table was README.md:78-82 @ `4614dd1`; triage-iq 91282bb, 2026-10-17, moved the detail to docs/); top-1 60.5% / 76.5% → 54.84% / 69.98% (`EVALUATION.md:10,8`). See "Correction 2026-10-23" at the end of this file. **Wave 19 correction (2026-07-31):** retrained via a one-vs-rest multi-label supervision fix, landed 2026-07-24 — `triage-iq/README.md:78-82`, `docs/architecture/adr/0036-classifier-multilabel-supervision-fix.md`. Prior value (82.5%/90.4% top-3) is superseded, was current at the case study's 2026-07-26 writing but the fix had already shipped by then — see the wave-19 provenance-failure note below. |
+| `triageiq:cqr-coverage-k8s` / `-vscode` (split 2026-08-13) | Resolution-time interval coverage after Conformal Quantile Regression: 79.71% (k8s) / 82.7% (vscode) vs. an 80% nominal target | **Correction 2026-10-23:** 76.2% / 74.6% → 79.71% [77.94, 81.38] (held-out n=2,095) / 82.7% [78.5, 86.2] (n=370), `triage-iq/docs/EVALUATION.md:30,35` @ `3bcd086`; the old figures were measured on the pre-D7 served state (EVALUATION.md:57). The vscode figure is one reconstructed 7-day window, not a guarantee. Historical source follows: `triage-iq/README.md:94,98`; `triage-iq/data/models/cqr_conformal_adjustments.json:11,40` — issue #45 fix: this results row previously shared `sourceRef: "triageiq:cqr"` with the CQR *design-decision* text below, which cites the ADR's earlier exploratory numbers (76.6%/74.1% for a different calibration split), not this shipped, README-matching figure — a wrong-sourceRef bug of the same shape already fixed once for `gold-rate-tracker:headline` (see the wave-20 correction note under "The metrics.json layer" below). This row already existed as a `content/metrics.json` entry with this exact source; it just never had a matching parseable provenance.md row for the case-study claim checker to resolve against. |
 
 **Correction vs. spec.md:** spec claimed "fabrication-gated CI (3.1% measured, hard gate)" — wrong
 on every count. Grounding-verified fabrication rates as of that 2026-07-12 audit were **1.9% (k8s) / 9.1% (vscode)**
@@ -1349,3 +1349,23 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
+
+## Correction 2026-10-23 — TriageIQ classifier and CQR figures superseded at source
+
+`triageiq:classifier-top3-k8s` / `-vscode` and `triageiq:cqr-coverage-k8s` / `-vscode` still
+displayed the 2026-08-05 figures. Re-read from `triage-iq` HEAD `3bcd086` (`docs/EVALUATION.md`,
+which carries the full table since triage-iq 91282bb, 2026-10-17):
+
+- Top-3: k8s 87.1% → 85.99% [83.16, 88.41] (n=671), vscode 89.8% → 85.82% [82.17, 88.82] (n=423)
+  (`docs/EVALUATION.md:9`, `:7`). Top-1: k8s 60.5% → 54.84%, vscode 76.5% → 69.98% (`:10`, `:8`).
+  The k8s top-3 is now marginally above vscode's; the intervals overlap.
+- Conformal (CQR v2) coverage: k8s 76.2% → 79.71% [77.94, 81.38], vscode 74.6% → 82.7% [78.5, 86.2]
+  (`docs/EVALUATION.md:30`, `:35`). The old figures were measured on the pre-D7 served state.
+- Retrieval Recall@5 values are unchanged (39.39% / 53.50%); only their line refs moved, to
+  `README.md:40` / `README.md:41`.
+- Inference stage latency label on the vscode classifier row: p50 4.9ms → 7.0ms
+  (`docs/EVALUATION.md:16`, both repos, production n=5, 2026-10-11).
+
+Not changed here: the resolution-time row (the served behaviour changed under ADR-0064 and needs
+its own re-verification) and `content/resume-data.json` / `content/resume-metrics.json` /
+`public/resume.pdf`, which remain on the old figures until the owner regenerates the résumé.

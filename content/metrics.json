@@ -46,63 +46,63 @@
     },
     "triageiq:classifier-top3-k8s": {
       "label": "Component classifier top-3 accuracy (kubernetes)",
-      "value": "87.1%",
+      "value": "85.99%",
       "repo": "gaurav-gandhi-2411/triage-iq",
-      "source_file": "README.md",
-      "source_line": 81,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the kubernetes top-3 figure at README.md:81. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 9,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. Before 2026-10-23, the top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) were one line below each primary in the same table. Before 2026-10-23 this entry pinned the kubernetes top-3 figure at README.md:81. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix. Corrected 2026-10-23: 87.1% -> 85.99% (docs/EVALUATION.md:9 @ 3bcd086); triage-iq's current table reports the 47-class retrain (ADR-0057) evaluated on fresh test rows with 95% intervals; the ADR-0036-era figure is superseded. Now n=671, CI [83.16, 88.41]; top-1 is 54.84% at docs/EVALUATION.md:10 (previously 60.5%). k8s top-3 is now marginally above vscode's 85.82%."
     },
     "triageiq:classifier-top3-vscode": {
       "label": "Component classifier top-3 accuracy (vscode)",
-      "value": "89.8%",
+      "value": "85.82%",
       "repo": "gaurav-gandhi-2411/triage-iq",
-      "source_file": "README.md",
-      "source_line": 79,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. The top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) are one line below each primary in the same table. This entry pins the vscode top-3 figure at README.md:79. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix."
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 7,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Split from the former triageiq:classifier-top3 on 2026-08-13. That entry's value was a four-number claim (k8s top-3/top-1, vscode top-3/top-1) anchored to a single line, so the citation could not be correct for more than one of them -- and it was correct for none, having also cited a pre-squash-merge SHA. Each entry now pins ONE number to the ONE line holding it. Before 2026-10-23, the top-1 secondaries (60.5% k8s, 89.8%->76.5% vscode) were one line below each primary in the same table. Before 2026-10-23 this entry pinned the vscode top-3 figure at README.md:79. Prior history preserved: corrected from the pre-ADR-0036 value 82.5% (k8s) / 90.4% (vscode), top-3 only; ADR-0036 (2026-07-24) shipped a multi-label supervision fix. Corrected 2026-10-23: 89.8% -> 85.82% (docs/EVALUATION.md:7 @ 3bcd086); triage-iq's current table reports the 47-class retrain (ADR-0057) evaluated on fresh test rows with 95% intervals; the ADR-0036-era figure is superseded. Now n=423, CI [82.17, 88.82]; top-1 is 69.98% at docs/EVALUATION.md:8 (previously 76.5%)."
     },
     "triageiq:cqr-coverage-k8s": {
       "label": "Resolution-time CQR interval coverage (kubernetes)",
-      "value": "76.2%",
+      "value": "79.71%",
       "repo": "gaurav-gandhi-2411/triage-iq",
-      "source_file": "README.md",
-      "source_line": 94,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. kubernetes coverage at README.md:94 (80% nominal target). Also re-pointed off 1ad094f, a pre-squash-merge branch commit. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 30,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. Before 2026-10-23, kubernetes coverage was pinned at README.md:94 (80% nominal target). Also re-pointed off 1ad094f, a pre-squash-merge branch commit. New entry (wave 18) — was accurate and current but never surfaced on the site. Before 2026-10-23 it matched the then-live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode); that served state is superseded. Corrected 2026-10-23: 76.2% -> 79.71% (docs/EVALUATION.md:30 @ 3bcd086); the 76.2%/74.6% figures were measured on the pre-D7 served state (EVALUATION.md:57), which ADR-0064 / owner decision D7 (2026-10-11) replaced. Now Conformal (CQR v2) coverage on held-out n=2,095, CI [77.94, 81.38], target 80%."
     },
     "triageiq:cqr-coverage-vscode": {
       "label": "Resolution-time CQR interval coverage (vscode)",
-      "value": "74.6%",
+      "value": "82.7%",
       "repo": "gaurav-gandhi-2411/triage-iq",
-      "source_file": "README.md",
-      "source_line": 98,
-      "commit_sha": "4614dd1bd54e1fa5b33b25c7904f5f99e1e9ff0d",
-      "measured_at": "2026-08-05",
-      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. vscode coverage at README.md:98 (80% nominal target). Also re-pointed off 1ad094f. New entry (wave 18) — was accurate and current but never surfaced on the site. Matches the live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode)."
+      "source_file": "docs/EVALUATION.md",
+      "source_line": 35,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Split 2026-08-13. The former single entry packed two numbers behind one line number, which cannot be correct for both -- the cited-line check added the same day flagged it. Each entry now pins ONE number to the ONE line holding it, verified by counting raw newlines. Before 2026-10-23, vscode coverage was pinned at README.md:98 (80% nominal target). Also re-pointed off 1ad094f. New entry (wave 18) — was accurate and current but never surfaced on the site. Before 2026-10-23 it matched the then-live-serving artifact data/models/cqr_conformal_adjustments.json (0.7617 k8s, 0.7459 vscode); that served state is superseded. Corrected 2026-10-23: 74.6% -> 82.7% (docs/EVALUATION.md:35 @ 3bcd086); the 76.2%/74.6% figures were measured on the pre-D7 served state (EVALUATION.md:57), which ADR-0064 / owner decision D7 (2026-10-11) replaced. Now held-out n=370 on one reconstructed 7-day window, CI [78.5, 86.2]; a measurement on that window, not a guarantee."
     },
     "triageiq:retrieval-recall5-k8s": {
       "label": "Similar-issue retrieval Recall@5, related task, clean eval subset (kubernetes)",
       "value": "39.39%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
-      "source_line": 100,
-      "commit_sha": "77bebccbabf118a2487ba864c91ced36f890f0d8",
-      "measured_at": "2026-08-11",
-      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 18.0% -> 24.67% -> 39.39%, three corrections deep. ADR-0035 (2026-07-24) produced 18.0% by fixing a title-only-query harness bug. ADR-0040 (2026-08-10) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit and the query-instruction prefix was never applied; fixing both raised it to 24.67% [18.0, 31.3], measured over the full 150-pair eval population (README.md:101). A 2026-08-11 eval-population audit (commit 1433b287, PR #81) then found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues referencing many unrelated sub-issues; causal-only 'See #N' references) -- a hand-verified, outcome-blind clean subset (two exclusion criteria written down before any pair was scored, applied blind by 5 reviewers) landed at 39.39% [27.3, 51.5] (n=66), CI lower bound above the unfiltered point estimate. This clean-subset number is now triage-iq's own bolded/primary headline figure for this metric in both its README table and architecture diagram -- not a caveated alternative. Was split 2026-08-13 from a single entry that packed two numbers behind one line number (see vscode sibling entry's history)."
+      "source_line": 40,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 18.0% -> 24.67% -> 39.39%, three corrections deep. ADR-0035 (2026-07-24) produced 18.0% by fixing a title-only-query harness bug. ADR-0040 (2026-08-10) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit and the query-instruction prefix was never applied; fixing both raised it to 24.67% [18.0, 31.3], measured over the full 150-pair eval population (README.md:101). A 2026-08-11 eval-population audit (commit 1433b287, PR #81) then found ~56% of that population is structurally invalid as a content-similarity test (umbrella issues referencing many unrelated sub-issues; causal-only 'See #N' references) -- a hand-verified, outcome-blind clean subset (two exclusion criteria written down before any pair was scored, applied blind by 5 reviewers) landed at 39.39% [27.3, 51.5] (n=66), CI lower bound above the unfiltered point estimate. This clean-subset number is now triage-iq's own bolded/primary headline figure for this metric in both its README table and architecture diagram -- not a caveated alternative. Was split 2026-08-13 from a single entry that packed two numbers behind one line number (see vscode sibling entry's history). Line ref updated 2026-10-23: README.md:100 -> README.md:40 @ 3bcd086 (triage-iq front-page trim, 91282bb); value 39.39% unchanged."
     },
     "triageiq:retrieval-recall5-vscode": {
       "label": "Similar-issue retrieval Recall@5, duplicate task (vscode)",
       "value": "53.50%",
       "repo": "gaurav-gandhi-2411/triage-iq",
       "source_file": "README.md",
-      "source_line": 103,
-      "commit_sha": "77bebccbabf118a2487ba864c91ced36f890f0d8",
-      "measured_at": "2026-08-11",
-      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 50.5% -> 53.50%. ADR-0035 (2026-07-24) corrected the original ~80%-noise gold set to 50.5% via a harness fix (title-only queries against a title+body production index). ADR-0040 (2026-08-10, commit 6cb695ab) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit; Lever 1 (the truncation fix) shipped unconditionally for both repos and raised vscode's duplicate-task Recall@5 to 53.50% [46.5, 60.5] (README.md:103) -- vscode does not get Lever 2 (the query-instruction prefix), which tested directionally negative for its duplicate-matching task, so 53.50% remains current. Split 2026-08-13 from a single entry that packed two numbers (k8s + vscode) behind one line number, which the cited-line check flagged as unable to be correct for both."
+      "source_line": 41,
+      "commit_sha": "3bcd086d59e60181f350fcbe1990d68c84b31469",
+      "measured_at": "2026-10-17",
+      "note": "Corrected 2026-08-15 (re-verified from scratch against triage-iq HEAD, unchanged since the prior 2026-08-12 audit): 50.5% -> 53.50%. ADR-0035 (2026-07-24) corrected the original ~80%-noise gold set to 50.5% via a harness fix (title-only queries against a title+body production index). ADR-0040 (2026-08-10, commit 6cb695ab) then found the corpus was truncated at 512 characters instead of BGE's real 512-token limit; Lever 1 (the truncation fix) shipped unconditionally for both repos and raised vscode's duplicate-task Recall@5 to 53.50% [46.5, 60.5] (README.md:103) -- vscode does not get Lever 2 (the query-instruction prefix), which tested directionally negative for its duplicate-matching task, so 53.50% remains current. Split 2026-08-13 from a single entry that packed two numbers (k8s + vscode) behind one line number, which the cited-line check flagged as unable to be correct for both. Line ref updated 2026-10-23: README.md:103 -> README.md:41 @ 3bcd086 (triage-iq front-page trim, 91282bb); value 53.50% unchanged."
     },
     "shelfsense:wrmsse": {
       "label": "WRMSSE, best private leaderboard",
