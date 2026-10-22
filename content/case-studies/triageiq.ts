@@ -122,13 +122,13 @@ export const triageiq: CaseStudy = {
     {
       label: "Resolution-time CQR interval coverage (kubernetes)",
       value: "79.71%",
-      detail: "vs. an 80% nominal target, post-calibration, and what's actually loaded in the live-serving artifact; see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
+      detail: "vs. an 80% nominal target, CQR v2 post-calibration, the served interval (triage-iq ADR-0064); the CQR design decision below gives the earlier raw-model coverage figures",
       sourceRef: "triageiq:cqr-coverage-k8s",
     },
     {
       label: "Resolution-time CQR interval coverage (vscode)",
       value: "82.7%",
-      detail: "against the same 80% nominal target, same calibration path",
+      detail: "against the same 80% nominal target; the served vscode interval is centred on the train median and widened by the stored CQR adjustment (ADR-0064), measured on one reconstructed 7-day window",
       sourceRef: "triageiq:cqr-coverage-vscode",
     },
     {
