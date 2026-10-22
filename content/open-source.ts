@@ -78,7 +78,7 @@ export const openSourcePackages: OpenSourcePackage[] = [
     name: "tracegauge",
     packageName: "tracegauge",
     pypiUrl: "https://pypi.org/project/tracegauge/",
-    repoUrl: "https://github.com/gaurav-gandhi-2411/token-efficiency-scorer",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/tracegauge",
     sourceRef: "oss:tracegauge-repo",
   },
   {
