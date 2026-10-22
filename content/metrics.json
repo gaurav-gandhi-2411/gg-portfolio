@@ -226,12 +226,12 @@
     "tracegauge:tests": {
       "label": "Test suite",
       "value": "643/643 passing",
-      "repo": "gaurav-gandhi-2411/token-efficiency-scorer",
-      "source_file": "CHANGELOG.md (CURRENT_STATE.md:82's 601 is a 0.9.0-scoped feature subtotal, not the whole-suite count)",
-      "source_line": 92,
-      "commit_sha": "cd4087e43d575dc0afa5dfef3a8f90da2790d82a",
+      "repo": "gaurav-gandhi-2411/tracegauge",
+      "source_file": "CHANGELOG.md",
+      "source_line": 946,
+      "commit_sha": "1c8941a14762bbf20fa643db29cb06888eb5027f",
       "measured_at": "2026-08-05",
-      "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor."
+      "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor. Re-pointed 2026-10-23: token-efficiency-scorer was renamed to tracegauge with a history scrub (0.16.0); 643/643 is the 0.10.0-era count in the CHANGELOG; whether to show a current count is queued for the owner."
     },
     "warmer:embedding-separation": {
       "label": "Embedding cluster separation (mean silhouette, raw embeddings)",

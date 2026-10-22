@@ -137,7 +137,7 @@ const CASE_STUDY_REPO = {
   aetherart: "gaurav-gandhi-2411/AetherArt",
   agentgauge: "gaurav-gandhi-2411/agentgauge",
   reclaim: "gaurav-gandhi-2411/reclaim",
-  tracegauge: "gaurav-gandhi-2411/token-efficiency-scorer",
+  tracegauge: "gaurav-gandhi-2411/tracegauge",
   "adk-tracegauge": "gaurav-gandhi-2411/adk-tracegauge",
   "expense-tracker": "gaurav-gandhi-2411/expense-tracker",
 };

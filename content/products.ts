@@ -199,7 +199,7 @@ export const products: Product[] = [
     name: "tracegauge",
     tagline:
       "Scores a Claude Code session on how efficient it was, and shows you where the tokens went to waste.",
-    repoUrl: "https://github.com/gaurav-gandhi-2411/token-efficiency-scorer",
+    repoUrl: "https://github.com/gaurav-gandhi-2411/tracegauge",
     categories: ["tooling", "evals-research", "llm-agents"],
     techChips: ["Python", "PyPI"],
     pypi: {

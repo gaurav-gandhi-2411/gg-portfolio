@@ -131,7 +131,7 @@ export const tracegauge: CaseStudy = {
     { label: "Install from PyPI", href: "https://pypi.org/project/tracegauge/" },
     {
       label: "Source on GitHub",
-      href: "https://github.com/gaurav-gandhi-2411/token-efficiency-scorer",
+      href: "https://github.com/gaurav-gandhi-2411/tracegauge",
     },
   ],
 };

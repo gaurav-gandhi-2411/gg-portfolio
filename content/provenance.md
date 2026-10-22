@@ -406,7 +406,7 @@ the earlier concurrent-session pass's citation of only the 2.6GB single-componen
 
 | Claim | Source |
 |---|---|
-| PyPI package `tracegauge`, `pip install tracegauge` | `token-efficiency-scorer/pyproject.toml` (`name = "tracegauge"`), badges in `README.md:6-7`. **The version was removed from this row on 2026-08-18**: it read 0.10.0, confirmed via `pip index versions tracegauge` on 2026-07-12, and the registry had since moved to 0.12.0. Version and release count are now fetched live per package by `lib/live-data.ts`'s `getPypiStats` rather than written down anywhere |
+| PyPI package `tracegauge`, `pip install tracegauge` | `tracegauge/pyproject.toml` (`name = "tracegauge"`), badges in `README.md:6-7`. **The version was removed from this row on 2026-08-18**: it read 0.10.0, confirmed via `pip index versions tracegauge` on 2026-07-12, and the registry had since moved to 0.12.0. Version and release count are now fetched live per package by `lib/live-data.ts`'s `getPypiStats` rather than written down anywhere |
 
 Note: the PyPI package name (`tracegauge`) differs from the GitHub repo name
 (`token-efficiency-scorer`) — the card's repo link points to the actual repo; package
@@ -1250,7 +1250,7 @@ change is live in the repo under a different commit. Checked 2026-09-23.
 | `oss:adk-python-6939` | google/adk-python PR #6939, "fix(evaluation): reject num_samples=0 in JudgeModelOptions at construction time", landed via Copybara as commit `85e08686f8310e00b2b031a042db86405920b4b2`, not yet in a tagged release | `https://github.com/google/adk-python/commit/85e08686f8310e00b2b031a042db86405920b4b2` (commit message and content confirmed via `GET /repos/google/adk-python/commits/85e0868...`) |
 | `oss:keras-23420` | keras-team/keras PR #23420, "fix: R2Score returns NaN instead of 1.0 for a perfect prediction on zero-variance data", merged as commit `f3b31e4f4667849d98c1e230e142c9f445f2eed0`, not yet in a tagged release | `https://github.com/keras-team/keras/commit/f3b31e4f4667849d98c1e230e142c9f445f2eed0`; `GET /repos/keras-team/keras/pulls/23420` returns `state: closed, merged: true, merge_commit_sha` matching this commit exactly |
 | `oss:adk-python-in-review` | google/adk-python #6739 ("fix(evaluation): honor each metric's own eval_status in AgentEvaluator.evaluate()") and #6740 ("fix(cli): adk eval process exit code now reflects PASSED/FAILED"), both OPEN, not counted as landed | `GET /repos/google/adk-python/pulls/6739` and `.../pulls/6740` both return `state: open` |
-| `oss:tracegauge-repo` | tracegauge's source repo is `gaurav-gandhi-2411/token-efficiency-scorer` (the PyPI package name differs from the repo name) | `https://pypi.org/pypi/tracegauge/json`, `info.project_urls.Repository` |
+| `oss:tracegauge-repo` | tracegauge's source repo is `gaurav-gandhi-2411/tracegauge` (the PyPI package name differs from the repo name) | `https://pypi.org/pypi/tracegauge/json`, `info.project_urls.Repository` |
 | `oss:adk-tracegauge-repo` | adk-tracegauge's source repo is `gaurav-gandhi-2411/adk-tracegauge` | `https://pypi.org/pypi/adk-tracegauge/json`, `info.project_urls.Repository` |
 | `oss:agentgauge-harness-repo` | agentgauge-harness's source repo is `gaurav-gandhi-2411/agentgauge` | `https://pypi.org/pypi/agentgauge-harness/json`, `info.project_urls.Repository` |
 
