@@ -118,13 +118,14 @@ test.describe("Case-study metric provenance", () => {
     // triageiq:cqr-coverage entry — proves this no longer shares sourceRef
     // "triageiq:cqr" with the CQR design-decision text below it, which cites
     // the ADR's earlier, uncalibrated 74.4%/38.2% numbers, not this row's
-    // shipped 76.2%/74.6%.
+    // shipped 79.71%/82.7% (was 76.2%/74.6% until 2026-10-23, when the
+    // entry moved from README.md to docs/EVALUATION.md).
     await expect(panel).toContainText("Verified source");
     await expect(panel).not.toContainText("0010-conformal-quantile-regression");
     const link = panel.getByRole("link").first();
     await expect(link).toHaveAttribute(
       "href",
-      /github\.com\/gaurav-gandhi-2411\/triage-iq\/blob\/.*README\.md/
+      /github\.com\/gaurav-gandhi-2411\/triage-iq\/blob\/.*docs\/EVALUATION\.md/
     );
   });
 
