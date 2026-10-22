@@ -231,7 +231,7 @@
       "source_line": 946,
       "commit_sha": "1c8941a14762bbf20fa643db29cb06888eb5027f",
       "measured_at": "2026-08-05",
-      "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor. Re-pointed 2026-10-23: token-efficiency-scorer was renamed to tracegauge with a history scrub (0.16.0); 643/643 is the 0.10.0-era count in the CHANGELOG; whether to show a current count is queued for the owner."
+      "note": "Corrected from 601/601 (site-vs-repo reconciliation, wave 18): CURRENT_STATE.md:82's 601/601 figure is inside a superseded 0.9.0 sub-section, not the current 0.10.0 release. CHANGELOG.md:92 ('643/643 tests green, up from 601 in 0.9.0; 43 new tests') and a live pytest collection both confirm 643/643 is current. commit_sha updated to cd4087e (2026-07-26) — genuinely newer than the previously-cited 6da6a64 (2026-07-04), confirmed via git merge-base --is-ancestor. Re-pointed 2026-10-23: the repo token-efficiency-scorer now returns 404; the project continues as gaurav-gandhi-2411/tracegauge (CHANGELOG 0.16.0: renamed to tracegauge) and the old pinned commit cd4087e is not reachable there; 643/643 is the 0.10.0-era count in the CHANGELOG (line 946); whether to show a current count is queued for the owner."
     },
     "warmer:embedding-separation": {
       "label": "Embedding cluster separation (mean silhouette, raw embeddings)",
