@@ -1349,3 +1349,52 @@ now that `content/products.ts` references its `github.com` URL (the script's own
 `referencedRepoSlugs` scan). Separately, `gaurav-gandhi-2411` (the GitHub profile README repo) was
 added to `KNOWN_NON_PRODUCT_REPOS` — it was a real, public, non-product repo the inventory check
 would otherwise have started flagging.
+
+## Wave 15 pipeline proposals — 2026-10-26 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Demonstrates a measurable LLM synthesis performance and is directly verifiable in the README, though it lacks a recent timestamp.; verifier: The draft accurately reflects all numerical values, sample size, and methodological details present in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:45`
+  Draft: "Measured LLM synthesis quality with a regression detector across 64 cases, achieving a mean score of 12.09 / 15 (80.6%) and a bootstrap 95% CI of 11.64–12.52."
+  Suggested provenance ID: `triage-iq-readme`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a concrete component accuracy metric that proves skill and is directly verifiable in the README, though it lacks a recent date and thus isn’t clearly current.; verifier: The draft accurately reflects the specific metrics, confidence interval, and task name provided in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:46`
+  Draft: "Measured component accuracy of the LLM synthesis task at 68.8% (44/64), with a 95% Wilson confidence interval of 56.6%–78.8%."
+  Suggested provenance ID: `triage-iq-llm-synthesis-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows solid evaluation expertise and is directly sourced, but lacks a recent timestamp, so it’s not current.; verifier: The draft accurately reflects all specific numbers, model names, and caveats present in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:52`
+  Draft: "Scored each pipeline stage on held‑out data using Wilson or bootstrap confidence intervals (2,000 resamples, seed 42) and measured LLM quality with a local qwen3:8b judge on a 64‑issue gold set (44/64 exact matches), all without any live LLM calls in CI. The judge’s component_match is lenient, so the exact‑match count is the reliable metric, and the grounding check validates consistency against the pipeline’s top‑3 predictions rather than gold correctness."
+  Suggested provenance ID: `triage-iq-evaluation`
+- **gaurav-gandhi-2411/triage-iq** (curator 3/5 — Shows a measurable 6.95pp improvement of LightGBM over a majority baseline, is directly in the README, but lacks a date and context, and is not redundant with existing copy.; verifier: The draft accurately reflects the specific metric (+6.95pp), model (LightGBM), and context (k8s bucket vs majority) found in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:82`
+  Draft: "Improved LightGBM model performance by 6.95 percentage points over the majority baseline in the k8s bucket."
+  Suggested provenance ID: `triage-iq-readme-k8s-bucket-lightgbm`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — The fact demonstrates concrete EDA and modeling skill and is directly quoted from the README, but lacks a recent timestamp, so it’s strong but not current.; verifier: The draft accurately reflects all specific numbers (68%, 55%, lag-7/14/28), technical terms (Tweedie, SNAP, hierarchy encodings), and causal claims present in the source text without introducing unsupported information or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed that a compound‑Poisson (Tweedie) loss is the correct objective, flagged SNAP indicators and lag‑7/14/28 as high‑value features, and required hierarchy encodings for store, category, and department. Predicted a 68% zero‑sale rate and 55% lumpy/erratic series before any model was trained, showing per‑series methods would collapse and that a cross‑series global model with the right loss would capture the signal."
+  Suggested provenance ID: `readme-eda-implication`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Shows concrete forecasting skill and measurable results, directly quoted from the README, but lacks a recent date; it adds new detail not covered in the current copy.; verifier: All numerical values (1,000, 334, 333, 333, 0.6541, 0.8377, 30,490) and specific claims (stratification logic, ETS performance, Kaggle score matching SN28) are explicitly present in the source text.)
+  Source: `README.md:109`
+  Draft: "Built a stratified sample of 1,000 series (334 FOODS‑top, 333 HOUSEHOLD‑mid, 333 HOBBIES‑low) to make ETS/ARIMA/Prophet experiments feasible, achieving an ETS WRMSSE of 0.6541 on the sample and a Kaggle public score of 0.8377 that matched SN28 despite covering only a fraction of the 30,490‑series catalog."
+  Suggested provenance ID: `shelfsense-m5:sample-stratified-1000`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Shows debugging and performance trade‑off skill, is directly quoted from the README, but lacks a recent timestamp and adds new info not in current copy.; verifier: The draft accurately reflects the specific numbers (442/1,000 series, 3 hours, ~12 hours) and the action taken (documenting the failure) found in the source text without adding unsupported claims or tone drift.)
+  Source: `README.md:111`
+  Draft: "Diagnosed a SARIMA fitting crash that stopped after processing 442 of 1,000 series in 3 hours, avoiding a further ~12‑hour sequential run and documenting the failure transparently."
+  Suggested provenance ID: `readme-sarima-crash`
+- **gaurav-gandhi-2411/review-iq** (curator 4/5 — Demonstrates measurable evaluation skill and is verifiable, but lacks a recent timestamp while adding detail not covered in current copy.; verifier: All numerical values and specific claims in the draft are literally present in the source text, and the characterization of the statistical result as 'non-significant' is supported by the source's explicit statement that 'no benefit is detectable' and the confidence interval crossing zero.)
+  Source: `README.md:197`
+  Draft: "Measured the impact of 36 excluded reviews—15 overlapping with prompt fixtures and 21 from the internal benchmark—and found exposed reviews scored 80.6% versus 79.6% for unseen ones, a non‑significant 1.0 pp difference (95 % CI ‑4.4 to +6.2)."
+  Suggested provenance ID: `readme-why-36-reviews-excluded`
+- **gaurav-gandhi-2411/review-iq** (curator 3/5 — The fact shows a verifiable calibration decision demonstrating quality‑control skill, but lacks a date and measurable impact, so it passes with a modest score.; verifier: The draft accurately reflects the specific numbers (9/33 checks, tolerance <= 2) and the action taken (dropped from active panel) as stated in the source text without adding unsupported claims or tone drift.)
+  Source: `README.md:486`
+  Draft: "Identified calibration issues and removed the allam-2-7b model from the active panel after it failed 9 of 33 control‑set field checks, exceeding the allowed tolerance of 2."
+  Suggested provenance ID: `review-iq-calibration-drop`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — Shows measurable analysis skill and is directly sourced, but lacks a recent timestamp.; verifier: The draft accurately reflects all specific numbers, claims, and causal relationships present in the source text without introducing unsupported information or tone drift.)
+  Source: `README.md:202`
+  Draft: "Diagnosed that users who browse a single colour across many product types achieve the lowest fused similarity scores (0.33–0.38), indicating the user embedding is pulled in multiple directions and no modality dominates. The model still retrieves the correct colour (5/5 Black recommendations for a Black‑only buyer) but with weak confidence, suggesting a colour‑aware re‑ranking step would improve results."
+  Suggested provenance ID: `readme-202`
+- **gaurav-gandhi-2411/AetherArt** (curator 4/5 — The fact shows a measurable model‑evaluation skill and is directly supported by the README link, though it lacks a recent timestamp, and it isn’t already covered in the case‑study.; verifier: The draft accurately reflects the source's mention of the 500/1000/1500 sweep, the specific metrics (HPSv2.1 + ImageReward), and the selection of the winning checkpoint without adding unsupported claims or altering the tone.)
+  Source: `README.md:59`
+  Draft: "Evaluated 500, 1000, and 1500‑step checkpoints with HPSv2.1 and ImageReward, selecting the top‑scoring checkpoint (see the winning‑checkpoint grid)."
+  Suggested provenance ID: `aetherart-checkpoint-eval`
