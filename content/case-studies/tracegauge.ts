@@ -96,7 +96,7 @@ export const tracegauge: CaseStudy = {
       sourceRef: "tracegauge:judge-validation",
     },
     {
-      label: "Generalization: 172 developers, 1,053 real sessions",
+      label: "Generalization: 1,053 real sessions (from 58 attributed developers, plus 281 sessions with no user_id)",
       value: "repeated-failed-retry rate ~1.4% in the wild vs. 6.6% in the calibration pool",
       detail: "the calibration pool is honestly labeled a high-waste outlier, not a representative population",
       sourceRef: "tracegauge:generalization",
