@@ -15,6 +15,10 @@ import type { CaseStudy } from "../types";
 // then by ADR-0035's harness-bug fix (eval queried title-only against a
 // title+body production index) — vscode is no longer "retired". LLM synthesis
 // corrected 3-shot -> 4-shot (ADR-0037, 2026-07-30).
+// Classifier top-3 and CQR coverage rows corrected 2026-10-23 to triage-iq's
+// docs/EVALUATION.md @ 3bcd086: 87.1%/89.8% -> 85.99% (k8s) / 85.82% (vscode)
+// (47-class retrain, ADR-0057); 76.2%/74.6% -> 79.71% / 82.7% (post-D7 served
+// state, ADR-0064). The resolution-time row below is NOT yet re-verified.
 export const triageiq: CaseStudy = {
   slug: "triageiq",
   verifiedAt: "2026-10-10", // fabrication-gate wording re-verified against triage-iq code (provenance.md); other rows last checked wave 19
@@ -104,27 +108,27 @@ export const triageiq: CaseStudy = {
     // were actually looking at. sourceRef is a single string by design (see
     // content/types.ts) — one displayed claim, one citation.
     {
-      label: "Component classifier top-3 accuracy (vscode), p50 4.9ms",
-      value: "89.8%",
-      detail: "top-1 76.5%, multi-label supervision fix, ADR-0036, shipped model as of 2026-07-24",
+      label: "Component classifier top-3 accuracy (vscode), p50 7.0ms",
+      value: "85.82%",
+      detail: "top-1 69.98%, 47-class retrain, ADR-0057, fresh test rows (n=423), as of triage-iq's 2026-10-17 evaluation table",
       sourceRef: "triageiq:classifier-top3-vscode",
     },
     {
       label: "Component classifier top-3 accuracy (kubernetes)",
-      value: "87.1%",
-      detail: "top-1 60.5%, same shipped model, the harder of the two eval corpora",
+      value: "85.99%",
+      detail: "top-1 54.84%, same shipped model, fresh test rows (n=671), the harder of the two eval corpora on top-1",
       sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
       label: "Resolution-time CQR interval coverage (kubernetes)",
-      value: "76.2%",
-      detail: "vs. an 80% nominal target, post-calibration, and what's actually loaded in the live-serving artifact; see the CQR design decision below for how much worse the raw, uncalibrated model's coverage was before this",
+      value: "79.71%",
+      detail: "vs. an 80% nominal target, CQR v2 post-calibration, the served interval (triage-iq ADR-0064); the CQR design decision below gives the earlier raw-model coverage figures",
       sourceRef: "triageiq:cqr-coverage-k8s",
     },
     {
       label: "Resolution-time CQR interval coverage (vscode)",
-      value: "74.6%",
-      detail: "against the same 80% nominal target, same calibration path",
+      value: "82.7%",
+      detail: "against the same 80% nominal target; the served vscode interval is centred on the train median and widened by the stored CQR adjustment (ADR-0064), measured on one reconstructed 7-day window",
       sourceRef: "triageiq:cqr-coverage-vscode",
     },
     {
