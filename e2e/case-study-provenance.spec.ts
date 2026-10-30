@@ -79,20 +79,20 @@ test.describe("Case-study metric provenance", () => {
     // "Resolution-time interval coverage" (triageiq:cqr-coverage) used to be
     // this test's example, but issue #45's sourceRef-split fix gave it its
     // own content/metrics.json entry — it's structured-tier now (see the
-    // dedicated regression test below). "Resolution-time predictor MAE"
+    // dedicated regression test below). "Resolution-time point estimate"
     // (triageiq:resolution) has no metrics.json entry, so it stays a clean
     // example of the prose-only path.
     const trigger = page.getByRole("button", {
-      name: /show source for Resolution-time predictor MAE/,
+      name: /show source for Resolution-time point estimate/,
     });
     await trigger.click();
 
-    const panel = page.getByRole("group", { name: /Source for Resolution-time predictor MAE/ });
+    const panel = page.getByRole("group", { name: /Source for Resolution-time point estimate/ });
     await expect(panel).toHaveCSS("opacity", "1");
     await expect(panel).toContainText("Cited in provenance.md");
     // the raw provenance.md Source cell text, unprocessed — proves this
     // isn't a parser-derived citation
-    await expect(panel).toContainText("README.md:91-98");
+    await expect(panel).toContainText("README.md:42-43,134");
     // GG's 2026-08-06 call: a prose-tier metric never renders this
     // component's own regex-extracted file citation as a link (a wrong
     // citation next to a real number is worse than no citation). GG's
