@@ -116,6 +116,13 @@ export const mmfr: CaseStudy = {
       sourceRef: "mmfr:brand-caveat",
       format: "prose",
     },
+    {
+      label: "Honest caveat: single-colour browsers",
+      value: "Lowest fused similarity, 0.33-0.38",
+      detail: "from the README's analysis of its 30 pre-selected demo users (the personalized demo is labelled illustrative only): users who browse one colour across many product types score lowest; the model still returns the right colour (5/5 Black for a Black-only buyer) but with weak confidence; a colour-aware re-ranking step is the README's proposed fix, not built",
+      sourceRef: "mmfr:single-colour-browsers",
+      format: "prose",
+    },
   ],
   story: {
     title: "Diagnosed a full representation collapse to a specific warmup-schedule fix, then wrote the scaling ADR that says exactly where this architecture stops working",
