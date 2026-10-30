@@ -26,7 +26,7 @@ export const experience: ExperienceEntry[] = [
         dateRange: "Aug 2026 – Present",
         bullets: [
           {
-            text: "Lead a 5-person data-science team across GenAI document-intelligence and conversational-AI workstreams, setting the modeling roadmap, evaluation strategy, and technical review standards; hired two of the team's data scientists through end-to-end interviews and onboarded both onto live production systems.",
+            text: "Lead a data-science team across GenAI document-intelligence and conversational-AI workstreams, setting the modeling roadmap, evaluation strategy, and technical review standards; hired two of the team's data scientists through end-to-end interviews and onboarded both onto live production systems.",
             sourceRef: "resume:indium-senior-lead",
             featured: true,
           },

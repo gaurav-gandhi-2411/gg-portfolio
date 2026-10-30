@@ -1,8 +1,8 @@
 {
   "id": "background-indium-lead",
-  "question": "What team does GG lead at Uber AI, and what's the team size?",
+  "question": "What team does GG lead at Uber AI?",
   "category": "background",
   "expectedSourceRefs": ["resume:indium-senior-lead"],
   "expectedBehavior": "answer",
-  "notes": "Direct recall from content/experience.ts's Lead Data Scientist bullet at Uber AI (via Indium Software): leads a 5-person data-science team, sourceRef resume:indium-senior-lead. The question said 'at Indium Software' until the resume moved the attribution to client-first; the sourceRef is unchanged because it is the same claim, now under a different role in the ladder."
+  "notes": "Direct recall from content/experience.ts's Lead Data Scientist bullet at Uber AI (via Indium Software): leads a data-science team, sourceRef resume:indium-senior-lead. The question said 'at Indium Software' until the resume moved the attribution to client-first; the sourceRef is unchanged because it is the same claim, now under a different role in the ladder. Until 2026-10-30 the question also asked for the team size; the site no longer states one (owner decision), so the question was narrowed. The recorded cassette still carries the old '5-person' answer: re-recording spends Groq quota, so it waits for the owner."
 }
