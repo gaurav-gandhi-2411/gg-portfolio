@@ -18,7 +18,12 @@ import type { CaseStudy } from "../types";
 // Classifier top-3 and CQR coverage rows corrected 2026-10-23 to triage-iq's
 // docs/EVALUATION.md @ 3bcd086: 87.1%/89.8% -> 85.99% (k8s) / 85.82% (vscode)
 // (47-class retrain, ADR-0057); 76.2%/74.6% -> 79.71% / 82.7% (post-D7 served
-// state, ADR-0064). The resolution-time row below is NOT yet re-verified.
+// state, ADR-0064).
+// Corrected 2026-10-30 to triage-iq @ 4da3a3c: Stage 4 model llama-3.1-8b-instant ->
+// openai/gpt-oss-120b (README.md:192; 4 few-shot examples still built in
+// src/triage_iq/prompts/triage_prompt.py:540); resolution row rewritten (served point
+// estimate is the training-window median since ADR-0064, README.md:42-43,134); LLM
+// synthesis quality row added (README.md:45-46,52).
 export const triageiq: CaseStudy = {
   slug: "triageiq",
   verifiedAt: "2026-10-10", // fabrication-gate wording re-verified against triage-iq code (provenance.md); other rows last checked wave 19
@@ -57,7 +62,7 @@ export const triageiq: CaseStudy = {
       },
       {
         label: "Stage 4, LLM synthesis",
-        detail: "Groq llama-3.1-8b-instant, 4-shot, JSON-schema retry + fallback, ~3s",
+        detail: "Groq openai/gpt-oss-120b, 4-shot, JSON-schema retry + fallback, ~3s",
       },
       {
         label: "Grounding verifier",
@@ -151,9 +156,9 @@ export const triageiq: CaseStudy = {
       sourceRef: "triageiq:retrieval-recall5-vscode",
     },
     {
-      label: "Resolution-time predictor MAE vs. naive baseline",
-      value: "k8s: 104.05d vs. 106.29d naive (+2.1% better)",
-      detail: "vscode: 6.02d vs. 3.53d naive, 70.5% worse; served as-is with a transparency badge",
+      label: "Resolution-time point estimate: served median vs. learned model",
+      value: "k8s: learned model 102.09d vs. 104.23d naive mean error (+2.06%), but 7.28d vs. 3.52d median error; not served",
+      detail: "The served point estimate is the training-window median (k8s 3.04d, vscode 3.84d; ADR-0064) because the learned model did not beat it on the typical issue. vscode: learned model 5.45d vs. 3.53d naive mean error, worse. The k8s bucket classifier reached 32.95% [31.29, 34.66] vs. 26.0% for always-majority (+6.95 pp, 95% CI +5.55 to +8.36)",
       sourceRef: "triageiq:resolution",
     },
     {
@@ -161,6 +166,12 @@ export const triageiq: CaseStudy = {
       value: "0.0% (0/53) k8s / 0.0% (0/11) vscode",
       detail: "Committed baseline at triage-iq 877af11 (set 2026-10-08, cd2934f). k8s was 1.9% (1/53) on the 2026-09-23 recording; 9.1% vscode was an older audit.",
       sourceRef: "triageiq:contamination-adr0018",
+    },
+    {
+      label: "LLM synthesis quality (64-issue gold set, one local judge)",
+      value: "68.8% (44/64) exact component match · judge 12.09/15",
+      detail: "Exact match Wilson 95% [56.6, 78.8]; judge mean 12.09/15 (80.6%), bootstrap 95% CI [11.64, 12.52] over issues. One local judge (qwen3:8b) replaying a recorded cassette, so it does not detect live-provider drift. The judge's component_match is lenient on neighbouring labels, so exact match is the number to quote",
+      sourceRef: "triageiq:llm-synthesis-quality",
     },
   ],
   story: {
