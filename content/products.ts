@@ -40,15 +40,16 @@ export const products: Product[] = [
     repoUrl: "https://github.com/gaurav-gandhi-2411/triage-iq",
     categories: ["llm-agents", "retrieval", "forecasting", "evals-research"],
     techChips: ["TF-IDF", "BGE + FAISS", "LightGBM", "Groq"],
-    // The kubernetes figure, not vscode's higher 89.8% — the card shows one
-    // number and this is the lower of the two, which is the right default for
-    // a site whose whole claim is that its numbers are the honest ones.
+    // The kubernetes figure (85.99%, vs vscode's 85.82%: within noise, the
+    // CIs overlap) — the card shows one number, and k8s is the harder corpus
+    // on top-1 (54.84% vs 69.98%), which is the right default for a site
+    // whose whole claim is that its numbers are the honest ones.
     metric: refreshableMetric("triageiq:classifier-top3-k8s"),
     figure: {
       kind: "bars",
       rows: [
-        { name: "k8s", pct: 87.1 },
-        { name: "vscode", pct: 89.8 },
+        { name: "k8s", pct: 85.99 },
+        { name: "vscode", pct: 85.82 },
       ],
     },
   },

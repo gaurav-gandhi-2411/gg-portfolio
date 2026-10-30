@@ -167,7 +167,7 @@ export function TriageiqClassifyToy() {
         your browser over 12 real, sourced GitHub issue titles above (hover a button for
         its URL), not TriageIQ&apos;s production model (no BGE+FAISS retrieval, no LightGBM,
         no Groq synthesis, and 12 docs vs. its real gold-labeled eval set). Production
-        TriageIQ&apos;s real top-3 accuracy on these repos: 82.5% (k8s) / 90.4% (vscode).
+        TriageIQ&apos;s real top-3 accuracy on these repos: 85.99% (k8s) / 85.82% (vscode).
       </p>
     </div>
   );
