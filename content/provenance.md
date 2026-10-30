@@ -534,6 +534,7 @@ unchanged where they already covered a claim. Paths are relative to
 | `mmfr:ndcg` | NDCG@10 0.0208, MRR 0.0172 (active pool) | `README.md:113-124` |
 | `mmfr:cost` | ≈$0.001–$0.004 per 1,000 recommendations with warm cache | `COST.md:26-27,64` |
 | `mmfr:brand-caveat` | New-brand /recommend is illustrative-only (synthetic users); /similar is the validated day-one capability | `README.md:178-190` |
+| `mmfr:single-colour-browsers` | Users who browse one colour across many product types score lowest on fused similarity (0.33-0.38); model retrieves the right colour (5/5 Black for a Black-only buyer) with weak confidence; colour-aware re-ranking proposed, not built. Scope: README's 30 pre-selected demo users, personalized demo labelled illustrative only | `README.md:202` at multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c; scope caveats `README.md:146` (30 pre-selected demo users), `README.md:182` ("illustrative only") |
 
 **Wave 19 correction (2026-07-31):** the brand-catalogue enumeration in `content/case-studies/multimodal-fashion-recommender.ts` ("Snitch, Fashor, Powerlook") was missing **Virgio**, live since 2026-07-11 (`README.md:7`: "Snitch, Fashor, Powerlook, Virgio"). All numeric claims above (`mmfr:recall10`, `:ndcg`, `:cost`) were re-checked and are unchanged. `mmfr:faiss-adr`'s "≤4 brands" framing is still accurate — Virgio brings the count to exactly 4.
 
@@ -1173,6 +1174,7 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:202`
   Draft: "Identified the lowest fused similarity scores (0.33–0.38) in users who browse a single colour across many product types, demonstrating the model's ability to retrieve the correct colour with weak confidence."
   Suggested provenance ID: `multimodal-fashion-recommender:colour-browsing-patterns`
+  Status: folded 2026-10-30 (with this PR) into the `mmfr:single-colour-browsers` results row, with the 30-demo-user / illustrative-only scope caveat.
 
 ## Wave 15 pipeline proposals — 2026-08-03 (LLM-consensus, pending human review)
 
