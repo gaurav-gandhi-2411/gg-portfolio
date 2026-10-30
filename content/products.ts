@@ -160,8 +160,9 @@ export const products: Product[] = [
     name: "Samidha Reviews",
     tagline:
       "Turns a pile of customer reviews in English and Hinglish into what people actually keep saying.",
-    // Bare API root 404s (no handler); /docs is the live, browsable Swagger UI.
-    liveUrl: "https://api.samidhareviews.xyz/docs",
+    // The product's web app (owner decision 2026-10-30). The API's Swagger UI stays linked
+    // from the case study as "Live API docs".
+    liveUrl: "https://app.samidhareviews.xyz/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/review-iq",
     categories: ["llm-agents"],
     techChips: ["FastAPI", "Groq", "Tiered routing"],
