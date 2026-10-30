@@ -157,8 +157,8 @@ export const triageiq: CaseStudy = {
     },
     {
       label: "Resolution-time point estimate: served median vs. learned model",
-      value: "k8s: learned model 102.09d vs. 104.23d naive mean error (+2.06%), but 7.28d vs. 3.52d median error; not served",
-      detail: "The served point estimate is the training-window median (k8s 3.04d, vscode 3.84d; ADR-0064) because the learned model did not beat it on the typical issue. vscode: learned model 5.45d vs. 3.53d naive mean error, worse. The k8s bucket classifier reached 32.95% [31.29, 34.66] vs. 26.0% for always-majority (+6.95 pp, 95% CI +5.55 to +8.36)",
+      value: "median served: k8s 3.04d · vscode 3.84d",
+      detail: "The served point estimate is the training-window median (ADR-0064). The learned model is not served: on k8s it is marginally better on mean error (102.09d vs. 104.23d, +2.06%) but worse on median error (7.28d vs. 3.52d); on vscode it is worse (5.45d vs. 3.53d mean error). The vscode median dates from 2015-16, while current issues resolve in hours. The k8s bucket classifier reached 32.95% [31.29, 34.66] vs. 26.0% for always-majority (+6.95 pp, 95% CI +5.55 to +8.36)",
       sourceRef: "triageiq:resolution",
     },
     {
