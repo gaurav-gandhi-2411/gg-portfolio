@@ -507,10 +507,10 @@ unchanged where they already covered a claim. Paths are relative to
 |---|---|---|
 | `shelfsense:tweedie` | Tweedie loss over RMSE for 68% zero-inflated demand; +0.02 WRMSSE | `README.md:266,31-43` |
 | `shelfsense:direct-horizon` | 28 direct per-horizon models; recursion measured at 11% WRMSSE cost | `README.md:186-203,271` |
-| `shelfsense:global-model` | Global cross-series LightGBM; per-series ETS collapsed on HOBBIES (3.27 WRMSSE) | `README.md:148,166-172` |
+| `shelfsense:global-model` | Global cross-series LightGBM; per-series ETS collapsed on HOBBIES (3.27 WRMSSE); EDA found 55% lumpy/erratic series (predicted before any model was trained); classical methods run on a stratified 1,000-series sample (334 FOODS / 333 HOUSEHOLD / 333 HOBBIES; 8-12 hours per method on all 30,490), best ETS WRMSSE 0.6541 on the sample, and its Kaggle submission scored the same public 0.8377 as the SN28 baseline because 1,000 of 30,490 series carry too little revenue weight. 0.6541 is a sample figure and 0.8377 equals the baseline, neither is a headline result | `README.md:43,109,148,166-172` @ `6b423cc`; `reports/01_eda_findings.md`; `reports/02_classical_methods.md` |
 | `shelfsense:pandera` | Pandera schema enforcement at persistence boundaries caught a real NaN bug | `README.md:276` |
 | `shelfsense:hobbies` | HOBBIES 3.2663 (ETS) → 0.6112 (LightGBM), 5x | `README.md:158-164` |
-| `shelfsense:val-divergence` | 4 variants improved on validation but lost on private LB (harness failure, documented); winner 0.520 vs realistic ceiling 0.53–0.55; SARIMA OOM at 442/1000; 111 tests | `README.md:234-256,389-393,15,405,111,375` |
+| `shelfsense:val-divergence` | 4 variants improved on validation but lost on private LB (harness failure, documented); winner 0.520 vs realistic ceiling 0.53–0.55; SARIMA parallel workers killed at 442/1000 after about 3 hours, most likely out of memory; 111 tests. **Corrected 2026-10-30:** was "SARIMA OOM"; the sources agree the joblib workers were killed, OOM is the report's stated likely cause | `README.md:234-256,389-393,15,405,375`; `README.md:111,269`; `reports/02_classical_methods.md:87-89` |
 
 ### ReviewIQ (review-iq)
 
@@ -1167,6 +1167,7 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+  Status: folded 2026-10-30 (with this PR) into the `shelfsense:global-model` decision body, with the 0.6541 sample caveat and 0.8377 = baseline.
 - **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 5/5 — This fact proves a skill by demonstrating the model's performance on a specific user archetype and providing insights into its strengths and weaknesses, and is verifiable as it is literally present in the source text.; verifier: The draft accurately reflects the source's specific metrics, user behavior description, and model performance observation without introducing unsupported claims or tone drift.)
   Source: `README.md:202`
   Draft: "Identified the lowest fused similarity scores (0.33–0.38) in users who browse a single colour across many product types, demonstrating the model's ability to retrieve the correct colour with weak confidence."
@@ -1188,6 +1189,7 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:README.md-109`
+  Status: folded 2026-10-30 (with this PR) into the `shelfsense:global-model` decision body, with the 0.6541 sample caveat and 0.8377 = baseline.
 
 ## Wave 15 pipeline proposals — 2026-08-10 (LLM-consensus, pending human review)
 
@@ -1201,6 +1203,7 @@ Each proposal below passed all three stages (curator score against `docs/content
   Source: `README.md:109`
   Draft: "Built a stratified 1,000-series sample from 30,490 series to enable rapid iteration, achieving an ETS WRMSSE of 0.6541 on the sample and a public score of 0.8377 on Kaggle."
   Suggested provenance ID: `shelfsense-m5:rapid-iteration-sample`
+  Status: folded 2026-10-30 (with this PR) into the `shelfsense:global-model` decision body, with the 0.6541 sample caveat and 0.8377 = baseline.
 
 ## Wave refresh-2026-09 Phase C, step 2.4 (2026-09-23) — Gold Rate Tracker cross-surface repin (F3/F4)
 
