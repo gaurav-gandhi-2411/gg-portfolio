@@ -550,7 +550,7 @@ unchanged where they already covered a claim. Paths are relative to
 | ID | Claim | Source |
 |---|---|---|
 | `aetherart:clip-blindness` | CLIP structurally blind to rendering-level changes: nine SD 2.1 experiments plus a seven-experiment SDXL replication; own SD 2.1 claim revised 9/9 → 4/9 under a stricter 1-SE threshold (SDXL replication 3/7). **Correction 2026-10-18:** the earlier "9 experiments (SD 2.1 + SDXL)" merged two separate counts | `README.md:71,91-105,111-123,199-211`; AetherArt README.md:97 ("7 experiments", SDXL), :105 ("structurally blind to rendering-level parameters"), :117-119 ("Original SD 2.1 claim | 9 / 9", "SD 2.1 recomputed (1-SE threshold) | 4 / 9", "SDXL replication (1-SE threshold) | 3 / 7"), at AetherArt main sha 10eb31cee0a3c2a608037bb3048968fddd69f967 (read 2026-10-18) |
-| `aetherart:checkpoint` | Checkpoint 1000 over 500/1500 via multi-scorer + human review, not lowest loss | `README.md:236-242` |
+| `aetherart:checkpoint` | Checkpoint 1000 over 500/1500 by visual comparison on four fixed prompts (seed 42), not lowest loss and not a metric score. **Corrected 2026-10-30:** was "multi-scorer + human review"; the source notebook says selection was visual (`docs/lab_notebook.md:37` @ `10eb31c`) | `README.md:234-243`; `docs/lab_notebook.md:33-37` |
 | `aetherart:lora-quality` | Ukiyo-e LoRA: HPS 0.239, ImageReward 1.479, CLIP 0.359 comparison-only (GCP L4, seed 42) | `docs/lab_notebook.md:258-266` |
 | `aetherart:360-sweep` | 360-run benchmark: prompt moves CLIP 18× more than scheduler (range 0.130 vs 0.007) | `README.md:248-252` |
 | `aetherart:tests` | 229 tests, ~60s, no GPU required | `README.md:283` |
