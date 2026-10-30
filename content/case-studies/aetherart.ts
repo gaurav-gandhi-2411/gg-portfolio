@@ -19,7 +19,7 @@ export const aetherart: CaseStudy = {
   approach: [
     "The style comes from a LoRA adapter, a small ~45MB add-on file, not a full retrained model, trained on 80 ukiyo-e images from WikiArt in 4 hours 26 minutes on a rented GCP L4 GPU, for about $3.50. Adding the trigger word \"ukyowood\" to a prompt turns the style on.",
     "Fitting everything into 8GB of VRAM took three things working together: running the model at half precision (FP16, which halves memory use), swapping in a corrected VAE (the component that turns the model's internal representation back into a viewable image) because the stock SDXL VAE silently produces black or corrupted output in FP16, and an optional 4-bit quantization mode (NF4) for even tighter budgets. A separate Hyper-SD 8-step LoRA cuts generation from the usual 25-50 steps down to 8, for a fast demo mode.",
-    "Training checkpoints at 500, 1000, and 1500 steps were compared using two quality scorers, HPSv2.1 and ImageReward, instead of the more common CLIP score, because the project's own experiments found CLIP score can be blind to real quality differences (more on that below). The live demo runs on Cloud Run with an L4 GPU, adds ControlNet for composition control (steering the layout of the generated image from a reference sketch or depth map), and an NSFW safety filter.",
+    "Training checkpoints at 500, 1000, and 1500 steps were compared visually against four fixed prompts at seed 42, and the adapter's quality is measured with two scorers, HPSv2.1 and ImageReward, instead of the more common CLIP score, because the project's own experiments found CLIP score can be blind to real quality differences (more on that below). The live demo runs on Cloud Run with an L4 GPU, adds ControlNet for composition control (steering the layout of the generated image from a reference sketch or depth map), and an NSFW safety filter.",
   ],
   architecture: {
     intro:
@@ -43,7 +43,7 @@ export const aetherart: CaseStudy = {
       { label: "NSFW safety guard", detail: "Falconsai/nsfw_image_detection" },
       { label: "Generated image", kind: "output" },
     ],
-    note: "Offline training path (separate from serving): 80 WikiArt ukiyo-e images → diffusers LoRA training → checkpoint sweep at 500/1000/1500 steps, scored with HPSv2.1 + ImageReward on a GCP L4 → checkpoint 1000 selected → published to HuggingFace Hub.",
+    note: "Offline training path (separate from serving): 80 WikiArt ukiyo-e images → diffusers LoRA training → checkpoint sweep at 500/1000/1500 steps on a GCP L4, compared visually on four fixed prompts (seed 42) → checkpoint 1000 selected → published to HuggingFace Hub.",
   },
   decisions: [
     {
@@ -57,8 +57,8 @@ export const aetherart: CaseStudy = {
       sourceRef: "aetherart:clip-blindness",
     },
     {
-      title: "Checkpoint 1000 selected after quality scoring confirmed what the loss curve already flagged",
-      body: "Training loss jumped roughly 10× between checkpoint 1000 and checkpoint 1500 (0.008 → ~0.08), a warning sign on its own, not by itself proof the model had gotten worse. HPSv2.1/ImageReward scoring plus human review confirmed a real, visible quality regression at checkpoint 1500, so checkpoint 1000 was selected instead, the independent quality check corroborated the loss signal rather than overriding it.",
+      title: "Checkpoint 1000 selected by visual comparison after the loss curve flagged 1500",
+      body: "Training loss jumped roughly 10× between checkpoint 1000 and checkpoint 1500 (0.008 → ~0.08), a warning sign on its own, not by itself proof the model had gotten worse. A visual comparison on four fixed prompts at seed 42 confirmed a visible regression at checkpoint 1500 (the samurai figure dropped out), while checkpoint 500 was over-calligraphed with weak figure scale, so checkpoint 1000 was selected. It was a visual judgment, not a metric one: the lab notebook records that CLIP could not separate the checkpoints.",
       sourceRef: "aetherart:checkpoint",
     },
     {
