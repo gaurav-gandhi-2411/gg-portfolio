@@ -62,7 +62,7 @@ export const shelfsense: CaseStudy = {
     },
     {
       title: "One global model across all series, not one model per series",
-      body: "Classical per-series models (like ETS, a smoothing-based method fit separately to each individual series) collapse on sparse categories with little history, the HOBBIES category scored 3.27 WRMSSE that way. A single LightGBM model trained across all series at once can borrow statistical strength from the busier series to help the sparse ones.",
+      body: "Classical per-series models (like ETS, a smoothing-based method fit separately to each individual series) collapse on sparse categories with little history, the HOBBIES category scored 3.27 WRMSSE that way. A single LightGBM model trained across all series at once can borrow statistical strength from the busier series to help the sparse ones. Exploratory analysis predicted this before any model was trained: 68% of item-days are zero and 55% of series are lumpy or erratic. Classical methods ran only on a stratified 1,000-series sample, since all 30,490 would take 8-12 hours per method; the best, ETS, reached 0.6541 WRMSSE there, but its Kaggle submission only matched the seasonal-naive baseline (0.8377), as 1,000 series carry too little revenue weight to move the full-catalogue score.",
       sourceRef: "shelfsense:global-model",
     },
     {
@@ -93,7 +93,7 @@ export const shelfsense: CaseStudy = {
     {
       label: "Honest ceiling",
       value: "competition winner: 0.520 · this repo's realistic ceiling without GPU compute: 0.53–0.55",
-      detail: "111 unit tests, 60%+ coverage; SARIMA was abandoned after an out-of-memory crash at series 442 of 1,000",
+      detail: "111 unit tests, 60%+ coverage; SARIMA was abandoned after its parallel worker processes were killed (most likely out of memory) at series 442 of 1,000, three hours in",
       sourceRef: "shelfsense:val-divergence",
     },
   ],
