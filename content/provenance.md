@@ -82,7 +82,7 @@ Experience" section.
 
 | ID | Company / role |
 |---|---|
-| `resume:indium-senior-lead` | Uber AI via Indium, Lead Data Scientist, team and hiring bullet |
+| `resume:indium-senior-lead` | Uber AI via Indium, Lead Data Scientist, team and hiring bullet. Team size (5-person, also in the home meta description and the About paragraph): owner-stated, 2026-10-31 |
 | `resume:uber-lead-platform` | Uber AI via Indium, Lead Data Scientist, document-verification platform bullet |
 | `resume:indium-senior-finetune` | Uber AI via Indium, Senior Data Scientist, Qwen LoRA/QLoRA fine-tuning bullet |
 | `resume:indium-senior-vit` | Uber AI via Indium, Senior Data Scientist, ViT dual-threshold verification bullet |

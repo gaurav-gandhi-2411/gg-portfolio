@@ -57,7 +57,7 @@ const siteUrl = site.url;
 // "(Indium/Uber AI)" parenthetical, not by cutting the sentence short.
 const homeTitle = "Gaurav Gandhi, Lead Data Scientist, Applied AI";
 const homeDescription =
-  "Lead Data Scientist heading a data-science team in Uber's AI org, plus independent AI products and research. Every number sourced.";
+  "Lead Data Scientist leading a 5-person data-science team in Uber's AI org, plus independent AI products and research. Every number sourced.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
