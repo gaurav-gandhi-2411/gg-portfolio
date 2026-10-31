@@ -222,10 +222,10 @@ small-n percentage), swapped in the actually-current number.
 
 | ID | Claim | Source |
 |---|---|---|
-| `shelfsense:wrmsse` + `shelfsense:wrmsse-baseline` (split 2026-08-13) | WRMSSE 0.8956 → 0.5693, 36% reduction | `shelfsense-m5/README.md:7`, `reports/leaderboard.md:233`. No commits since 2026-05-17 — unchanged, re-confirmed 2026-07-12 |
+| `shelfsense:wrmsse` + `shelfsense:wrmsse-baseline` (split 2026-08-13) | WRMSSE 0.8956 → 0.5693, 36% reduction | `shelfsense-m5/README.md:7`, `reports/leaderboard.md:233`. No content changes since 2026-05-17 (later commits touch CI and the metrics manifest only), re-confirmed 2026-11-01 @ `8454e4f` |
 
 No live deployment exists for this project (batch/local pipeline only per
-`shelfsense-m5/README.md` "Live Path (Local CLI)") — card shows repo link only, no live-link
+`shelfsense-m5/README.md:315-358`, "Reproduce": local CLI and Docker Compose only) — card shows repo link only, no live-link
 claim made.
 
 ### ReviewIQ
@@ -506,11 +506,11 @@ unchanged where they already covered a claim. Paths are relative to
 
 | ID | Claim | Source |
 |---|---|---|
-| `shelfsense:tweedie` | Tweedie loss over RMSE for 68% zero-inflated demand; +0.02 WRMSSE | `README.md:266,31-43` |
-| `shelfsense:direct-horizon` | 28 direct per-horizon models; recursion measured at 11% WRMSSE cost | `README.md:186-203,271` |
-| `shelfsense:global-model` | Global cross-series LightGBM; per-series ETS collapsed on HOBBIES (3.27 WRMSSE); EDA found 55% lumpy/erratic series (predicted before any model was trained); classical methods run on a stratified 1,000-series sample (334 FOODS / 333 HOUSEHOLD / 333 HOBBIES; 8-12 hours per method on all 30,490), best ETS WRMSSE 0.6541 on the sample, and its Kaggle submission scored the same public 0.8377 as the SN28 baseline because 1,000 of 30,490 series carry too little revenue weight. 0.6541 is a sample figure and 0.8377 equals the baseline, neither is a headline result | `README.md:43,109,148,166-172` @ `6b423cc`; `reports/01_eda_findings.md`; `reports/02_classical_methods.md` |
+| `shelfsense:tweedie` | Tweedie loss over RMSE for 68% zero-inflated demand; +0.02 WRMSSE | `README.md:266,31-43`; RMSE-vs-Tweedie rationale `README.md:153,170` @ `8454e4f` |
+| `shelfsense:direct-horizon` | 28 direct per-horizon models; private LB, global LightGBM approach: recursive 0.8138 vs 28-model direct 0.6095 | `README.md:186-203,271`; `reports/leaderboard.md:56,226,228` |
+| `shelfsense:global-model` | Global cross-series LightGBM; per-series ETS scored 3.27 WRMSSE on the 333 lowest-selling HOBBIES series in the sample; EDA found 55% lumpy/erratic series (predicted before any model was trained); classical methods run on a stratified 1,000-series sample (334 FOODS / 333 HOUSEHOLD / 333 HOBBIES; about 6.8 hours for ETS and 33 for ARIMA on all 30,490), best ETS WRMSSE 0.6541 on the sample, and its Kaggle submission scored the same public 0.8377 as the SN28 baseline because 1,000 of 30,490 series carry too little revenue weight. 0.6541 is a sample figure and 0.8377 equals the baseline, neither is a headline result | `README.md:43,109,148,166-172` @ `6b423cc`; `reports/01_eda_findings.md`; `reports/02_classical_methods.md:13-17,22-24` |
 | `shelfsense:pandera` | Pandera schema enforcement at persistence boundaries caught a real NaN bug | `README.md:276` |
-| `shelfsense:hobbies` | HOBBIES 3.2663 (ETS) → 0.6112 (LightGBM), 5x | `README.md:158-164` |
+| `shelfsense:hobbies` | HOBBIES 3.2663 (ETS, 333 lowest-selling HOBBIES series in the 1k sample) vs 0.6112 (LightGBM, all HOBBIES, full catalogue); different series sets and re-normalised weights, not like-for-like; seasonal naive 1.5949 on the same sample | `README.md:158-164`; `reports/leaderboard.md:7,145,172`; `reports/02_classical_methods.md:24` |
 | `shelfsense:val-divergence` | 4 variants improved on validation but lost on private LB (harness failure, documented); winner 0.520 vs realistic ceiling 0.53–0.55; SARIMA parallel workers killed at 442/1000 after about 3 hours, most likely out of memory; 111 tests. **Corrected 2026-10-30:** was "SARIMA OOM"; the sources agree the joblib workers were killed, OOM is the report's stated likely cause | `README.md:234-256,389-393,15,405,375`; `README.md:111,269`; `reports/02_classical_methods.md:87-89` |
 
 ### ReviewIQ (review-iq)

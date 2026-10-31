@@ -96,7 +96,7 @@ export const products: Product[] = [
     slug: "shelfsense",
     name: "ShelfSense",
     tagline:
-      "Forecasts retail demand a week out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
+      "Forecasts retail demand 28 days out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/shelfsense-m5",
     categories: ["forecasting", "evals-research"],
     techChips: ["LightGBM", "Dagster", "M5 dataset"],
