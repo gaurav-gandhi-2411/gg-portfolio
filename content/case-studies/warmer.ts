@@ -21,7 +21,7 @@ export const warmer: CaseStudy = {
     "It's built for word-game players in India in particular: Warmer is one of very few daily games with a native Hinglish (romanized Hindi-English) mode, which turned out to be the hardest engineering problem in the project.",
   ],
   approach: [
-    "The key design decision is that no AI runs while you play. Each day's puzzle is fully precomputed offline: a Python generator picks the secret word, embeds the entire vocabulary with a sentence-embedding model (a model that turns words into lists of numbers, where similar meanings land near each other), ranks every word by similarity to the secret, and writes one small compressed file per day per language.",
+    "The key design decision is that no AI runs while you play. Each day's puzzle is fully precomputed offline: a Python generator takes the day's secret word from a curated schedule, embeds the entire vocabulary with a sentence-embedding model (a model that turns words into lists of numbers, where similar meanings land near each other), ranks every word by similarity to the secret, and writes one small compressed file per day per language.",
     "The Flutter app, Android and web, just downloads that day's file and looks your guess up in the precomputed ranking. That makes the marginal serving cost per player effectively zero, and it means the generator can afford a heavier, more accurate model, because it only runs once at build time.",
     "The payload is obfuscated (hashed keys, an encoded secret) so opening the file in a browser doesn't spoil the puzzle, and the app bundles a week of puzzles offline as a fallback.",
   ],
@@ -35,7 +35,7 @@ export const warmer: CaseStudy = {
         detail: "runs once at build time, zero runtime cost",
         parallel: [
           { label: "English embeddings", detail: "sentence-transformers" },
-          { label: "Hinglish embeddings", detail: "l3cube-pune/indic-sentence-bert-nli" },
+          { label: "Hinglish embeddings", detail: "gauravgandhi2411/hinglish-relatedness-sbert (LoRA fine-tune of l3cube-pune/indic-sentence-bert-nli)" },
         ],
       },
       {
@@ -65,8 +65,8 @@ export const warmer: CaseStudy = {
       sourceRef: "warmer:precompute-design",
     },
     {
-      title: "Swap the Hinglish model for one trained on romanized text",
-      body: "The original multilingual model was trained on Hindi in Devanagari script. Romanized words like \"baarish\" or \"jeet\" were out-of-distribution, so it clustered them near unrelated Latin-script languages by surface form. The fix was an eval-gated bake-off across nine candidates; a model trained natively on code-mixed romanized text won.",
+      title: "Swap the Hinglish model, chosen by an eval-gated bake-off",
+      body: "The original multilingual model was trained on Hindi in Devanagari script. Romanized words like \"baarish\" or \"jeet\" were out-of-distribution, so it clustered them near unrelated Latin-script languages by surface form. The fix was an eval-gated bake-off across nine candidates; l3cube-pune/indic-sentence-bert-nli, a multilingual Indic sentence-embedding model (MuRIL fine-tuned on NLI data for ten Indian languages plus English), scored highest on Spearman among the nine candidates and won on measured metrics.",
       sourceRef: "warmer:hinglish-fix",
     },
     {
@@ -77,7 +77,7 @@ export const warmer: CaseStudy = {
     },
     {
       title: "When fine-tuning failed twice, change the method, not the data",
-      body: "Two full-parameter fine-tuning attempts both regressed held-out accuracy, the second got worse after adding more training data (543 pairs, then 756/1028 pairs), falsifying the \"more data fixes it\" hypothesis. The eventual win held the data fixed and swept the method instead: every full-parameter and frozen-layer config stayed within noise, every LoRA config beat the baseline, three of them CI-significantly. The shipped model is that LoRA fine-tune, published openly on Hugging Face with the benchmark that judges it.",
+      body: "Two full-parameter fine-tuning attempts both regressed held-out Spearman correlation, the second got worse after adding more training data (543 pairs, then 756/1028 pairs), falsifying the \"more data fixes it\" hypothesis. The eventual win held the data fixed and swept the method instead: every full-parameter and frozen-layer config stayed within noise, every LoRA config beat the baseline, three of them CI-significantly. The shipped model is that LoRA fine-tune, published openly on Hugging Face with the benchmark that judges it.",
       sourceRef: "warmer:lora-reframe",
       selfReported: true,
     },
@@ -88,16 +88,16 @@ export const warmer: CaseStudy = {
       // come from the SAME file and line at two different commits (line 24 of
       // baseline_report.md, pre- and post-fine-tune), so they are two separate
       // citations and each now carries its own.
-      label: "Hinglish semantic accuracy after the fine-tune (Spearman vs. human judgments)",
+      label: "Hinglish ranking quality after the fine-tune (Spearman vs. AI-authored, owner-reviewed near/mid/far tiers)",
       headline: true,
       value: "0.813",
-      detail: "the script-mismatch fix reached 0.639; a LoRA fine-tune plus an eval-harness RNG fix took it to 0.813 on the production set (English holds at 0.842). The stricter held-out generalization number is 0.435 → 0.704, both are reported, neither hidden",
+      detail: "the script-mismatch fix reached 0.639; the LoRA fine-tune reached 0.800 on the same 25-secret production set, which now includes secrets it was trained on; an eval-harness RNG fix then regenerated that set's random far-tier words, moving it to 0.813 (English 0.837 → 0.842 with no model change). The stricter held-out number, on secrets never trained on, is 0.435 → 0.704, both are reported, neither hidden",
       sourceRef: "warmer:hinglish-fix",
     },
     {
       label: "The same metric before the fine-tune",
       value: "−0.003",
-      detail: "literally no correlation, same eval, same file and line, at the pre-fix commit",
+      detail: "literally no correlation; same harness, same file and line, at the pre-fix commit (the far-tier words were regenerated at the 0.813 commit, so the two are not on identical items)",
       sourceRef: "warmer:hinglish-baseline",
     },
     {
@@ -111,19 +111,21 @@ export const warmer: CaseStudy = {
       label: "Cross-language consistency (translation pairs landing in the right band)",
       headline: true,
       value: "5.1% → 78.0%",
+      detail:
+        "full 60-pair schedule (59 resolved), which includes secrets the model was trained on; on held-out secrets only, 37.5% → 81.25%",
       sourceRef: "warmer:hinglish-fix",
     },
     {
-      label: "Public Hinglish relatedness benchmark vs. 7 off-the-shelf alternatives",
+      label: "Hinglish relatedness benchmark (50 held-out secrets) vs. 7 off-the-shelf alternatives",
       value: "0.675 Spearman [95% CI 0.601, 0.741], 0.740 cross-language pass-rate [0.62, 0.86]",
       detail:
-        "leads all 7 tested alternatives (including 2 released after the original bake-off) on both metrics, CI-significant in all 14 comparisons, per the model card's own reported eval set; the companion dataset published alongside the model describes its own contents as 34 secrets and reports a close but distinct 0.657 for the same metric, a source discrepancy noted rather than resolved (see provenance.md)",
+        "leads all 7 tested alternatives (including 2 released after the original bake-off) on both metrics, CI-significant in all 14 comparisons, on 50 held-out secrets (42 dim1-eligible). The public dataset publishes the 34 of those that were never game words (the other 16 are live game secrets); on those 34 the model scores 0.657 [0.569, 0.736]",
       sourceRef: "warmer:hinglish-public-benchmark",
       format: "prose",
     },
     {
       label: "Test suite",
-      value: "160/160 generator · 94/94 app · 2/2 emulator integration",
+      value: "781 passed generator · 530 passed app (2026-07-30) · 2/2 web integration (README figure, undated)",
       sourceRef: "warmer:tests",
       selfReported: true,
     },
@@ -138,10 +140,10 @@ export const warmer: CaseStudy = {
   story: {
     title: "Zero correlation to a published, working model, the debugging trail, including the fixes that made it worse first",
     body: [
-      "At launch, the Hinglish mode's semantic ranking measured a Spearman correlation of −0.003 against human similarity judgments, literally no correlation. The root cause was empirical, not speculative: the multilingual embedding model had learned Hindi in Devanagari script, so romanized Hinglish words were gibberish to it. \"Dil\" landed near Turkish words; \"dua\" near Italian, clustered by how they're spelled, not what they mean.",
-      "The fix was a nine-candidate bake-off under a fixed evaluation harness, transliteration pipelines, code-mixed BERT variants, MuRIL, decided purely on measured metrics. A model trained natively on romanized code-mixed text won, taking Spearman to 0.639.",
+      "At launch, the Hinglish mode's semantic ranking measured a Spearman correlation of −0.003 against the project's hand-tiered near/mid/far relatedness labels (AI-authored, owner-reviewed), literally no correlation. The root cause was empirical, not speculative: the multilingual embedding model had learned Hindi in Devanagari script, so romanized Hinglish words were gibberish to it. \"Dil\" landed near Turkish words; \"dua\" near Italian, clustered by how they're spelled, not what they mean.",
+      "The fix was a nine-candidate bake-off under a fixed evaluation harness, transliteration pipelines, code-mixed BERT variants, raw mean-pooled MuRIL, decided purely on measured metrics. A multilingual Indic sentence-embedding model, l3cube-pune/indic-sentence-bert-nli (MuRIL fine-tuned on NLI data), won, taking Spearman to 0.639.",
       "Then came the more interesting result: two full fine-tuning cycles tried to push past that ceiling with curated and corpus-mined Hinglish word pairs, and both made the model worse, the second attempt, with more data, regressed further than the first. The project documented that as a falsified hypothesis and shipped the off-the-shelf model while the question sat open.",
-      "The eventual breakthrough came from changing the method, not the data: holding the training set fixed and sweeping capacity-control configurations showed every full-parameter variant stuck at noise while every LoRA variant improved, a small-data overfitting signature the earlier attempts had misread as a data problem. The winning LoRA model now ships in production and is published on Hugging Face (hinglish-relatedness-sbert), alongside the public benchmark used to judge it against seven alternatives.",
+      "The eventual breakthrough came from changing the method, not the data: holding the training set fixed and sweeping capacity-control configurations showed every full-parameter variant stuck at noise while every LoRA variant improved, a small-data overfitting signature the earlier attempts had misread as a data problem. The winning LoRA model now ships in production and is published on Hugging Face (hinglish-relatedness-sbert), alongside a public benchmark drawn from the same 50-secret evaluation that compared it against seven alternatives.",
     ],
     sourceRef: "warmer:lora-reframe",
   },

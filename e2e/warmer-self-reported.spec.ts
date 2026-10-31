@@ -34,11 +34,11 @@ test.describe("Warmer self-reported labels", () => {
   test("public-backed claims are not labelled", async ({ page }) => {
     await page.goto("/work/warmer");
     for (const name of [
-      "Hinglish semantic accuracy after the fine-tune (Spearman vs. human judgments)",
+      "Hinglish ranking quality after the fine-tune (Spearman vs. AI-authored, owner-reviewed near/mid/far tiers)",
       "The same metric before the fine-tune",
       "Cluster separation, base vs fine-tuned (mean silhouette, raw embeddings)",
       "Cross-language consistency (translation pairs landing in the right band)",
-      "Public Hinglish relatedness benchmark vs. 7 off-the-shelf alternatives",
+      "Hinglish relatedness benchmark (50 held-out secrets) vs. 7 off-the-shelf alternatives",
     ]) {
       const row = page.locator("dt", { hasText: name });
       await expect(row).toHaveCount(1);
