@@ -15,10 +15,10 @@ export const mmfr: CaseStudy = {
     "This project targets small and mid-size Indian D2C fashion brands specifically: businesses that want real recommendations without hiring a machine-learning team or standing up their own infrastructure to get them.",
   ],
   approach: [
-    "The model is trained on the H&M Kaggle dataset, 1.37 million customers, 105,000 articles, 31 million past purchases, and it's a \"two-tower\" design: one tower turns an item into a single vector of numbers, the other turns a shopper into one, and training pulls a shopper's vector close to the items they actually bought.",
+    "The model is trained on a sample of the H&M Kaggle dataset (1.37 million customers, 105,000 articles and 31 million purchases in full; the sample is 20,000 articles and 2 million purchases, split by time), and it's a \"two-tower\" design: one tower turns an item into a single vector of numbers, the other turns a shopper into one, and training pulls a shopper's vector close to the items they actually bought.",
     "The item tower doesn't learn to see or read from scratch. It takes a frozen CLIP model's image embedding (CLIP already knows how to describe what's in a photo) and a frozen SBERT model's text embedding (SBERT already knows what a product description means), concatenates them, and passes the combination through a small neural network down to one 256-number vector. The user tower runs a small Transformer over a shopper's last 20 purchases and pools that into the same 256-number space.",
     "Training uses a contrastive loss (InfoNCE): for each shopper in a batch, their real next purchase should sit closer in that 256-dimensional space than every other item in the batch. At serving time, a FAISS index (a fast nearest-neighbor search library) finds the closest items to a shopper's vector, and a Groq-hosted LLM writes a one-sentence, cached explanation for why each item was picked.",
-    "The same pipeline was extended to ingest real Indian brand catalogues: Snitch, Fashor, Powerlook, Virgio, from CSV, so a brand can get \"more like this\" recommendations from day one, before it has any purchase history of its own on the platform.",
+    "The same pipeline was extended to ingest real Indian brand catalogues: Snitch, Fashor and Powerlook from CSV, Virgio pulled once from its public Shopify product feed, so a brand can get \"more like this\" recommendations from day one, before it has any purchase history of its own on the platform.",
   ],
   architecture: {
     intro:
@@ -27,7 +27,7 @@ export const mmfr: CaseStudy = {
       {
         label: "H&M dataset + brand catalogues",
         kind: "input",
-        detail: "1.37M customers, 105K articles, 31M transactions; Snitch/Fashor/Powerlook/Virgio via CSV ingestion",
+        detail: "1.37M customers, 105K articles, 31M transactions (trained on a 20K-article, 2M-transaction sample); Snitch/Fashor/Powerlook via CSV, Virgio via Shopify feed ingestion",
       },
       {
         label: "Item Tower and User Tower",
@@ -39,7 +39,7 @@ export const mmfr: CaseStudy = {
           },
           {
             label: "User Tower",
-            detail: "last 20 purchases → 2-layer/4-head Transformer → masked mean-pool → MLP → 256d",
+            detail: "last 20 purchases → 2-layer/4-head Transformer → masked mean-pool → L2-normalized 256d",
           },
         ],
       },
@@ -61,27 +61,27 @@ export const mmfr: CaseStudy = {
         detail: "one-sentence \"why this\" explanation, Redis/LRU-cached",
       },
     ],
-    note: "H&M's own 2M-row transaction history is deliberately excluded from live serving via a BRANDS_ENABLED flag, see the FAISS scaling decision below.",
+    note: "H&M was first kept out of live serving via a BRANDS_ENABLED flag, see the FAISS scaling decision below; it now runs as a public sandbox brand that loads only its training-split history.",
   },
   decisions: [
     {
       title: "Frozen CLIP + SBERT fusion, not end-to-end fine-tuning",
-      body: "The image and text encoders are frozen and only the fusion MLP on top of them is trained. That means the model transfers to any fashion catalogue, including Indian ethnic wear it never saw during training, without retraining the encoders themselves.",
+      body: "The image and text encoders are frozen; only the fusion MLP on top of them, and the user tower, are trained. That means the model transfers to any fashion catalogue, including Indian ethnic wear it never saw during training, without retraining the encoders themselves.",
       sourceRef: "mmfr:frozen-fusion",
     },
     {
-      title: "Temperature 0.1, learning rate 3e-4, and a 500-step warmup, after the standard config collapsed",
-      body: "The textbook contrastive-learning config (temperature 0.07, learning rate 1e-3, no warmup) caused total representation collapse: every item and user vector converged to the same point in space, loss looked deceptively low, and the model learned nothing. Raising the temperature, lowering the learning rate, and, the single most important fix, adding a 500-step warmup period, resolved it.",
+      title: "Temperature 0.1, learning rate 3e-4, and a 500-step warmup, after the early-run config collapsed",
+      body: "The early-run config (temperature 0.07, learning rate 1e-3, no warmup) caused total representation collapse: every item and user vector converged to the same point in space, loss looked deceptively low, and the model learned nothing. Raising the temperature, lowering the learning rate, and, the single most important fix, adding a 500-step warmup period, resolved it.",
       sourceRef: "mmfr:collapse-fix",
     },
     {
       title: "FAISS, not a managed vector database, for up to 4 brands, a written trade-off, not an oversight",
-      body: "For a handful of brands, a plain FAISS index that lives in local process memory needs zero extra infrastructure and behaves identically in development and production. An architecture decision record spells out the math on when that stops being true and lays out a 4-phase migration path (today's single shared process, then lazy-loading with an LRU cache, then a real vector database, Qdrant, then per-brand service instances) for when it does.",
+      body: "For a handful of brands, a plain FAISS index that lives in local process memory needs zero extra infrastructure and behaves identically in development and production. An architecture decision record spells out the math on when that stops being true and lays out a 4-phase migration path (today's single shared process, then lazy-loading with an LRU cache, then a real vector database, Qdrant, then per-brand service instances) for when it does. The ADR scoped this to up to 4 brands; the live deployment has since grown to five (four Indian brands plus the H&M sandbox), one past that scope.",
       sourceRef: "mmfr:faiss-adr",
     },
     {
       title: "Evaluated on exactly the 10,556-item pool the production index actually serves",
-      body: "Recall is measured against the same active item pool FAISS serves at inference time, not a larger offline-only pool, so the reported number is what a real user would actually experience, not an optimistic upper bound.",
+      body: "Recall is measured against the same 10,556-item active pool FAISS serves at inference time, not a larger offline-only pool. On the full 20,000-item pool the same model scores 0.0299.",
       sourceRef: "mmfr:recall10",
     },
   ],
@@ -122,7 +122,7 @@ export const mmfr: CaseStudy = {
     {
       label: "Honest caveat: single-colour browsers",
       value: "Lowest fused similarity, 0.33-0.38",
-      detail: "from the README's analysis of its 30 pre-selected demo users (the personalized demo is labelled illustrative only): users who browse one colour across many product types score lowest; the model still returns the right colour (5/5 Black for a Black-only buyer) but with weak confidence; a colour-aware re-ranking step is the README's proposed fix, not built",
+      detail: "from the README's analysis of the 30 pre-selected H&M demo users in the Hugging Face Space: users who browse one colour across many product types score lowest; the model still returns the right colour (5/5 Black for a Black-only buyer) but with weak confidence; a colour-aware re-ranking step is the README's proposed fix, not built",
       sourceRef: "mmfr:single-colour-browsers",
       format: "prose",
     },
@@ -130,10 +130,10 @@ export const mmfr: CaseStudy = {
   story: {
     title: "Diagnosed a full representation collapse to a specific warmup-schedule fix, then wrote the scaling ADR that says exactly where this architecture stops working",
     body: [
-      "Training with the paper-standard contrastive-learning recipe, temperature 0.07, learning rate 1e-3, no warmup, produced a suspiciously clean-looking loss curve and a completely useless model: every item and user embedding had converged to the same point in the 256-dimensional space. Cosine similarity between any two items was effectively 1.0. Nothing had been learned; the loss function had just found the cheapest way to look small.",
-      "The fix came from empirical iteration rather than a known formula: raising the temperature to 0.1, dropping the learning rate to 3e-4, and, the change that mattered most, adding a 500-step warmup before the learning rate reached its full value. Warmup gives the towers a chance to spread out into distinct regions of the space before the optimizer starts taking large steps, which is exactly what a cold, aggressive learning rate short-circuits.",
+      "Training with the early-run recipe, temperature 0.07, learning rate 1e-3, no warmup, produced a suspiciously clean-looking loss curve and a completely useless model: every item and user embedding had converged to the same point in the 256-dimensional space. Nothing had been learned; the loss function had just found the cheapest way to look small.",
+      "The fix came from empirical iteration rather than a known formula: raising the temperature to 0.1, dropping the learning rate to 3e-4, and, the change that mattered most, adding a 500-step warmup before the learning rate reached its full value. Without warmup, the MLP layers saturated in the first 500 steps, before the Transformer had learned any sequence structure; warming the learning rate up gives the Transformer that time.",
       {
-        text: "Once the model worked, a second question came up: how many brands can one shared FAISS process actually hold? An architecture decision record ran the numbers rather than guessing: three real brand catalogues fit comfortably in roughly 250–400MB, but H&M's own 2-million-row transaction history alone would push the current 4GiB Cloud Run instance over budget, scaling to include it is estimated to need 8GiB, and even that is a tight fit, not comfortable headroom. Rather than ship a serving path that would eventually fall over, H&M is deliberately excluded from live serving behind a BRANDS_ENABLED flag, with a 4-phase migration path, lazy-loading with an LRU cache, then a real vector database like Qdrant, then per-brand service instances, written down for when the catalogue count grows past what one process can hold.",
+        text: "Once the model worked, a second question came up: how many brands can one shared FAISS process actually hold? An architecture decision record ran the numbers rather than guessing: three real brand catalogues fit comfortably in roughly 250–400MB, but H&M's full 2-million-row transaction history would push the 4GiB Cloud Run instance over budget, and including it was estimated to need a tight 8GiB. So H&M was kept out of live serving behind a BRANDS_ENABLED flag. It now runs as a public sandbox brand that loads only its training-split history. The ADR also lays out a 4-phase migration path, lazy-loading with an LRU cache, then a real vector database like Qdrant, then per-brand service instances, for when the catalogue count grows past what one process can hold.",
         // This paragraph is a topic shift (FAISS scaling budget, not the
         // collapse-fix training bug) — mmfr:faiss-adr is what actually
         // cites the scaling ADR carrying the 250-400MB figure; the story's

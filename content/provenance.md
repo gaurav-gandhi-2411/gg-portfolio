@@ -364,10 +364,10 @@ claims change.
 
 | ID | Claim | Source |
 |---|---|---|
-| `mmfr:recall10` + `mmfr:recall10-baseline` (split 2026-08-13) | Recall@10 lift 3.06× vs. popularity baseline (0.0328 vs. 0.0107) | `multimodal-fashion-recommender/README.md:113,119-126`; locked-gate cross-check `PROJECT_MEMORY.md:375-386` ("Δ = 0.000000 vs baseline, identical"). Re-confirmed unchanged 2026-07-12 (matches the earlier concurrent-session pass exactly) |
+| `mmfr:recall10` + `mmfr:recall10-baseline` (split 2026-08-13) | Recall@10 lift 3.06× vs. popularity baseline (0.0328 vs. 0.0107) | `multimodal-fashion-recommender/README.md:113,119-126`; locked-gate cross-check `PROJECT_MEMORY.md:370-386` (benchmark table) and `:393-399` ("Δ = 0.000000 vs baseline, identical"), both at multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c. Re-confirmed unchanged 2026-07-12 (matches the earlier concurrent-session pass exactly) |
 
-Live entry point is the Hugging Face Space (H&M-only demo); Cloud Run deploy is not yet live —
-used the HF Space URL as the card's live link, not an aspirational Cloud Run URL.
+Live entry point is the Hugging Face Space (H&M-only demo). The Cloud Run API has been live since
+2026-06-14 (`PROJECT_MEMORY.md:553`; `README.md:11-16` links it, multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c), but the HF Space stays the card's live link as the interactive demo.
 
 ### Gold Rate Tracker
 
@@ -534,9 +534,9 @@ unchanged where they already covered a claim. Paths are relative to
 | `mmfr:ndcg` | NDCG@10 0.0208, MRR 0.0172 (active pool) | `README.md:113-124` |
 | `mmfr:cost` | ≈$0.001–$0.004 per 1,000 recommendations with warm cache | `COST.md:26-27,64` |
 | `mmfr:brand-caveat` | New-brand /recommend is illustrative-only (synthetic users); /similar is the validated day-one capability | `README.md:178-190` |
-| `mmfr:single-colour-browsers` | Users who browse one colour across many product types score lowest on fused similarity (0.33-0.38); model retrieves the right colour (5/5 Black for a Black-only buyer) with weak confidence; colour-aware re-ranking proposed, not built. Scope: README's 30 pre-selected demo users, personalized demo labelled illustrative only | `README.md:202` at multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c; scope caveats `README.md:146` (30 pre-selected demo users), `README.md:182` ("illustrative only") |
+| `mmfr:single-colour-browsers` | Users who browse one colour across many product types score lowest on fused similarity (0.33-0.38); model retrieves the right colour (5/5 Black for a Black-only buyer) with weak confidence; colour-aware re-ranking proposed, not built. Scope: the 30 pre-selected H&M demo users in the Hugging Face Space | `README.md:202` at multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c; scope `README.md:136-149` (Space demo, 30 pre-selected users at :146); the `README.md:182` "illustrative only" caveat is about the Indian-brand synthetic users, not these |
 
-**Wave 19 correction (2026-07-31):** the brand-catalogue enumeration in `content/case-studies/multimodal-fashion-recommender.ts` ("Snitch, Fashor, Powerlook") was missing **Virgio**, live since 2026-07-11 (`README.md:7`: "Snitch, Fashor, Powerlook, Virgio"). All numeric claims above (`mmfr:recall10`, `:ndcg`, `:cost`) were re-checked and are unchanged. `mmfr:faiss-adr`'s "≤4 brands" framing is still accurate — Virgio brings the count to exactly 4.
+**Wave 19 correction (2026-07-31):** the brand-catalogue enumeration in `content/case-studies/multimodal-fashion-recommender.ts` ("Snitch, Fashor, Powerlook") was missing **Virgio**, live since 2026-07-11 (`README.md:7`: "Snitch, Fashor, Powerlook, Virgio"). All numeric claims above (`mmfr:recall10`, `:ndcg`, `:cost`) were re-checked and are unchanged. Virgio brings the live count to 5 (4 Indian brands + the H&M sandbox), one past the ADR's ≤4 Phase-1 scope (`.github/workflows/deploy.yml:125` `BRANDS_ENABLED=snitch,fashor,powerlook,h_and_m,virgio`, `PROJECT_MEMORY.md:1743`, multimodal-fashion-recommender@9f4cd7e1700903daf2878a9e4ae59bc783bf722c).
 
 ### Gold Rate Tracker
 
