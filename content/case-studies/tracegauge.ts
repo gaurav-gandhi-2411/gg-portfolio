@@ -2,9 +2,13 @@ import type { CaseStudy } from "../types";
 
 // Sources: token-efficiency-scorer repo (README.md,
 // research/05-architecture-pivot.md, CURRENT_STATE.md, pyproject.toml,
-// provenance.md) — see provenance.md's tracegauge section. Test count
-// corrected wave 19 (2026-07-31): CURRENT_STATE.md's 601 is a 0.9.0-scoped
-// feature subtotal, not the whole-suite result; CHANGELOG.md's 643 is.
+// provenance.md) — see provenance.md's tracegauge section. Test count:
+// "643/643" was the 0.10.0-era whole-suite total (CHANGELOG.md:946); the
+// current count is dated, from CI run 40867813997 on tracegauge master
+// 1bdd0da (2026-10-29), where each of the 12 full-suite `tests` legs reported
+// "1589 passed, 20 skipped".
+// No file in the repo states the current total (the newest CHANGELOG total is
+// 0.12.3's 755), so the run is the source.
 export const tracegauge: CaseStudy = {
   slug: "tracegauge",
   verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
@@ -85,7 +89,7 @@ export const tracegauge: CaseStudy = {
   results: [
     {
       label: "Test suite",
-      value: "643/643 passing",
+      value: "1,589 passing as of 2026-10-29",
       detail: "baselines built from 75 quality-gated sessions across 5 task types",
       sourceRef: "tracegauge:tests",
     },
