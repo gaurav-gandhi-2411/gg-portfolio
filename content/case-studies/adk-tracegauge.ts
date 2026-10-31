@@ -99,7 +99,7 @@ export const adkTracegauge: CaseStudy = {
   results: [
     {
       label: "Time from a fresh install to a real verdict",
-      value: "78.2s",
+      value: "89.5s",
       detail: "a bundled demo agent with a cost regression injected, no API key and no network call",
       sourceRef: "adk-tracegauge:quickstart",
     },
