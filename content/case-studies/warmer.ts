@@ -89,6 +89,7 @@ export const warmer: CaseStudy = {
       // baseline_report.md, pre- and post-fine-tune), so they are two separate
       // citations and each now carries its own.
       label: "Hinglish semantic accuracy after the fine-tune (Spearman vs. human judgments)",
+      headline: true,
       value: "0.813",
       detail: "the script-mismatch fix reached 0.639; a LoRA fine-tune plus an eval-harness RNG fix took it to 0.813 on the production set (English holds at 0.842). The stricter held-out generalization number is 0.435 → 0.704, both are reported, neither hidden",
       sourceRef: "warmer:hinglish-fix",
@@ -98,7 +99,6 @@ export const warmer: CaseStudy = {
       value: "−0.003",
       detail: "literally no correlation, same eval, same file and line, at the pre-fix commit",
       sourceRef: "warmer:hinglish-baseline",
-      headline: false,
     },
     {
       label: "Cluster separation, base vs fine-tuned (mean silhouette, raw embeddings)",
@@ -109,6 +109,7 @@ export const warmer: CaseStudy = {
     },
     {
       label: "Cross-language consistency (translation pairs landing in the right band)",
+      headline: true,
       value: "5.1% → 78.0%",
       sourceRef: "warmer:hinglish-fix",
     },

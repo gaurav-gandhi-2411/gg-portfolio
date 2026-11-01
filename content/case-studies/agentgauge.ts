@@ -115,12 +115,14 @@ export const agentgauge: CaseStudy = {
     },
     {
       label: "Minimum detectable effect, full 253-task corpus, 80% power",
+      headline: true,
       value: "0.0537",
       detail: "5.37 percentage points, down from an uncorrected trial-level baseline of 0.433 (43.3pp)",
       sourceRef: "agentgauge:mde-curve",
     },
     {
       label: "False-alarm rate under the null",
+      headline: true,
       value: "0.59%",
       detail: "13 of 2,200 null comparisons, paired + CUPED estimator",
       sourceRef: "agentgauge:mde-curve",
@@ -143,6 +145,7 @@ export const agentgauge: CaseStudy = {
       // own CI, and each of those excludes zero — a different, stronger
       // claim, now stated separately from the spread.
       label: "Does a BLOCKING description defect actually cause task failure? (qwen2.5:7b)",
+      headline: true,
       value: "−13.3pp",
       detail:
         "the smallest of three per-family effects; the spread across families runs to −28.9pp, and each family's own CI excludes zero, the only 1 of 6 lint rules with a measured causal effect",
