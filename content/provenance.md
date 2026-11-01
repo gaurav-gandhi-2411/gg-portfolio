@@ -204,7 +204,7 @@ pass before use in card copy.
 
 | ID | Claim | Source |
 |---|---|---|
-| `dealhunter:ci-gates` | Deterministic replay suite, per-run cost accounting — no specific test count asserted, since no committed artifact exists for one as of 2026-08-08 (checked: cited sources, 4 root docs, 5 docs/ files, CONTRIBUTING.md, WORKFLOW.md, GitHub commit/PR search — see wave-21 note below). Retires `dealhunter:test-coverage` (below and in this file's wave-18/19/20 history): its last live-measured count (727) was never committed anywhere, and the site had been citing it via a since-fixed false-positive substring match | `agentic-travel-booking-system/README.md:115-120` (lint/typecheck/test commands + "Eval harness (planner golden set, VCR replay)") |
+| `dealhunter:ci-gates` | Deterministic replay suite, per-run cost accounting — no specific test count asserted, since no committed artifact exists for one as of 2026-08-08 (checked: cited sources, 4 root docs, 5 docs/ files, CONTRIBUTING.md, WORKFLOW.md, GitHub commit/PR search — see wave-21 note below). Retires `dealhunter:test-coverage` (below and in this file's wave-18/19/20 history): its last live-measured count (727) was never committed anywhere, and the site had been citing it via a since-fixed false-positive substring match | `agentic-travel-booking-system/README.md:115-120` (lint/typecheck/test commands + "Eval harness (planner golden set, VCR replay)"); per-run cost accounting: `apps/api/evals/optimizer/runner.py:262` (`"cost_usd_estimate": cost_est`), `apps/api/src/travel_agent/observability/pricing.py:47` (`def compute_cost(`) @ `c1b6d86` |
 
 **Correction, two rounds:** spec/inventory's original "demo-haiku: 24/24 completion, coherence
 4.625" describes an LLM profile removed from the live product on 2026-06-19 (commit `464e004`,
@@ -216,7 +216,8 @@ risk and proposed swapping to a test-coverage metric instead — but sourced it 
 `README.md:118`'s **"249 tests, ~90% coverage,"` which is itself a stale line (confirmed stale
 independently in my June-12 inventory read, and reconfirmed here directly against
 `CURRENT_STATE.md` and a live pytest collection). Kept their metric-type instinct (avoid a
-small-n percentage), swapped in the actually-current number.
+small-n percentage), swapped in the actually-current number. **Superseded by Wave 21 (below):**
+no test count is shown on the page; this paragraph is retained as history only.
 
 ### ShelfSense
 
@@ -493,14 +494,13 @@ unchanged where they already covered a claim. Paths are relative to
 
 | ID | Claim | Source |
 |---|---|---|
-| `dealhunter:window-searcher` | Deterministic WindowSearcher coordinator (not an LLM agent) for testability + hard call budget | `docs/architecture/adr/0005-hierarchical-window-search.md:52-71,211-231` |
-| `dealhunter:pareto-archetypes` | Exactly 2 Pareto archetypes with guaranteed-distinct trade-offs, not a ranked list | `docs/architecture/adr/0006-pareto-frontier-archetypes.md:39-77,175-190` |
-| `dealhunter:llm-judge` | LLM-judge eval: single judge, cross-family, median-of-3 | `docs/architecture/adr/0016-llm-judge-design.md:29-66` |
-| `dealhunter:multi-provider` | Multi-provider fallback chain built after repeated free-tier Groq daily-quota outages | `spec.md:1-9,30-36` |
-| `dealhunter:planner-baseline` | Planner baseline 31/31 archetype selection | `CURRENT_STATE.md:377-385` |
+| `dealhunter:window-searcher` | Deterministic, rule-based window generation (not an LLM agent) for testability + hard provider-call budget. Corrected 2026-11-01: no `WindowSearcher` class exists at the pinned SHA; the decision is real and enforced by `generate_windows` + `CallBudget.can_call_flight()` | `docs/architecture/adr/0005-hierarchical-window-search.md:52-71,211-231`; `apps/api/src/travel_agent/coordinator/streaming.py:137,162,191`; `coordinator/windows.py:14` @ `c1b6d86` |
+| `dealhunter:pareto-archetypes` | Exactly 2 Pareto archetypes, not a ranked list. Corrected 2026-11-01: the "guaranteed-distinct" wording is removed; the code takes the max on each axis and handles the case where both slots hold the same flight. The frontier is computed in plain code and the LLM writes only the explanations | `docs/architecture/adr/0006-pareto-frontier-archetypes.md:39-77,175-190`; `apps/api/src/travel_agent/agents/optimizer.py:67-90,77-78,204` @ `c1b6d86` |
+| `dealhunter:llm-judge` | LLM-judge eval: single judge, median-of-3. Cross-family only for the 2026-05-17 baselines (Qwen3-32B judging Haiku and Llama); corrected 2026-11-01: since Groq's 2026-08-16 deprecations the default judge and the production model are both `openai/gpt-oss-120b`, flagged upstream as unresolved | `docs/architecture/adr/0016-llm-judge-design.md:29-66`; `apps/api/config/llm_routing.yaml:79-85,204-214` @ `c1b6d86` |
+| `dealhunter:multi-provider` | Multi-provider fallback chain built after free-tier Groq daily quota repeatedly blocked eval runs and demo prep (and would hard-fail live searches with a 429). Corrected 2026-11-01: the Groq model is `openai/gpt-oss-120b`, switched in the upstream config on 2026-08-22 (`llama-3.3-70b-versatile` deprecated by Groq 2026-08-16); six adapters (adds vLLM); Anthropic and NIM are eval-only | `spec.md:1-9,30-36`; `docs/architecture/adr/0027-llm-fallback-chain.md:11-14`; `apps/api/config/llm_routing.yaml:76-85`; `apps/api/src/travel_agent/llm/vllm.py:1-2`; `apps/web/components/demo/ProfileToggle.tsx:6-8` @ `c1b6d86` |
+| `dealhunter:planner-baseline` | Archetype selection 31/31 (deterministic, model-independent, no LLM; relabelled 2026-11-01 from "Planner baseline") | `CURRENT_STATE.md:374,381,385` @ `c1b6d86` |
 | `dealhunter:optimizer-baseline` | Optimizer baseline: demo-haiku 24/24, coherence 5.0/5; demo-llama 21/24 (quota-constrained), 4.881 | `apps/api/docs/evals/baselines/README.md:19-27` |
-| `dealhunter:audit` | Early self-audit: 6/10 prototype-to-production score | `AUDIT_REPORT.md:9-15` |
-| `dealhunter:silent-outage` | Two-week silent outage: stale Cloud Run tag + empty-string env vars bypassing `??`; fixed with canary/soak gates + staleness cron | `docs/architecture/adr/0023`, `0024-production-frontend-alignment.md:1-153` |
+| `dealhunter:silent-outage` | Two-week silent outage: stale Cloud Run tag + empty-string env vars bypassing `??`; fixed with canary/soak gates + staleness cron | `docs/architecture/adr/0023`, `0024-production-frontend-alignment.md:1-153`; the blank-base-URL mechanism (`fetch("" + "/search")` throwing a URL parse error) is `0024-production-frontend-alignment.md:36-40` @ `c1b6d86` |
 
 ### ShelfSense (shelfsense-m5)
 
@@ -928,7 +928,7 @@ instruction.
 | Reclaim | AI-layer bundling | Corrected — ADR-0030 (2026-08-05) supersedes ADR-0024: the AI layer is now bundled into the public installer by default (torch dropped for ONNX-converted CLIP+MiniLM, 199.4MB total; installer 309.3MB / installed 884.0MB), not a source-only `[ai]` extra as the site said | `reclaim/README.md:351-360` (@ `3e0c5c1`); `reclaim/docs/architecture/adr/0030-onnx-conversion-and-bundled-ai-installer.md:1-16,57-78` |
 | Gold Rate Tracker | Backtest results row | Fixed an internal-consistency bug: the Wilcoxon p-value (0.0003) and direction-accuracy figure (52.06%) shown alongside the 199-fold MAE numbers actually belonged to a different, earlier 194-fold snapshot — no single commit has all four numbers together. Repinned both to the same commit (`a4d892c`) already cited for the MAE/fold-count: p≈0, direction accuracy 50.75% | `gold-rate-tracker` commit `a4d892c` (`data/backtest.json`, wilcoxon 0.0) vs. commit `06ea421` (194-fold, wilcoxon 0.0003, dir_acc 0.5206) |
 | Gold Rate Tracker | Scraper primary-source framing | Corrected — ADR-025 flipped the roles: IBJA is now the primary source and Tanishq is opportunistic secondary confirmation (Tanishq's site blocks automated access behind Cloudflare most of the time), the reverse of what the site said | `gold-rate-tracker/docs/adr/025-ibja-primary-source-decision.md`; historical: the claim was read from README line 7 on 2026-07-31, and that line is now the one-line product summary; the IBJA-primary statement is now at `gold-rate-tracker/README.md:46@0dce95a` |
-| DealHunter | LLM provider fallback chain | Corrected "a fallback chain across five LLM providers" → the actual live-traffic chain is two hops (Groq → OpenRouter); the other three adapters (Anthropic, NVIDIA NIM, Ollama) serve eval/demo/local-dev purposes, and NIM was tried as a third production profile and abandoned | `agentic-travel-booking-system/docs/architecture/adr/0027-llm-fallback-chain.md:1,50-54`; `CURRENT_STATE.md:635` |
+| DealHunter | LLM provider fallback chain | Corrected "a fallback chain across five LLM providers" → the actual live-traffic chain is two hops (Groq → OpenRouter); the other three adapters (Anthropic, NVIDIA NIM, Ollama) serve eval/demo/local-dev purposes, and NIM was tried as a third production profile and abandoned (**corrected 2026-11-01:** NIM was a fourth demo profile, dropped because its credit pool could not sustain it; Anthropic and NIM are eval-only; six adapters including vLLM) | `agentic-travel-booking-system/docs/architecture/adr/0027-llm-fallback-chain.md:1,50-54`; `CURRENT_STATE.md:635` @ `c1b6d86` |
 | tracegauge | `tracegauge:tests` | Corrected "601/601 passing" → "643/643 passing" — the cited line was inside a superseded 0.9.0 sub-section of `CURRENT_STATE.md`; the CHANGELOG and a live `pytest` collection both confirm 643/643 is current for the shipped 0.10.0 release | `token-efficiency-scorer/CHANGELOG.md:92`; live `pytest --collect-only` (643 tests, 2026-08-05) |
 
 **Confirmed clean, no changes needed:** ShelfSense, ReviewIQ/Samidha Reviews, Expense Tracker —
