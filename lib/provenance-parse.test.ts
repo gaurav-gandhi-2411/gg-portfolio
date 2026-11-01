@@ -5,6 +5,7 @@ import {
   extractCitations,
   extractMeasuredDate,
   parseProvenanceText,
+  proseMeasuredDate,
   stripRepoPrefix,
 } from "./provenance-parse.ts";
 
@@ -70,6 +71,33 @@ test("extractMeasuredDate prefers a date in the source cell over one in the clai
   );
   assert.equal(extractMeasuredDate("corrected 2026-07-31 in the write-up", "no date here"), "2026-07-31");
   assert.equal(extractMeasuredDate("no date here either", "still none"), undefined);
+});
+
+test("extractMeasuredDate reads a date inside a cited filename, not a correction note in the claim", () => {
+  // A report named `deep_diagnosis_2026-07-12.md` was measured on 2026-07-12; the claim's
+  // "Corrected 2026-11-01" is when the site's wording changed, not when anything was measured.
+  assert.equal(
+    extractMeasuredDate(
+      "15/32 disappointing. **Corrected 2026-11-01:** was 2 bugs",
+      "`reports/deep_diagnosis_2026-07-12.md:3-9` @ `e1bc192`"
+    ),
+    "2026-07-12"
+  );
+  // Still not fooled by a longer digit run.
+  assert.equal(extractMeasuredDate("none", "build 12026-07-123"), undefined);
+});
+
+test("a live-fetched value has no measured date, whatever dates its row's prose mentions", () => {
+  // These values are read from PyPI / the puzzle manifest at ISR time. A date in the row is a
+  // historical observation ("returned 0.4.1 at 2026-08-18T09:10Z"), not when the shown value
+  // was measured, so the popover must fall back to "verified against source <date>".
+  for (const ref of ["tracegauge:pypi", "adk-tracegauge:pypi", "derived:warmer-puzzle-count"]) {
+    assert.equal(proseMeasuredDate(ref, "fetched live", "returned 0.4.1 at 2026-08-18T09:10Z"), undefined);
+  }
+  assert.equal(
+    proseMeasuredDate("style-maitri:live-audit", "Corrected 2026-11-01", "`reports/deep_diagnosis_2026-07-12.md`"),
+    "2026-07-12"
+  );
 });
 
 test("a line that never matches the row shape at all is silently skipped, not rejected", () => {
