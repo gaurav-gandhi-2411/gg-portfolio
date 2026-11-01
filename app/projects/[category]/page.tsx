@@ -33,7 +33,7 @@ export async function generateMetadata({
   if (!cat) return {};
   return {
     title: `${cat.label} projects · Gaurav Gandhi`,
-    description: `Every AI product and research tool I've built and shipped in ${cat.label}. Each one with an honest, sourced case study.`,
+    description: `AI products and research tools I've built and shipped in ${cat.label}, each with an honest, sourced case study.`,
     alternates: { canonical: `/projects/${cat.id}` },
   };
 }
