@@ -275,6 +275,9 @@ jobs:
       - name: generated-claims.mjs tests (freshness verdict for generated claims)
         run: node --test scripts/lib/generated-claims.test.mjs
 
+      - name: source-numbers.mjs tests (cited-line transitions keep the current side)
+        run: node --test scripts/lib/source-numbers.test.mjs
+
       - name: refresh-hf-downloads.mjs tests (stub HTTP server, R3 exit codes, as-of label)
         run: node --test scripts/refresh-hf-downloads.test.mjs
 
