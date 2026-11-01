@@ -20,14 +20,14 @@ export const goldRateTracker: CaseStudy = {
     "The project's real differentiator isn't a clever model. It's a willingness to refuse shipping a price-prediction feature that doesn't actually beat a trivially simple baseline, even though \"AI predicts gold prices\" is a far more exciting headline than \"tomorrow will probably look like today.\"",
   ],
   approach: [
-    "A GitHub Actions cron job fetches the IBJA (India Bullion and Jewellers Association) benchmark rate every three hours, the national reference price, and the primary source since Tanishq's retail site started blocking automated access behind Cloudflare's bot protection. A plain-HTTP Tanishq scrape still runs opportunistically alongside it, falling back to a full browser (Playwright), and confirms the IBJA-calibrated estimate against real retail pricing whenever it succeeds; when it doesn't, the IBJA estimate ships on its own. A HuberRegressor (a regression method that's resistant to occasional bad data points) converts the IBJA benchmark into a retail-price estimate, calibrated against historical Tanishq readings.",
-    "The headline forecast shown to users is deliberately a naive flat-hold: tomorrow's price is predicted to be whatever today's price is. That's the model that ships, because measured honestly, nothing more sophisticated has beaten it yet.",
+    "A GitHub Actions cron job, scheduled every three hours, fetches the IBJA (India Bullion and Jewellers Association) benchmark rate, the national reference price, and the primary source since Tanishq's retail site started blocking automated access behind Cloudflare's bot protection. A separate Tanishq scrape runs in its own workflow, at six timed visits a day, on a self-hosted runner (GitHub-hosted runner IPs are blocked by Cloudflare). It tries plain HTTP first, which has succeeded 0 of 37 recent attempts, so in practice it reads the page with a full browser (Playwright). It confirms the IBJA-calibrated estimate against real retail pricing whenever it succeeds; when it doesn't, the IBJA estimate ships on its own. A HuberRegressor (a regression method that's resistant to occasional bad data points) converts the IBJA benchmark into a retail-price estimate, calibrated against historical Tanishq readings.",
+    "From launch until 2026-10-02 the headline forecast shown to users was deliberately a naive flat-hold: tomorrow's price is predicted to be whatever today's price is. That's the model that shipped, because measured honestly, nothing more sophisticated had beaten it. On 2026-10-02 a next-day model (ADR 064) took over the headline during its daily window, and on 2026-10-07 another model, P3, became the headline (ADR 069).",
     "A small time-series model, Chronos-Bolt-Tiny, still runs every cycle as a \"directional companion\", but its output is suppressed from the user interface (internally labeled \"DARK\") because it fails a pre-registered statistical bar for being trustworthy enough to show.",
     "Everything renders as an installable static Progressive Web App on GitHub Pages, reading the committed JSON files directly with no backend server, and price-drop alerts go out over ntfy.sh. The entire stack runs for ₹0 a month.",
   ],
   architecture: {
     intro:
-      "A scraper feeds a naive baseline that ships, and a small ML model that runs in parallel but stays dark unless it earns its place.",
+      "A scraper feeds a naive baseline that was the headline from 2026-05 to 2026-10 (a different model, P3, has been the headline since 2026-10-07), and a small ML model that runs in parallel but stays dark unless it earns its place.",
     stages: [
       {
         label: "IBJA benchmark rate",
@@ -35,17 +35,21 @@ export const goldRateTracker: CaseStudy = {
         detail: "national reference price, primary source since Tanishq's Cloudflare protection started blocking most automated access",
       },
       {
-        label: "Fetcher (GitHub Actions, every 3h)",
-        detail: "IBJA fetch (primary) + opportunistic Tanishq scrape (plain HTTP, Playwright fallback) for retail confirmation when it succeeds",
+        label: "IBJA fetch (GitHub Actions, scheduled every 3h)",
+        detail: "IBJA benchmark fetch (primary)",
+      },
+      {
+        label: "Tanishq scrape (self-hosted runner, six timed visits a day)",
+        detail: "own workflow; plain HTTP first (0 of 37 recent attempts succeeded), Playwright in practice; retail confirmation when it succeeds",
       },
       { label: "prices.json", detail: "committed to the repo, the durable price history" },
       {
         label: "Naive flat-hold forecast",
-        detail: "IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor; tomorrow = today, the headline shown to users",
+        detail: "IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor; tomorrow = today, the headline shown to users until 2026-10-02, when a next-day model (ADR 064) took over; P3 has been the headline since 2026-10-07 (ADR 069)",
       },
       {
         label: "Chronos-Bolt-Tiny directional probe",
-        detail: "runs every cycle, feeds only notification triggers, kept DARK, not shown as a forecast",
+        detail: "runs every cycle as a recorded probe, kept DARK, not shown as a forecast; since ADR 020 it no longer drives alerts",
       },
       {
         label: "ntfy.sh alerts",
@@ -57,11 +61,11 @@ export const goldRateTracker: CaseStudy = {
         detail: "static site reads data/*.json directly, no server in the loop",
       },
     ],
-    note: "Total infrastructure cost: ₹0/month, running entirely on GitHub Actions, GitHub Pages, and ntfy.sh free tiers.",
+    note: "Total infrastructure cost: ₹0/month. The stack uses GitHub Actions, GitHub Pages, ntfy.sh, a Cloudflare Worker watchdog, GoatCounter and Sentry, plus a self-hosted runner on the owner's laptop for the Tanishq scrape.",
   },
   decisions: [
     {
-      title: "Ship the naive flat-hold as the headline, not the ML model",
+      title: "Shipped the naive flat-hold as the headline, not the ML model (2026-05 to 2026-10)",
       body: "The original 165-fold walk-forward backtest (2026-05-19, a test that repeatedly trains on the past and checks the very next prediction, sliding forward through time) showed Chronos-Bolt-Tiny performing 10.4% worse than the naive flat-hold on mean absolute error, with the difference statistically significant (p=0.0089), the decision that shipped naive as the headline. Every larger backtest run since (see Results below) has confirmed the same conclusion, not reversed it.",
       // Deliberately its own sourceRef, not gold-rate-tracker:headline: this
       // decision describes the ORIGINAL 165-fold backtest (ADR-012,
@@ -79,40 +83,40 @@ export const goldRateTracker: CaseStudy = {
     },
     {
       title: "Model promotion is pre-registered and falsifiable",
-      body: "Chronos only graduates from \"directional companion\" to a shown forecast if a backtest of at least 250 folds beats the naive baseline on mean absolute error with a Wilcoxon signed-rank test p-value under 0.05, a bar written down in advance, not adjusted after seeing the result.",
+      body: "Chronos only graduates from \"directional companion\" to a shown forecast if a backtest on at least 250 rows of history beats the naive baseline on mean absolute error with a Wilcoxon signed-rank test p-value under 0.05, a bar written down in advance, not adjusted after seeing the result.",
       sourceRef: "gold:promotion-gate",
     },
     {
       title: "Stop iterating and wait, because the sample size can't currently detect a real edge",
-      body: "A Monte Carlo power analysis found that at the current sample size (93 folds), only an implausibly large ~21 percentage-point accuracy edge would even be detectable at standard statistical power. Rather than keep tuning a model that can't be evaluated yet, the project computed the sample size needed and set a revisit date instead of guessing.",
+      body: "A Monte Carlo power analysis found that at the sample size of 2026-07-17 (93 folds; the direction harness has since grown to 171 and 165 folds at the two horizons), only an implausibly large ~21 percentage-point accuracy edge would even be detectable at standard statistical power. Rather than keep tuning a model that can't be evaluated yet, the project computed the sample size needed and set a revisit date instead of guessing.",
       sourceRef: "gold:power-analysis",
     },
   ],
   results: [
     {
-      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (209-fold backtest, horizon 5 days)",
+      label: "Naive flat-hold vs. Chronos-Bolt-Tiny (209-fold backtest, MAE averaged over 1–5 days ahead)",
       value: "249.24 vs. 292.14",
       detail:
-        "MAE (₹/g), naive wins by ~17% (Wilcoxon signed-rank p < 0.001, the naive baseline's advantage is real, not noise)",
+        "MAE (₹/g), Chronos is ~17% worse than naive; naive's error is ~14.7% lower (Wilcoxon signed-rank p < 0.001, the naive baseline's advantage is real, not noise)",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
       label: "Chronos direction accuracy",
       value: "51.2%",
-      detail: "barely above a coin flip, and below the true ~70% regime base rate",
+      detail: "barely above a coin flip; Chronos was below the always-up base rate on every window ADR 019 tested",
       sourceRef: "gold-rate-tracker:headline",
     },
     {
-      label: "Direction-signal promotion gate",
+      label: "ml/direction classifier promotion gate",
       value: "Held DARK at both horizons tested",
-      detail: "h=1: logistic model 48.5% vs. 50.8% base rate (p=0.63, n=130); h=2: 60.9% vs. 57.8% base rate (p=0.45, n=128)",
+      detail: "As of 2026-10-26: h=1: logistic model 49.1% vs. 49.7% always-up (n=171); h=2: 55.8% vs. 56.4% (p=1.00, n=165). The earlier figures on this page (48.5% vs. 50.8%, 60.9% vs. 57.8%) came from a training window that leaked future labels. A separate next-rate model's up/down line passed its own gate and went live 2026-10-02 (ADR 064).",
       sourceRef: "gold:direction-baseline",
       format: "prose",
     },
     {
       label: "Infrastructure cost",
       value: "₹0/month",
-      detail: "GitHub Actions + GitHub Pages + ntfy.sh, all free tiers",
+      detail: "GitHub Actions, GitHub Pages, ntfy.sh, a Cloudflare Worker watchdog, GoatCounter and Sentry, plus a self-hosted laptop runner; the repo states it costs nothing to run",
       sourceRef: "gold:zero-cost",
     },
   ],
@@ -120,8 +124,8 @@ export const goldRateTracker: CaseStudy = {
     title: "Corrected its own baseline from a 50% coin-flip to gold's real ~70% base rate, and that correction made the model's edge disappear",
     body: [
       "Early on, the project reported directional-accuracy figures of 55.8% and 63.3% as beating \"the 50% naive floor\", the standard textbook baseline for a binary up/down signal. That comparison looked reasonable, and it made the model look genuinely useful.",
-      "A review caught the flaw: 50% is only the right baseline when the series is roughly balanced between up and down moves. Gold's price in this data rose roughly 70% of the time, which means a trivial rule, \"always predict up,\" no model required, already beats 50% by a wide margin. Once that true base rate was used as the comparison instead, the model's advantage didn't just shrink. It disappeared: on every window tested, the always-predict-up rule matched or beat the trained model.",
-      "The project wrote this up as an architecture decision record rather than quietly keeping the more flattering 50%-baseline comparison, and turned the directional signal off in the live product. The honest version of the finding is less exciting than \"the model beats a coin flip,\" but it's the one that's actually true, and it's the one that shipped.",
+      "A review caught the flaw: 50% is only the right baseline when the series is roughly balanced between up and down moves. Gold's price in this data rose roughly 70% of the time, which means a trivial rule, \"always predict up,\" no model required, already beats 50% by a wide margin. Once that true base rate was used as the comparison instead, the model's advantage didn't just shrink. It disappeared: on every window tested, the always-predict-up rule beat the model, which sat below the base rate on every window.",
+      "The project wrote this up as an architecture decision record rather than quietly keeping the more flattering 50%-baseline comparison, and turned the directional signal off in the live product. The honest version of the finding is less exciting than \"the model beats a coin flip,\" but it's the one that's actually true, and it's the one that shipped. A different model later passed the same kind of gate on its own out-of-sample record, and the up/down line returned on 2026-10-02 (ADR 064).",
     ],
     sourceRef: "gold:direction-baseline",
   },

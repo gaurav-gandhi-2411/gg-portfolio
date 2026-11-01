@@ -8,16 +8,16 @@ export const reclaim: CaseStudy = {
   slug: "reclaim",
   verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
   title: "Reclaim",
-  dek: "A Windows disk-cleanup tool that only ever deletes by deterministic rule, never by model score, proved its own safety net by surviving a real incident where its own delete run hit three shared Python environments, recovered every file, and rebuilt detection to be structural rather than pattern-based.",
+  dek: "A Windows disk-cleanup tool that only ever deletes by deterministic rule, never by model score, proved its own safety net by surviving a real incident where its own delete run hit three shared Python environments, recovered every file, and rebuilt detection to be structural rather than marker-based.",
   depth: "full",
   problem: [
     "A Windows disk that's nearly full turns cleanup into a bet: delete the wrong thing, a config file that looks unused, a cache a build tool secretly still reads from, and something breaks, sometimes not until days later. Most cleanup tools resolve that tension by either being too conservative to free real space, or by trusting a model's \"this looks safe\" score enough to just act on it.",
-    "Reclaim resolves it a different way: nothing is ever proposed for deletion by a model, only by a deterministic rule (an exact path pattern, a file extension, a byte-identical hash match), and every one of those rules still has to pass a deny-first safety gate before it can even be shown to the user. The project's real subject isn't the disk-cleanup feature, it's what it actually costs, in real bugs found and estimates corrected, to earn the right to call a delete \"safe.\"",
+    "Reclaim resolves it a different way: no model ever deletes a path on its own authority. Every candidate the engine can apply comes from a deterministic detector (an exact path pattern, a file extension, a byte-identical hash match) or an explicit heuristic; AI suggestions are recommend-only, and a human selects and confirms the paths before anything is applied; an optional assistant (MCP) path never names a path at all, it can only request a rule or category selection that a human must approve in Reclaim's own window; and every candidate still has to pass a deny-first safety gate before it can be tagged for any tier. The project's real subject isn't the disk-cleanup feature, it's what it actually costs, in real bugs found and estimates corrected, to earn the right to call a delete \"safe.\"",
   ],
   approach: [
-    "A scan builds a local, read-only SQLite index of a drive, nothing is touched yet. Deterministic detectors then query that index for candidates: files whose path matches a known-safe pattern (a build tool's cache directory), files with a known-disposable extension, or files that are byte-for-byte identical to another file already being kept. Every candidate passes through SafetyValidator, a deny-first gate that excludes protected system roots, git repositories, protected file extensions, database and VM disk files, Docker/WSL roots, and cloud-sync placeholders, a BLOCKED verdict means the file is excluded entirely, never just downgraded to a lower-priority tier.",
-    "What happens to a file once it's approved depends on its category, not the run. Caches a build tool can regenerate with one command (a package manager's cache, browser temp files, crash dumps, dev-environment artifacts) are deleted permanently, because their real recovery path was always the rebuild command, not a backup copy. Everything else, including every exact-duplicate match, moves into a recoverable vault or the Windows Recycle Bin, with a manifest that supports restoring an entire batch by ID. Nothing on disk changes at all unless the user passes an explicit --apply flag; the default is always a dry-run report.",
-    "An applied-AI layer sits beside the deterministic engine, bundled directly into the public installer by default since a July 2026 rework (ADR-0030) replaced torch with ONNX-converted models, cutting the AI footprint from roughly 1GB down to under 200MB. It finds near-duplicate photos with a perceptual hash (pHash, a fingerprint that stays similar for visually similar images, compared by Hamming distance, the number of bits that differ between two fingerprints), backed by OpenCLIP for semantic grouping (finding photos of the same *kind* of thing, like two different beach photos, not just copies of the same photo). It groups near-duplicate documents with MinHash text-shingle prefiltering (a fast way to estimate how similar two documents are without comparing every word) plus a sentence-embedding confirmation pass, classifies screenshots so an OCR failure never gets silently read as \"safe to delete,\" and ranks review-queue items with a small model trained on cross-LLM-labeled data. None of it can delete anything on its own, every AI-produced suggestion goes through the exact same human confirmation and SafetyValidator check as everything else, and the AI layer's own output types are structurally incompatible with the code path that actually deletes files.",
+    "A scan builds a local, read-only SQLite index of the user's own profile by default (a whole-drive scan is a separate, confirmed opt-in), nothing is touched yet. Deterministic detectors then query that index for candidates: files whose path matches a known-safe pattern (a build tool's cache directory), files with a known-disposable extension, or files that are byte-for-byte identical to another file already being kept. Every candidate passes through SafetyValidator, a deny-first gate that excludes protected system roots, git repositories, protected file extensions, database and VM disk files, Docker/WSL roots, and cloud-sync placeholders, a BLOCKED verdict means the file is excluded entirely, never just downgraded to a lower-priority tier.",
+    "What happens to a file once it's approved depends on the mode and its category. In safe mode, the default for every install, every apply goes to the Windows Recycle Bin, and a separate closed allow-list (package managers' own clean commands, aged temp files, old crash dumps, caches of closed browsers) is the only thing that frees space permanently. In power mode, caches a build tool can regenerate with one command are deleted permanently, because their real recovery path was always the rebuild command, not a backup copy. Everything else, including every exact-duplicate match, moves into a recoverable vault or the Windows Recycle Bin, with a manifest that restores a vaulted batch by ID; Recycle Bin batches are restored through Windows' own Recycle Bin. Scan-driven candidates change nothing on disk without an explicit apply (the CLI's --apply flag, or a second confirmation in the dashboard); the default is a dry-run report. The exceptions are the closed regenerable-cache clean, which Simple mode's one-click button runs with no preview, and an opt-in weekly run of the same clean, off by default.",
+    "An applied-AI layer sits beside the deterministic engine. ADR-0030 (2026-08-05) replaced torch with ONNX-converted models (199.4MB of model files in place of a roughly 1GB torch-based dependency stack) so the layer can be bundled into the installer built from main; the latest published release, v1.3.0 (2026-07-25), predates that change and is still the core-only installer. It finds near-duplicate photos with a perceptual hash (pHash, a fingerprint that stays similar for visually similar images, compared by Hamming distance, the number of bits that differ between two fingerprints), backed by OpenCLIP for semantic grouping (finding photos of the same *kind* of thing, like two different beach photos, not just copies of the same photo). It groups near-duplicate documents with MinHash text-shingle prefiltering (a fast way to estimate how similar two documents are without comparing every word) plus a sentence-embedding confirmation pass, classifies screenshots so an OCR failure never gets silently read as \"safe to delete,\" and orders the AI Suggestions list with a small LightGBM ranker trained on cross-LLM-labeled data. None of it can delete anything on its own, every AI-produced suggestion goes through the exact same human confirmation and SafetyValidator check as everything else, and the AI layer's own output types are structurally incompatible with the code path that actually deletes files.",
   ],
   architecture: {
     intro:
@@ -26,7 +26,7 @@ export const reclaim: CaseStudy = {
       {
         label: "Scan",
         kind: "input",
-        detail: "read-only walk of every fixed drive into a local SQLite inventory index, no filesystem changes",
+        detail: "read-only walk of the user's own profile by default (a whole-drive scan is a confirmed opt-in) into a local SQLite inventory index, no filesystem changes",
       },
       {
         label: "Deterministic detectors",
@@ -40,10 +40,10 @@ export const reclaim: CaseStudy = {
       {
         label: "Tiered candidates",
         detail:
-          "dry-run report by default; retention is a property of the category, rebuild-recoverable caches delete permanently, everything else stays vault- or Recycle-Bin-recoverable",
+          "scan-driven applies are a dry-run report by default (the closed regenerable-cache clean runs from a one-click button); in power mode retention is a property of the category (rebuild-recoverable caches delete permanently, everything else stays vault- or Recycle-Bin-recoverable); in safe mode every apply is Recycle-Bin-only",
       },
       {
-        label: "AI layer (bundled by default)",
+        label: "AI layer (bundled since ADR-0030; not yet in a published release)",
         detail: "recommend-only, structurally unable to call the delete path",
         parallel: [
           { label: "Near-dup images", detail: "pHash + OpenCLIP semantic grouping" },
@@ -55,15 +55,15 @@ export const reclaim: CaseStudy = {
       {
         label: "Apply",
         detail:
-          "dry-run unless --apply; safe mode (default for every install) forces Recycle-Bin-only + the riskiest categories off, regardless of config",
+          "dry-run unless --apply; safe mode (default for every install) forces the generic apply pipeline to Recycle-Bin-only + the riskiest categories off, regardless of config; a separate, closed allow-list of regenerable caches is the only permanent delete in safe mode (ADR-0034)",
       },
       {
         label: "Quarantine & Restore",
         kind: "output",
-        detail: "vault/Recycle-Bin batch, restorable by batch ID, or Windows' own Recycle Bin under safe mode",
+        detail: "vault batch, restorable by batch ID; Recycle-Bin batches (safe mode's default) restore through Windows' own Recycle Bin",
       },
     ],
-    note: "The public installer (Nuitka + Inno Setup) bundles the AI layer by default as of ADR-0030, torch was dropped in favor of ONNX-converted CLIP + MiniLM models (199.4MB total), for a 309.3MB installer and an 884.0MB installed footprint. This supersedes the project's earlier core/optional-extra split (ADR-0024).",
+    note: "ADR-0030 makes the installer (Nuitka + Inno Setup) bundle the AI layer: torch was dropped in favor of ONNX-converted CLIP + MiniLM models (199.4MB), for a 309.3MB installer and an 884.0MB installed footprint, superseding the project's earlier core/optional-extra split (ADR-0024). That build is not yet published: the latest release, v1.3.0 (2026-07-25), is the earlier core-only installer.",
   },
   decisions: [
     {
@@ -78,17 +78,17 @@ export const reclaim: CaseStudy = {
     },
     {
       title: "Hardlink- and structure-aware accounting, because byte-identical isn't the same as reclaimable",
-      body: "A \"duplicate\" can be a hardlink to its own keep copy (0 bytes actually freed), or a byte-identical file inside a shared Python interpreter build that a dozen unrelated tools depend on. Crediting a candidate's full size only when every name pointing to its inode is in the same delete set (hardlink-aware accounting) took the exact-duplicate reclaimable estimate from ~48GB to 23.09GB; excluding model caches and live environments from generic duplicate detection took it to 4.26GB, the largest single correction in the project's honesty arc, and every correction moved the number down, never up.",
+      body: "A \"duplicate\" can be a hardlink to its own keep copy (0 bytes actually freed), or a byte-identical file inside a shared Python interpreter build that a dozen unrelated tools depend on. Crediting a candidate's full size only when every name pointing to its inode is in the same delete set (hardlink-aware accounting) took the exact-duplicate reclaimable estimate from ~48GB to 23.09GB; excluding model caches and live environments from generic duplicate detection took it to 4.26GB, an 82% cut from 23.09GB (about 91% from the original ~48GB), and every correction moved the number down, never up.",
       sourceRef: "reclaim:honesty-arc",
     },
     {
       title: "Never pool a metric across a declared distribution tier",
-      body: "A remeasurement of the document near-duplicate detector reported 95.24% precision pooled across a large, easy prose tier and a small, hard templated-document tier, comfortably above the 95% target. The templated tier alone, at the identical threshold, was actually 86.34% precision: a real 71%-false-positive failure the large tier's thousands of clean negatives had mathematically diluted into invisibility. The fix wasn't a better threshold; it was a structural one, the eval harness gained functions with no code path capable of concatenating counts across tiers before computing a ratio, and the incident itself became a permanent regression test.",
+      body: "A remeasurement of the document near-duplicate detector reported 95.24% precision pooled across a large, easy prose tier and a small, hard templated-document tier, comfortably above the 95% target. The templated tier alone, at the identical threshold, was actually 86.34% precision (25 of its 183 flagged pairs were false): a real failure the large tier's thousands of clean negatives had mathematically diluted into invisibility. The fix was a stricter joint threshold gated on each tier independently, plus a structural one: the eval harness gained functions with no code path capable of concatenating counts across tiers before computing a ratio, and the incident itself became a permanent regression test.",
       sourceRef: "reclaim:pooling-bug",
     },
     {
       title: "Safe mode ships as the default the moment strangers, not just the author, can run it",
-      body: "Every safety mechanism up to this point had been built and measured against one disk, watched by the person who wrote the code. A public installer changes that audience, so safe mode became three independent, structurally-proven guarantees rather than one flag: permanent delete is unreachable in code whenever mode is safe (proven by monkeypatching os.unlink and shutil.rmtree to raise if ever called), the three highest-risk category groups are forced off regardless of what a config file requests, and every apply must be an explicit, human-picked list of paths, never a one-click \"apply everything.\" The same proof was run twice against the actual compiled installer, not just the source tree.",
+      body: "Every safety mechanism up to this point had been built and measured against one disk, watched by the person who wrote the code. A public installer changes that audience, so safe mode became three independent, structurally-proven guarantees rather than one flag: permanent delete is unreachable in the apply pipeline whenever mode is safe (proven by monkeypatching the delete primitives to raise if ever called; a later, separate path, ADR-0034, permanently cleans only a closed, in-code allow-list of regenerable caches and takes no path from any caller), the three highest-risk category groups are forced off regardless of what a config file requests, and every apply through the review pipeline must be an explicit, human-picked list of paths, never a one-click \"apply everything\" (the one-click clean added later, ADR-0034, can touch only that closed allow-list). The same proof was run twice against the actual compiled installer, not just the source tree.",
       sourceRef: "reclaim:safe-mode-installer",
     },
   ],
@@ -122,7 +122,7 @@ export const reclaim: CaseStudy = {
     {
       label: "Filename-driven XSS in the review UI, found and closed",
       value: "0 innerHTML assignments carry a path field anywhere in the codebase today",
-      detail: "the one bug in this project's own review UI, not the deletion engine, the screen a human is supposed to trust before confirming a delete was itself exploitable via a maliciously-named file",
+      detail: "the most dangerous bug in the project, found in its own review UI rather than the deletion engine: the screen a human is supposed to trust before confirming a delete was itself exploitable via a maliciously-named file",
       sourceRef: "reclaim:xss-finding",
       format: "prose",
     },
