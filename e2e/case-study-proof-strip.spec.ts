@@ -32,7 +32,9 @@ const slugs = Object.keys(caseStudies);
 test.describe("Case-study proof strip", () => {
   test("fixture sanity: most studies qualify, some do not", () => {
     const withStrip = slugs.filter((s) => expectedRows(s).length > 0);
-    expect(withStrip.length).toBeGreaterThanOrEqual(10);
+    // 9 of 15 since DealHunter dropped its unsourced 6/10 audit row (#380): one
+    // sourced headline is below the two-row minimum, so it flags none. Still "most".
+    expect(withStrip.length).toBeGreaterThanOrEqual(9);
     expect(withStrip.length).toBeLessThan(slugs.length);
   });
 

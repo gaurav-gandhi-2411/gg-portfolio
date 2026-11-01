@@ -16,11 +16,11 @@ export const evalDefectBench: CaseStudy = {
   dek: "A held-out benchmark for a class of silent-verdict-degradation bugs, plus 3 detection baselines (AST, local LLM consensus, frontier judge) that all failed a pre-registered viability gate.",
   depth: "short",
   problem: [
-    "An agent-evaluation framework can fail silently: a bug in the scoring path doesn't crash, it just quietly returns a plausible-looking verdict that's wrong, the kind of defect nobody notices because nothing about the failure looks like a failure. This benchmark exists to test whether that specific class of bug (\"silent verdict degradation\") is even detectable by tooling that could plausibly run in CI, before anyone builds a detector and assumes it works.",
+    "An agent-evaluation framework can fail silently: a bug in the scoring path doesn't crash, it just quietly returns a plausible-looking verdict that's wrong, the kind of defect nobody notices because nothing about the failure looks like a failure. This benchmark exists to test whether that specific class of bug (\"silent verdict degradation\") is even detectable by automated tooling, before anyone builds a detector and assumes it works.",
     "The benchmark itself is the honest part: 30 real, merged bug-fix commits from google/adk-python's own evaluation module, paired with 30 verified-untouched controls, frozen and scored blind.",
   ],
   approach: [
-    "Three independent detection approaches were built and run against the frozen 60-record benchmark: a hand-built AST scanner (5 pattern detectors), a local three-model Ollama consensus (llama3.1:8b, gemma2:9b, qwen2.5:7b, majority vote), and a single frontier-model judge scoring an isolated function body blind. Two pass/fail gates were pre-registered before the frontier-judge run: a mechanism-naming gate (EXACT localization at least 40% AND adjudicated false-positive rate at most 20%) and a looser triage gate (balanced accuracy at least 70% AND adjudicated FPR at most 15%).",
+    "Three independent detection approaches were built and run against the frozen 60-record benchmark: a hand-built AST scanner (5 pattern detectors; run on the 30 positives only, never on the controls), a local three-model Ollama consensus (llama3.1:8b, gemma2:9b, qwen2.5:7b, majority vote), and a single frontier-model judge scoring an isolated function body blind. Two pass/fail gates were pre-registered before the frontier-judge run: a mechanism-naming gate (EXACT localization at least 40% AND adjudicated false-positive rate at most 20%) and a looser triage gate (balanced accuracy at least 70% AND adjudicated FPR at most 15%).",
     "None of the three detectors passed either gate. That's the headline result, not a footnote, the repository exists to make the negative result, and the benchmark that produced it, reusable by the next attempt instead of something that has to be rediscovered from scratch.",
   ],
   results: [
@@ -59,7 +59,7 @@ export const evalDefectBench: CaseStudy = {
       headline: true,
       value: "15 / 30 (50%)",
       detail:
-        "across 3 primary shapes (silent accumulation loss, value not consulted, boundary strips attached data), each cross-referenced against real external google/adk-python PRs/issues; one of those, keras#23420, is a merged, contested, evidence-defended fix in a major framework, landed 2026-09-15",
+        "across 3 primary shapes (silent accumulation loss, value not consulted, boundary strips attached data), two of them cross-referenced against real external google/adk-python PRs/issues; separately, keras#23420, one of the five external PRs behind the taxonomy's cross-references, is a merged, contested, evidence-defended fix in a major framework, landed 2026-09-15",
       sourceRef: "eval-defect-bench:taxonomy",
     },
   ],
