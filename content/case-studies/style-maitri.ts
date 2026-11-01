@@ -9,7 +9,7 @@ import type { CaseStudy } from "../types";
 // never-committed local eval reports (94.4%/n=378, 112,425/42 stores) — reverted.
 // Those reports have no git commit date (reports/ and data/processed/ are both
 // gitignored in this repo) and cannot be independently audited, unlike the
-// git-committed reports/final_scorecard_2026-07-12.txt (commit 57e7e60, explicitly
+// git-committed reports/final_scorecard_2026-07-12.txt (commit db4a6ed, explicitly
 // titled "final honest scorecard") backing the values below. The 8-store list WAS
 // corrected (the original text conflated a different single-brand demo config table)
 // — that correction comes from the same committed report as the store count, so it
@@ -23,13 +23,13 @@ export const styleMaitri: CaseStudy = {
   dek: "A white-label AI shopping assistant for Indian fashion brands, stress-tested by sending 6 agents to role-play skeptical shoppers on the live site, shipped only after that audit's two trust-breaking bugs were found and fixed.",
   depth: "full",
   problem: [
-    "Indian D2C fashion brands want a conversational shopping assistant, something a shopper can chat with the way they'd ask a helpful store clerk, but grounded in their own real catalogue: their actual prices, sizes, and stock, never invented ones. Style Maitri is built white-label so any brand can run it: one Docker container (a packaged, portable copy of the whole app) plus one YAML config file (a small settings file) per brand.",
+    "Indian D2C fashion brands want a conversational shopping assistant, something a shopper can chat with the way they'd ask a helpful store clerk, but grounded in their own real catalogue: their actual prices and sizes, never invented ones (the catalogue is a point-in-time snapshot, not a live stock feed). Style Maitri is built white-label so any brand can run it: one Docker container (a packaged, portable copy of the whole app) plus one YAML config file (a small settings file) per brand.",
     "It's been demoed across 8 real Indian fashion catalogues: Snitch, Fashor, Virgio, Powerlook, Myntra, Flipkart, GlobalRepublic, and Libas, for 52,494 items in total. The core promise is that it can't hallucinate: it should never quote a price or describe a fabric that isn't actually in the catalogue it's serving.",
   ],
   approach: [
-    "A shopper's message enters a LangGraph agent loop (a graph-shaped state machine that lets an LLM take one step at a time, pick a tool, act, decide the next step) with six tools: search, compare, filter, outfit-bundle, clarify, and respond. An LLM router (Groq's llama-3.1-8b-instant) reads the message and classifies intent to pick which tool runs next. Because an LLM's judgment can drift or loop, a plain code-level guard sits underneath it and forces a deterministic next step after search or compare complete, the agent physically cannot wander in circles forever.",
+    "A shopper's message enters a LangGraph agent loop (a graph-shaped state machine that lets an LLM take one step at a time, pick a tool, act, decide the next step) with six tools: search, compare, filter, outfit-bundle, clarify, and respond. An LLM router (Groq's openai/gpt-oss-20b, the model the repo currently configures for it) reads the message and classifies intent to pick which tool runs next. Because an LLM's judgment can drift or loop, a plain code-level guard sits underneath it and forces a deterministic next step after search or compare complete, the agent physically cannot wander in circles forever.",
     "Once a tool decides it needs product data, retrieval runs as a hybrid: a dense FAISS embedding search (turns text into vectors and finds nearby meanings) running alongside a BM25 keyword search (classic exact-term matching), and the two ranked lists are merged with Reciprocal Rank Fusion, a simple, well-understood formula for combining two rankings without needing either one to \"win.\"",
-    "Before anything is shown to the shopper, every generated response is checked against the items that were actually retrieved and stripped of any claim that isn't backed by real catalogue data. The same Docker image serves every brand; only the YAML config changes, which is what makes the white-label promise real rather than aspirational.",
+    "Before anything is shown to the shopper, every generated response is checked against the items that were actually retrieved and any sentence that references a price, size, or material not present in those items is stripped. The same Docker image serves every brand; only the YAML config changes, which is what makes the white-label promise real rather than aspirational.",
   ],
   architecture: {
     intro:
@@ -47,7 +47,7 @@ export const styleMaitri: CaseStudy = {
       {
         label: "LangGraph router",
         detail:
-          "Groq llama-3.1-8b-instant classifies intent; a code-level guard forces deterministic transitions after search/compare",
+          "Groq openai/gpt-oss-20b (the repo's configured router model) classifies intent; a code-level guard forces deterministic transitions after search/compare",
       },
       {
         label: "Tool node",
@@ -63,7 +63,7 @@ export const styleMaitri: CaseStudy = {
       },
       {
         label: "Groq response generation + grounding check",
-        detail: "strips any claim not backed by an actually-retrieved item",
+        detail: "strips any sentence that references a price, size, or material not present in the retrieved items",
       },
       {
         label: "Reply to shopper",
@@ -81,7 +81,7 @@ export const styleMaitri: CaseStudy = {
     },
     {
       title: "A rule-based normalizer, not an LLM, to unify garment names",
-      body: "Eight catalogues describe the same kind of item eight different ways, \"kurta\", \"kurti\", \"tunic top\" might all mean the same thing to a shopper. Instead of asking an LLM to guess a mapping every time, a deterministic keyword/rule engine resolves every product title into one canonical taxonomy. It imports nothing from the LLM stack at all, which makes it auditable, free to run, and impossible to get inconsistent answers from on the same input twice.",
+      body: "Store catalogues describe the same kind of item in different ways, \"sweatpants\" and \"joggers\" can mean the same thing to a shopper. Instead of asking an LLM to guess a mapping every time, a deterministic keyword/rule engine resolves every product title into one canonical taxonomy (\"TraqEase Sweatpants Black\" → joggers). It imports nothing from the LLM stack at all, which makes it auditable, free to run, and impossible to get inconsistent answers from on the same input twice.",
       sourceRef: "style-maitri:garment-normalizer",
     },
     {
@@ -109,28 +109,29 @@ export const styleMaitri: CaseStudy = {
     },
     {
       label: "Retrieval precision@5",
-      value: "96–99% on occasion/search queries",
-      detail: "drops to 67% on adversarial queries (n=92)",
+      value: "88.9% (n=92)",
+      detail:
+        "overall, 2026-07-12 scorecard; by category in the 2026-07-11 run: occasion 99% (n=27), search 93% (n=42), adversarial 70% (n=23)",
       sourceRef: "style-maitri:retrieval-eval",
     },
     {
       label: "Adversarial live-site audit",
       value: "15 of 32",
       detail:
-        "skeptical-shopper queries judged disappointing: 6 subagents role-playing wedding shoppers on the live production site found 2 trust-destroying bugs no offline eval had caught",
+        "skeptical-shopper queries judged disappointing: 6 subagents role-playing wedding shoppers on the live production site filed 7 findings as trust-destroying blockers (2 of them flagged as trust/safety issues) no offline eval had caught",
       sourceRef: "style-maitri:live-audit",
     },
   ],
   story: {
     title: "6 agents went shopping as skeptics on the live site, and found what a 93.8%-accuracy eval set never could",
     leadIn: {
-      text: "The offline evals looked healthy: 93.8% intent accuracy, 96–99% retrieval precision on normal queries.",
+      text: "The offline evals looked healthy: 93.8% intent accuracy (n=211), 88.9% retrieval precision@5 (n=92).",
       sourceRef: "style-maitri:intent-accuracy",
     },
     body: [
-      "But those numbers only measure what the eval set happens to ask. To find out what a real, skeptical shopper would experience, 6 independent agents were sent to drive the actual live production site as wedding shoppers would, 32 messy, realistic queries, judged honestly rather than graded against a rubric written in advance.",
+      "But those numbers only measure what the eval set happens to ask. To find out what a real, skeptical shopper would experience, 6 independent agents were sent to drive the actual live production site as wedding shoppers would: 3 swept the visual and UX flows, and 3 judged 32 messy, realistic queries as a human, honestly rather than graded against a rubric written in advance.",
       "15 of the 32 responses were judged disappointing, and two were worse than disappointing: a body-shape styling feature fabricated a confident claim about someone's body from a photo that had no person in it at all, and a bridal search ranked children's clothing above adult items in the results.",
-      "The most interesting finding was a consistency bug, not an accuracy bug. When the outfit-board tool can't find matching footwear, its code path correctly tells the shopper \"we don't have footwear that matches.\" But the plain-search path handling the exact same missing-inventory situation invents a plausible-sounding recommendation instead, \"pairs well with delicate ankle-strap sandals\", when zero footwear items exist anywhere in the result. Two code paths, same underlying case, one honest and one confabulating. No offline metric was ever going to surface that, because the eval set doesn't know to compare one tool's honesty against another's. Only driving the live product like a real, skeptical user found it.",
+      "The most interesting finding was a consistency bug, not an accuracy bug. When the outfit-board tool can't find matching footwear, its code path correctly tells the shopper \"No women's footwear that match this look in our partner stores yet.\" But the plain-search path handling the exact same missing-inventory situation invents a plausible-sounding recommendation instead, \"pairs well with delicate ankle-strap sandals\", when zero footwear items exist anywhere in the result. Two code paths, same underlying case, one honest and one confabulating. No offline metric was ever going to surface that, because the eval set doesn't know to compare one tool's honesty against another's. Only driving the live product like a real, skeptical user found it.",
     ],
     sourceRef: "style-maitri:live-audit",
   },
