@@ -7,8 +7,8 @@ import hfDownloads from "@/content/generated/hf-downloads.json";
 import metricsJson from "@/content/metrics.json";
 import {
   extractCitations,
-  extractMeasuredDate,
   parseProvenanceText,
+  proseMeasuredDate,
   type ParsedProvenance,
 } from "@/lib/provenance-parse";
 
@@ -126,7 +126,7 @@ export function getProvenance(
   const repoSlug = stripRepoSlug(repoUrl);
   const citations = extractCitations(row.source, repoSlug);
   const measuredAt =
-    generatedFetchDates[sourceRef] ?? extractMeasuredDate(row.claim, row.source);
+    generatedFetchDates[sourceRef] ?? proseMeasuredDate(sourceRef, row.claim, row.source);
 
   return {
     tier: "prose",
