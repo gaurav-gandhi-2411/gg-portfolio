@@ -72,6 +72,20 @@ test("extractMeasuredDate prefers a date in the source cell over one in the clai
   assert.equal(extractMeasuredDate("no date here either", "still none"), undefined);
 });
 
+test("extractMeasuredDate reads a date inside a cited filename, not a correction note in the claim", () => {
+  // A report named `deep_diagnosis_2026-07-12.md` was measured on 2026-07-12; the claim's
+  // "Corrected 2026-11-01" is when the site's wording changed, not when anything was measured.
+  assert.equal(
+    extractMeasuredDate(
+      "15/32 disappointing. **Corrected 2026-11-01:** was 2 bugs",
+      "`reports/deep_diagnosis_2026-07-12.md:3-9` @ `e1bc192`"
+    ),
+    "2026-07-12"
+  );
+  // Still not fooled by a longer digit run.
+  assert.equal(extractMeasuredDate("none", "build 12026-07-123"), undefined);
+});
+
 test("a line that never matches the row shape at all is silently skipped, not rejected", () => {
   const text = [
     "Some unrelated prose paragraph.",
