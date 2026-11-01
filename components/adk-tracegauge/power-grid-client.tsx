@@ -140,8 +140,8 @@ export default function PowerGridClient() {
             Where one real evalset actually landed
           </p>
           <p className="text-sm leading-relaxed text-foreground">
-            The same package, run twice against a real 36-case evalset, put its own within-case
-            cost CV at {POWER_GRID.realMeasured.cv} -- between the {"0.1"} and {"0.2"} rows above.
+            The same package, run twice against a real 36-case evalset on a local model
+            (ollama_chat/qwen2.5:7b), put its own within-case cost CV at {POWER_GRID.realMeasured.cv} -- between the {"0.1"} and {"0.2"} rows above.
             {realPoint10
               ? ` At n=${n}, its own power to catch a ${POWER_GRID.effect} came out at ${realPoint10.power}% [${realPoint10.ci[0]}%, ${realPoint10.ci[1]}%] (${realPoint10.trials}), read directly off this evalset rather than looked up on this grid.`
               : " This grid's n values (30, 50, 100) don't include 36, the evalset's real size -- pick n=30 to see the closest published comparison."}

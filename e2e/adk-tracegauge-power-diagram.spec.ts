@@ -119,6 +119,11 @@ test.describe("adk-tracegauge power-variance diagram", () => {
 
     // Default state is Regime B / paired, so the callout starts visible.
     await expect(realCallout).toBeVisible();
+    // Intent: the one real measurement says which model it was taken on. The
+    // case study reports a hosted and a local measurement; this grid's point is
+    // the local one (realMeasured.detail), and a bare "real evalset" reads as
+    // the hosted headline.
+    await expect(realCallout.locator("..")).toContainText("ollama_chat/qwen2.5:7b");
 
     await section.getByRole("button", { name: "Fixed-dollar noise" }).click();
     await expect(realCallout).toHaveCount(0);
