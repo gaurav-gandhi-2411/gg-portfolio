@@ -3,7 +3,7 @@ import type { CaseStudy } from "../types";
 // Sources: adk-tracegauge repo (README.md, pyproject.toml,
 // .github/workflows/ci.yml, docs/audit/Q1_WITHIN_CASE_CV.md,
 // docs/audit/Q1A_RECONCILIATION.md, docs/audit/AC1_SKEW_SENSITIVITY.md) at
-// commit 4c62769, plus the live PyPI JSON API for the published version and
+// commit 8071a72987096373b9c683965214180069054143, plus the live PyPI JSON API for the published version and
 // release count. See provenance.md's adk-tracegauge section.
 //
 // No version number is written down on this page, on purpose. The first
@@ -29,7 +29,7 @@ export const adkTracegauge: CaseStudy = {
   approach: [
     "Two commands do the work. adk-tracegauge snapshot runs your existing eval suite with a small plugin attached, capturing what every single invocation actually cost in dollars, and writes it to a file. adk-tracegauge check takes a baseline file and a current file and decides whether cost went up for real.",
     "The decision is a percentile bootstrap on the difference in mean cost: resample both runs ten thousand times, build a confidence interval around the difference, and only call it a regression when that interval excludes zero and the increase also clears a floor you configured, either a flat dollar amount or a percentage. Both conditions have to hold, because an increase can be reliably real and still be too small to care about.",
-    "The gate then exits with a code a build system can act on: zero for pass, one for a regression, three for not enough data to say either way. That third one matters more than it looks. Refusing to answer is a different outcome from passing, and collapsing the two is how a cost gate ends up certifying a build it never actually examined.",
+    "The gate then exits with a code a build system can act on: zero for pass, one for a regression, three for not enough data to say either way, and four for a pass the run was too underpowered to vouch for. The three matters more than it looks. Refusing to answer is a different outcome from passing, and collapsing the two is how a cost gate ends up certifying a build it never actually examined.",
     "There is a second, smaller path for people already living inside adk eval: the package registers a real cost metric there too, so an eval run prints a dollar figure and a pass or fail per invocation. It is for watching costs while you iterate, not for gating a build, because ADK's own eval command returns success to the shell whether the metrics passed or failed.",
   ],
   architecture: {
@@ -64,7 +64,7 @@ export const adkTracegauge: CaseStudy = {
       {
         label: "Exit code your CI can gate on",
         kind: "output",
-        detail: "0 pass · 1 regression · 3 insufficient data",
+        detail: "0 pass · 1 regression · 3 insufficient data · 4 underpowered pass",
       },
     ],
     note: "The mode and the key it paired on are printed on every run, never silently assumed.",
@@ -81,8 +81,8 @@ export const adkTracegauge: CaseStudy = {
       sourceRef: "adk-tracegauge:power-retraction",
     },
     {
-      title: "The honest answer on a real workload is 28%, and it ships in the README",
-      body: "Rather than leave the grids as theory, the same thirty-six-case eval set was run twice against a local model to get a real number for how much the same case's cost wobbles between runs. It came out at 0.157, which lands on the grid at roughly 28% power to catch a true 10% cost increase at the default minimum of thirty cases. That is nowhere near the 80% bar the project sets for calling anything reliable, and it is published in the README as the realistic case rather than buried. Large increases are still caught comfortably; small ones at small eval sets are a real blind spot, named as one.",
+      title: "On a real hosted model the measured power is 37.85%, and it ships in the README",
+      body: "Rather than leave the grids as theory, the same thirty-six-case eval set was run twice against a local model (ollama_chat/qwen2.5:7b) to get a real number for how much the same case's cost wobbles between runs. It came out at a within-case CV of 0.1566, which put paired-mode power to catch a true 10% cost increase at 28.45% at the default minimum of thirty cases. The README then repeated the measurement against a hosted model, gemini-3.5-flash-lite: a within-case CV of 0.1307 and 37.85% [35.75%, 40.00%] power at thirty cases, 43.50% at thirty-six. The README calls that hosted-model figure the actual deliverable. Both are far below the 80% bar the project sets for calling anything reliable, and the README says so plainly: at thirty cases the shipped default does not reliably detect a true 10% cost regression, even at the measured hosted-model variance. A 25% rise is still caught reliably (98.00% at thirty cases on the hosted model); small increases at small eval sets are a real blind spot, named as one.",
       sourceRef: "adk-tracegauge:real-cv",
     },
     {
@@ -100,7 +100,7 @@ export const adkTracegauge: CaseStudy = {
     {
       label: "Time from a fresh install to a real verdict",
       value: "89.5s",
-      detail: "a bundled demo agent with a cost regression injected, no API key and no network call",
+      detail: "a single run of a bundled demo agent with a cost regression injected, no API key and no network call",
       sourceRef: "adk-tracegauge:quickstart",
     },
     {
@@ -110,21 +110,33 @@ export const adkTracegauge: CaseStudy = {
       sourceRef: "adk-tracegauge:pypi",
     },
     {
-      label: "Power to catch a true 10% cost rise, on a real eval set",
-      value: "28.45% at thirty cases, 32.25% at thirty-six",
-      detail: "the honest number, well under the 80% bar; the package prints its own equivalent on every run",
+      label: "Power to catch a true 10% cost rise, hosted model (gemini-3.5-flash-lite), 36-case eval set",
+      value: "37.85% at thirty cases, 43.50% at thirty-six",
+      detail: "paired-mode power simulated at the measured within-case CV of 0.1307, which the README calls the actual deliverable; well under the 80% bar, and the package prints its own equivalent on every run",
       sourceRef: "adk-tracegauge:real-cv",
     },
     {
-      label: "Power to catch a 25% rise, same eval set",
+      label: "Power to catch a 25% rise, hosted model (gemini-3.5-flash-lite), same eval set",
+      value: "98.00% at thirty cases, 99.35% at thirty-six",
+      detail: "big increases are caught reliably; the weakness is small ones at small sample sizes",
+      sourceRef: "adk-tracegauge:real-cv",
+    },
+    {
+      label: "Earlier local-model measurement (ollama_chat/qwen2.5:7b), true 10% cost rise, same 36-case eval set",
+      value: "28.45% at thirty cases, 32.25% at thirty-six",
+      detail: "paired-mode power at that run's within-case CV of 0.1566, the README's earlier real measurement, since repeated on the hosted model above",
+      sourceRef: "adk-tracegauge:real-cv",
+    },
+    {
+      label: "Earlier local-model measurement (ollama_chat/qwen2.5:7b), 25% cost rise, same eval set",
       value: "92.25% at thirty cases, 96.35% at thirty-six",
-      detail: "big increases are caught comfortably; the weakness is small ones at small sample sizes",
+      detail: "same local-model run as the row above",
       sourceRef: "adk-tracegauge:real-cv",
     },
     {
       label: "Supported Python versions, each on its own CI leg",
       value: "3.10 through 3.14",
-      detail: "run against both google-adk releases the version range admits",
+      detail: "the suite runs on each Python version against the google-adk the lockfile pins, and on the google-adk floor (2.6.0), with a bare-install smoke test across several google-adk releases",
       sourceRef: "adk-tracegauge:python-matrix",
     },
   ],
@@ -133,13 +145,13 @@ export const adkTracegauge: CaseStudy = {
       "The headline number was mine, it was wrong, and replacing it with a better single number would have been the same mistake again",
     body: [
       "The package shipped with a claim I liked: 99.22% power to detect a 10% cost regression at thirty cases. It came from a real simulation, not from thin air. It ran thousands of trials. The arithmetic was fine.",
-      "What it was not was universal. Detection power for this kind of test depends almost entirely on one thing the simulation had to assume: how much per-invocation cost varies. The generator behind that number assumed a low, fixed amount of wobble. An audit tried a different assumption, equally plausible and equally unmeasured, and the same cell came out near 5% instead of 99%. Two orders of magnitude apart, from a choice nobody had thought of as a choice.",
+      "What it was not was universal. Detection power for this kind of test depends almost entirely on one thing the simulation had to assume: how much per-invocation cost varies. The generator behind that number assumed a low, fixed amount of wobble. An audit tried a different assumption, equally plausible and equally unmeasured, and the same cell came out near 5% instead of 99%. An order-of-magnitude gap, from a choice nobody had thought of as a choice.",
       "The tempting fix was to pick the better assumption and republish. That would have reproduced the original error exactly, one assumption swapped for another, with the same false air of settledness. Instead the single number came out and was replaced by power as a function of the variable that actually determines it, in two grids, because the noise itself has two genuinely different shapes: a fixed dollar amount per case, which fits an eval set of near-identical prompts, and noise that scales with each case's own cost, which fits an eval set spanning short questions and long generation.",
       {
-        text: "Then came the part that made the retraction worth the trouble. A real eval set of thirty-six cases was run twice against a local model, giving a real figure for how much the same case's cost moves between runs: 0.157. On the grid that is about 28% power at thirty cases and 32% at thirty-six. Not 99%, and not the audit's 5% either, but firmly in the range where the gate cannot reliably see a 10% increase on an eval set of a realistic size.",
+        text: "Then came the part that made the retraction worth the trouble. A real eval set of thirty-six cases was run twice against a local model (ollama_chat/qwen2.5:7b), giving a real figure for how much the same case's cost moves between runs: a within-case CV of 0.1566. On the grid that was 28.45% power at thirty cases and 32.25% at thirty-six. The README later repeated the measurement against a hosted model, gemini-3.5-flash-lite, where the within-case CV came out at 0.1307 and the power at 37.85% at thirty cases and 43.50% at thirty-six; the README calls that hosted-model figure the actual deliverable. Not 99%, and not the audit's 5% either, but in the range where the gate cannot reliably see a 10% increase at thirty cases.",
         sourceRef: "adk-tracegauge:real-cv",
       },
-      "That number is now in the README, in the section a prospective user reads before installing. It would have been easy to leave the old figure up. Nothing external would have caught it, because the simulation behind it was real and the arithmetic was right. The thing that was wrong was the silence about what the number depended on, and silence is not something a test suite can fail.",
+      "Those numbers are now in the README, stated plainly as short of the 80% bar. It would have been easy to leave the old figure up. Nothing external would have caught it, because the simulation behind it was real and the arithmetic was right. The thing that was wrong was the silence about what the number depended on, and silence is not something a test suite can fail.",
       "The lasting fix is not either grid. It is the line the gate now prints on every run: the smallest increase it could reliably catch, computed from your own data's spread and your own sample size, which needs no assumption about noise shape because it is derived from the noise you actually have.",
     ],
     sourceRef: "adk-tracegauge:power-retraction",
