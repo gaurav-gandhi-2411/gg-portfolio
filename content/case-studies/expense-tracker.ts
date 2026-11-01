@@ -55,7 +55,7 @@ export const expenseTracker: CaseStudy = {
       label: "Deployment",
       value: "Offline: backend and frontend are both down (checked 2026-11-01)",
       detail:
-        "on 2026-11-01 the backend's /health returned 503 and then 500, and the frontend's registered Vercel deployment returned 404 (DEPLOYMENT_NOT_FOUND); the repo's own 2026-08-22 commit records the backend failing every request since billing was disabled on its cloud project. The code stays linked. Earlier: the backend was found down 2026-07-18 and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one); 9/9 Playwright auth E2E scenarios pass locally",
+        "on 2026-11-01 the backend's /health returned 503 and then 500, and the frontend's registered Vercel deployment returned 404 (DEPLOYMENT_NOT_FOUND); the repo's own 2026-08-22 commit recorded the backend failing every request at that time, with billing disabled on its cloud project. The code stays linked. Earlier: the backend was found down 2026-07-18 and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one); 9/9 Playwright auth E2E scenarios pass locally",
       sourceRef: "expense-tracker:state",
       format: "prose",
     },
