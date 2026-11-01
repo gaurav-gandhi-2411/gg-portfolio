@@ -13,14 +13,14 @@ export const tracegauge: CaseStudy = {
   slug: "tracegauge",
   verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
   title: "tracegauge",
-  dek: "A local, three-axis scorer that replaces \"this agent felt efficient\" with a measurement, built by testing four candidate waste heuristics against real annotator agreement, and rebuilding the architecture around the one that survived.",
+  dek: "A local, three-axis scorer that replaces \"this agent felt efficient\" with a measurement, built by testing four candidate waste heuristics for agreement between two LLM labelers, and rebuilding the architecture around the one that survived.",
   depth: "full",
   problem: [
     "Developers using Claude Code (or similar coding agents) have no real visibility into whether a given session used tokens well or burned through them on repeated failed attempts, redundant reads, or a wandering plan. Efficiency claims about coding agents are almost always anecdotal, \"it felt fast\" or \"it felt wasteful\", rather than measured against anything.",
     "tracegauge scores a finished session's token economy, trajectory quality (was the sequence of steps purposeful), and deterministic waste, and does it against the developer's own historical baseline rather than an arbitrary universal number, entirely locally, with no data leaving the machine unless the developer explicitly opts in.",
   ],
   approach: [
-    "The CLI (tes) reads a Claude Code session's JSONL log from ~/.claude/projects, redacts secrets at the moment of ingestion, and computes three independent axes rather than one combined score. Token economy compares the session's token usage against a p25–p75 band (the middle 50% of past sessions) built from the developer's own history for that same kind of task. Trajectory quality is rated by a local LLM judge running Qwen3-30B via Ollama (with an opt-in API path for judging), scoring whether each step in the session was purposeful. Deterministic waste is caught by two rule-based detectors, repeated-failed-retry and redundant-read, each of which attaches the specific turns that prove the finding, rather than asserting waste without evidence.",
+    "The CLI (tracegauge) reads a Claude Code session's JSONL log from ~/.claude/projects, redacts secrets at the moment of ingestion, and computes three independent axes rather than one combined score. Token economy compares the session's token usage against a p25–p75 band (the middle 50% of past sessions) built from the developer's own history for that same kind of task. Trajectory quality is rated by a local LLM judge running Qwen3-30B via Ollama (with an opt-in API path for judging), scoring whether each step in the session was purposeful. Deterministic waste is caught by two rule-based detectors, repeated-failed-retry and redundant-read, each of which attaches the specific turns that prove the finding, rather than asserting waste without evidence.",
     "There is deliberately no composite score: token economy, trajectory quality, and waste each carry their own caveats about where they're valid and where they're not, and collapsing them into one number would hide exactly the honesty that makes each axis useful on its own.",
     "A background watcher plus a dashboard that only listens on localhost automatically scores sessions as they finish, and the CLI also exposes score, monitor, budget, and patterns subcommands directly. Nothing phones home except two explicit, separately-consented opt-ins.",
   ],
@@ -55,7 +55,7 @@ export const tracegauge: CaseStudy = {
       {
         label: "CLI + localhost-only dashboard",
         kind: "output",
-        detail: "tes score/monitor/budget/patterns · tes serve on 127.0.0.1 · background watcher",
+        detail: "tracegauge score/monitor/budget/patterns · tracegauge serve on 127.0.0.1 · background watcher",
       },
     ],
   },
@@ -67,7 +67,7 @@ export const tracegauge: CaseStudy = {
     },
     {
       title: "The heuristic-primary design was abandoned after it was actually tested",
-      body: "Four candidate rule-based waste heuristics were built and checked for inter-annotator agreement, do independent raters applying the same rule agree with each other. Only one of the four cleared the 0.60 bar (it scored κ=0.825); the other three scored 0.15, 0.43, and 0.19. The failing three all needed cross-turn intent inference that no phrase-matching rule can capture, which is what forced the pivot to a hybrid architecture rather than a rewrite of the same rules.",
+      body: "Four candidate rule-based waste heuristics were built and checked for inter-rater agreement between two LLM labelers (GPT-OSS and Sonnet-4-6): do two labelers applying the same rule agree with each other. This is LLM-to-LLM agreement, not human ground truth. Only one of the four cleared the 0.60 bar (it scored κ=0.825); the other three scored 0.15, 0.43, and 0.19. The failing three all needed cross-turn intent inference that no phrase-matching rule can capture, which is what forced the pivot to a hybrid architecture rather than a rewrite of the same rules.",
       sourceRef: "tracegauge:heuristic-pivot",
     },
     {
@@ -90,13 +90,13 @@ export const tracegauge: CaseStudy = {
     {
       label: "Test suite",
       value: "1,589 passing as of 2026-10-29",
-      detail: "baselines built from 75 quality-gated sessions across 5 task types",
+      detail: "bundled baseline built from 71 ungated sessions of one developer, with a band for 4 task types",
       sourceRef: "tracegauge:tests",
     },
     {
-      label: "Judge validation against a reference LLM",
-      value: "84% strict agreement, 96% top-2, Spearman ρ≈0.79",
-      detail: "honest caveat: there are no human gold labels behind this, it's LLM-vs-LLM agreement, not ground truth",
+      label: "Judge cross-checks against other LLMs (no human labels)",
+      value: "Qwen vs Gemma on positive verdicts: 84% strict, 96% top-2; Spearman ρ≈0.79 vs a Claude Sonnet reference rater",
+      detail: "the 84%/96% is on 75 sessions Qwen rated MUCH_BETTER; agreement on negative verdicts (WORSE/MUCH_WORSE) was only 5.6%. The ρ is Qwen3-30B vs Claude Sonnet acting as an LLM reference rater, N=53. There are no human gold labels behind either number: it's LLM-vs-LLM agreement, not ground truth",
       sourceRef: "tracegauge:judge-validation",
     },
     {
@@ -114,17 +114,17 @@ export const tracegauge: CaseStudy = {
     {
       label: "Two features built and deliberately not shipped live",
       value: "Community-corpus feature held dormant; habit-coach feature unshipped",
-      detail: "\"a community corpus with zero contributors delivers no user value\"; habit-coach recommendations judged too thin at pre-publish review",
+      detail: "\"With zero contributors, a live corpus of one delivers no user value\"; habit-coach recommendations judged too thin at pre-publish review",
       sourceRef: "tracegauge:held-features",
       format: "prose",
     },
   ],
   story: {
-    title: "Tested four waste-detection heuristics against real annotator agreement, kept the one that survived, rebuilt the architecture around why the other three couldn't",
+    title: "Tested four waste-detection heuristics for agreement between two LLM labelers, kept the one that survived, rebuilt the architecture around why the other three couldn't",
     body: [
-      "Four waste-detection heuristics were built, each with a written rubric, and tested the honest way: independent human annotators applied each rule and their agreement was measured with Cohen's kappa (a statistic for inter-rater agreement that corrects for chance). The bar was 0.60. Three of the four heuristics scored 0.15, 0.43, and 0.19, well below it. One case was especially telling: a capable model applying one of the failing heuristics systematically over-fired it on 23% of turns, which ruled out \"the annotators are just being noisy\" as the explanation. The disagreement was conceptual, not statistical noise.",
-      "The postmortem's conclusion was structural rather than incremental: these three concepts need cross-turn intent inference, understanding what a sequence of steps was trying to accomplish, that no phrase-matching rule can capture, no matter how the rubric is worded. As the postmortem put it, any further rubric patch \"reduces to 'the annotator decides per instance', which is what κ=0.15 already measures.\" Patching the rubric a third time wouldn't have fixed anything; it would have just re-measured the same disagreement.",
-      "That finding forced the full pivot away from a heuristic-primary design toward the three-layer hybrid that actually shipped: deterministic features for the things rules genuinely can catch, a reference-based LLM judge for the things that need judgment, and human-gold calibration to keep the judge honest.",
+      "Four waste-detection heuristics were built, each with a written rubric, and tested the honest way: two LLM labelers (GPT-OSS and Sonnet-4-6) applied each rule independently and their agreement was measured with Cohen's kappa (a statistic for inter-rater agreement that corrects for chance). This is agreement between two LLMs, not human ground truth. The bar was 0.60. Three of the four heuristics scored 0.15, 0.43, and 0.19, well below it. One case was especially telling: on the tool-result-used heuristic, Sonnet over-fired on 72 of 310 turns (23%) versus the GPT-OSS bulk labeler, which the postmortem calls a systematic model-family effect, not random noise. Both models were given the same rubric, so the disagreement was in how a capable model interprets the concept: the rubric was under-specified for it.",
+      "The postmortem's conclusion was structural rather than incremental: these three concepts need cross-turn intent inference, understanding what a sequence of steps was trying to accomplish, that no phrase-matching rule can capture, no matter how the rubric is worded. As the postmortem put it about the redundant-read rule, any rubric clause that adds the intent condition \"reduces to 'the annotator decides per instance'\", which is what κ = 0.15 already measures. Patching the rubric further wouldn't have fixed anything; it would have just re-measured the same disagreement.",
+      "That finding forced the full pivot away from a heuristic-primary design toward the three-layer hybrid that actually shipped: deterministic features for the things rules genuinely can catch, a reference-based LLM judge for the things that need judgment, and a check of the judge against a reference LLM rater (a planned 40-session human gold set was never collected).",
     ],
     sourceRef: "tracegauge:heuristic-pivot",
   },
