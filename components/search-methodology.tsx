@@ -129,7 +129,7 @@ export function SearchMethodology() {
           >
             This comparison ran on 28 queries against the 13 projects the catalog held at the
             time, a random 3-guess baseline would already clear about 23% Recall@3 by chance, so
-            every tier&apos;s 85–100% is a genuine signal, but scores this close to 100%
+            every tier&apos;s 89–100% is a genuine signal, but scores this close to 100%
             don&apos;t by themselves prove sophisticated retrieval on a catalog this distinct;
             the 28 queries are LLM-generated, not collected from real recruiters, real search
             logs, or real usage; and the catalog has grown since without the comparison being
