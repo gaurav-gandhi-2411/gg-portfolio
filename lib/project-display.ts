@@ -33,9 +33,13 @@ export async function getProjectDisplayData(products: Product[]) {
 
   function datelineFor(product: Product): string | undefined {
     // Warmer's repo is private — its right-edge anchor is the stronger
-    // live signal it does have: the daily puzzle number (fail-soft).
+    // live signal it does have: the daily puzzle number (fail-soft), or
+    // "paused" when the payload manifest stops short of today.
     if (product.slug === "warmer") {
-      return puzzle ? `puzzle #${puzzle.number} live today` : undefined;
+      if (!puzzle) return undefined;
+      return puzzle.state === "live"
+        ? `puzzle #${puzzle.number} live today`
+        : "daily puzzle currently paused";
     }
     const slug = repoSlug(product.repoUrl);
     const repoData = slug ? freshness[slug] : undefined;
