@@ -152,7 +152,10 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
             {puzzle ? (
               <span data-live-value className="font-mono normal-case tracking-normal">
                 {" "}
-                · puzzle #{puzzle.number} today
+                ·{" "}
+                {puzzle.state === "live"
+                  ? `puzzle #${puzzle.number} today`
+                  : "daily puzzle currently paused"}
               </span>
             ) : null}
           </p>

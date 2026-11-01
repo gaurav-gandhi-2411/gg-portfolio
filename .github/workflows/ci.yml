@@ -51,6 +51,22 @@ on:
   # check has to be started explicitly. Still needed — the trigger above
   # covers base-branch breadth, not the GITHUB_TOKEN case.
   workflow_dispatch:
+    # Render visual baselines on CI's Linux runner for a PR branch (GG decision 2026-11-01).
+    # A passing visual test uploads no actual, so a copy change that stays inside the 1%
+    # tolerance (PR #369's StyleMaitri strip) left its baselines showing the old copy, and
+    # local baselines for these CI-owned snapshots are not allowed. With update_snapshots the
+    # `update-snapshots` job below renders and uploads them; nothing is committed by CI.
+    # `build` and `e2e` still run unchanged against the committed baselines, because a
+    # skipped run of a required check fails the merge gate's freshness check (gate 2b).
+    inputs:
+      update_snapshots:
+        description: "Render visual baselines and upload them as the rendered-baselines artifact"
+        type: boolean
+        default: false
+      grep:
+        description: "Optional Playwright --grep for the visual tests, e.g. work-style-maitri"
+        type: string
+        default: ""
   # Merges made with a workflow token (the dependabot auto-merge job, other bot
   # merges) do not fire push workflows, so such a main commit gets no CI run at
   # all: 0b1f35c (dependabot PR #343 merge) had none, and a broken main could
@@ -65,7 +81,9 @@ concurrency:
   # The schedule event gets its own group: on main it shares github.ref with
   # push runs, and cancel-in-progress would let a nightly run cancel a real
   # push run (or be cancelled by one) on the same ref.
-  group: ci-${{ github.ref }}${{ github.event_name == 'schedule' && '-schedule' || '' }}
+  # A snapshot-rendering dispatch gets its own group too, so it never cancels the branch's
+  # push run (or is cancelled by the next push).
+  group: ci-${{ github.ref }}${{ github.event_name == 'schedule' && '-schedule' || '' }}${{ inputs.update_snapshots && '-snapshots' || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -395,3 +413,54 @@ jobs:
             sleep 2
           done
           node scripts/check-bundle-size.mjs
+
+  # Renders visual baselines on the CI runner and uploads them; see the workflow_dispatch
+  # inputs above. Not a required check and never commits: the baselines are reviewed
+  # side-by-side and committed by hand, then CI re-runs against them as usual.
+  update-snapshots:
+    name: update-snapshots
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_snapshots }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      # --update-snapshots=all, not the default "changed": a page whose new copy stays inside
+      # the 1% tolerance is exactly the case this exists for, and "changed" skips it.
+      # The grep input reaches the shell as an env var, never interpolated into the script.
+      - name: Render visual baselines
+        env:
+          VISUAL_GREP: ${{ inputs.grep }}
+        run: |
+          set -o pipefail
+          if [ -n "$VISUAL_GREP" ]; then
+            npx playwright test e2e/visual-regression.spec.ts --project=desktop --update-snapshots=all --grep "$VISUAL_GREP"
+          else
+            npx playwright test e2e/visual-regression.spec.ts --project=desktop --update-snapshots=all
+          fi
+          git status --porcelain -- e2e/visual-regression.spec.ts-snapshots/ | tee rendered-baselines-changed.txt
+
+      - name: Upload rendered baselines
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendered-baselines
+          path: |
+            e2e/visual-regression.spec.ts-snapshots/
+            rendered-baselines-changed.txt
+          retention-days: 7
