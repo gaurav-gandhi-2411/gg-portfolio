@@ -36,8 +36,10 @@ test("triageiq fabrication results row is current and dated, not the undated 1.9
   const row = caseStudy.slice(caseStudy.indexOf('label: "LLM fabrication rate'));
   assert.match(row, /0\.0% \(0\/53\)/);
   assert.match(row, /0\.0% \(0\/11\)/);
-  assert.match(row, /877af11/);
-  assert.match(row, /2026-10-08/);
+  // Baseline provenance re-read at triage-iq 81bf315 (2026-10-31): reports/eval_baseline.json was
+  // rewritten by d00b0f5 (2026-10-11) for cassette e9f8861f; value unchanged at 0.0.
+  assert.match(row, /d00b0f5/);
+  assert.match(row, /2026-10-11/);
 });
 
 test("provenance states both bounds and does not claim the README overstates k8s as 1/53", () => {
