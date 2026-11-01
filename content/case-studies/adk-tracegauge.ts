@@ -99,6 +99,7 @@ export const adkTracegauge: CaseStudy = {
   results: [
     {
       label: "Time from a fresh install to a real verdict",
+      headline: true,
       value: "89.5s",
       detail: "a single run of a bundled demo agent with a cost regression injected, no API key and no network call",
       sourceRef: "adk-tracegauge:quickstart",
@@ -135,6 +136,7 @@ export const adkTracegauge: CaseStudy = {
     },
     {
       label: "Supported Python versions, each on its own CI leg",
+      headline: true,
       value: "3.10 through 3.14",
       detail: "the suite runs on each Python version against the google-adk the lockfile pins, and on the google-adk floor (2.6.0), with a bare-install smoke test across several google-adk releases",
       sourceRef: "adk-tracegauge:python-matrix",

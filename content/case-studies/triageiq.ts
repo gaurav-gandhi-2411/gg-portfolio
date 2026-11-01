@@ -122,18 +122,21 @@ export const triageiq: CaseStudy = {
     // content/types.ts) — one displayed claim, one citation.
     {
       label: "Component classifier top-3 accuracy (vscode), p50 7.0ms",
+      headline: true,
       value: "85.82%",
       detail: "top-1 69.98%, 47-class retrain, ADR-0057, fresh test rows (n=423), as of triage-iq's 2026-10-17 evaluation table",
       sourceRef: "triageiq:classifier-top3-vscode",
     },
     {
       label: "Component classifier top-3 accuracy (kubernetes)",
+      headline: true,
       value: "85.99%",
       detail: "top-1 54.84%, same shipped model, fresh test rows (n=671), the harder of the two eval corpora on top-1",
       sourceRef: "triageiq:classifier-top3-k8s",
     },
     {
       label: "Resolution-time CQR interval coverage (kubernetes)",
+      headline: true,
       value: "79.71%",
       detail: "vs. an 80% nominal target, CQR v2 post-calibration, the served interval (triage-iq ADR-0064); the CQR design decision below gives the earlier raw-model coverage figures",
       sourceRef: "triageiq:cqr-coverage-k8s",

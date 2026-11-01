@@ -88,6 +88,7 @@ export const dealhunter: CaseStudy = {
     },
     {
       label: "Planner baseline, correct archetype selection",
+      headline: true,
       value: "31/31 (100%)",
       sourceRef: "dealhunter:planner-baseline",
     },
@@ -100,6 +101,7 @@ export const dealhunter: CaseStudy = {
     },
     {
       label: "Early self-audit score",
+      headline: true,
       value: "6/10",
       detail: "prototype-to-production readiness, the honest starting point the project then spent several phases closing",
       sourceRef: "dealhunter:audit",

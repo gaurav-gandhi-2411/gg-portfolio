@@ -1,39 +1,27 @@
 import { MetricProvenance } from "@/components/metric-provenance";
 import type { CaseStudy } from "@/content/types";
 import { getProvenance } from "@/lib/provenance";
+import { headlineRows } from "@/lib/headline-rows";
 
 /** A strip is a glance, not a second Results section: three at most. */
 const MAX_ITEMS = 3;
-/**
- * Longest value (characters) that still reads as a numeral at display size.
- * Longer, sentence-like values stay in the Results section only.
- */
-const MAX_VALUE_LENGTH = 30;
 /** One chip alone reads as a pull-quote, not a strip. */
 const MIN_ITEMS = 2;
 
 /**
- * A compact row of the case study's own first short-numeral results, at the
- * top of the page. It holds no numbers of its own: every item is a row of
- * `study.results`, passed through unchanged, with the same sourceRef-derived
- * provenance disclosure the Results section uses, so the freshness and
- * consistency checks that cover `results` cover the strip too. Eligible rows:
- * not prose, value contains a digit (text such as "installable from PyPI"
- * is not a number), at most 30 chars, and not opted out. The only opt-out is
- * `headline: false` on a row that is explicitly a baseline / "before" number
- * (content/types.ts), never for picking favourites. Rows without
- * a resolvable provenance entry are skipped rather than shown unsourced.
- * Selection is positional (the first eligible rows), not curated.
+ * A compact row of the case study's headline results at the top of the
+ * page: exactly the results rows flagged `headline: true` (content/types.ts,
+ * lib/headline-rows.ts), in Results order. It holds no numbers of its own:
+ * every item is a row of `study.results`, passed through unchanged, with the
+ * same sourceRef-derived provenance disclosure the Results section uses, so
+ * the freshness and consistency checks that cover `results` cover the strip
+ * too. e2e/case-study-proof-strip.spec.ts holds the flags to the strip's
+ * shape (two or three short sourced numerals, never prose). The provenance
+ * and MAX_ITEMS guards below only keep a bad flag from rendering unsourced
+ * or overlong; the spec is what fails on one.
  */
 export function ProofStrip({ study, repoUrl }: { study: CaseStudy; repoUrl?: string }) {
-  const items = (study.results ?? [])
-    .filter(
-      (r) =>
-        r.format !== "prose" &&
-        r.headline !== false &&
-        /\d/.test(r.value) &&
-        r.value.length <= MAX_VALUE_LENGTH
-    )
+  const items = headlineRows(study.results)
     .map((result) => ({
       result,
       provenance: getProvenance(result.sourceRef, repoUrl, study.verifiedAt),
