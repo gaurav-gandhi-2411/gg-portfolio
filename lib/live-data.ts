@@ -6,6 +6,7 @@ import {
   sumTrailingCompleteDays,
   utcDateString,
 } from "@/lib/pypistats-window";
+import { type WarmerPuzzleState, warmerPuzzleState } from "@/lib/warmer-puzzle";
 
 // Wave 3 Tier 1: build-time/ISR live data. Every function here is
 // self-provenancing — it fetches from a real source rather than asserting a
@@ -112,12 +113,7 @@ export async function getPypiStats(packageNames: string[]): Promise<PypiStatsByP
   return Object.fromEntries(entries.filter(([, stats]) => Object.keys(stats).length > 0));
 }
 
-export interface WarmerPuzzleInfo {
-  number: number;
-  date: string;
-}
-
-export async function getWarmerPuzzleNumber(): Promise<WarmerPuzzleInfo | null> {
+export async function getWarmerPuzzleNumber(): Promise<WarmerPuzzleState | null> {
   const manifest = await safeFetchJson<{
     langs: Record<string, { days?: { date: string }[] }>;
   }>("https://raw.githubusercontent.com/gaurav-gandhi-2411/mindmeld-payloads/main/manifest.json");
@@ -131,18 +127,10 @@ export async function getWarmerPuzzleNumber(): Promise<WarmerPuzzleInfo | null> 
     manifest.langs.en?.days ??
     Object.values(manifest.langs).find((lang) => (lang?.days?.length ?? 0) > 0)?.days;
   if (!days || days.length === 0) return null;
-  const todayIso = new Date().toISOString().slice(0, 10);
-  // Puzzle N = today's 1-indexed position among precomputed days; falls back
-  // to the most recent day at or before today if today isn't in the list yet.
-  let idx = days.findIndex((d) => d.date === todayIso);
-  if (idx === -1) {
-    idx = days.reduce(
-      (best, d, i) => (d.date <= todayIso ? i : best),
-      -1
-    );
-  }
-  if (idx === -1) return null;
-  return { number: idx + 1, date: days[idx].date };
+  // Live only when today's puzzle exists; a manifest that stops short of
+  // today reads as paused (see lib/warmer-puzzle.ts for the 2026-11-01
+  // incident this replaced).
+  return warmerPuzzleState(days, new Date().toISOString().slice(0, 10));
 }
 
 export interface RepoFreshness {
