@@ -74,18 +74,21 @@ export const shelfsense: CaseStudy = {
   results: [
     {
       label: "Best private-leaderboard WRMSSE",
+      headline: true,
       value: "0.5693",
       detail: "a 36% reduction against the naive-seasonal baseline below, that percentage is derived from the two, not printed in the leaderboard",
       sourceRef: "shelfsense:wrmsse",
     },
     {
       label: "Naive-seasonal (Seasonal Naive 28) reference baseline",
+      headline: true,
       value: "0.8956",
       detail: "the reference the model is measured against, same leaderboard, same commit",
       sourceRef: "shelfsense:wrmsse-baseline",
     },
     {
       label: "HOBBIES category, per-series ETS → global LightGBM",
+      headline: true,
       value: "3.2663 → 0.6112",
       detail: "roughly a 5x reduction on the sparsest, hardest category",
       sourceRef: "shelfsense:hobbies",

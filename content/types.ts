@@ -176,13 +176,15 @@ export interface CaseStudy {
      */
     format?: "prose";
     /**
-     * `false` keeps this row out of the case-study proof strip
-     * (components/proof-strip.tsx) while it still renders in Results. Use it
-     * ONLY for a row that is explicitly a baseline / "before" number, which
-     * would read as a headline once lifted out of its comparison. Never a
-     * way to hand-pick which good numbers lead.
+     * `true` puts this row in the case-study proof strip at the top of the
+     * page (components/proof-strip.tsx, lib/headline-rows.ts); the row
+     * still renders in Results. Opt-in, so which numbers lead a page is a
+     * recorded decision, never a side effect of row order (until 2026-11-01
+     * the strip took the first three eligible rows). Flag two or three short,
+     * sourced numerals that carry the page's thesis, or none;
+     * e2e/case-study-proof-strip.spec.ts enforces the shape.
      */
-    headline?: false;
+    headline?: true;
   }[];
   /** The hardest documented engineering/debugging story. */
   story?: {

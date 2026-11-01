@@ -10,24 +10,17 @@ import { caseStudies } from "../content/case-studies";
  * data — so the strip's text must equal the source content value, character
  * for character, and removing the strip must not remove any content.
  *
- * Eligibility, stated here from the intent rather than read from the
- * implementation: the first (up to) three results rows that are a short
- * numeral rather than a sentence (not format "prose", value contains a digit,
- * value <= 30 chars, not opted out with `headline: false`). A
- * page with fewer than two such rows gets no strip rather than a lonely one.
+ * Selection, stated here from the intent rather than read from the
+ * implementation (changed 2026-11-01 from positional to explicit): the strip
+ * shows exactly the results rows flagged `headline: true`, in Results order.
+ * A study flags two or three rows, or none, and every flagged row must be a
+ * short numeral rather than a sentence (not format "prose", value contains a
+ * digit, value <= 30 chars) with a provenance entry.
  */
-const MAX_ITEMS = 3;
 const MAX_VALUE_LENGTH = 30;
 
 function expectedRows(slug: string) {
-  const eligible = (caseStudies[slug].results ?? []).filter(
-    (r) =>
-      r.format !== "prose" &&
-      r.headline !== false &&
-      /\d/.test(r.value) &&
-      r.value.length <= MAX_VALUE_LENGTH
-  );
-  return eligible.length >= 2 ? eligible.slice(0, MAX_ITEMS) : [];
+  return (caseStudies[slug].results ?? []).filter((r) => r.headline === true);
 }
 
 function escapeRegExp(text: string): string {
@@ -41,6 +34,34 @@ test.describe("Case-study proof strip", () => {
     const withStrip = slugs.filter((s) => expectedRows(s).length > 0);
     expect(withStrip.length).toBeGreaterThanOrEqual(10);
     expect(withStrip.length).toBeLessThan(slugs.length);
+  });
+
+  test("every study flags two or three headline rows, or none, each a short numeral", () => {
+    for (const slug of slugs) {
+      const rows = expectedRows(slug);
+      expect([0, 2, 3], `${slug} flags ${rows.length} headline rows`).toContain(rows.length);
+      for (const r of rows) {
+        expect(r.format, `${slug}: "${r.label}" is prose`).not.toBe("prose");
+        expect(r.value, `${slug}: "${r.label}" has no digit`).toMatch(/\d/);
+        expect(r.value.length, `${slug}: "${r.label}" value too long`).toBeLessThanOrEqual(
+          MAX_VALUE_LENGTH
+        );
+      }
+    }
+  });
+
+  test("selection is explicit: an unflagged eligible row never enters the strip", async ({
+    page,
+  }) => {
+    // StyleMaitri's retrieval row (88.9%) is a short sourced numeral placed
+    // before the live-audit row; under the old positional rule it took the
+    // third slot. The page's thesis is the audit, which is the flagged row.
+    await page.goto("/work/style-maitri");
+    const strip = page.locator("[data-proof-strip]");
+    await expect(strip).toHaveCount(1);
+    await expect(strip).toContainText("15 of 32");
+    await expect(strip).not.toContainText("88.9%");
+    await expect(page.locator("[data-case-article] dl")).toContainText("88.9%");
   });
 
   for (const slug of slugs) {
@@ -102,7 +123,7 @@ test.describe("Case-study proof strip", () => {
     );
   });
 
-  test("warmer's pre-fine-tune baseline is opted out of the strip but still in Results", async ({
+  test("warmer's pre-fine-tune baseline is unflagged, so it stays out of the strip but in Results", async ({
     page,
   }) => {
     await page.goto("/work/warmer");
