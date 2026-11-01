@@ -26,6 +26,7 @@ export const evalDefectBench: CaseStudy = {
   results: [
     {
       label: "Detectors that passed the pre-registered viability gate",
+      headline: true,
       value: "0 / 3",
       detail:
         "mechanism-naming gate (EXACT localization at least 40% AND adjudicated FPR at most 20%) and triage gate (balanced accuracy at least 70% AND adjudicated FPR at most 15%), both pre-registered before the frontier-judge run. Neither was cleared by any baseline",
@@ -55,6 +56,7 @@ export const evalDefectBench: CaseStudy = {
     },
     {
       label: "In-class taxonomy coverage (silent verdict degradation, the benchmark's actual target class)",
+      headline: true,
       value: "15 / 30 (50%)",
       detail:
         "across 3 primary shapes (silent accumulation loss, value not consulted, boundary strips attached data), each cross-referenced against real external google/adk-python PRs/issues; one of those, keras#23420, is a merged, contested, evidence-defended fix in a major framework, landed 2026-09-15",

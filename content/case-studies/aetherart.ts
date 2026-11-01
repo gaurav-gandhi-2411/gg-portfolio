@@ -80,12 +80,14 @@ export const aetherart: CaseStudy = {
   results: [
     {
       label: "Peak VRAM, full production pipeline (SDXL FP16 + Ukiyo-e LoRA)",
+      headline: true,
       value: "6.2GB",
       detail: "measured on a GCP L4 (24GB) at 1024×1024, 30 steps, inside the 8GB consumer-GPU budget; the optional NF4 4-bit path peaked at 2.6GB in a separate test on base SDXL (no LoRA, 1024×1024, 30 steps)",
       sourceRef: "aetherart:vram",
     },
     {
       label: "Ukiyo-e LoRA quality (GCP L4, seed 42, 30 steps, 1024×1024, avg. of 4 prompts)",
+      headline: true,
       value: "HPS 0.239 · ImageReward 1.479",
       detail: "CLIP score 0.359 shown for comparison only, not as the quality bar",
       sourceRef: "aetherart:lora-quality",
@@ -99,6 +101,7 @@ export const aetherart: CaseStudy = {
     },
     {
       label: "Test suite",
+      headline: true,
       value: "229 tests, ~60 seconds",
       detail: "heavy GPU dependencies mocked, no GPU required to run the suite",
       sourceRef: "aetherart:tests",

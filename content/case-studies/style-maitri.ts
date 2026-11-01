@@ -98,12 +98,14 @@ export const styleMaitri: CaseStudy = {
   results: [
     {
       label: "Intent-parsing accuracy (all fields exact)",
+      headline: true,
       value: "93.8% (n=211)",
       detail: "100% on well-formed queries, 61% on the adversarial subset",
       sourceRef: "style-maitri:intent-accuracy",
     },
     {
       label: "Cross-store catalogue",
+      headline: true,
       value: "52,494 items across 8 stores",
       sourceRef: "style-maitri:catalogue-size",
     },
@@ -116,6 +118,7 @@ export const styleMaitri: CaseStudy = {
     },
     {
       label: "Adversarial live-site audit",
+      headline: true,
       value: "15 of 32",
       detail:
         "skeptical-shopper queries judged disappointing: 6 subagents role-playing wedding shoppers on the live production site filed 7 findings as trust-destroying blockers (2 of them flagged as trust/safety issues) no offline eval had caught",
