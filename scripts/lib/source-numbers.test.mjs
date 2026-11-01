@@ -46,6 +46,20 @@ describe("extractCitedLineNumbers (one cited line)", () => {
     assert.ok(!n.includes(340));
   });
 
+  // Verifier finding (2026-11-01): the pattern matches transitions as pairs,
+  // so in a chain the middle value is the right side of the first pair and
+  // was kept as if current. Only the final value of a chain is current.
+  test("a chain keeps only its final value", () => {
+    assert.deepEqual(extractCitedLineNumbers("10 -> 20 -> 30"), [30]);
+    assert.deepEqual(extractCitedLineNumbers("10 -> 20 -> 30 -> 40 rows"), [40]);
+    assert.deepEqual(extractCitedLineNumbers("10% → 20% → 30%"), [30]);
+    assert.deepEqual(extractCitedLineNumbers("went from 10 to 20 to 30"), [30]);
+  });
+
+  test("a number just after a transition is kept", () => {
+    assert.deepEqual(extractCitedLineNumbers("10 -> 20, 30 rows"), [20, 30]);
+  });
+
   test("a line with no transition keeps every number, comma-grouped ones whole", () => {
     assert.deepEqual(extractCitedLineNumbers("2,300 rows, 14 columns, 0.239 MAE"), [2300, 14, 0.239]);
   });

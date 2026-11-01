@@ -73,6 +73,11 @@ export function extractSourceNumbers(text) {
 // both sides reported a correct citation as LINE MISMATCH (2026-11-01). So
 // inside a transition span only the LAST number is kept; the old side is
 // still dropped, so a citation of a superseded value keeps failing.
+// CHANGELOG_TRANSITION_PATTERN matches pairs, so in a chain ("10 -> 20 ->
+// 30", "from 10 to 20 to 30") the middle value ends the first pair; a span's
+// last number is therefore also dropped when the chain carries on after it.
+const CHAIN_CONTINUES = /^%?\s*(?:→|->|to\s+\d)/i;
+
 export function extractCitedLineNumbers(lineText) {
   const transitionRanges = findChangelogTransitionRanges(lineText);
   const matches = [...lineText.matchAll(NUMBER_PATTERN)];
@@ -81,7 +86,8 @@ export function extractCitedLineNumbers(lineText) {
       const span = transitionRanges.find(([start, end]) => m.index >= start && m.index < end);
       if (!span) return true;
       const next = matches[i + 1];
-      return !next || next.index >= span[1];
+      if (next && next.index < span[1]) return false;
+      return !CHAIN_CONTINUES.test(lineText.slice(m.index + m[0].length));
     })
     .map((m) => parseNumber(m[0]));
 }
