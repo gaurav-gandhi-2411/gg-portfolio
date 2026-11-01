@@ -5,6 +5,7 @@ import { ProjectMark, type ProjectMarkId } from "@/components/project-mark";
 import type { Product } from "@/content/types";
 import type { PypiPackageStats } from "@/lib/live-data";
 import type { ProjectRhythm } from "@/lib/project-rhythm";
+import { projectStatus, type ProjectStatus } from "@/lib/project-status";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,23 +28,12 @@ import { cn } from "@/lib/utils";
  * themselves.
  */
 
-type ProjectStatus = "Live" | "PyPI" | "Research";
-
-/**
- * Direction B ("Product showcase") — derived from fields the card already
- * has, never a hand-typed field on the product: "Live" beats "PyPI" (a live
- * surface is the stronger claim when a project has both, e.g. AgentGauge),
- * and everything else reads as "Research" rather than inventing a status
- * for a repo-only project.
- */
-function projectStatus(product: Product): ProjectStatus {
-  if (product.liveUrl) return "Live";
-  if (product.pypi) return "PyPI";
-  return "Research";
-}
-
 const STATUS_PILL_CLASS: Record<ProjectStatus, string> = {
   Live: "border-status-open/40 bg-status-open/10 text-status-open",
+  // Text stays muted-foreground (status-closed alone is 4.08:1 in light,
+  // under AA for caption text); the slate border is what sets it apart
+  // from Research's filled pill.
+  Offline: "border-status-closed/70 text-muted-foreground",
   PyPI: "border-accent/40 bg-accent/10 text-accent",
   Research: "border-border/60 bg-muted/50 text-muted-foreground",
 };
@@ -122,8 +112,8 @@ export function ProjectCard({
               </Link>
             </Heading>
             {/* Direction B ("Product showcase") — status at a glance,
-                derived from the project's own liveUrl/pypi fields, never
-                hand-typed (see projectStatus above). Its own right-aligned,
+                derived from the project's own offline/liveUrl/pypi fields, never
+                hand-typed (see lib/project-status.ts). Its own right-aligned,
                 non-wrapping cell, so the header reads the same on every card
                 (it used to wrap below the title on some and not others). The size is
                 a bracket property on purpose: cn() runs tailwind-merge, which

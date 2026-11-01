@@ -56,11 +56,26 @@ export type ProductFigure =
   | { kind: "bar"; pct: number; valueText: string }
   | { kind: "bars"; rows: { name: string; pct: number }[] };
 
-export interface Product {
+/**
+ * A health check found the product's live surface down. The card then reads
+ * "Offline" (lib/project-status.ts) and shows no Live link, because
+ * `offline` and `liveUrl` are mutually exclusive by type: an offline product
+ * cannot also carry a liveUrl, so it can never count toward "N live".
+ * `evidence` is the dated check, kept next to the data so the next reviewer
+ * can re-run it.
+ */
+export interface ProductOffline {
+  checkedAt: string;
+  evidence: string;
+}
+
+export type Product = ProductBase &
+  ({ liveUrl?: string; offline?: never } | { liveUrl?: never; offline: ProductOffline });
+
+interface ProductBase {
   slug: string;
   name: string;
   tagline: string;
-  liveUrl?: string;
   repoUrl?: string;
   metric?: ProductMetric;
   secondaryMetric?: ProductMetric;

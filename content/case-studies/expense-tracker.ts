@@ -8,7 +8,10 @@ import type { CaseStudy } from "../types";
 // live-verified this wave — so no liveUrl ships on the product card (a dead
 // link is worse than no link). See provenance.md's wave-19 addendum for the
 // full timeline, including a second frontend outage between wave 16's
-// 2026-07-26 200-OK check and this wave.
+// 2026-07-26 200-OK check and this wave. STATUS 2026-11-01: the backend is
+// down again (/health 503, then 500; billing disabled per the repo's
+// 2026-08-22 commit), so the whole product is offline; see provenance.md's
+// 2026-11-01 status entry.
 export const expenseTracker: CaseStudy = {
   slug: "expense-tracker",
   verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
@@ -50,9 +53,9 @@ export const expenseTracker: CaseStudy = {
     },
     {
       label: "Deployment",
-      value: "Cloud Run (backend) is live; Vercel (frontend) is down",
+      value: "Offline: backend and frontend are both down (checked 2026-11-01)",
       detail:
-        "backend found down 2026-07-18, root-caused and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one, /health returns 200 as of this writing); the frontend's Vercel deployment 404s (DEPLOYMENT_NOT_FOUND), a separate, still-open outage, said here rather than a dead link on the product card; 9/9 Playwright auth E2E scenarios pass locally",
+        "on 2026-11-01 the backend's /health returned 503 and then 500, and the frontend's registered Vercel deployment returned 404 (DEPLOYMENT_NOT_FOUND); the repo's own 2026-08-22 commit records the backend failing every request since billing was disabled on its cloud project. The code stays linked. Earlier: the backend was found down 2026-07-18 and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one); 9/9 Playwright auth E2E scenarios pass locally",
       sourceRef: "expense-tracker:state",
       format: "prose",
     },
