@@ -125,3 +125,18 @@ export function extractCitations(sourceText: string, repoSlug: string | undefine
 export function extractMeasuredDate(claim: string, source: string): string | undefined {
   return source.match(DATE_RE)?.[1] ?? claim.match(DATE_RE)?.[1];
 }
+
+/**
+ * Refs whose shown value is fetched at ISR time (lib/live-data.ts). Their rows mention dates
+ * of past observations, never the date of the value on screen, so they get no "measured" date.
+ */
+export const LIVE_FETCHED_REFS: ReadonlySet<string> = new Set([
+  "tracegauge:pypi",
+  "adk-tracegauge:pypi",
+  "derived:warmer-puzzle-count",
+]);
+
+/** The "measured" date for a prose-tier provenance row, or undefined when none is honest. */
+export function proseMeasuredDate(sourceRef: string, claim: string, source: string): string | undefined {
+  return LIVE_FETCHED_REFS.has(sourceRef) ? undefined : extractMeasuredDate(claim, source);
+}
