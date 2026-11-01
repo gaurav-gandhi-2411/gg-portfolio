@@ -13,7 +13,7 @@ export const aetherart: CaseStudy = {
   dek: "A Ukiyo-e style SDXL model squeezed into an 8GB consumer GPU budget, ran the experiment that found the field's default quality metric is structurally blind to real changes, and revised its own headline finding downward once a stricter statistical bar was applied.",
   depth: "full",
   problem: [
-    "State-of-the-art image generators like Stable Diffusion XL (SDXL) normally need a 16GB+ GPU, which puts them out of reach on a consumer laptop. AetherArt fine-tunes SDXL into a Japanese ukiyo-e woodblock-print style and engineers the whole pipeline to run inside an 8GB VRAM budget, with a live public demo.",
+    "State-of-the-art image generators like Stable Diffusion XL (SDXL) are large (the SDXL base model alone is 6.6GB of weights, before adding a VAE or ControlNet), which makes them hard to run on a consumer laptop GPU. AetherArt fine-tunes SDXL into a Japanese ukiyo-e woodblock-print style and engineers the whole pipeline to run inside an 8GB VRAM budget, with a live public demo.",
     "It's also a small research project in its own right: the field's default way of scoring whether a generated image is good, CLIP score, turns out to silently miss real quality changes in some situations, and AetherArt set out to measure exactly when that's true rather than assume it.",
   ],
   approach: [
@@ -57,8 +57,8 @@ export const aetherart: CaseStudy = {
       sourceRef: "aetherart:clip-blindness",
     },
     {
-      title: "Checkpoint 1000 selected by visual comparison after the loss curve flagged 1500",
-      body: "Training loss jumped roughly 10× between checkpoint 1000 and checkpoint 1500 (0.008 → ~0.08), a warning sign on its own, not by itself proof the model had gotten worse. A visual comparison on four fixed prompts at seed 42 confirmed a visible regression at checkpoint 1500 (the samurai figure dropped out), while checkpoint 500 was over-calligraphed with weak figure scale, so checkpoint 1000 was selected. It was a visual judgment, not a metric one: the lab notebook records that CLIP could not separate the checkpoints.",
+      title: "Checkpoint 1000 selected by visual comparison; a loss bump at 1500 coincided with the visible regression",
+      body: "In the SDXL run, the logged training loss read 0.038 at step 1000, 0.008 at step 1250 and ~0.08 at step 1500. The training summary calls these single-microbatch readings \"extremely noisy\" and says they are \"not the checkpoint selection criterion\", though it still reads the step-1500 bump as correlating with a visible regression rather than pure noise. A visual comparison on four fixed prompts at seed 42 confirmed a visible regression at checkpoint 1500 (the samurai figure dropped out), while checkpoint 500 was over-calligraphed with weak figure scale, so checkpoint 1000 was selected. It was a visual judgment, not a metric one: for the earlier SD 2.1 run, the lab notebook records that CLIP could not separate the checkpoints.",
       sourceRef: "aetherart:checkpoint",
     },
     {
@@ -81,7 +81,7 @@ export const aetherart: CaseStudy = {
     {
       label: "Peak VRAM, full production pipeline (SDXL FP16 + Ukiyo-e LoRA)",
       value: "6.2GB",
-      detail: "inside the 8GB consumer-GPU budget; optional NF4 4-bit path uses 2.6GB for a single pipeline",
+      detail: "measured on a GCP L4 (24GB) at 1024×1024, 30 steps, inside the 8GB consumer-GPU budget; the optional NF4 4-bit path peaked at 2.6GB in a separate test on base SDXL (no LoRA, 1024×1024, 30 steps)",
       sourceRef: "aetherart:vram",
     },
     {
@@ -106,7 +106,7 @@ export const aetherart: CaseStudy = {
     {
       label: "Honest caveats",
       value: "An underfitting paradox, plus an unresolved artifact",
-      detail: "a rank-4 LoRA scores higher on CLIP than rank-8, and 20 training images beat 80, read as CLIP rewarding literal keyword matching, not real quality; a calligraphy-cartouche artifact baked in from WikiArt caption text remains unresolved, only mitigated by negative prompting",
+      detail: "on SD 2.1 only (the SDXL equivalents were not run), a rank-4 LoRA scores higher on CLIP than rank-8, and 20 training images beat 80, read as CLIP rewarding literal keyword matching, not real quality; a calligraphy-cartouche artifact baked in from WikiArt caption text remains unresolved, only mitigated by negative prompting",
       sourceRef: "aetherart:caveats",
       format: "prose",
     },
@@ -126,7 +126,7 @@ export const aetherart: CaseStudy = {
     {
       label: "Measurement-defect methodology finding",
       value: "5",
-      detail: "silent evaluation-validity defects found and fixed: context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score, full writeup linked below.",
+      detail: "silent evaluation-validity defects found and fixed: context-window truncation, a phantom VRAM counter, CUDA context corruption, a mis-domained judge question, and a stale reused reference score. The linked writeup counts these five as confirmed and reports a sixth anomaly as a candidate, not a confirmed defect (the project's verdict document counts it, for six); full writeup linked below.",
       sourceRef: "aetherart:measurement-defects",
     },
   ],
@@ -141,7 +141,7 @@ export const aetherart: CaseStudy = {
   },
   closing: [
     "If you're relying on CLIP score, or any single automated metric, as your quality gate, this is worth testing first: run the experiment that checks whether the metric actually moves with the changes you care about, and hold your own claims to a statistical bar strict enough to survive being wrong.",
-    "The same discipline applied to a second style adapter turned up a further lesson: evaluating an adapter at only one operating point (the library default) produced a true but incomplete verdict, and evaluating the evaluation itself, repeatedly, is what caught five separate silent ways the measurements could have been wrong without ever throwing an error.",
+    "The same discipline applied to a second style adapter turned up a further lesson: evaluating an adapter at only one operating point (the library default) produced a true but incomplete verdict, and evaluating the evaluation itself, repeatedly, is what caught five confirmed silent ways (plus a sixth candidate) the measurements could have been wrong without ever throwing an error.",
   ],
   links: [
     { label: "Try AetherArt", href: "https://gaurav-gandhi.vercel.app/warmup/aetherart" },
