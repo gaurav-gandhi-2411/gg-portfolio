@@ -57,7 +57,7 @@ export const products: Product[] = [
     slug: "warmer",
     name: "Warmer",
     tagline:
-      "A word game you play once a day, where your only clue is how close each guess comes in meaning to the secret word.",
+      "A word game you play once a day, where your main clue is how close each guess comes in meaning to the secret word.",
     liveUrl: "https://playwarmer.vercel.app/",
     // Repo (mindmeld) is private — no public repo link until that changes. See provenance.md.
     categories: ["retrieval", "evals-research"],
@@ -96,7 +96,7 @@ export const products: Product[] = [
     slug: "shelfsense",
     name: "ShelfSense",
     tagline:
-      "Forecasts retail demand a week out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
+      "Forecasts retail demand 28 days out across all 30,490 Walmart product and store lines, so a buyer knows what to order.",
     repoUrl: "https://github.com/gaurav-gandhi-2411/shelfsense-m5",
     categories: ["forecasting", "evals-research"],
     techChips: ["LightGBM", "Dagster", "M5 dataset"],
