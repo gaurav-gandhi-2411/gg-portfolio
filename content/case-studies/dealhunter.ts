@@ -82,7 +82,6 @@ export const dealhunter: CaseStudy = {
     },
     {
       label: "Archetype selection baseline (deterministic, no LLM)",
-      headline: true,
       value: "31/31 (100%)",
       sourceRef: "dealhunter:planner-baseline",
     },
