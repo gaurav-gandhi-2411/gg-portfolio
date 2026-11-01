@@ -8,7 +8,7 @@ import { liveProductCount, products } from "@/content/products";
 export const metadata: Metadata = {
   title: "All projects · Gaurav Gandhi",
   description:
-    "Every AI product and research tool I've built and shipped. Each one with an honest, sourced case study.",
+    "AI products and research tools I've built and shipped, each with an honest, sourced case study.",
   alternates: { canonical: "/projects" },
 };
 
@@ -33,7 +33,7 @@ export default function ProjectsPage() {
           {products.length} projects · {liveProductCount(products)} live today
         </p>
         <p className="text-muted-foreground mt-5 max-w-measure text-base leading-relaxed">
-          Everything I&apos;ve built and shipped, daily-use products and research tools alike.
+          What I&apos;ve built and shipped, daily-use products and research tools alike.
           Each one has a case study: the problem, how I built it, and the honest numbers,
           including the ones that didn&apos;t flatter me.
         </p>
