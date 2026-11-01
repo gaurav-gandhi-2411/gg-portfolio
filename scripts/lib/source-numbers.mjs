@@ -1,5 +1,6 @@
 // Number-extraction primitives shared by scripts/check-metric-freshness.mjs. Moved here
 // unchanged on 2026-11-01 so they can be unit-tested (scripts/lib/source-numbers.test.mjs).
+
 // Matches a comma-grouped number ("2,300") before falling back to a plain
 // one — alternation order matters in JS regex (first alternative that
 // matches wins, not the longest), so the comma-pattern must come first or
@@ -61,5 +62,26 @@ export function extractSourceNumbers(text) {
   const matches = [...text.matchAll(NUMBER_PATTERN)];
   return matches
     .filter((m) => !transitionRanges.some(([start, end]) => m.index >= start && m.index < end))
+    .map((m) => parseNumber(m[0]));
+}
+
+// The same extraction for ONE cited line (the line-scoped check in
+// check-metric-freshness.mjs). There the conservative trade above is wrong:
+// the line is the entry's own named evidence, and a transition on it states
+// the current value on its right-hand side. "61,883 -> 52,494" is exactly
+// how style-maitri:catalogue-size's source records the figure, and dropping
+// both sides reported a correct citation as LINE MISMATCH (2026-11-01). So
+// inside a transition span only the LAST number is kept; the old side is
+// still dropped, so a citation of a superseded value keeps failing.
+export function extractCitedLineNumbers(lineText) {
+  const transitionRanges = findChangelogTransitionRanges(lineText);
+  const matches = [...lineText.matchAll(NUMBER_PATTERN)];
+  return matches
+    .filter((m, i) => {
+      const span = transitionRanges.find(([start, end]) => m.index >= start && m.index < end);
+      if (!span) return true;
+      const next = matches[i + 1];
+      return !next || next.index >= span[1];
+    })
     .map((m) => parseNumber(m[0]));
 }

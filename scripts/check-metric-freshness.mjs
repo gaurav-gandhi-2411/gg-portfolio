@@ -88,7 +88,12 @@ import {
   verificationVerdict,
 } from "./lib/case-study-claims.mjs";
 import { PUBLIC_CLAIM_SOURCES, checkAgainstPublicSources } from "./lib/public-sources.mjs";
-import { NUMBER_PATTERN, extractSourceNumbers, parseNumber } from "./lib/source-numbers.mjs";
+import {
+  NUMBER_PATTERN,
+  extractCitedLineNumbers,
+  extractSourceNumbers,
+  parseNumber,
+} from "./lib/source-numbers.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Overridable for testing the failure path against a fixture that isn't
@@ -505,7 +510,7 @@ async function checkCitedLines(store) {
       continue;
     }
     const lineText = lines[entry.source_line - 1] ?? "";
-    const lineNumbers = extractSourceNumbers(lineText);
+    const lineNumbers = extractCitedLineNumbers(lineText);
     const missing = tokens.filter((t) => !tokenFoundIn(t, lineNumbers));
 
     if (missing.length === 0) {
