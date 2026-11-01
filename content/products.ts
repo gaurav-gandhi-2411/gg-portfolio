@@ -232,8 +232,14 @@ export const products: Product[] = [
     // Wave 19 (2026-07-31): liveUrl removed. Wave 16 verified this URL live
     // (2026-07-26); it now 404s with DEPLOYMENT_NOT_FOUND — a second,
     // distinct frontend outage since that check. A dead link on the live
-    // site is worse than no link; the backend (Cloud Run) is separately
-    // confirmed live. See provenance.md's wave-19 addendum.
+    // site is worse than no link. See provenance.md's wave-19 addendum.
+    // 2026-11-01: the backend is down too, so the card reads "Offline"
+    // (code stays linked). See provenance.md's 2026-11-01 status entry.
+    offline: {
+      checkedAt: "2026-11-01",
+      evidence:
+        "backend /health 503 then 500; registered frontend 404 DEPLOYMENT_NOT_FOUND; repo commit 2026-08-22 records billing disabled",
+    },
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
     categories: ["retrieval", "forecasting", "llm-agents"],
     techChips: ["Groq", "Prophet", "IsolationForest"],
