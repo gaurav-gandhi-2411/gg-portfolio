@@ -57,7 +57,7 @@ export const products: Product[] = [
     slug: "warmer",
     name: "Warmer",
     tagline:
-      "A word game you play once a day, where your only clue is how close each guess comes in meaning to the secret word.",
+      "A word game you play once a day, where your main clue is how close each guess comes in meaning to the secret word.",
     liveUrl: "https://playwarmer.vercel.app/",
     // Repo (mindmeld) is private — no public repo link until that changes. See provenance.md.
     categories: ["retrieval", "evals-research"],
@@ -136,8 +136,8 @@ export const products: Product[] = [
     // failure", and the weakest effect that still excludes zero is the
     // strongest form of that claim.
     metric: refreshableMetric("agentgauge:blocking-causal-qwen2.5"),
-    // Wave 17: live on PyPI as of v0.5.2 — confirmed via `pip index versions
-    // agentgauge-harness` (2026-07-31), see provenance.md.
+    // Wave 17: live on PyPI (v0.5.3 at agentgauge 7c9f2dd, 2026-10-30) — see
+    // provenance.md.
     pypi: {
       packageName: "agentgauge-harness",
       installCommand: "pip install agentgauge-harness",
