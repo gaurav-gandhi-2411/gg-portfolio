@@ -11,7 +11,8 @@ import type { CaseStudy } from "../types";
 // 2026-07-26 200-OK check and this wave. STATUS 2026-11-01: the backend is
 // down again (/health 503, then 500; billing disabled per the repo's
 // 2026-08-22 commit), so the whole product is offline; see provenance.md's
-// 2026-11-01 status entry.
+// 2026-11-01 status entry. 2026-11-02: owner decision to archive it (see the
+// 2026-11-02 status entry).
 export const expenseTracker: CaseStudy = {
   slug: "expense-tracker",
   verifiedAt: "2026-10-10", // issue #123 -- re-checked against source 2026-10-10 (date bump only; no numbers or wording changed)
@@ -53,9 +54,9 @@ export const expenseTracker: CaseStudy = {
     },
     {
       label: "Deployment",
-      value: "Offline: backend and frontend are both down (checked 2026-11-01)",
+      value: "Archived (code available)",
       detail:
-        "on 2026-11-01 the backend's /health returned 503 and then 500, and the frontend's registered Vercel deployment returned 404 (DEPLOYMENT_NOT_FOUND); the repo's own 2026-08-22 commit recorded the backend failing every request at that time, with billing disabled on its cloud project. The code stays linked. Earlier: the backend was found down 2026-07-18 and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one); 9/9 Playwright auth E2E scenarios pass locally",
+        "archived by owner decision on 2026-11-02 rather than restored. The health checks that prompted it: on 2026-11-01 the backend's /health returned 503 and then 500, and the frontend's registered Vercel deployment returned 404 (DEPLOYMENT_NOT_FOUND); the repo's own 2026-08-22 commit recorded the backend failing every request at that time, with billing disabled on its cloud project. The code stays linked. Earlier: the backend was found down 2026-07-18 and fixed 2026-07-26 (migrated off a dead Supabase project onto a dedicated schema on a shared one); 9/9 Playwright auth E2E scenarios pass locally",
       sourceRef: "expense-tracker:state",
       format: "prose",
     },
