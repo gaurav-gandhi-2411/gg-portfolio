@@ -34,6 +34,7 @@ const STATUS_PILL_CLASS: Record<ProjectStatus, string> = {
   // under AA for caption text); the slate border is what sets it apart
   // from Research's filled pill.
   Offline: "border-status-closed/70 text-muted-foreground",
+  Archived: "border-status-closed/70 text-muted-foreground",
   PyPI: "border-accent/40 bg-accent/10 text-accent",
   Research: "border-border/60 bg-muted/50 text-muted-foreground",
 };

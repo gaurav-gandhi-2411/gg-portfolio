@@ -233,12 +233,13 @@ export const products: Product[] = [
     // (2026-07-26); it now 404s with DEPLOYMENT_NOT_FOUND — a second,
     // distinct frontend outage since that check. A dead link on the live
     // site is worse than no link. See provenance.md's wave-19 addendum.
-    // 2026-11-01: the backend is down too, so the card reads "Offline"
-    // (code stays linked). See provenance.md's 2026-11-01 status entry.
-    offline: {
-      checkedAt: "2026-11-01",
-      evidence:
-        "backend /health 503 then 500; registered frontend 404 DEPLOYMENT_NOT_FOUND; repo commit 2026-08-22 records billing disabled",
+    // 2026-11-01: a health check found the backend down too (evidence kept
+    // in provenance.md's 2026-11-01 entry). 2026-11-02: owner decision to
+    // archive rather than restore, so the card reads "Archived" with the
+    // code still linked. See provenance.md's 2026-11-02 status entry.
+    archived: {
+      decidedAt: "2026-11-02",
+      note: "owner decision to stop running it; the 2026-11-01 health checks found backend and frontend down",
     },
     repoUrl: "https://github.com/gaurav-gandhi-2411/expense-tracker",
     categories: ["retrieval", "forecasting", "llm-agents"],
