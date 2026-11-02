@@ -173,7 +173,7 @@ export const products: Product[] = [
     slug: "gold-rate-tracker",
     name: "Gold Rate Tracker",
     tagline:
-      "A PWA that tracks India's 22K gold rate and ships an honest naive flat-hold range, not a forecast, because the ML model I trained never beat that baseline.",
+      "A PWA that tracks India's 22K gold rate and shows a model forecast of the next official rate. The pretrained forecaster (Chronos-Bolt) lost to a naive flat-hold in my backtest, so it stays hidden.",
     liveUrl: "https://gaurav-gandhi-2411.github.io/gold-rate-tracker/",
     repoUrl: "https://github.com/gaurav-gandhi-2411/gold-rate-tracker",
     categories: ["forecasting", "evals-research"],

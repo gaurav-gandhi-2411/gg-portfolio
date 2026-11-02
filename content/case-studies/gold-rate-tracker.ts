@@ -13,7 +13,7 @@ export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
   verifiedAt: "2026-09-23", // wave refresh-2026-09 (F3/F4) -- repinned to product repo's frozen SHA citation
   title: "Gold Rate Tracker",
-  dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model, and shipped the honest forecast instead of the more exciting one.",
+  dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model. That model stays hidden; the live forecast comes from a different, simpler one.",
   depth: "full",
   problem: [
     "Indian retail gold buyers want to know today's Tanishq 22K jewelry price and whether now is a good time to buy, without paying for a subscription service, and without trusting a forecast that's really just marketing dressed up as intelligence.",
@@ -27,7 +27,7 @@ export const goldRateTracker: CaseStudy = {
   ],
   architecture: {
     intro:
-      "A scraper feeds a naive baseline that was the headline from 2026-05 to 2026-10 (a different model, P3, has been the headline since 2026-10-07), and a small ML model that runs in parallel but stays dark unless it earns its place.",
+      "A scraper feeds a next-rate forecast. A naive flat-hold was the headline from 2026-05 to 2026-10; P3, a fitted slope on how world gold moved after India's daily rate was set, has been the headline since 2026-10-07 (ADR 069). Chronos, a small pretrained forecaster, runs in parallel but stays dark.",
     stages: [
       {
         label: "IBJA benchmark rate",
@@ -44,8 +44,8 @@ export const goldRateTracker: CaseStudy = {
       },
       { label: "prices.json", detail: "committed to the repo, the durable price history" },
       {
-        label: "Naive flat-hold forecast",
-        detail: "IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor; tomorrow = today, the headline shown to users until 2026-10-02, when a next-day model (ADR 064) took over; P3 has been the headline since 2026-10-07 (ADR 069)",
+        label: "Next-rate forecast (P3; naive flat-hold before 2026-10)",
+        detail: "P3 is the headline since 2026-10-07 (ADR 069): a slope fitted on the world gold move after India's last official rate, with a split-conformal 80% range; IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor. Before it, a next-day model took over on 2026-10-02 (ADR 064), and before that the naive flat-hold (tomorrow = today) was the headline",
       },
       {
         label: "Chronos-Bolt-Tiny directional probe",
