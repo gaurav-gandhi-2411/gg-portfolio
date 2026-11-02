@@ -273,13 +273,6 @@ export function ProjectCard({
                 Source ↗
               </InlineLink>
             )}
-            {status === "Archived" && (
-              // The pill stays one short word (it is a non-wrapping cell);
-              // the full owner-approved phrase sits beside the code link.
-              <span className="text-muted-foreground -my-3 inline-flex min-h-11 items-center">
-                Archived (code available)
-              </span>
-            )}
           </div>
         </div>
       </div>
