@@ -1374,3 +1374,32 @@ which carries the full table since triage-iq 91282bb, 2026-10-17):
 Not changed here: the resolution-time row (the served behaviour changed under ADR-0064 and needs
 its own re-verification) and `content/resume-data.json` / `content/resume-metrics.json` /
 `public/resume.pdf`, which remain on the old figures until the owner regenerates the résumé.
+
+## Wave 15 pipeline proposals — 2026-11-02 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable LLM performance skill and is directly present in the README, not duplicated in the existing copy, though it lacks an explicit recent date.; verifier: The draft accurately reflects all numerical values, metrics, and statistical details present in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:52`
+  Draft: "Evaluated LLM synthesis on a regression detector across 64 cases, achieving a mean score of 12.09 out of 15 (80.6%) with a 95% bootstrap confidence interval of 11.64–12.52."
+  Suggested provenance ID: `triage-iq-llm-synthesis`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a concrete 68.8% component accuracy, verifiable in the README, but lacks a recent timestamp, so it’s solid but not clearly current.; verifier: The draft accurately reflects the specific metrics (68.8%, 44/64, Wilson 95% CI [56.6, 78.8]) and terminology (exact string match) found in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:53`
+  Draft: "Achieved 68.8% exact‑match component accuracy (44 of 64 cases) with a 95% Wilson confidence interval of 56.6–78.8%."
+  Suggested provenance ID: `triage-iq-llm-synthesis-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Demonstrates solid evaluation skill and is directly supported by the README, but lacks a clear recent date and adds new information not covered in the existing copy.; verifier: All specific numbers (2000 resamples, seed 42, 64 issues, 11 vscode, 53 k8s, 44/64) and technical claims (Wilson/bootstrap intervals, local judge, zero live calls, grounding check definition) in the draft are literally present and accurately represented in the source text.)
+  Source: `README.md:61`
+  Draft: "Scored each pipeline stage on held‑out data using Wilson or bootstrap confidence intervals (2,000 resamples, seed 42) and measured LLM quality with a local `qwen3:8b` judge on a 64‑issue gold set (11 vscode, 53 k8s), enabling CI to run with zero live LLM calls. The exact‑match rate was 44/64, and the grounding check verified consistency against the pipeline’s top‑3 predictions."
+  Suggested provenance ID: `evaluation-metrics`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — The fact demonstrates concrete modeling insight and is directly quoted from the README, but lacks a recent timestamp, and adds new detail not covered in the existing copy.; verifier: The draft accurately reflects the specific metrics (68%, 55%), feature lists, and causal logic (prediction before training leading to model choice) present in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed a 68% zero demand rate and 55% lumpy/erratic pattern, flagging SNAP indicators and lag‑7/14/28 features as high‑value and requiring store, category, and department hierarchy encodings; this analysis led to choosing a compound‑Poisson (Tweedie) loss and a cross‑series global model that could recover signal where per‑series methods would fail."
+  Suggested provenance ID: `readme-eda-implication`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — Demonstrates analytical skill and is directly quoted from the README, but lacks a recent timestamp, making it less current while not duplicating existing copy.; verifier: The draft accurately reflects the specific metrics (0.33–0.38, 5/5), the causal explanation (weak confidence due to diverse product types), and the proposed solution (colour-aware re-ranking) found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:202`
+  Draft: "Measured fused similarity scores of 0.33–0.38 for users who browse a single colour across many product types, showing the model can retrieve the correct colour (5/5 Black recommendations) but with weak confidence, which points to a colour‑aware re‑ranking step as a useful improvement."
+  Suggested provenance ID: `readme-fused-similarity-colour`
+- **gaurav-gandhi-2411/AetherArt** (curator 3/5 — The fact shows a verifiable skill in checkpoint evaluation, meets axes 1‑2, but lacks a recent timestamp and adds new detail not yet on the site.; verifier: The draft accurately reflects the source text's claims regarding the visual selection process, the specific sweep steps (500/1000/1500), the fixed prompts and seed (42), and the reference to the checkpoint-1000 grid image, without introducing unsupported numbers or tone drift.)
+  Source: `README.md:59`
+  Draft: "Visually selected the winning checkpoint from a 500/1000/1500‑step sweep using four fixed prompts at seed 42, as documented in the checkpoint‑1000 grid image."
+  Suggested provenance ID: `checkpoint-selection`
