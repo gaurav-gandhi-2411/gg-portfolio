@@ -69,8 +69,23 @@ export interface ProductOffline {
   evidence: string;
 }
 
+/**
+ * The owner decided to stop running the product (an owner decision, where
+ * `offline` is a health check finding it down). The card reads "Archived"
+ * with the source code still linked; like `offline` it is exclusive with
+ * `liveUrl`, so an archived product never counts toward "N live".
+ */
+export interface ProductArchived {
+  decidedAt: string;
+  note: string;
+}
+
 export type Product = ProductBase &
-  ({ liveUrl?: string; offline?: never } | { liveUrl?: never; offline: ProductOffline });
+  (
+    | { liveUrl?: string; offline?: never; archived?: never }
+    | { liveUrl?: never; offline: ProductOffline; archived?: never }
+    | { liveUrl?: never; offline?: never; archived: ProductArchived }
+  );
 
 interface ProductBase {
   slug: string;
