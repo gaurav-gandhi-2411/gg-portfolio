@@ -228,6 +228,30 @@ function actualBehavior(result) {
 }
 
 /**
+ * Raw citation tags: a known chunk id/sourceRef sitting in answer prose.
+ *
+ * Deliberately NOT built from lib/chatbot/strip-citation-tags.ts: a detector
+ * that shares the stripper's code shares its blind spots and would pass
+ * whenever the stripper is wrong in the same way. This is a plain "does any
+ * known ref appear as a whole token" scan over the index read straight from
+ * disk. Known refs, not a generic word-colon-word pattern, so "10:30" never
+ * counts.
+ */
+let rawTagRegex = null;
+function findRawCitationTags(text) {
+  if (rawTagRegex === null) {
+    const index = JSON.parse(readFileSync(join(ROOT, "content", "chatbot", "index.json"), "utf8"));
+    const refs = new Set(index.chunks.flatMap((c) => [c.id, c.sourceRef]));
+    const alt = [...refs]
+      .sort((a, b) => b.length - a.length)
+      .map((r) => r.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|");
+    rawTagRegex = new RegExp(`(?<![\\w/:#-])(?:${alt})(?![\\w#-])`, "g");
+  }
+  return text.match(rawTagRegex) ?? [];
+}
+
+/**
  * Computes the 4 headline metrics, each only over fixtures that weren't
  * skipped (no cassette recorded yet) — a skipped fixture contributes to
  * neither the numerator nor the denominator of any metric, so `n` always
@@ -254,6 +278,17 @@ function computeSummary(results) {
   const correctRefusals = refuseFixtures.filter((r) => r.final.refused === true);
   const falseRefusals = answerFixtures.filter((r) => r.final.refused === true);
 
+  const tagged = evaluated
+    // Answer prose and follow-up chip text; a chip's own sourceRef field is
+    // structured data and deliberately not scanned.
+    .map((r) => ({
+      id: r.fixture.id,
+      tags: [r.final.answer, ...(r.final.followUps ?? []).map((f) => f.question)].flatMap(
+        findRawCitationTags
+      ),
+    }))
+    .filter((t) => t.tags.length > 0);
+
   const rate = (num, den) => (den === 0 ? null : num / den);
 
   return {
@@ -261,6 +296,12 @@ function computeSummary(results) {
     groundednessRate: { value: rate(groundedHits.length, answerFixtures.length), n: answerFixtures.length },
     refusalPrecision: { value: rate(correctRefusals.length, refuseFixtures.length), n: refuseFixtures.length },
     falseRefusalRate: { value: rate(falseRefusals.length, answerFixtures.length), n: answerFixtures.length },
+    // A count, not a rate: any nonzero value fails check-thresholds.mjs.
+    rawCitationTags: {
+      value: tagged.reduce((n, t) => n + t.tags.length, 0),
+      n: evaluated.length,
+      fixtures: tagged.map((t) => t.id),
+    },
   };
 }
 
@@ -338,6 +379,11 @@ function writeReports(results, summary, today) {
     `| Refusal precision | ${formatMetric(summary.refusalPrecision)} |`,
     `| False-refusal rate | ${formatMetric(summary.falseRefusalRate)} |`,
     "",
+    `Raw citation tags in answers: ${summary.rawCitationTags.value} (must be 0; checked over ${summary.rawCitationTags.n} evaluated fixtures)` +
+      (summary.rawCitationTags.fixtures.length > 0
+        ? `. Offending fixtures: ${summary.rawCitationTags.fixtures.join(", ")}`
+        : "."),
+    "",
     "n/a (n=0) means every fixture that metric would draw from is still " +
       '"skipped: no cassette recorded" — expected until `--live` records real ' +
       "cassettes (see TODO in .github/workflows/eval.yml).",
@@ -413,6 +459,10 @@ async function main() {
   console.log(`Citation-groundedness:     ${formatMetric(summary.groundednessRate)}`);
   console.log(`Refusal precision:         ${formatMetric(summary.refusalPrecision)}`);
   console.log(`False-refusal rate:        ${formatMetric(summary.falseRefusalRate)}`);
+  console.log(
+    `Raw citation tags:         ${summary.rawCitationTags.value} (must be 0)` +
+      (summary.rawCitationTags.fixtures.length ? ` in ${summary.rawCitationTags.fixtures.join(", ")}` : "")
+  );
   console.log(`Report: reports/wave16-chatbot-eval-${today}.md (+.json)`);
 }
 

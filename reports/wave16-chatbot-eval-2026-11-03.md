@@ -19,6 +19,8 @@ Production ships `openai/gpt-oss-120b`.
 | Refusal precision | 100.0% (n=9) |
 | False-refusal rate | 0.0% (n=20) |
 
+Raw citation tags in answers: 0 (must be 0; checked over 29 evaluated fixtures).
+
 n/a (n=0) means every fixture that metric would draw from is still "skipped: no cassette recorded" — expected until `--live` records real cassettes (see TODO in .github/workflows/eval.yml).
 
 ## Per-fixture results

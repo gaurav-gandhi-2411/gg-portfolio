@@ -17,6 +17,11 @@
     "falseRefusalRate": {
       "value": 0,
       "n": 20
+    },
+    "rawCitationTags": {
+      "value": 0,
+      "n": 29,
+      "fixtures": []
     }
   },
   "results": [

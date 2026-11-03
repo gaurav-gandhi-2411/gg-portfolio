@@ -12,6 +12,17 @@
 
 import type { RetrievedChunk } from "@/lib/chatbot/retrieve";
 import { site } from "@/content/site";
+import rawIndex from "@/content/chatbot/index.json";
+import { buildCitationTagStripper } from "@/lib/chatbot/strip-citation-tags";
+
+// Every id and sourceRef in the corpus. Server-side only: no client component
+// imports answer.ts at runtime, and retrieve.ts already loads the same JSON.
+const stripCitationTags = buildCitationTagStripper(
+  (rawIndex as { chunks: { id: string; sourceRef: string }[] }).chunks.flatMap((c) => [
+    c.id,
+    c.sourceRef,
+  ])
+);
 
 export const REFUSAL_MESSAGE =
   "I don't have grounded information to answer that. I can only answer questions about GG's AI/ML project portfolio, case studies, and experience, so try asking about one of those.";
@@ -273,7 +284,7 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
       : REFUSAL_MESSAGE;
 
   return {
-    answer: collapseVerbatimRepeat(rawAnswer),
+    answer: stripCitationTags(collapseVerbatimRepeat(rawAnswer)),
     citations: validatedCitations,
     refused: false,
     followUps: validateFollowUps(parsed?.followUps, retrievedBySourceRef),
@@ -283,6 +294,7 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
 /** Longest follow-up we will show. Past this it stops reading as a chip. */
 const MAX_FOLLOW_UP_LENGTH = 90;
 const MAX_FOLLOW_UPS = 3;
+const MIN_STRIPPED_FOLLOW_UP_WORDS = 3;
 
 /**
  * Keeps only the follow-ups that are grounded, exactly as citations are.
@@ -311,8 +323,12 @@ function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>)
     if (typeof question !== "string" || typeof sourceRef !== "string") continue;
     if (!retrieved.has(sourceRef)) continue;
 
-    const text = question.trim();
+    const trimmed = question.trim();
+    const text = stripCitationTags(trimmed);
     if (text.length === 0 || text.length > MAX_FOLLOW_UP_LENGTH) continue;
+    // A chip that lost a ref and is now a fragment is dropped, not repaired.
+    // Only when a strip happened, so existing short chips are unaffected.
+    if (text !== trimmed && text.split(/\s+/).length < MIN_STRIPPED_FOLLOW_UP_WORDS) continue;
     const key = text.toLowerCase();
     if (seen.has(key)) continue;
 
