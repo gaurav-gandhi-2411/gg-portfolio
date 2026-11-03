@@ -13,8 +13,11 @@
 //
 // Shapes covered, each with an optional "#N" suffix (ids carry it, sourceRefs
 // do not, so both are in the known set): bare, `backticked`, [bracketed],
-// (parenthesized). A ref embedded in a longer token (a path segment, a longer
-// unknown ref) is left alone.
+// (parenthesized), **bold**, __bold__, *italic*, _italic_. A ref embedded in a
+// longer token (a path segment, a longer unknown ref) is left alone.
+//
+// Known limitation: grammar is not repaired. "the `ref`, which" becomes
+// "the, which".
 
 /** A match preceded or followed by these would be the middle of a longer token. */
 const NOT_BEFORE = String.raw`(?<![\w/:#-])`;
@@ -22,6 +25,25 @@ const NOT_AFTER = String.raw`(?![\w#-])`;
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Removes wrappers a removal left empty: "(see )", "()", "[]", "****", "__".
+ * Loops because removing an inner shell can empty the outer one. Only called
+ * on text that had a ref removed, so authored brackets elsewhere are never
+ * reached.
+ */
+function emptyShells(text: string): string {
+  let prev: string;
+  let cur = text;
+  do {
+    prev = cur;
+    cur = cur
+      .replace(/[ \t]*\(\s*(?:(?:see|cf\.?|refs?\.?|sources?|per)\s*:?\s*)?\)/gi, "")
+      .replace(/\[\s*\]/g, "")
+      .replace(/(\*{1,2}|_{1,2})\s*\1/g, "");
+  } while (cur !== prev);
+  return cur;
 }
 
 /**
@@ -37,7 +59,8 @@ export function buildCitationTagStripper(knownRefs: Iterable<string>): (text: st
   if (refs.length === 0) return (text) => text;
   const ref = refs.map(escapeRegExp).join("|");
   const pattern = new RegExp(
-    `\`\\s*(?:${ref})\\s*\`|\\[\\s*(?:${ref})\\s*\\]|\\(\\s*(?:${ref})\\s*\\)|${NOT_BEFORE}(?:${ref})${NOT_AFTER}`,
+    `\`\\s*(?:${ref})\\s*\`|\\[\\s*(?:${ref})\\s*\\]|\\(\\s*(?:${ref})\\s*\\)|` +
+      `(\\*\\*|__|\\*|_)\\s*(?:${ref})\\s*\\1|${NOT_BEFORE}(?:${ref})${NOT_AFTER}`,
     "g"
   );
 
@@ -50,8 +73,7 @@ export function buildCitationTagStripper(knownRefs: Iterable<string>): (text: st
     if (!removed) return text;
     // Tidy only what a removal can leave behind, and only on this path, so
     // text without a tag is returned byte-identical.
-    return stripped
-      .replace(/\(\s*\)|\[\s*\]/g, "")
+    return emptyShells(stripped)
       .replace(/[ \t]{2,}/g, " ")
       .replace(/[ \t]+([,.;:!?])/g, "$1")
       .replace(/[ \t]+$/gm, "")

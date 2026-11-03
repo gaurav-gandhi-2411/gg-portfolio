@@ -53,6 +53,33 @@ test("is idempotent", () => {
   assert.equal(strip(once), once);
 });
 
+test("emphasis-wrapped refs are removed with their markers", () => {
+  const cases: [string, string][] = [
+    ["Fixed by **warmer:hinglish-fix** today.", "Fixed by today."],
+    ["Fixed by __warmer:hinglish-fix__ today.", "Fixed by today."],
+    ["Fixed by *warmer:hinglish-fix* today.", "Fixed by today."],
+    ["Fixed by **`warmer:hinglish-fix`** today.", "Fixed by today."],
+    ["Fixed by _provenance:warmer:p3_ today.", "Fixed by today."],
+  ];
+  for (const [input, expected] of cases) assert.equal(strip(input), expected, input);
+});
+
+test("a parenthetical left empty is removed with the space before it", () => {
+  const cases: [string, string][] = [
+    ["It was fixed (see warmer:hinglish-fix) in training.", "It was fixed in training."],
+    ["It was fixed (see `warmer:hinglish-fix`).", "It was fixed."],
+    ["It was fixed (cf. warmer:hinglish-fix) here.", "It was fixed here."],
+    ["It was fixed (source: warmer:hinglish-fix) here.", "It was fixed here."],
+    ["It was fixed (warmer:hinglish-fix) here.", "It was fixed here."],
+  ];
+  for (const [input, expected] of cases) assert.equal(strip(input), expected, input);
+});
+
+test("authored empty-looking markup is untouched when no ref was removed", () => {
+  const text = "Call f() and see () or **bold** and (see the docs).";
+  assert.equal(strip(text), text);
+});
+
 test("empty known set is a no-op", () => {
   assert.equal(buildCitationTagStripper([])("a `x:y` b"), "a `x:y` b");
 });
@@ -106,4 +133,38 @@ test("the real project-warmer-hinglish recording is stripped", () => {
   assert.equal(result.refused, false);
   assert.ok(!result.answer.includes("warmer:hinglish-fix"), result.answer);
   assert.ok(result.citations.length > 0);
+});
+
+const withChips = (followUps: unknown) =>
+  buildAnswer(
+    JSON.stringify({
+      answer: "It was retrained.",
+      citations: [{ sourceRef: "warmer:hinglish-fix" }],
+      followUps,
+    }),
+    chunks
+  );
+
+test("follow-up chips are stripped of raw refs", () => {
+  const result = withChips([
+    { question: "What did `warmer:hinglish-fix` change in training?", sourceRef: "warmer:hinglish-fix" },
+    { question: "How was the fix (see warmer:hinglish-fix) evaluated?", sourceRef: "warmer:hinglish-fix" },
+  ]);
+  assert.deepEqual(
+    result.followUps.map((f) => f.question),
+    ["What did change in training?", "How was the fix evaluated?"]
+  );
+  assert.ok(result.followUps.every((f) => f.sourceRef === "warmer:hinglish-fix"));
+});
+
+test("a chip reduced to a fragment or nothing is dropped; short untouched chips stay", () => {
+  const result = withChips([
+    { question: "`warmer:hinglish-fix`", sourceRef: "warmer:hinglish-fix" },
+    { question: "More on warmer:hinglish-fix?", sourceRef: "warmer:hinglish-fix" },
+    { question: "Why Hinglish?", sourceRef: "warmer:hinglish-fix" },
+  ]);
+  assert.deepEqual(
+    result.followUps.map((f) => f.question),
+    ["Why Hinglish?"]
+  );
 });

@@ -279,7 +279,14 @@ function computeSummary(results) {
   const falseRefusals = answerFixtures.filter((r) => r.final.refused === true);
 
   const tagged = evaluated
-    .map((r) => ({ id: r.fixture.id, tags: findRawCitationTags(r.final.answer) }))
+    // Answer prose and follow-up chip text; a chip's own sourceRef field is
+    // structured data and deliberately not scanned.
+    .map((r) => ({
+      id: r.fixture.id,
+      tags: [r.final.answer, ...(r.final.followUps ?? []).map((f) => f.question)].flatMap(
+        findRawCitationTags
+      ),
+    }))
     .filter((t) => t.tags.length > 0);
 
   const rate = (num, den) => (den === 0 ? null : num / den);

@@ -294,6 +294,7 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
 /** Longest follow-up we will show. Past this it stops reading as a chip. */
 const MAX_FOLLOW_UP_LENGTH = 90;
 const MAX_FOLLOW_UPS = 3;
+const MIN_STRIPPED_FOLLOW_UP_WORDS = 3;
 
 /**
  * Keeps only the follow-ups that are grounded, exactly as citations are.
@@ -322,8 +323,12 @@ function validateFollowUps(raw: unknown, retrieved: Map<string, RetrievedChunk>)
     if (typeof question !== "string" || typeof sourceRef !== "string") continue;
     if (!retrieved.has(sourceRef)) continue;
 
-    const text = question.trim();
+    const trimmed = question.trim();
+    const text = stripCitationTags(trimmed);
     if (text.length === 0 || text.length > MAX_FOLLOW_UP_LENGTH) continue;
+    // A chip that lost a ref and is now a fragment is dropped, not repaired.
+    // Only when a strip happened, so existing short chips are unaffected.
+    if (text !== trimmed && text.split(/\s+/).length < MIN_STRIPPED_FOLLOW_UP_WORDS) continue;
     const key = text.toLowerCase();
     if (seen.has(key)) continue;
 
