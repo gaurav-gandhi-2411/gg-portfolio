@@ -13,11 +13,11 @@ export const goldRateTracker: CaseStudy = {
   slug: "gold-rate-tracker",
   verifiedAt: "2026-09-23", // wave refresh-2026-09 (F3/F4) -- repinned to product repo's frozen SHA citation
   title: "Gold Rate Tracker",
-  dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model, and shipped the honest forecast instead of the more exciting one.",
+  dek: "A free-tier gold-price PWA, benchmarked honestly enough to publish the case where the naive baseline beat the ML model. That model's price forecast is not shown; the live forecast comes from a different, simpler one.",
   depth: "full",
   problem: [
     "Indian retail gold buyers want to know today's Tanishq 22K jewelry price and whether now is a good time to buy, without paying for a subscription service, and without trusting a forecast that's really just marketing dressed up as intelligence.",
-    "The project's real differentiator isn't a clever model. It's a willingness to refuse shipping a price-prediction feature that doesn't actually beat a trivially simple baseline, even though \"AI predicts gold prices\" is a far more exciting headline than \"tomorrow will probably look like today.\"",
+    "The project's real differentiator isn't a clever model. It's a willingness to keep a price-prediction feature off the headline until it beats a trivially simple baseline, even though \"AI predicts gold prices\" is a far more exciting headline than \"tomorrow will probably look like today.\"",
   ],
   approach: [
     "A GitHub Actions cron job, scheduled every three hours, fetches the IBJA (India Bullion and Jewellers Association) benchmark rate, the national reference price, and the primary source since Tanishq's retail site started blocking automated access behind Cloudflare's bot protection. A separate Tanishq scrape runs in its own workflow, at six timed visits a day, on a self-hosted runner (GitHub-hosted runner IPs are blocked by Cloudflare). It tries plain HTTP first, which has succeeded 0 of 37 recent attempts, so in practice it reads the page with a full browser (Playwright). It confirms the IBJA-calibrated estimate against real retail pricing whenever it succeeds; when it doesn't, the IBJA estimate ships on its own. A HuberRegressor (a regression method that's resistant to occasional bad data points) converts the IBJA benchmark into a retail-price estimate, calibrated against historical Tanishq readings.",
@@ -27,7 +27,7 @@ export const goldRateTracker: CaseStudy = {
   ],
   architecture: {
     intro:
-      "A scraper feeds a naive baseline that was the headline from 2026-05 to 2026-10 (a different model, P3, has been the headline since 2026-10-07), and a small ML model that runs in parallel but stays dark unless it earns its place.",
+      "A scraper feeds a next-rate forecast. A naive flat-hold was the headline from 2026-05 to 2026-10; P3, a fitted slope on how world gold moved after India's daily rate was set, has been the headline since 2026-10-07 (ADR 069). Chronos, a small pretrained forecaster, runs in parallel; its price forecast is not shown.",
     stages: [
       {
         label: "IBJA benchmark rate",
@@ -44,8 +44,8 @@ export const goldRateTracker: CaseStudy = {
       },
       { label: "prices.json", detail: "committed to the repo, the durable price history" },
       {
-        label: "Naive flat-hold forecast",
-        detail: "IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor; tomorrow = today, the headline shown to users until 2026-10-02, when a next-day model (ADR 064) took over; P3 has been the headline since 2026-10-07 (ADR 069)",
+        label: "Next-rate forecast (P3; naive flat-hold before 2026-10)",
+        detail: "P3 is the headline since 2026-10-07 (ADR 069): a slope fitted on the world gold move after India's last official rate, with a split-conformal range that targets 80%; IBJA-calibrated by default, Tanishq-confirmed when fresh; HuberRegressor premium factor. Before it, a next-day model took over on 2026-10-02 (ADR 064), and before that the naive flat-hold (tomorrow = today) was the headline",
       },
       {
         label: "Chronos-Bolt-Tiny directional probe",

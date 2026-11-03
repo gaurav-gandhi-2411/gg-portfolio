@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"GG leads a 5-person data-science team at Indium Software\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-lead\"}\n   ]\n}",
-  "tokensIn": 796,
-  "tokensOut": 46
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"He leads a 5‑person data‑science team at Uber AI.\",\"citations\":[{\"sourceRef\":\"resume:indium-senior-lead\"}],\"followUps\":[{\"question\":\"What workstreams does his team cover?\",\"sourceRef\":\"resume:indium-senior-lead\"},{\"question\":\"How many data scientists did he hire for the team?\",\"sourceRef\":\"resume:indium-senior-lead\"},{\"question\":\"What platform does he coordinate at Uber AI?\",\"sourceRef\":\"resume:uber-lead-platform\"}]}",
+  "tokensIn": 945,
+  "tokensOut": 521
 }
