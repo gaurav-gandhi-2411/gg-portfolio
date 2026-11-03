@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"No specific number of years of professional Python experience is stated in the provided context.\",\n   \"citations\": []\n}",
-  "tokensIn": 1165,
-  "tokensOut": 29
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"I don’t have that information.\", \"citations\":[], \"followUps\":[{\"question\":\"How many years of data science & ML experience does GG have?\",\"sourceRef\":\"derived:career-years\"},{\"question\":\"When did GG start his first data‑science role?\",\"sourceRef\":\"derived:career-years\"},{\"question\":\"What open source contributions has GG made to google/adk-python?\",\"sourceRef\":\"oss:adk-python-in-review\"}]}",
+  "tokensIn": 1181,
+  "tokensOut": 384
 }

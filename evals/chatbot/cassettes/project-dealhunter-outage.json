@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"DealHunter's two-week silent production outage was caused by a stale Cloud Run tag and empty-string environment variables bypassing the nullish-coalescing operator (`??`), resulting in the app sending requests with blank fields instead of failing loudly or falling back to a default.\",\n   \"citations\": [\n      {\"sourceRef\": \"dealhunter:silent-outage\"}\n   ]\n}",
-  "tokensIn": 1010,
-  "tokensOut": 82
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"The outage was caused by two independent bugs: the Cloud Run backend was stuck on a stale image tag, and the Vercel frontend had required environment variables set to empty strings, which bypassed the nullish‑coalescing fallback and caused every request to use a blank base URL, resulting in silent failures.\",\"citations\":[{\"sourceRef\":\"dealhunter:silent-outage\"}],\"followUps\":[{\"question\":\"How was the outage resolved?\",\"sourceRef\":\"dealhunter:silent-outage\"},{\"question\":\"What fallback logic failed on the frontend?\",\"sourceRef\":\"dealhunter:silent-outage\"},{\"question\":\"What lessons were learned from this incident?\",\"sourceRef\":\"dealhunter:silent-outage\"}]}",
+  "tokensIn": 1765,
+  "tokensOut": 374
 }

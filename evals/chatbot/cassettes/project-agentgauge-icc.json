@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"The ICC finding changed how AgentGauge allocates trials across tasks by spending the same budget on more tasks at one trial each, instead of many trials on few tasks.\",\n   \"citations\": [\n      {\"sourceRef\": \"agentgauge:icc-mde\"}\n   ]\n}",
-  "tokensIn": 996,
-  "tokensOut": 63
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"The high ICC (0.793) showed repeats gave little new information, so AgentGauge shifted a fixed trial budget to many tasks with a single trial each (e.g., 100 tasks × 1 trial instead of 20 tasks × 5 trials).\",\"citations\":[{\"sourceRef\":\"agentgauge:mde-curve\"}],\"followUps\":[{\"question\":\"What minimum detectable effect was achieved after this reallocation?\",\"sourceRef\":\"agentgauge:approach:2\"},{\"question\":\"What ICC value was observed for repeated trials?\",\"sourceRef\":\"agentgauge:mde-curve\"},{\"question\":\"How many tasks were used after scaling the pool?\",\"sourceRef\":\"agentgauge:approach:2\"}]}",
+  "tokensIn": 1370,
+  "tokensOut": 416
 }

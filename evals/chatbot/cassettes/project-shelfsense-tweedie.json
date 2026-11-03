@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"ShelfSense uses Tweedie loss instead of RMSE for its demand-forecasting models because 68% of the data is zero, and Tweedie loss is built for this shape of data, avoiding the over-forecasting issue that RMSE would cause.\",\n   \"citations\": [\n      {\"sourceRef\": \"shelfsense:tweedie\"}\n   ]\n}",
-  "tokensIn": 1021,
-  "tokensOut": 82
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"ShelfSense uses Tweedie loss because 68% of the demand data is zero‑inflated; RMSE treats all errors equally and penalises zero predictions on intermittent series, whereas Tweedie loss is designed for zero‑inflated count data and actually rewards correct zero forecasts, yielding a measurable +0.02 WRMSSE improvement.\",\"citations\":[{\"sourceRef\":\"shelfsense:tweedie\"}],\"followUps\":[{\"question\":\"What performance gain did Tweedie loss achieve?\",\"sourceRef\":\"shelfsense:tweedie\"},{\"question\":\"How many models use Tweedie loss in ShelfSense?\",\"sourceRef\":\"shelfsense:approach:3\"},{\"question\":\"What percentage of the data is zero?\",\"sourceRef\":\"shelfsense:tweedie\"}]}",
+  "tokensIn": 1433,
+  "tokensOut": 420
 }

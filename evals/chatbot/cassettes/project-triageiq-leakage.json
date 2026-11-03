@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"The target-leakage bug in TriageIQ's resolution-time predictor was caused by the train/test split dividing issues by closed_at, which guaranteed that any issue still open at the cutoff date landed in the test set and every already-resolved issue landed in train. Fixing this bug by re-splitting by created_at collapsed the mean absolute error from 693 days to 87 days, an 8x improvement.\",\n   \"citations\": [\n       {\"sourceRef\": \"triageiq:split-fix\"}\n   ]\n}",
-  "tokensIn": 1147,
-  "tokensOut": 112
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"TriageIQ discovered that its train/test split was based on the issue closed_at date, which leaked the target into the test set. Re‑splitting by created_at reduced the mean absolute error from about 693 days to 87 days (an ~8× improvement).\",\"citations\":[{\"sourceRef\":\"triageiq:split-fix\"}],\"followUps\":[{\"question\":\"What other data leaks were found?\",\"sourceRef\":\"triageiq:split-fix\"},{\"question\":\"How did the has_priority feature leak affect the model?\",\"sourceRef\":\"triageiq:split-fix\"},{\"question\":\"How many evaluation cases were contaminated by training data?\",\"sourceRef\":\"triageiq:split-fix\"}]}",
+  "tokensIn": 1964,
+  "tokensOut": 582
 }

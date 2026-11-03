@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"The Multimodal Fashion Recommender's training collapsed due to the original configuration causing total representation collapse. It was fixed by adjusting the temperature to 0.1, learning rate to 3e-4, and adding a 500-step warmup period, with the warmup being the most critical fix.\",\n   \"citations\": [\n      {\"sourceRef\": \"mmfr:collapse-fix\"},\n      {\"sourceRef\": \"mmfr:collapse-fix\"}\n   ]\n}",
-  "tokensIn": 926,
-  "tokensOut": 101
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"The early training config (temperature 0.07, learning rate 1e‑3, no warmup) caused total representation collapse – all item and user vectors converged to the same point, loss appeared low and the model learned nothing. It was fixed by raising the temperature to 0.1, lowering the learning rate to 3e‑4, and adding a 500‑step warmup (the warmup was the most critical change).\",\"citations\":[{\"sourceRef\":\"mmfr:collapse-fix\"}],\"followUps\":[{\"question\":\"What encoders are used in the Multimodal Fashion Recommender?\",\"sourceRef\":\"mmfr:frozen-fusion\"},{\"question\":\"What loss function does the model train with?\",\"sourceRef\":\"multimodal-fashion-recommender:approach:3\"},{\"question\":\"What are the model's evaluation metrics?\",\"sourceRef\":\"mmfr:ndcg\"}]}",
+  "tokensIn": 1090,
+  "tokensOut": 465
 }

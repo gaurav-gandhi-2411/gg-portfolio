@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"Reclaim guarantees that its optional AI layer can never delete a file directly because the AI layer's output types are structurally incompatible with the code path that actually deletes files, and every AI-produced suggestion goes through human confirmation and SafetyValidator check.\",\n   \"citations\": [\n       {\"sourceRef\": \"reclaim:approach:3\"},\n       {\"sourceRef\": \"reclaim:ai-layer-boundary\"}\n   ]\n}",
-  "tokensIn": 1217,
-  "tokensOut": 91
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"Reclaim guarantees the AI layer can never delete a file because the AI‑generated objects are structurally incompatible with the deletion code (they lack the required `safety_verdict` field, causing an AttributeError), the AI only produces recommend‑only suggestions that must be manually approved, and every candidate – including AI suggestions – must pass a deny‑first safety gate before any filesystem operation is executed.\",\"citations\":[{\"sourceRef\":\"reclaim:problem:2\"},{\"sourceRef\":\"reclaim:ai-layer-boundary\"},{\"sourceRef\":\"reclaim:approach:3\"}],\"followUps\":[{\"question\":\"What is the deny‑first safety gate?\",\"sourceRef\":\"reclaim:problem:2\"},{\"question\":\"Which models does Reclaim use for image similarity?\",\"sourceRef\":\"reclaim:approach:3\"},{\"question\":\"How are AI suggestions confirmed in the UI?\",\"sourceRef\":\"reclaim:problem:2\"}]}",
+  "tokensIn": 1610,
+  "tokensOut": 600
 }

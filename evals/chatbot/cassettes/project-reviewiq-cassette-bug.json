@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"Samidha Reviews diagnosed its urgency-scoring bug using cassette-replay CI, which replays previously-recorded LLM responses rather than calling the API again.\",\n   \"citations\": [\n       {\"sourceRef\": \"reviewiq:urgency-rubric\"},\n       {\"sourceRef\": \"reviewiq:cassette-ci\"}\n   ]\n}",
-  "tokensIn": 1084,
-  "tokensOut": 75
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"They used cassette‑replay debugging: re‑running the previously recorded LLM responses (keyed by model and prompt) instead of issuing a new live API call, which let them pinpoint the rubric‑matching bug.\",\"citations\":[{\"sourceRef\":\"reviewiq:urgency-rubric\"},{\"sourceRef\":\"reviewiq:cassette-ci\"}],\"followUps\":[{\"question\":\"What was changed in the urgency rubric?\",\"sourceRef\":\"reviewiq:urgency-rubric\"},{\"question\":\"How does the cassette‑replay CI work?\",\"sourceRef\":\"reviewiq:cassette-ci\"},{\"question\":\"Why did the phrase \\\"poor fit\\\" cause a medium score?\",\"sourceRef\":\"reviewiq:urgency-rubric\"}]}",
+  "tokensIn": 1520,
+  "tokensOut": 442
 }
