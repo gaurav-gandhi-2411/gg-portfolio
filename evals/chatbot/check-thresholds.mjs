@@ -121,6 +121,21 @@ function main() {
     console.log(`pass  ${threshold.label}: ${pct}% (n=${metric.n})`);
   }
 
+  // Raw chunk refs in answer prose: a count that must be exactly 0. A report
+  // without the field fails closed (an old-format report proves nothing).
+  const tags = report.summary.rawCitationTags;
+  if (!tags || typeof tags.value !== "number") {
+    console.error("FAIL  Raw citation tags in answers: field missing from report");
+    failed = true;
+  } else if (tags.value > 0) {
+    console.error(
+      `FAIL  Raw citation tags in answers: ${tags.value} (must be 0) in ${(tags.fixtures ?? []).join(", ")}`
+    );
+    failed = true;
+  } else {
+    console.log(`pass  Raw citation tags in answers: 0 (n=${tags.n})`);
+  }
+
   if (failed) {
     console.error("\nThe chatbot eval gate failed: a metric regressed, or the question set moved.");
     process.exit(1);
