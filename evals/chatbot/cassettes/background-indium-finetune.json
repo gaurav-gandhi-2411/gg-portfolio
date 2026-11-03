@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"97%+\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-finetune\"}\n   ]\n}",
-  "tokensIn": 793,
-  "tokensOut": 36
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"It raised field-level extraction accuracy to above 97%.\",\"citations\":[{\"sourceRef\":\"resume:indium-senior-finetune\"}],\"followUps\":[{\"question\":\"How many GPUs were used for the document-understanding transformer?\",\"sourceRef\":\"resume:indium-ds-docunderstanding\"},{\"question\":\"What annual cost savings were achieved?\",\"sourceRef\":\"resume:indium-ds-docunderstanding\"},{\"question\":\"How many documents were processed?\",\"sourceRef\":\"resume:indium-ds-docunderstanding\"}]}",
+  "tokensIn": 918,
+  "tokensOut": 370
 }

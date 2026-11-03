@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"The provided context does not mention the dollar cost of training TriageIQ's models.\",\n   \"citations\": []\n}",
-  "tokensIn": 1121,
-  "tokensOut": 30
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"I don't have that information.\",\"citations\":[],\"followUps\":[{\"question\":\"How many training examples were used for TriageIQ's classifier?\",\"sourceRef\":\"triageiq:classifier-bakeoff\"},{\"question\":\"What latency change did DistilBERT achieve on VSCode?\",\"sourceRef\":\"triageiq:classifier-bakeoff\"},{\"question\":\"What was the resolution‑time interval coverage after Conformal Quantile Regression?\",\"sourceRef\":\"provenance:triageiq:row2\"}]}",
+  "tokensIn": 1961,
+  "tokensOut": 622
 }

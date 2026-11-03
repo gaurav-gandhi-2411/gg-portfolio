@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"GG is based in Bengaluru, India, and is open to Senior AI/ML roles.\",\n   \"citations\": [\n      {\"sourceRef\": \"site:identity\"}\n   ]\n}",
-  "tokensIn": 944,
-  "tokensOut": 44
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"GG is based in Bengaluru, India, and his current status is that he is open to Lead / Senior AI‑ML roles.\",\"citations\":[{\"sourceRef\":\"site:identity\"}],\"followUps\":[{\"question\":\"How can I contact GG?\",\"sourceRef\":\"resume:contact-email\"},{\"question\":\"What is GG's GitHub username?\",\"sourceRef\":\"site:identity\"},{\"question\":\"Is GG open to new roles?\",\"sourceRef\":\"site:identity\"}]}",
+  "tokensIn": 1358,
+  "tokensOut": 448
 }

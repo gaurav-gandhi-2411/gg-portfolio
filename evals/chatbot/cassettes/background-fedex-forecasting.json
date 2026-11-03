@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"GG's role at FedEx Express was Decision Scientist, and he delivered a ~20% reduction in operational inefficiencies by upgrading ARIMA pipelines to SARIMA with Box-Jenkins tuning, Fourier seasonality, and automated anomaly filtering.\",\n   \"citations\": [\n      {\"sourceRef\": \"resume:fedex-forecasting\"}\n   ]\n}",
-  "tokensIn": 709,
-  "tokensOut": 74
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"GG was a Decision Scientist at FedEx Express, where he improved forecasting by upgrading ARIMA pipelines to SARIMA with Box‑Jenkins tuning, Fourier seasonality and automated anomaly filtering, cutting operational inefficiencies by about 20%.\",\"citations\":[{\"sourceRef\":\"resume:fedex-forecasting\"}],\"followUps\":[{\"question\":\"How much did inefficiencies drop after the SARIMA upgrade?\",\"sourceRef\":\"resume:fedex-forecasting\"},{\"question\":\"What techniques did GG use for anomaly detection at FedEx?\",\"sourceRef\":\"resume:fedex-anomaly\"},{\"question\":\"What statistical model did GG implement for forecasting?\",\"sourceRef\":\"resume:fedex-forecasting\"}]}",
+  "tokensIn": 877,
+  "tokensOut": 635
 }

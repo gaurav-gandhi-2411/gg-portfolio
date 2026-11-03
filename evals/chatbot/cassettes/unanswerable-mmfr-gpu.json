@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"I don't have that information\",\n   \"citations\": []\n}",
-  "tokensIn": 880,
-  "tokensOut": 20
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"The provided information does not specify which GPU was used to train the model.\",\"citations\":[],\"followUps\":[{\"question\":\"What dataset was used to train the Multimodal Fashion Recommender?\",\"sourceRef\":\"multimodal-fashion-recommender:approach:1\"},{\"question\":\"Which image model provides embeddings for the item tower?\",\"sourceRef\":\"multimodal-fashion-recommender:approach:2\"},{\"question\":\"Are the image and text encoders fine‑tuned during training?\",\"sourceRef\":\"mmfr:frozen-fusion\"}]}",
+  "tokensIn": 1354,
+  "tokensOut": 402
 }

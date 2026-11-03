@@ -26,7 +26,15 @@
 // Zero new dependencies: global fetch, Node's built-in module.register()
 // hook API — same "no deps" convention as scripts/content-pipeline/*.mjs.
 //
+//   --rerecord-model=<model>: with --live, re-record ONLY fixtures whose
+//   existing cassette has recordedModel === <model> (e.g. a retired model).
+//   Fixtures with no cassette are NOT recorded by this flag and stay "skipped".
+//   Failed live calls are not cassetted, so re-running picks up only the rest.
+//
+//   --throttle-ms=<n>: sleep n ms after each live call (free-tier rate limits).
+//
 // Run: node evals/chatbot/run-eval.mjs [--live] [--force]
+//        [--rerecord-model=<model>] [--throttle-ms=<n>]
 
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
@@ -47,6 +55,13 @@ const REPORTS_DIR = join(ROOT, "reports");
 const args = process.argv.slice(2);
 const LIVE = args.includes("--live");
 const FORCE = args.includes("--force");
+const flagValue = (name) => args.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+const RERECORD_MODEL = flagValue("rerecord-model") ?? null;
+const THROTTLE_MS = Number(flagValue("throttle-ms") ?? 0);
+if (!Number.isFinite(THROTTLE_MS) || THROTTLE_MS < 0) {
+  throw new Error("--throttle-ms must be a non-negative number");
+}
+if (RERECORD_MODEL && !LIVE) throw new Error("--rerecord-model requires --live");
 
 // "Answer"-expected categories — the ones the retrieval-recall,
 // groundedness, and false-refusal metrics are computed over. Categories
@@ -166,7 +181,11 @@ async function runFixture(fixture, lib) {
   }
 
   const existingCassette = loadCassette(fixture.id);
-  const shouldCallLive = LIVE && (!existingCassette || FORCE);
+  // With --rerecord-model, only cassettes stamped with that model are live;
+  // fixtures without a cassette are left alone (no new recordings).
+  const shouldCallLive = RERECORD_MODEL
+    ? LIVE && existingCassette?.recordedModel === RERECORD_MODEL
+    : LIVE && (!existingCassette || FORCE);
 
   if (shouldCallLive) {
     if (!lib.groqProvider) {
@@ -175,6 +194,7 @@ async function runFixture(fixture, lib) {
     const systemPrompt = lib.buildSystemPrompt();
     const userPrompt = lib.buildUserPrompt(fixture.question, chunks);
     const completion = await lib.groqProvider.complete(systemPrompt, userPrompt);
+    if (THROTTLE_MS > 0) await new Promise((r) => setTimeout(r, THROTTLE_MS));
     if (!completion) {
       // Fail-soft, same contract as route.ts: a failed Groq call downgrades
       // to the honest refusal rather than crashing the run. Not cassetted —
