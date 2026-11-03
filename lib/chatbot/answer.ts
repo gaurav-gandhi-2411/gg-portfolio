@@ -12,6 +12,17 @@
 
 import type { RetrievedChunk } from "@/lib/chatbot/retrieve";
 import { site } from "@/content/site";
+import rawIndex from "@/content/chatbot/index.json";
+import { buildCitationTagStripper } from "@/lib/chatbot/strip-citation-tags";
+
+// Every id and sourceRef in the corpus. Server-side only: no client component
+// imports answer.ts at runtime, and retrieve.ts already loads the same JSON.
+const stripCitationTags = buildCitationTagStripper(
+  (rawIndex as { chunks: { id: string; sourceRef: string }[] }).chunks.flatMap((c) => [
+    c.id,
+    c.sourceRef,
+  ])
+);
 
 export const REFUSAL_MESSAGE =
   "I don't have grounded information to answer that. I can only answer questions about GG's AI/ML project portfolio, case studies, and experience, so try asking about one of those.";
@@ -273,7 +284,7 @@ export function buildAnswer(rawContent: string, chunks: RetrievedChunk[]): ChatA
       : REFUSAL_MESSAGE;
 
   return {
-    answer: collapseVerbatimRepeat(rawAnswer),
+    answer: stripCitationTags(collapseVerbatimRepeat(rawAnswer)),
     citations: validatedCitations,
     refused: false,
     followUps: validateFollowUps(parsed?.followUps, retrievedBySourceRef),
