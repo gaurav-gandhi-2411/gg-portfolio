@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"AetherArt fits Stable Diffusion XL into an 8GB consumer GPU budget by running the model at half precision (FP16), swapping in a corrected VAE, and using an optional 4-bit quantization mode (NF4).\",\n   \"citations\": [\n      {\"sourceRef\": \"aetherart:approach:2\"}\n   ]\n}",
-  "tokensIn": 920,
-  "tokensOut": 79
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"AetherArt runs SDXL at half‑precision (FP16), uses a corrected VAE, and can apply optional 4‑bit NF4 quantisation plus an 8‑step Hyper‑SD LoRA, which together keep peak VRAM at about 6.2 GB – comfortably inside an 8 GB consumer‑GPU budget.\",\"citations\":[{\"sourceRef\":\"aetherart:approach:2\"},{\"sourceRef\":\"aetherart:vram\"},{\"sourceRef\":\"aetherart:problem:1\"}],\"followUps\":[{\"question\":\"What is the peak VRAM usage of AetherArt’s full pipeline?\",\"sourceRef\":\"aetherart:vram\"},{\"question\":\"What quantisation mode does AetherArt offer for tighter VRAM budgets?\",\"sourceRef\":\"aetherart:approach:2\"},{\"question\":\"How many steps does the Hyper‑SD LoRA reduce generation to?\",\"sourceRef\":\"aetherart:approach:2\"}]}",
+  "tokensIn": 1624,
+  "tokensOut": 595
 }

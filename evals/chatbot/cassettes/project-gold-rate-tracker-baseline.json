@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"No, the Chronos-Bolt-Tiny model did not beat the naive flat-hold forecast.\",\n   \"citations\": [\n      {\"sourceRef\": \"gold-rate-tracker:headline\"},\n      {\"sourceRef\": \"gold-rate-tracker:headline\"},\n      {\"sourceRef\": \"gold-rate-tracker:approach:3\"},\n      {\"sourceRef\": \"gold-rate-tracker:approach:2\"}\n   ]\n}",
-  "tokensIn": 977,
-  "tokensOut": 93
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"No, Chronos-Bolt-Tiny performed worse than the naive flat‑hold forecast, with a higher mean absolute error and statistically significant under‑performance.\",\"citations\":[{\"sourceRef\":\"gold-rate-tracker:original-decision\"},{\"sourceRef\":\"gold-rate-tracker:headline\"}],\"followUps\":[{\"question\":\"What metric was used to compare the models?\",\"sourceRef\":\"gold-rate-tracker:headline\"},{\"question\":\"Which statistical test showed the naive baseline’s advantage?\",\"sourceRef\":\"gold-rate-tracker:headline\"},{\"question\":\"What is the promotion criteria for the model to be shown?\",\"sourceRef\":\"gold:promotion-gate\"}]}",
+  "tokensIn": 1156,
+  "tokensOut": 355
 }

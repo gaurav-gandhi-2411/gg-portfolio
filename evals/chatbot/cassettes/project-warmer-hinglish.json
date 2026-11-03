@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"Warmer had a Hinglish bug due to a script-mismatch where the model was trained on Devanagari Hindi instead of romanized/Latin-script Hinglish, and it was fixed by using a model trained natively on romanized code-mixed text, with further improvement from using LoRA variants.\",\n   \"citations\": [\n      {\"sourceRef\": \"provenance:warmer:p3\"},\n      {\"sourceRef\": \"warmer:hinglish-fix\"},\n      {\"sourceRef\": \"warmer:lora-reframe\"}\n   ]\n}",
-  "tokensIn": 1041,
-  "tokensOut": 120
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"Warmer’s Hinglish bug was a script‑mismatch: the model that had been swapped in was trained on Devanagari Hindi instead of the romanized/Latin‑script Hinglish it needed. The issue was fixed with the `warmer:hinglish-fix`, which replaced the incorrect model with one trained on proper Hinglish script.\",\"citations\":[{\"sourceRef\":\"provenance:warmer:p3\"}],\"followUps\":[{\"question\":\"What performance impact did the Hinglish fine‑tune attempts have?\",\"sourceRef\":\"warmer:finetune-failures\"},{\"question\":\"Who is Warmer built for?\",\"sourceRef\":\"warmer:problem:2\"},{\"question\":\"Where can I find the Hinglish SBERT model linked to Warmer?\",\"sourceRef\":\"provenance:warmer-hinglish-sbert-model-public-benchmark-linked-not-duplicated:p1\"}]}",
+  "tokensIn": 1179,
+  "tokensOut": 605
 }

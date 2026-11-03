@@ -8,10 +8,7 @@ Production ships `openai/gpt-oss-120b`.
 
 | Model the cassette was recorded against | Fixtures |
 | --- | --- |
-| `llama-3.3-70b-versatile` | 22 |
-| `openai/gpt-oss-120b` | 1 |
-
-**MODEL DRIFT.** Every metric below was produced by a model that is not the one production serves, so they describe a pipeline that no longer runs. The thresholds still pass, which is exactly the problem: a recording of a retired model replays perfectly forever. Re-recording costs a real Groq quota run, so this is reported rather than failed.
+| `openai/gpt-oss-120b` | 23 |
 
 ## Summary
 

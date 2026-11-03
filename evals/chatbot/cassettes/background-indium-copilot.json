@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"a production multi-agent copilot combining Hybrid RAG, NL2SQL, a schema knowledge graph, and LangChain tool orchestration\",\n   \"citations\": [\n       {\"sourceRef\": \"resume:indium-senior-copilot\"}\n   ]\n}",
-  "tokensIn": 759,
-  "tokensOut": 59
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"He built a multi‑agent copilot that combines hybrid RAG (dense + sparse retrieval), NL2SQL, and a schema knowledge graph.\",\"citations\":[{\"sourceRef\":\"resume:indium-senior-copilot\"}],\"followUps\":[{\"question\":\"What technologies power the multi‑agent copilot?\",\"sourceRef\":\"resume:indium-senior-copilot\"},{\"question\":\"What other AI projects did GG deliver at Indium?\",\"sourceRef\":\"resume:indium-ds-docunderstanding\"},{\"question\":\"Did GG work on fine‑tuning large language models at Indium?\",\"sourceRef\":\"resume:indium-senior-finetune\"}]}",
+  "tokensIn": 956,
+  "tokensOut": 617
 }

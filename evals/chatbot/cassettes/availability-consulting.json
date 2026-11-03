@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"GG is open to select AI/ML consulting engagements, in addition to full-time Senior or Principal Applied AI roles.\",\n   \"citations\": [\n      {\"sourceRef\": \"availability:summary\"}\n   ]\n}",
-  "tokensIn": 884,
-  "tokensOut": 48
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"He is looking for Lead or Senior Applied AI roles and also takes on select AI/ML consulting engagements.\",\"citations\":[{\"sourceRef\":\"availability:summary\"}],\"followUps\":[{\"question\":\"Where is GG based?\",\"sourceRef\":\"site:identity\"},{\"question\":\"What roles is GG open to?\",\"sourceRef\":\"site:identity\"},{\"question\":\"What is GG's professional title?\",\"sourceRef\":\"site:identity\"}]}",
+  "tokensIn": 1111,
+  "tokensOut": 488
 }

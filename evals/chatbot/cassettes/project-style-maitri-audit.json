@@ -1,6 +1,6 @@
 {
-  "recordedModel": "llama-3.3-70b-versatile",
-  "groqResponse": "{\n  \"answer\": \"Two trust-destroying bugs, including a consistency bug where the outfit-board tool and plain-search path handled missing inventory situations differently, with one being honest and the other confabulating.\",\n   \"citations\": [\n      {\"sourceRef\": \"style-maitri:live-audit\"}\n   ]\n}",
-  "tokensIn": 1011,
-  "tokensOut": 67
+  "recordedModel": "openai/gpt-oss-120b",
+  "groqResponse": "{\"answer\":\"The audit uncovered seven trust‑destroying blockers that offline evaluations never caught, including two flagged as trust/safety issues, and a consistency bug where the plain‑search path invented a recommendation for nonexistent footwear while the outfit‑board path correctly reported none.\",\"citations\":[{\"sourceRef\":\"style-maitri:live-audit\"}],\"followUps\":[{\"question\":\"How many of the 32 queries were judged disappointing?\",\"sourceRef\":\"style-maitri:live-audit\"},{\"question\":\"What specific trust‑destroying findings were reported?\",\"sourceRef\":\"style-maitri:live-audit\"},{\"question\":\"What consistency bug was discovered?\",\"sourceRef\":\"style-maitri:live-audit\"}]}",
+  "tokensIn": 1442,
+  "tokensOut": 587
 }
