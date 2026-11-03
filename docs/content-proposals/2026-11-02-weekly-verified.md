@@ -1,0 +1,67 @@
+# Weekly content proposals: verification against sources (2026-11-02)
+
+What this is: a verification of the six proposals in bot PR #387, section "Wave 15 pipeline
+proposals - 2026-11-02 (LLM-consensus, pending human review)" of `content/provenance.md`.
+Those proposals are LLM-consensus output (curator, framer, verifier models), not
+human-reviewed claims. This file checks each one against the source repo README (and the
+underlying artifact where one exists) at the pinned source SHAs below, and against the site
+copy on `origin/main` (`341fc81`).
+
+This is NOT published copy. Nothing here is reflected on the site by this PR, and nothing has
+been folded in; that decision is the owner's. The file lives under `docs/`, which
+`scripts/chatbot/build-index.mjs` does not read (its inputs are `content/case-studies/*.ts`,
+`content/products.ts`, `content/provenance.md`, `content/experience.ts`,
+`content/availability.ts`, `content/site.ts`), so the chatbot index is unchanged.
+
+Format and verdict vocabulary follow `2026-10-26-weekly-verified.md` (PR #352, closed
+unmerged; its file lives only on branch `docs/content-proposals-2026-10-26-verified`, which
+is where it was read from). Added verdict this week: ALREADY-ON-SITE.
+
+## Method
+
+1. Resolved each source repo's `main` HEAD and read `README.md` at that SHA through the GitHub
+   contents API (read-only, no clones). Followed the README's artifact links
+   (`docs/EVALUATION.md`, `reports/*.json`, `reports/01_eda_findings.md`) at the same SHA.
+2. Quoted the cited line and checked every number and every causal or comparative word.
+3. Date = committer date of the last commit touching that file at the pinned SHA (not
+   line-level blame; the GitHub blame API was not used).
+4. Grepped `content/case-studies/*.ts` and `content/products.ts` (and `content/provenance.md`
+   for context) at `origin/main` `341fc81`.
+5. Verdicts. ALREADY-ON-SITE: the fact is already published (file:line cited). VERIFIED-ADJUSTED:
+   facts are in the source but the proposal's wording changes a qualifier. PARTIAL: part is
+   unsupported. HISTORICAL: superseded by a newer source.
+
+Source SHAs: triage-iq `2899887` (2026-11-02), shelfsense-m5 `8454e4f` (2026-10-30),
+multimodal-fashion-recommender `9f4cd7e` (2026-08-22), AetherArt `f06af9b` (2026-11-01).
+
+Summary: 6 of 6 proposals are ALREADY-ON-SITE (every one restates a fact folded by an earlier
+wave). Wording problems in the drafts are listed per row. 0 sentences are ready to fold.
+
+## Verification table
+
+| # | repo | proposal (verbatim from #387) | verdict | source (file:line@sha7, file last changed) | underlying artifact | on-site location and notes |
+|---|------|-------------------------------|---------|--------------------------------------------|---------------------|----------------------------|
+| 1 | triage-iq | "Evaluated LLM synthesis on a regression detector across 64 cases, achieving a mean score of 12.09 out of 15 (80.6%) with a 95% bootstrap confidence interval of 11.64-12.52." | ALREADY-ON-SITE (wording would be VERIFIED-ADJUSTED) | triage-iq README.md:52@2899887, 2026-11-01 (6b6e630). "LLM synthesis (judge /15) \| both \| Judge mean, regression detector, n=64 \| 12.09/15 (80.6%), bootstrap 95% CI [11.64, 12.52]" | `reports/judge_mean_ci.json` (48dda6f, 2026-10-17): n 64, mean 12.0938, ci95 [11.64, 12.52], percentile bootstrap over issues, 2000 resamples, seed 42, scale_max 15 | Numbers match. Draft drops that the score is from one local judge (`qwen3:8b`) and that the interval is over issues only. "Regression detector" is the row's metric name, not something the evaluation "was on". On site: `content/case-studies/triageiq.ts:183-184` ("judge 12.09/15 (80.6%), bootstrap 95% CI [11.64, 12.52] over issues. One local judge (qwen3:8b) replaying a recorded cassette"). Folded by #357. |
+| 2 | triage-iq | "Achieved 68.8% exact-match component accuracy (44 of 64 cases) with a 95% Wilson confidence interval of 56.6-78.8%." | ALREADY-ON-SITE (wording would be VERIFIED-ADJUSTED) | triage-iq README.md:53@2899887, 2026-11-01 (6b6e630). "Component accuracy: predicted equals gold (exact string match) \| **68.8% (44/64)**, Wilson 95% [56.6, 78.8]" | `reports/component_match_agreement_2026-10-16.json` (f8716e5, 2026-10-16): exact_match_accuracy 0.6875, wilson95 [0.5661, 0.7877], equal_pairs 44, wrong_plans 20 | Numbers match; "exact-match" is correct. "Achieved" is mild framing for a deterministic string-equality score on a 64-issue set. On site: `triageiq.ts:183-184` ("68.8% (44/64) exact component match", "Exact match Wilson 95% [56.6, 78.8]"). Folded by #357. |
+| 3 | triage-iq | "Scored each pipeline stage on held-out data using Wilson or bootstrap confidence intervals (2,000 resamples, seed 42) and measured LLM quality with a local `qwen3:8b` judge on a 64-issue gold set (11 vscode, 53 k8s), enabling CI to run with zero live LLM calls. The exact-match rate was 44/64, and the grounding check verified consistency against the pipeline's top-3 predictions." | ALREADY-ON-SITE (draft wording is VERIFIED-ADJUSTED, see flags) | triage-iq README.md:61@2899887, 2026-11-01 (6b6e630). "Each stage is scored on held-out data with Wilson or bootstrap intervals (2000 resamples, seed 42). LLM quality comes from one local judge (`qwen3:8b`) on a 64-issue gold set (vscode n=11, k8s n=53) replayed from a recorded cassette, so CI makes zero live LLM calls. ... the grounding check is a consistency check against the pipeline's own top-3, not a correctness check against gold, because all 20 wrong-component plans still pass it." | `docs/EVALUATION.md` (2899887) grounding note (line 74): counts plans where the component is not in the classifier's own top-3 or a cited similar-issue number was not retrieved; "a consistency check against the pipeline's upstream outputs, not a correctness check against gold labels"; 20 of 64 plans wrong, all pass. Same file line 64: 68.8% (44/64) | On site: `triageiq.ts:47` ("A grounding checker then confirms that the plan's component is in the classifier's top three and that every issue it cites was actually retrieved. That is a consistency check, not a correctness check: 20 of the 64 gold-set plans name the wrong component and all 20 pass it."), `triageiq.ts:113` (cassette replay, vscode 11 report-only, k8s 53), `triageiq.ts:184` (qwen3:8b, recorded cassette, exact match is the number to quote). **Flag A (grounding):** "verified consistency against the pipeline's top-3 predictions" is accurate only as far as it goes. The source states it is NOT a correctness check and that all 20 wrong plans pass it; the draft drops that, and "verified" invites reading it as correctness validation. It also omits the second half of the check (cited similar-issue numbers must be in the retrieved set). **Flag B (44/64 pairing):** the 44/64 is the exact string match between the predicted component and gold (README.md:53), a different quantity from the judge score described in the same sentence; the draft's "The exact-match rate was 44/64" sits next to the judge and the grounding check with no definition, so it reads as a property of the judge or of grounding. In the source it is defined separately (and the judge's own `component_match` is the more lenient number, 1.70/2 vs 1.38/2 strict, `component_match_agreement_2026-10-16.json`). Also drops "one local judge" and "replayed from a recorded cassette" (the reason for zero live calls). |
+| 4 | shelfsense-m5 | "Diagnosed a 68% zero demand rate and 55% lumpy/erratic pattern, flagging SNAP indicators and lag-7/14/28 features as high-value and requiring store, category, and department hierarchy encodings; this analysis led to choosing a compound-Poisson (Tweedie) loss and a cross-series global model that could recover signal where per-series methods would fail." | ALREADY-ON-SITE (core claims; see residual note) | shelfsense-m5 README.md:43@8454e4f, 2026-05-11 (74ee18e). "EDA implication: compound-Poisson (Tweedie) loss is the right objective. SNAP flags and lag-7/14/28 are high-value features. Hierarchy encodings (`store_id`, `cat_id`, `dept_id`) are required. The 68% zero rate and 55% lumpy/erratic classification predicted - before a single model was trained - that per-series classical methods would collapse on HOBBIES and that a cross-series global model with the right loss would recover that signal." | `reports/01_eda_findings.md` (43e329f, 2026-04-25): overall zero-sales rate 68.0% (line 27); Lumpy/Erratic 16,724 series, 54.8% (line 41); SNAP days +11.2% total sales (line 69); lag-7/14/28 (lines 108, 117) | Wording errors in the draft: the 68% and 55% were measured by EDA, not "diagnosed", and they are what predicted the modelling choices; "led to choosing" turns the README's "predicted ... would collapse on HOBBIES" into a decision narrative, and "fail" drops "on HOBBIES". On site: 68% and Tweedie `shelfsense.ts:13`, `:54-55`; "predicted this before any model was trained: 68% ... and 55% of series are lumpy or erratic", classical collapse on HOBBIES and global-model rationale `shelfsense.ts:65`; hierarchy categoricals in the feature matrix `shelfsense.ts:17`, `:33`. Folded by #356. Residual, not a fold-ready claim: "SNAP flags are high-value features" and "lag-7/14/28" as an EDA implication are not stated in `content/` (no SNAP hit); the README sentence and the EDA report (SNAP +11.2%, lines 69 and 72) support them, and the earlier waves chose not to fold them. |
+| 5 | multimodal-fashion-recommender | "Measured fused similarity scores of 0.33-0.38 for users who browse a single colour across many product types, showing the model can retrieve the correct colour (5/5 Black recommendations) but with weak confidence, which points to a colour-aware re-ranking step as a useful improvement." | ALREADY-ON-SITE (wording would be VERIFIED-ADJUSTED, README-ONLY) | multimodal-fashion-recommender README.md:202@9f4cd7e, 2026-07-11 (7b5d84b). "Users who browse a single colour across many product types produced the lowest fused similarity scores (0.33-0.38). Neither modality dominates because the user embedding is pulled in many directions by diverse product types. The model retrieves the correct colour (5/5 Black recommendations for a Black-only buyer) but with weak confidence. A colour-aware re-ranking post-step would help this archetype." | None re-checked this week; the 2026-10-26 verification found none (HEAD `9f4cd7e` unchanged since) | Numbers match. Draft drops "lowest" (the 0.33-0.38 are the lowest scores, not a general figure), drops the 30 pre-selected demo users scope and the README's own "illustrative only" label for the personalized demo, and "useful improvement" overstates "would help this archetype" (a proposal, not built). On site: `multimodal-fashion-recommender.ts:123-126` (row "Honest caveat: single-colour browsers", "Lowest fused similarity, 0.33-0.38", 30 pre-selected demo users, "a colour-aware re-ranking step is the README's proposed fix, not built"), ledger `provenance.md:537` (`mmfr:single-colour-browsers`). Folded by #358. |
+| 6 | AetherArt | "Visually selected the winning checkpoint from a 500/1000/1500-step sweep using four fixed prompts at seed 42, as documented in the checkpoint-1000 grid image." | ALREADY-ON-SITE (wording VERIFIED-ADJUSTED) | AetherArt README.md:59@f06af9b, 2026-11-01 (75ed02f). "Checkpoint selected visually from a 500/1000/1500 sweep (four fixed prompts at seed 42, `reports/lora_training_summary_sdxl.md#checkpoint-selection`) - see `reports/lora_checkpoint_eval_sdxl/checkpoint-1000_grid.png` for the winning-checkpoint grid." | `reports/lora_training_summary_sdxl.md` (checkpoint-selection section), linked from the README line; not re-read for this table beyond the link | Supported, and this is the corrected wording (the 2026-10-26 table found README.md:59 then said "scored by HPSv2.1 + ImageReward"; at `75ed02f` it says "selected visually"). One wording fix: the sweep and prompts are documented in `lora_training_summary_sdxl.md#checkpoint-selection`; the grid image is the picture of the winning checkpoint, not the documentation of the selection. On site: `content/case-studies/aetherart.ts:22` ("compared visually against four fixed prompts at seed 42"), `:46` ("compared visually on four fixed prompts (seed 42) -> checkpoint 1000 selected"). Folded by Q14. Out of scope here: `aetherart.ts:22` still goes on to say the adapter's quality is measured with HPSv2.1 and ImageReward, which is a separate claim from checkpoint selection and was not checked this week. |
+
+## Ready-to-fold drafts
+
+None. All six proposals restate facts that earlier waves already folded (#357 triage-iq
+items, #356 ShelfSense, #358 mmfr single-colour, Q14 AetherArt "selected visually"), so
+there is no fully supported sentence here that is not already on the site. The only
+unpublished fragment is the ShelfSense EDA statement that SNAP flags and lag-7/14/28 are
+high-value features (row 4); it is supported by README.md:43 and
+`reports/01_eda_findings.md` but is a modelling-intent claim, and it is left to the owner
+whether it earns a line.
+
+## Notes for the owner
+
+- The recurring pattern: the curator's "not duplicated in the existing copy" check is wrong
+  for all six items this week; every one is already published. The proposals pipeline does
+  not appear to compare against `content/case-studies/*.ts`.
+- The three triage-iq drafts duplicate each other (rows 1-3 overlap on 44/64 and the
+  cassette caveat). Row 3 is the one with real wording risk (flags A and B).
