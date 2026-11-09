@@ -1379,3 +1379,40 @@ which carries the full table since triage-iq 91282bb, 2026-10-17):
 Not changed here: the resolution-time row (the served behaviour changed under ADR-0064 and needs
 its own re-verification) and `content/resume-data.json` / `content/resume-metrics.json` /
 `public/resume.pdf`, which remain on the old figures until the owner regenerates the résumé.
+
+## Wave 15 pipeline proposals — 2026-11-09 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Demonstrates a strong, verifiable performance metric for the LLM judge, but lacks a date to confirm it’s recent.; verifier: The draft accurately reflects all numerical values (n=64, mean 12.09, 80.6%, CI 11.64-12.52) and the specific metric (LLM synthesis judge) found in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:52`
+  Draft: "Evaluated the LLM synthesis judge on 64 inputs, achieving a mean score of 12.09 / 15 (80.6%) with a bootstrap 95% CI of 11.64–12.52."
+  Suggested provenance ID: `triage-iq-llm-synthesis`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — Shows a verifiable 68.8% component accuracy, proving ML skill, but lacks a recent timestamp; verifier: The draft accurately reflects the specific metrics (68.8%, 44/64) and confidence interval (56.6-78.8%) provided in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:53`
+  Draft: "Measured LLM synthesis component accuracy at 68.8% (44 / 64), with a 95% Wilson confidence interval of 56.6–78.8%."
+  Suggested provenance ID: `triage-iq-llm-synthesis-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a concrete, measurable evaluation skill (statistical scoring, bootstrap, exact‑match results) that is verifiable in the README and not already covered in the case‑study copy.; verifier: All specific numbers (2,000 resamples, seed 42, 64-issue set, 44/64 exact match) and claims (Wilson/bootstrap intervals, local qwen3:8b judge, zero live LLM calls) are explicitly present in the source text, and the tone remains neutral and factual.)
+  Source: `README.md:61`
+  Draft: "Scored each pipeline stage on held‑out data using Wilson or bootstrap intervals (2,000 resamples, seed 42) and measured LLM quality with a local qwen3:8b judge on a 64‑issue gold set, allowing CI to run with zero live LLM calls; the exact‑match rate was 44/64."
+  Suggested provenance ID: `triage-iq:evaluation`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Shows concrete modeling insight and is directly quoted in the README, but lacks a recent timestamp, so it’s not current.; verifier: The draft accurately reflects the specific metrics (68%, 55%), feature selections (SNAP, lags, hierarchy), and modeling decisions (Tweedie loss, global model) explicitly stated in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed that 68% of series are zero and 55% are lumpy/erratic, which guided the selection of a compound‑Poisson (Tweedie) loss and a cross‑series global model; also identified SNAP flags and lag‑7/14/28 as high‑value features and required hierarchy encodings (store_id, cat_id, dept_id)."
+  Suggested provenance ID: `eda-implication`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 3/5 — Demonstrates debugging and modeling skill and is directly sourced, but lacks a recent date, so it’s not clearly current.; verifier: The draft accurately reflects the specific numbers (442/1,000, 3 hours, 12 hours), the causal logic (structural vs tuning), and the action taken (documenting the crash) found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:111`
+  Draft: "Diagnosed that SARIMA fitting crashed after 3 hours at series 442 of 1,000 and documented the failure instead of spending an estimated additional 12 hours on sequential runs. The analysis confirmed that classical ETS/ARIMA methods were not competitive on sparse HOBBIES series, indicating a structural failure mode rather than a tuning issue."
+  Suggested provenance ID: `sarima-crash-doc`
+- **gaurav-gandhi-2411/review-iq** (curator 4/5 — The fact demonstrates measurable evaluation skill and is directly verifiable in the README, is not redundant with existing copy, but lacks a clear recent timestamp.; verifier: The draft accurately reflects the specific numerical data (80.6%, 79.6%, +1.0 pp, CI -4.4 to +6.2) and the statistical conclusion ('no detectable benefit') present in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:197`
+  Draft: "Measured the impact of the 36 excluded reviews, finding exposed reviews scored 80.6% versus 79.6% for unseen ones—a 1.0‑percentage‑point difference with a 95% confidence interval of –4.4 to +6.2, showing no detectable benefit at this sample size."
+  Suggested provenance ID: `excluded-reviews-impact`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — Shows measurable analysis skill and is directly quoted, but lacks a recent timestamp while adding new detail not in current copy; verifier: The draft accurately reflects the specific metrics (0.33–0.38, 5/5), the causal explanation regarding modality dominance, and the proposed solution found in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:202`
+  Draft: "Diagnosed that users who browse a single colour across many product types generate the lowest fused similarity scores (0.33–0.38), showing that neither visual nor textual modality dominates and confidence is weak (e.g., 5/5 Black recommendations for a Black‑only buyer). Identified a colour‑aware re‑ranking post‑step as a concrete way to boost confidence for this user archetype."
+  Suggested provenance ID: `readme-202`
+- **gaurav-gandhi-2411/AetherArt** (curator 3/5 — The fact shows a concrete, verifiable checkpoint‑selection process, but lacks a recent timestamp, so it passes skill and verifiability but is not clearly current.; verifier: The draft accurately reflects the source text's details regarding the sweep steps (500/1000/1500), the evaluation method (visual, 4 prompts, seed 42), and the outcome (selection of a winning checkpoint), without introducing unsupported claims or tone drift.)
+  Source: `README.md:59`
+  Draft: "Visually evaluated checkpoints from the 500, 1000, and 1500‑step sweeps—using four fixed prompts at seed 42—and selected the best‑performing checkpoint (see the winning‑checkpoint grid)."
+  Suggested provenance ID: `checkpoint-selection-visual-eval`
