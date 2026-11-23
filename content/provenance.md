@@ -1379,3 +1379,40 @@ which carries the full table since triage-iq 91282bb, 2026-10-17):
 Not changed here: the resolution-time row (the served behaviour changed under ADR-0064 and needs
 its own re-verification) and `content/resume-data.json` / `content/resume-metrics.json` /
 `public/resume.pdf`, which remain on the old figures until the owner regenerates the résumé.
+
+## Wave 15 pipeline proposals — 2026-11-23 (LLM-consensus, pending human review)
+
+Each proposal below passed all three stages (curator score against `docs/content-pipeline-rubric.md`, framer draft, verifier cross-check from a different model family) but is **not yet reflected in any case study** — this is LLM-consensus judgment, not a human-reviewed claim. Fold into the relevant case study by hand if you agree; delete this section once actioned or rejected.
+
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable LLM synthesis performance, is directly quoted from the README, and adds new information not covered in the existing copy, though its recency cannot be confirmed.; verifier: The draft accurately reflects all numerical values, percentages, sample size, and confidence intervals present in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:52`
+  Draft: "Measured LLM synthesis quality with a judge mean of 12.09 / 15 (80.6%) across 64 cases, 95% CI [11.64, 12.52]."
+  Suggested provenance ID: `triage-iq-llm-synthesis`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact shows a measurable model accuracy (skill) and is directly present in the README, but lacks a date so recency is unclear, though it isn’t redundant with existing copy.; verifier: The draft accurately reflects the specific metrics, confidence interval, and terminology found in the source text without adding unsupported claims or altering the tone.)
+  Source: `README.md:53`
+  Draft: "Measured component accuracy of LLM synthesis at 68.8% (44/64), with a 95% Wilson confidence interval of 56.6%–78.8%."
+  Suggested provenance ID: `triage-iq-llm-synthesis-accuracy`
+- **gaurav-gandhi-2411/triage-iq** (curator 4/5 — The fact demonstrates a measurable evaluation skill and is directly present in the README, so it is verifiable and not redundant, though it lacks a clear recent timestamp.; verifier: All specific numbers (2000 resamples, seed 42, 64 issues, 44/64 matches) and technical details (Wilson/bootstrap, qwen3:8b, cassette replay) are explicitly present in the source text, and the tone remains neutral and factual.)
+  Source: `README.md:61`
+  Draft: "Measured each pipeline stage on held‑out data using Wilson or bootstrap confidence intervals (2,000 resamples, seed 42). Evaluated LLM quality with a local qwen3:8b judge on a 64‑issue gold set (44/64 exact matches), replayed from a recorded cassette so CI makes no live LLM calls."
+  Suggested provenance ID: `triage-iq:evaluation`
+- **gaurav-gandhi-2411/triage-iq** (curator 3/5 — Shows a measurable LightGBM improvement verifiable in the README, but without a date it isn’t clearly current.; verifier: The draft accurately reflects the specific metric (+6.95pp), model (LightGBM), comparison (vs maj.), and context (k8s bucket) found in the source text without adding unsupported claims or tone drift.)
+  Source: `README.md:91`
+  Draft: "Improved LightGBM performance by 6.95 percentage points over the majority baseline in the k8s bucket."
+  Suggested provenance ID: `triage-iq-readme`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Shows concrete modeling insight and is directly quoted in the README, but lacks a recent timestamp.; verifier: The draft accurately reflects the specific metrics (68%, 55%), feature sets, and modeling conclusions present in the source text without introducing unsupported claims or tone drift.)
+  Source: `README.md:43`
+  Draft: "Diagnosed the series‑level demand patterns—finding a 68 % zero rate and 55 % lumpy/erratic classification—and selected a compound‑Poisson (Tweedie) loss, SNAP flag and lag‑7/14/28 features plus store, category and department hierarchy encodings, enabling a cross‑series global model to capture signal that per‑series methods would miss."
+  Suggested provenance ID: `shelfsense-eda-analysis`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates a concrete forecasting skill with verifiable metrics, but lacks a recent timestamp and isn’t redundant with existing copy.; verifier: All numerical values, specific claims, and causal explanations in the draft are directly supported by the source text without distortion or unsupported embellishment.)
+  Source: `README.md:109`
+  Draft: "Built a stratified sample of 1,000 series (334 FOODS‑top, 333 HOUSEHOLD‑mid, 333 HOBBIES‑low) to make ETS/ARIMA/Prophet modeling feasible, and achieved an ETS WRMSSE of 0.6541 on that sample. Submitting the model to Kaggle yielded a public score of 0.8377, matching the SN28 baseline despite covering only a fraction of the 30,490‑series catalog."
+  Suggested provenance ID: `shelfsense-m5-sample-stratification`
+- **gaurav-gandhi-2411/shelfsense-m5** (curator 4/5 — Demonstrates valuable debugging and decision‑making skill and is directly quoted from the README, but lacks a recent timestamp, so recency is uncertain.; verifier: The draft accurately reflects all specific numbers (442/1,000, 3 hours, 558, ~12 hours) and claims (structural failure, non-competitive ETS/ARIMA) found in the source text without introducing unsupported information or tone drift.)
+  Source: `README.md:111`
+  Draft: "Diagnosed that SARIMA crashed in joblib’s worker pool after processing 442 of 1,000 series in 3 hours; sequential fitting would have needed ~12 hours for the remaining 558 series. Documented the failure and showed that ETS and ARIMA were already non‑competitive on the sparse HOBBIES series, confirming the issue was structural, not a tuning problem."
+  Suggested provenance ID: `sarima-crash-analysis`
+- **gaurav-gandhi-2411/multimodal-fashion-recommender** (curator 4/5 — The fact demonstrates analytical skill and is directly quoted from the README, but lacks a recent timestamp, though it adds non‑redundant insight not covered in the current copy.; verifier: The draft accurately reflects the specific numerical ranges (0.33–0.38) and retrieval statistics (5/5) found in the source, and the characterization of 'low confidence' is directly supported by the source's mention of 'weak confidence'.)
+  Source: `README.md:202`
+  Draft: "Measured fused similarity scores for users browsing a single colour across many product types at 0.33–0.38, showing low confidence even though the model retrieved the correct colour (5/5 Black recommendations)."
+  Suggested provenance ID: `readme-fused-similarity-colour`
